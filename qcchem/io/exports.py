@@ -15,48 +15,53 @@ from qcchem.io.serialization import to_primitive
 def build_qcschema_payload(result: Any) -> dict[str, Any]:
     """Build a minimal QCSchema-style export from a QCchem run result."""
     data = to_primitive(result)
+    problem = data.get("problem") or {}
+    energy = data.get("energy") or {}
+    provenance = data.get("provenance") or {}
     return {
         "schema_name": "qcschema_output",
         "schema_version": 1,
         "driver": "energy",
         "model": {
-            "method": data["solver"]["kind"] if "solver" in data else "qcchem",
-            "basis": data["problem"]["basis"],
+            "method": (data.get("solver") or {}).get("kind", "qcchem"),
+            "basis": problem.get("basis"),
         },
         "molecule": {
-            "name": data["problem"]["molecule_name"],
-            "charge": data["problem"]["charge"],
-            "multiplicity": data["problem"]["multiplicity"],
+            "name": problem.get("molecule_name"),
+            "charge": problem.get("charge"),
+            "multiplicity": problem.get("multiplicity"),
         },
         "properties": {
-            "return_energy": data["energy"]["total_energy"],
-            "electronic_energy": data["energy"]["electronic_energy"],
-            "nuclear_repulsion_energy": data["energy"]["nuclear_repulsion_energy"],
+            "return_energy": energy.get("total_energy"),
+            "electronic_energy": energy.get("electronic_energy"),
+            "nuclear_repulsion_energy": energy.get("nuclear_repulsion_energy"),
         },
         "provenance": {
             "creator": "QCchem",
-            "version": data["schema_version"],
+            "version": data.get("schema_version"),
             "routine": "qcchem.workflow.runner.run_spec",
-            "git_commit": data["provenance"]["git_commit"],
-            "git_branch": data["provenance"].get("git_branch"),
-            "workspace_fingerprint": data["provenance"].get("workspace_fingerprint"),
+            "git_commit": provenance.get("git_commit"),
+            "git_branch": provenance.get("git_branch"),
+            "workspace_fingerprint": provenance.get("workspace_fingerprint"),
         },
         "extras": {
-            "qcchem_run_id": data["run_id"],
-            "verification_status": data["verification_status"],
+            "qcchem_run_id": data.get("run_id"),
+            "verification_status": data.get("verification_status"),
             "hardware_verified": data.get("hardware_verified", False),
             "hardware_evidence_tier": data.get("hardware_evidence_tier"),
-            "mapping": data["mapping"],
+            "mapping": data.get("mapping"),
             "reduction_audit": data.get("reduction_audit"),
             "measurement": data.get("measurement"),
             "calibration": data.get("calibration"),
+            "chemical_accuracy": data.get("chemical_accuracy"),
+            "runtime_chemical_accuracy": data.get("runtime_chemical_accuracy"),
             "runtime_options": data.get("runtime_options"),
             "runtime_submission": data.get("runtime_submission"),
             "compression_result": data.get("compression_result"),
             "perturbative_correction_result": data.get("perturbative_correction_result"),
         },
-        "return_result": data["energy"]["total_energy"],
-        "success": data["verification_status"] != "failed",
+        "return_result": energy.get("total_energy"),
+        "success": data.get("verification_status") != "failed",
     }
 
 
