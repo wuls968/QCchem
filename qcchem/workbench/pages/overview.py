@@ -4,6 +4,7 @@ from typing import Any
 
 from dash import dcc, html
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
 from qcchem.workbench.components.molecule import build_molecule_viewer
@@ -119,20 +120,55 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
         (view.get("confidence", {}).get("runtime_chemical_accuracy") or {}).get("absolute_error_hartree", absolute_error)
         or absolute_error
     )
-    figure = go.Figure()
+    threshold = float(
+        (
+            view.get("confidence", {}).get("chemical_accuracy") or {}
+        ).get("threshold_hartree")
+        or view.get("confidence", {}).get("threshold")
+        or view.get("benchmark", {}).get("threshold")
+        or 0.02
+    )
+    figure = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=False,
+        vertical_spacing=0.18,
+        row_heights=[0.42, 0.58],
+        subplot_titles=("Reported total energy", "Absolute-error evidence"),
+    )
     figure.add_bar(
-        x=["Reference", "Compressed VQE", "Hardware Result"],
-        y=[total_energy - absolute_error, total_energy, total_energy + runtime_absolute_error],
-        marker_color=["#20334a", "#9a6b3f", "#93a18a"],
+        x=["Compressed VQE"],
+        y=[total_energy],
+        marker_color=["#9a6b3f"],
+        row=1,
+        col=1,
+    )
+    figure.add_bar(
+        x=["Benchmark absolute error", "Runtime absolute error"],
+        y=[absolute_error, runtime_absolute_error],
+        marker_color=["#20334a", "#93a18a"],
+        row=2,
+        col=1,
+    )
+    figure.add_hline(
+        y=threshold,
+        line_dash="dash",
+        line_color="#46607a",
+        annotation_text="Threshold",
+        annotation_position="top right",
+        row=2,
+        col=1,
     )
     figure.update_layout(
-        title={"text": "Energy alignment across the current evidence stack", "x": 0.04},
+        title={"text": "Energy and absolute-error evidence across the current evidence stack", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
-        margin={"l": 36, "r": 20, "t": 72, "b": 40},
+        margin={"l": 36, "r": 20, "t": 84, "b": 40},
         font={"color": "#2d2216"},
-        yaxis_title="Energy (Hartree)",
+        showlegend=False,
     )
+    figure.update_yaxes(title_text="Total energy (Hartree)", row=1, col=1)
+    figure.update_yaxes(title_text="Absolute error (Hartree)", row=2, col=1)
     return figure
 
 

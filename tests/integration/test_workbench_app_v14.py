@@ -145,8 +145,12 @@ def test_page_modules_expose_model_driven_builders() -> None:
     overview_module = importlib.import_module("qcchem.workbench.pages.overview")
     overview_page = overview_module.build_overview_page(model)
     overview_graph = next(component for component in _walk_components(overview_page) if component.__class__.__name__ == "Graph")
-    overview_y = tuple(overview_graph.figure.data[0].y)
-    assert overview_y[1] == pytest.approx(-9.8765)
+    assert len(overview_graph.figure.data) == 2
+    assert tuple(overview_graph.figure.data[0].y) == pytest.approx((-9.8765,))
+    assert tuple(overview_graph.figure.data[1].y) == pytest.approx((0.1234, 0.0142))
+    assert overview_graph.figure.layout.yaxis.title.text == "Total energy (Hartree)"
+    assert overview_graph.figure.layout.yaxis2.title.text == "Absolute error (Hartree)"
+    assert "absolute-error evidence" in overview_graph.figure.layout.title.text.lower()
 
     compression_module = importlib.import_module("qcchem.workbench.pages.active_space_compression")
     compression_page = compression_module.build_active_space_compression_page(model)
@@ -185,6 +189,45 @@ def test_page_modules_expose_model_driven_builders() -> None:
     assert tuple(structure_graph.figure.data[0].x) == (0, 1, 2, 3, 4)
     assert tuple(structure_graph.figure.data[0].y) == (-18.4, -11.2, -1.8, -0.6, 0.9)
     assert structure_graph.figure.layout.title.text == "Orbital energy ladder across the selected model window"
+
+
+@pytest.mark.integration
+def test_structure_orbitals_labels_original_indices_when_provided() -> None:
+    from qcchem.workbench.pages.overview import build_sample_view_model
+    from qcchem.workbench.pages.structure_orbitals import build_structure_orbitals_page
+
+    model = build_sample_view_model()
+    model["structure"]["active_space_metadata"] = {
+        "num_active_orbitals": 5,
+        "num_active_electrons": 2,
+        "orbital_window": "Shifted window",
+        "orbital_levels_ev": [-18.4, -11.2, -1.8, -0.6, 0.9],
+        "orbital_indices_original": [5, 6, 7, 8, 9],
+    }
+    model["reduction"]["selected_active_orbitals_original"] = [7, 8, 9]
+    model["reduction"]["selected_active_orbitals"] = [2, 3, 4]
+    model["reduction"]["frozen_orbitals"] = [5]
+
+    page = build_structure_orbitals_page(model)
+    graph = next(component for component in _walk_components(page) if component.__class__.__name__ == "Graph")
+
+    assert tuple(graph.figure.data[0].x) == (0, 1, 2, 3, 4)
+    assert tuple(graph.figure.data[0].y) == (-18.4, -11.2, -1.8, -0.6, 0.9)
+    assert tuple(graph.figure.data[0].marker.color) == ("#46607a", "#93a18a", "#9a6b3f", "#9a6b3f", "#9a6b3f")
+    assert tuple(tuple(entry) for entry in graph.figure.data[0].customdata) == (
+        (0, 5, "Frozen"),
+        (1, 6, "Context"),
+        (2, 7, "Active"),
+        (3, 8, "Active"),
+        (4, 9, "Active"),
+    )
+    assert tuple(graph.figure.layout.xaxis.ticktext) == (
+        "pos 0 / orig 5",
+        "pos 1 / orig 6",
+        "pos 2 / orig 7",
+        "pos 3 / orig 8",
+        "pos 4 / orig 9",
+    )
 
 
 @pytest.mark.integration
