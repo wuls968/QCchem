@@ -387,6 +387,19 @@ def _compute_exact_spectrum_if_needed(spec, mapping, logger, events) -> ExactSpe
     return compute_exact_spectrum(mapping.qubit_hamiltonian, num_states=required_states)
 
 
+def _ensure_exploratory_allowed(spec, *, exploratory_command: bool) -> None:
+    requested = (
+        spec.solver.experimental
+        or spec.mitigation.experimental
+        or spec.exploratory.enabled
+        or bool(spec.exploratory.modules)
+    )
+    if requested and not (exploratory_command or spec.policy.allow_exploratory):
+        raise ValueError(
+            "Exploratory modules require `qcchem exploratory ...` or `policy.allow_exploratory=true`."
+        )
+
+
 def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> RunResult:
     """Run a QCchem calculation from an already-parsed RunSpec."""
     started_at = perf_counter()
@@ -831,7 +844,13 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     return result
 
 
-def run_from_config(config_path: Path, output_dir: Path | None = None) -> RunResult:
+def run_from_config(
+    config_path: Path,
+    output_dir: Path | None = None,
+    *,
+    exploratory_command: bool = False,
+) -> RunResult:
     """Run a QCchem calculation from a YAML configuration."""
     spec = load_run_spec(config_path)
+    _ensure_exploratory_allowed(spec, exploratory_command=exploratory_command)
     return run_spec(spec, source_config=str(config_path), output_dir=output_dir)
