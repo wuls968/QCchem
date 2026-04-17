@@ -16,7 +16,10 @@ from qcchem.core import (
     BenchmarkSuiteSummary,
     NoiseModelSpec,
 )
-from qcchem.io.benchmark_config import load_benchmark_suite_spec
+from qcchem.io.benchmark_config import (
+    HardwareCalibrationSuiteSpec,
+    load_benchmark_entry_spec,
+)
 from qcchem.io.config import load_run_spec
 from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting import write_result_json
@@ -605,6 +608,7 @@ def build_hardware_calibration_suite(
 
     summary = {
         "suite_name": resolved_output_root.name,
+        "artifact_root": str(resolved_output_root),
         "summary": {
             "total_cases": len(cases),
             "runtime_evidence_status_counts": runtime_status_counts,
@@ -618,7 +622,23 @@ def build_hardware_calibration_suite(
     return summary
 
 
-def run_benchmark_suite_from_config(path: Path, output_dir: Path | None = None) -> BenchmarkSuiteResult:
+def _run_hardware_calibration_suite_from_spec(
+    spec: HardwareCalibrationSuiteSpec,
+    *,
+    output_dir: Path | None = None,
+) -> dict[str, Any]:
+    return build_hardware_calibration_suite(
+        [case.result_json for case in spec.cases],
+        output_root=(output_dir or spec.output_root),
+    )
+
+
+def run_benchmark_suite_from_config(
+    path: Path,
+    output_dir: Path | None = None,
+) -> BenchmarkSuiteResult | dict[str, Any]:
     """Load and run a benchmark suite from YAML."""
-    spec = load_benchmark_suite_spec(path)
+    spec = load_benchmark_entry_spec(path)
+    if isinstance(spec, HardwareCalibrationSuiteSpec):
+        return _run_hardware_calibration_suite_from_spec(spec, output_dir=output_dir)
     return run_benchmark_suite_from_spec(spec, source_config=str(path), output_dir=output_dir)

@@ -1,0 +1,46 @@
+{
+  "artifact_root": "/Users/a0000/QCchem/artifacts/hardware_calibration_suite_v1",
+  "cases": [
+    {
+      "achieved_error": 0.24522975855719475,
+      "achieved_error_status": "derived_from_runtime_result",
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe",
+      "backend_name": "ibm_marrakesh",
+      "hardware_verified": true,
+      "job_id": "d7gqrorjne2c739384t0",
+      "name": "h2_runtime_hardware_probe",
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/result.json",
+      "runtime_evidence_status": "retrieved_result",
+      "runtime_evidence_tier": "retrieved_result",
+      "runtime_shots": 44,
+      "runtime_submission_status": "succeeded",
+      "runtime_submission_wall_time_seconds": 388.7044200829987
+    },
+    {
+      "achieved_error": 0.38879419502160584,
+      "achieved_error_status": "derived_from_runtime_result",
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2",
+      "backend_name": "ibm_fez",
+      "hardware_verified": true,
+      "job_id": "d7gr4jc93s0c738rtv10",
+      "name": "lih_active_runtime_hardware_probe_v2",
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json",
+      "runtime_evidence_status": "retrieved_result",
+      "runtime_evidence_tier": "retrieved_result",
+      "runtime_shots": 44,
+      "runtime_submission_status": "succeeded",
+      "runtime_submission_wall_time_seconds": 84.30369187500037
+    }
+  ],
+  "suite_name": "hardware_calibration_suite_v1",
+  "summary": {
+    "hardware_verified_cases": [
+      "h2_runtime_hardware_probe",
+      "lih_active_runtime_hardware_probe_v2"
+    ],
+    "runtime_evidence_status_counts": {
+      "retrieved_result": 2
+    },
+    "total_cases": 2
+  }
+}

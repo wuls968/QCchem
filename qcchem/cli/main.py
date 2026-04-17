@@ -185,6 +185,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "benchmark":
         if args.benchmark_command == "run":
             result = run_benchmark_suite_from_config(args.config, output_dir=args.output_dir)
+            if isinstance(result, dict):
+                summary = result.get("summary", {})
+                print(f"Benchmark suite completed: {result.get('suite_name')}")
+                print(f"Cases: {summary.get('total_cases')}")
+                print(
+                    "Runtime evidence status counts: "
+                    f"{summary.get('runtime_evidence_status_counts', {})}"
+                )
+                print(f"Artifacts: {result.get('artifact_root')}")
+                return 0
             print(f"Benchmark suite completed: {result.suite_name}")
             print(f"Cases: {result.summary.total_cases}")
             print(f"Status counts: {result.summary.status_counts}")

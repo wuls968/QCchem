@@ -8,7 +8,7 @@ import pytest
 from qcchem.reporting.aggregate import write_hardware_calibration_report
 from qcchem.reporting.markdown import render_markdown_report
 from qcchem.io.serialization import to_primitive
-from qcchem.workflow.benchmark import build_hardware_calibration_suite
+from qcchem.workflow.benchmark import build_hardware_calibration_suite, run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 
 
@@ -21,7 +21,8 @@ def test_hardware_run_report_mentions_hardware_sections(tmp_path: Path) -> None:
 
     report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")
     assert "Hardware Execution" in report_text
-    assert "Calibration Summary" in report_text
+    assert "Local Calibration Summary" in report_text
+    assert "executed-solver calibration only" in report_text
 
 
 @pytest.mark.integration
@@ -40,7 +41,8 @@ def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tm
     payload["hardware_evidence_tier"] = None
     report_text = render_markdown_report(payload)
 
-    assert "Calibration Summary" in report_text
+    assert "Local Calibration Summary" in report_text
+    assert "runtime-derived hardware evidence" in report_text
     assert "- available: `False`" in report_text
     assert "Hardware Execution" in report_text
     assert "- hardware_verified: `False`" in report_text
@@ -196,3 +198,81 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
     assert "Achieved Error Status" in report_text
     assert "h2_runtime_probe" in report_text
     assert "lih_runtime_probe" in report_text
+
+
+@pytest.mark.integration
+def test_hardware_calibration_suite_yaml_runs_through_benchmark_entrypoint(tmp_path: Path) -> None:
+    result_one = {
+        "run_id": "h2_runtime_probe",
+        "energy": {
+            "constant_energy_correction": 1.25,
+            "nuclear_repulsion_energy": 0.5,
+        },
+        "exact_baseline": {
+            "available": True,
+            "total_energy": 3.6,
+        },
+        "runtime_submission": {
+            "attempted": True,
+            "submitted": True,
+            "succeeded": True,
+            "submission_wall_time_seconds": 18.0,
+            "job_id": "job-h2",
+            "backend_name": "ibm_marrakesh",
+            "returned_job_metadata": {
+                "evs": [2.0],
+                "metadata": {"shots": 44},
+            },
+        },
+    }
+    result_two = {
+        "run_id": "lih_runtime_probe",
+        "energy": {
+            "constant_energy_correction": -4.0,
+            "nuclear_repulsion_energy": 1.0,
+        },
+        "exact_baseline": {
+            "available": True,
+            "total_energy": -2.75,
+        },
+        "runtime_submission": {
+            "attempted": True,
+            "submitted": False,
+            "succeeded": False,
+            "failure_category": "runtime_not_submitted",
+        },
+    }
+
+    first_result_path = tmp_path / "h2_runtime_probe" / "result.json"
+    first_result_path.parent.mkdir(parents=True, exist_ok=True)
+    first_result_path.write_text(json.dumps(result_one), encoding="utf-8")
+    second_result_path = tmp_path / "lih_runtime_probe" / "result.json"
+    second_result_path.parent.mkdir(parents=True, exist_ok=True)
+    second_result_path.write_text(json.dumps(result_two), encoding="utf-8")
+
+    config_path = tmp_path / "hardware_calibration_suite.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "hardware_calibration_suite:",
+                "  name: hardware_calibration_suite_test",
+                "  description: Synthetic dashboard config for benchmark dispatch coverage.",
+                "  output_root: artifacts/should_be_overridden",
+                "  cases:",
+                "    - name: h2_runtime_probe",
+                f"      result_json: {first_result_path}",
+                "    - name: lih_runtime_probe",
+                f"      result_json: {second_result_path}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    output_dir = tmp_path / "hardware_suite_output"
+    summary = run_benchmark_suite_from_config(config_path, output_dir=output_dir)
+
+    assert summary["suite_name"] == "hardware_suite_output"
+    assert summary["summary"]["total_cases"] == 2
+    assert (output_dir / "hardware_calibration_summary.json").exists()
+    assert (output_dir / "hardware_calibration_report.md").exists()
