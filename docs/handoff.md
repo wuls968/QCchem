@@ -21,6 +21,10 @@
   - `folded_spectrum`
 - exploratory mitigation / benchmark definitions 已正式落模块与测试
 - 把 low-rank measurement / runtime path 推进到 empirical calibration + real runtime submission attempt
+- 新增 hardware calibration phase：
+  - 真实 H2 / LiH runtime probe artifact
+  - 统一 hardware calibration dashboard
+  - export provenance 补充 `hardware_verified` / `hardware_evidence_tier`
 - 新增 `calibration` 正式 schema，记录：
   - measured wall time
   - measured shot usage
@@ -35,7 +39,11 @@
 - 已安装并接入 `qiskit-ibm-runtime`
 - 当前环境下 QCchem 已完成一次真实 `QiskitRuntimeService()` job submission/result retrieval
 - 真实 hardware probe artifact：
-  - `artifacts/lih_active_runtime_hardware_probe`
+  - `artifacts/h2_runtime_hardware_probe`
+  - `artifacts/lih_active_runtime_hardware_probe_v2`
+- 真实 hardware calibration suite artifact：
+  - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json`
+  - `artifacts/hardware_calibration_suite_v1/hardware_calibration_report.md`
 - 新增 calibration artifact：
   - `artifacts/lih_active_shot_runtime_ready_compressed/calibration.json`
   - `artifacts/lih_active_shot_runtime_ready_compressed/calibration_report.md`
@@ -61,6 +69,7 @@
 - compressed exact / ideal low-rank measurement planning
 - empirical calibration artifact/report path
 - real runtime submission probe artifact with returned job metadata
+- hardware calibration dashboard artifact/report path
 - PySCF NEVPT2 classical-reference correction task
 - LiH active-space compression benchmark suite
 - low-rank benchmark suite exact / ideal cases
@@ -83,6 +92,7 @@
 - transition dipole exact-derived path
 - oscillator strength exact-derived path
 - remote runtime submission path beyond placeholder，当前仅验证到最小 hardware probe
+- hardware calibration dashboard 的 runtime-evidence 归因逻辑
 - runtime/session-ready integration point
 - low-rank runtime policy metadata layer
 - 完整 mitigation implementation
@@ -92,6 +102,10 @@
 - exploratory benchmark/study 的更深集成目前仍以显式隔离为主，尚未成为独立 aggregate workflow
 - 还没有把完整 low-rank benchmark suite 接到真实远程 estimator primitive result
 - 还没有验证多 case chemistry workflow 的远端 runtime 稳定性
+- `hardware_verified` 目前只代表真实 runtime result 已取回，不代表 chemistry 数值已验证到 publication-grade
+- 当前 hardware calibration suite 的 runtime-derived achieved error 仍较大：
+  - H2 约 `0.245 Ha`
+  - LiH 约 `0.389 Ha`
 - mitigation 仍以 schema + metadata + hook 为主
 - embedding 还没有 fragment solver execution，只到 DMET-style recommendation skeleton
 - excited-state 还没有 validated VQD / qEOM implementation
@@ -111,6 +125,8 @@
 
 - local noisy model 目前只证明 QCchem 能走 noisy execution path，不证明它代表真实硬件
 - 当前真实 runtime 只验证了最小 hardware probe，不应外推成整套 remote chemistry workflow 已验证
+- hardware calibration suite 现在以 `runtime_submission` 作为 authoritative runtime-evidence source；它解决的是“有没有真实 runtime 结果”而不是“结果是否已经足够精确”
+- `hardware_verified=True` 只能读作“真实 runtime result retrieved”，不能读作“真机 chemistry benchmark 已数值达标”
 - 当前 NEVPT2 是 classical plugin reference augmentation，不应当误读为量子原生后修正已验证
 - `double_factorization` 与 embedding skeleton 已正式落 artifact，但仍是 exploratory
 - QCSchema/HDF5 导出当前是 interoperability helper，不是外部标准完全认证声明

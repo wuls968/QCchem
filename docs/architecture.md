@@ -57,6 +57,7 @@
 12. 可选写出 QCSchema-style JSON / HDF5 export
 13. 把 reduction/compression/measurement/plugin/noise/runtime/capability/policy/mitigation/task status 与 provenance 一并落盘
 14. 如启用 runtime path，额外记录 empirical calibration 与 real runtime submission attempt
+15. hardware calibration suite 以 `runtime_submission` 为 authoritative runtime-evidence source 聚合 dashboard，并把 `hardware_verified` / `hardware_evidence_tier` 一起纳入导出和汇总
 
 ### Benchmark
 
@@ -121,6 +122,12 @@
 
 `RunResult`
 : 原子级 artifact；benchmark/study/scan/task 都围绕它组织。
+
+`hardware_verified`
+: 表示真实 runtime result 已取回并写入 artifact 的证据位；它不等于 chemistry 数值已经通过 publication-grade 精度验证。
+
+`hardware_evidence_tier`
+: 对 hardware evidence 的来源分层；当前 hardware calibration 主要使用 `retrieved_result` 这类 tier。
 
 `BackendCapabilitySummary`
 : capability snapshot，回答 backend 是否 statevector、shot-based、noise-model-ready、runtime-ready、session-ready、batch-ready。
@@ -208,6 +215,8 @@
 - `runtime_options`
 - `calibration`
 - `runtime_submission`
+- `hardware_verified`
+- `hardware_evidence_tier`
 - `mitigation`
 
 这意味着 QCchem 已经能表达“准备好怎么接 runtime”，但还不能声称“已经验证远程执行”。
@@ -219,6 +228,11 @@
 - 若缺少账户或权限，失败会以 `RuntimeSubmissionSummary` 形式落盘
 - 一旦 job 成功，returned job metadata 与 result provenance 会进入 artifact
 - 当前仍只验证到最小 hardware probe，不表示完整远端 chemistry workflow 已验证
+- hardware calibration/dashboard 以 `runtime_submission` 为 authoritative runtime-evidence source；一个 case 是否被视为 hardware-verified，首先取决于真实提交与结果取回是否存在
+- 当前 `artifacts/hardware_calibration_suite_v1` 的 runtime-derived achieved error 仍明显偏大：
+  - H2 约 `0.245 Ha`
+  - LiH 约 `0.389 Ha`
+- 因此 `hardware_verified=True` 应解释为“真实 runtime 结果已取回”，不能解释为“真机 chemistry 精度已经达到 publication 标准”
 
 当 compression-aware execution 启用时，runtime snapshot 还会记录：
 

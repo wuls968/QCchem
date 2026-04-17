@@ -16,6 +16,7 @@
 - compressed exact / ideal low-rank measurement planning
 - empirical calibration artifact/report path
 - real runtime submission probe artifact with returned job metadata
+- hardware calibration dashboard artifact/report path
 - PySCF NEVPT2 classical-reference correction task
 - LiH active-space compression benchmark suite
 - low-rank benchmark suite exact / ideal cases
@@ -79,6 +80,27 @@
 - 已系统性验证远程 runtime chemistry workflow
 - 已验证真机数值可信度
 
+## `hardware_verified` 的含义
+
+当前 `hardware_verified` 表示：
+
+- `runtime_submission` 显示发生了真实 runtime 提交，并且结果已成功取回
+- artifact/export/dashboard 可以据此把该 case 归入 hardware-evidence 已取得的集合
+- hardware calibration suite 以 `runtime_submission` 作为 authoritative runtime-evidence source
+
+它不表示：
+
+- chemistry 总能量误差已经达到 publication-grade 或 chemical-accuracy 标准
+- 整条远端 chemistry workflow 已经系统性验证完成
+- 相同配置在别的 backend、时间点或 shot budget 下会稳定复现
+
+当前已知边界：
+
+- `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json` 中，runtime-derived `achieved_error` 目前约为：
+  - H2 `0.245 Ha`
+  - LiH `0.389 Ha`
+- 因此 `hardware_verified=True` 目前只能解释为“真实 runtime result retrieved”，不能解释为“数值结果已可信到可发表 benchmark”
+
 ## mitigation-ready 的含义
 
 当前 mitigation-ready 表示：
@@ -130,6 +152,7 @@
   - 当前 validated 范围限定为 PySCF classical-reference plugin path
 - export-ready
   - 已有 `qcschema.json` 与 `result.h5` 可选导出
+  - `qcschema.json` extras 现在显式包含 `hardware_verified`、`hardware_evidence_tier`、`runtime_submission`
   - 当前定位为 interoperability / provenance helper
 - embedding-ready
   - 已有 fragment schema、bath/environment metadata、formal artifact/report

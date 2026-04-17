@@ -72,6 +72,11 @@
   - merge mature utilities into core path
   - isolate exploratory solvers/mitigation/benchmarks under explicit package boundaries
   - make exploratory CLI/reporting behavior first-class
+- hardware calibration phase:
+  - real H2 / LiH runtime probes
+  - unified hardware calibration dashboard
+  - exports carrying `hardware_verified` / `hardware_evidence_tier` / `runtime_submission` provenance
+  - explicit docs boundary that `hardware_verified` means runtime result retrieved, not publication-grade chemistry validation
 - successful remote runtime / session execution integration
 - 更丰富的 noise model suite 与 mitigation experiment layer
 - 更稳的 variational excited-state solver 路径

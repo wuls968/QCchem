@@ -1,5 +1,10 @@
+import json
+
+import h5py
+
 from qcchem.core.results import CalibrationSummary, RunResult
 from qcchem.core.results import BenchmarkSummary, MeasurementSummary, SampledResultSummary
+from qcchem.io.exports import build_qcschema_payload, write_hdf5_result
 from qcchem.workflow.calibration import build_calibration_summary
 
 
@@ -67,3 +72,60 @@ def test_calibration_summary_derives_values_from_sampled_data() -> None:
     assert summary.precision_target == 0.25
     assert summary.achieved_error == 0.03
     assert summary.estimated_vs_measured_cost == 0.2
+
+
+def test_exports_include_hardware_execution_metadata(tmp_path) -> None:
+    payload = {
+        "schema_version": "0.10",
+        "run_id": "hardware-probe",
+        "verification_status": "exploratory",
+        "hardware_verified": True,
+        "hardware_evidence_tier": "retrieved_result",
+        "solver": {"kind": "vqe"},
+        "problem": {
+            "basis": "sto3g",
+            "molecule_name": "H2",
+            "charge": 0,
+            "multiplicity": 1,
+        },
+        "energy": {
+            "total_energy": -1.05,
+            "electronic_energy": -1.75,
+            "nuclear_repulsion_energy": 0.7,
+        },
+        "provenance": {
+            "git_commit": None,
+            "git_branch": "main",
+            "workspace_fingerprint": "abc123",
+        },
+        "mapping": {"kind": "jw"},
+        "runtime_submission": {
+            "attempted": True,
+            "submitted": True,
+            "succeeded": True,
+            "job_id": "job-123",
+            "backend_name": "ibm_marrakesh",
+        },
+        "measurement": None,
+        "calibration": {
+            "measured_wall_time_seconds": 388.7,
+            "achieved_error": 0.15,
+        },
+        "runtime_options": None,
+        "compression_result": None,
+        "perturbative_correction_result": None,
+        "reduction_audit": None,
+    }
+
+    qcschema = build_qcschema_payload(payload)
+    assert qcschema["extras"]["hardware_verified"] is True
+    assert qcschema["extras"]["hardware_evidence_tier"] == "retrieved_result"
+    assert qcschema["extras"]["runtime_submission"]["job_id"] == "job-123"
+
+    hdf5_path = tmp_path / "result.h5"
+    write_hdf5_result(payload, hdf5_path)
+    with h5py.File(hdf5_path, "r") as handle:
+        assert json.loads(handle.attrs["hardware_verified"]) is True
+        assert json.loads(handle.attrs["hardware_evidence_tier"]) == "retrieved_result"
+        assert json.loads(handle["runtime_submission"].attrs["submitted"]) is True
+        assert json.loads(handle["runtime_submission"].attrs["job_id"]) == "job-123"
