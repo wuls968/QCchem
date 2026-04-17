@@ -103,10 +103,16 @@ def build_sample_view_model() -> dict[str, Any]:
 
 
 def _overview_figure(view: dict[str, Any]) -> go.Figure:
+    total_energy = float(view["hero"].get("total_energy") or 0.0)
+    absolute_error = float(view["hero"].get("absolute_error") or 0.0)
+    runtime_absolute_error = float(
+        (view.get("confidence", {}).get("runtime_chemical_accuracy") or {}).get("absolute_error_hartree", absolute_error)
+        or absolute_error
+    )
     figure = go.Figure()
     figure.add_bar(
         x=["Reference", "Compressed VQE", "Hardware Result"],
-        y=[-7.8941, view["hero"]["total_energy"], -7.8801],
+        y=[total_energy - absolute_error, total_energy, total_energy + runtime_absolute_error],
         marker_color=["#20334a", "#9a6b3f", "#93a18a"],
     )
     figure.update_layout(
@@ -123,6 +129,10 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
 def build_overview_page(model: dict[str, Any]) -> html.Div:
     view = model
     molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
+    active_space_metadata = view.get("structure", {}).get("active_space_metadata") or {}
+    compression = view.get("compression") or {}
+    mapping = view.get("mapping") or {}
+    benchmark = view.get("benchmark") or {}
     return html.Div(
         className="qcchem-page qcchem-page--overview",
         style={"display": "grid", "gap": "1.25rem"},
@@ -165,10 +175,19 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                     detail_card(
                         "Scientific framing",
                         [
-                            ("Active space", "2 electrons / 4 orbitals"),
-                            ("Compression", "Double factorization rank 11"),
-                            ("Mapping", "Bravyi-Kitaev with 2 tapered qubits"),
-                            ("Confidence state", "Validated against threshold"),
+                            (
+                                "Active space",
+                                f'{active_space_metadata.get("num_active_electrons", "?")} electrons / {active_space_metadata.get("num_active_orbitals", "?")} orbitals',
+                            ),
+                            (
+                                "Compression",
+                                f'{compression.get("method", "n/a")} rank {compression.get("rank", "n/a")}',
+                            ),
+                            (
+                                "Mapping",
+                                f'{str(mapping.get("kind", "n/a")).replace("_", "-")} with {mapping.get("symmetry_tapered_qubits", 0)} tapered qubits',
+                            ),
+                            ("Confidence state", "Validated against threshold" if benchmark.get("meets_threshold") else "Threshold not yet met"),
                         ],
                     ),
                     callout_card(

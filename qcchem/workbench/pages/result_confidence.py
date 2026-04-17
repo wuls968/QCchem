@@ -27,6 +27,11 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     confidence = model["confidence"]
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    runtime_evidence_available = runtime_chemical_accuracy.get("available", False)
+    runtime_chemical_accuracy_met = runtime_chemical_accuracy.get(
+        "meets_chemical_accuracy",
+        runtime_chemical_accuracy.get("available", False),
+    )
     comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
         "comparison_target", "exact diagonalization"
     )
@@ -68,13 +73,12 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                                 ),
                             ),
                             (
-                                "Runtime-backed",
-                                str(
-                                    runtime_chemical_accuracy.get(
-                                        "available",
-                                        runtime_chemical_accuracy.get("meets_chemical_accuracy", False),
-                                    )
-                                ),
+                                "Runtime evidence available",
+                                str(runtime_evidence_available),
+                            ),
+                            (
+                                "Runtime chemical accuracy",
+                                str(runtime_chemical_accuracy_met),
                             ),
                             ("Comparison target", str(comparison_target)),
                         ],

@@ -2,8 +2,10 @@
   const VIEWER_SELECTOR = ".qcchem-molecule-viewer";
   const CANVAS_SELECTOR = ".qcchem-molecule-viewer__canvas";
   const BRIDGE_FLAG = "qcchemBridgeHydrated";
+  const PAYLOAD_HASH_KEY = "qcchemPayloadHash";
   const MOL_SCRIPT_ID = "qcchem-3dmol-script";
   const MOL_SCRIPT_SRC = "https://3Dmol.org/build/3Dmol-min.js";
+  let scriptPromise = null;
 
   function payloadToXYZ(payload) {
     if (!payload.atoms || !Array.isArray(payload.atoms)) {
@@ -18,28 +20,45 @@
 
   function ensureScript() {
     const existing = document.getElementById(MOL_SCRIPT_ID);
-    if (existing) {
+    if (existing && existing.dataset.qcchem3dmolReady === "true") {
       return Promise.resolve();
     }
+    if (scriptPromise) {
+      return scriptPromise;
+    }
 
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
+    scriptPromise = new Promise((resolve, reject) => {
+      const script = existing || document.createElement("script");
       script.id = MOL_SCRIPT_ID;
-      script.src = MOL_SCRIPT_SRC;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Unable to load 3Dmol bridge dependency."));
-      document.head.appendChild(script);
+      if (!existing) {
+        script.src = MOL_SCRIPT_SRC;
+        script.async = true;
+      }
+      script.onload = () => {
+        script.dataset.qcchem3dmolReady = "true";
+        resolve();
+      };
+      script.onerror = () => {
+        scriptPromise = null;
+        reject(new Error("Unable to load 3Dmol bridge dependency."));
+      };
+      if (!existing) {
+        document.head.appendChild(script);
+      }
     });
+    return scriptPromise;
   }
 
   function hydrateViewer(mountNode) {
-    if (!mountNode || mountNode.dataset[BRIDGE_FLAG] === "true") {
+    if (!mountNode) {
       return;
     }
 
     const moleculeJson = mountNode.getAttribute("data-molecule-json");
     if (!moleculeJson) {
+      return;
+    }
+    if (mountNode.dataset[BRIDGE_FLAG] === "true" && mountNode.dataset.qcchemPayloadHash === moleculeJson) {
       return;
     }
 
@@ -58,6 +77,7 @@
     }
 
     const renderNode = mountNode.querySelector(CANVAS_SELECTOR) || mountNode;
+    renderNode.replaceChildren();
     const viewer = bridgeApi.createViewer(renderNode, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
     if (payload.coordinates) {
       viewer.addModel(payload.coordinates, payload.format || "xyz");
@@ -88,6 +108,7 @@
     });
     viewer.zoomTo();
     viewer.render();
+    mountNode.dataset.qcchemPayloadHash = moleculeJson;
     mountNode.dataset[BRIDGE_FLAG] = "true";
   }
 

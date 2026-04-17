@@ -7,11 +7,14 @@ from qcchem.workbench.components.cards import callout_card, detail_card, metric_
 from qcchem.workbench.pages.overview import build_sample_view_model
 
 
-def _compression_figure() -> go.Figure:
+def _compression_figure(compression: dict[str, object]) -> go.Figure:
+    pre_term_count = int(compression.get("pre_term_count") or compression.get("post_term_count") or 0)
+    post_term_count = int(compression.get("post_term_count") or 0)
+    rank = int(compression.get("rank") or 0)
     figure = go.Figure()
     figure.add_bar(
         x=["Original terms", "Post factorization", "Effective rank"],
-        y=[128, 44, 11],
+        y=[pre_term_count, post_term_count, rank],
         marker_color=["#20334a", "#9a6b3f", "#93a18a"],
     )
     figure.update_layout(
@@ -52,7 +55,10 @@ def build_active_space_compression_page(model: dict[str, object]) -> html.Div:
                     ),
                 ],
             ),
-            html.Section(className="qcchem-card", children=[dcc.Graph(figure=_compression_figure(), config={"displayModeBar": False})]),
+            html.Section(
+                className="qcchem-card",
+                children=[dcc.Graph(figure=_compression_figure(compression), config={"displayModeBar": False})],
+            ),
             html.Div(
                 style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
                 children=[

@@ -58,6 +58,7 @@ def test_create_app_registers_primary_pages() -> None:
         if isinstance(getattr(child, "id", None), dict) and child.id.get("type") == "qcchem-page-validation"
     }
 
+    assert "/" in page_paths
     assert set(page_paths) >= {route for route, _title, _builder in SCIENTIFIC_PAGE_MODULES.values()}
 
 
@@ -78,12 +79,20 @@ def test_page_modules_expose_model_driven_builders() -> None:
 
     model = build_sample_view_model()
     model["hero"]["molecule_name"] = "Spec Probe"
+    model["hero"]["total_energy"] = -9.8765
+    model["hero"]["absolute_error"] = 0.1234
     model["runtime"]["backend_name"] = "backend-probe"
+    model["runtime"]["transpiled_depth"] = 987
+    model["runtime"]["returned_job_metadata"] = {"metadata": {"shots": 8192}}
+    model["runtime"]["result_provenance"] = {"attempt_stage": "queued"}
     model["compression"]["method"] = "tensor_hypercontraction"
+    model["compression"]["pre_term_count"] = 300
+    model["compression"]["post_term_count"] = 21
+    model["compression"]["rank"] = 5
     model["mapping"]["kind"] = "parity"
     model["confidence"]["verification_status"] = "review-probe"
     model["confidence"]["chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
-    model["confidence"]["runtime_chemical_accuracy"] = {"available": False, "meets_chemical_accuracy": False}
+    model["confidence"]["runtime_chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
     model["confidence"]["comparison_target"] = "probe-reference"
     model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
     model["structure"]["active_space_metadata"] = {
@@ -112,7 +121,24 @@ def test_page_modules_expose_model_driven_builders() -> None:
     confidence_page = importlib.import_module("qcchem.workbench.pages.result_confidence").build_result_confidence_page(model)
     confidence_text = _collect_text(confidence_page)
     assert "Chemical accuracy False" in confidence_text
-    assert "Runtime-backed False" in confidence_text
+    assert "Runtime evidence available True" in confidence_text
+    assert "Runtime chemical accuracy False" in confidence_text
+
+    overview_module = importlib.import_module("qcchem.workbench.pages.overview")
+    overview_page = overview_module.build_overview_page(model)
+    overview_graph = next(component for component in _walk_components(overview_page) if component.__class__.__name__ == "Graph")
+    overview_y = tuple(overview_graph.figure.data[0].y)
+    assert overview_y[1] == pytest.approx(-9.8765)
+
+    compression_module = importlib.import_module("qcchem.workbench.pages.active_space_compression")
+    compression_page = compression_module.build_active_space_compression_page(model)
+    compression_graph = next(component for component in _walk_components(compression_page) if component.__class__.__name__ == "Graph")
+    assert tuple(compression_graph.figure.data[0].y) == (300, 21, 5)
+
+    runtime_module = importlib.import_module("qcchem.workbench.pages.runtime_monitoring")
+    runtime_page = runtime_module.build_runtime_monitoring_page(model)
+    runtime_graph = next(component for component in _walk_components(runtime_page) if component.__class__.__name__ == "Graph")
+    assert runtime_graph.figure.data[0].y[-1] == 987
 
 
 @pytest.mark.integration
@@ -151,6 +177,9 @@ def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
     assert 'getElementById(id)' in bridge
     assert "mountNode.dataset[BRIDGE_FLAG] = \"invalid\"" in bridge
     assert "element.dataset" not in bridge
+    assert "dataset.qcchemPayloadHash" in bridge
+    assert "script.dataset.qcchem3dmolReady" in bridge or "qcchem3dmolReady" in bridge
+    assert "querySelector(CANVAS_SELECTOR)" in bridge
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:

@@ -7,21 +7,31 @@ from qcchem.workbench.components.cards import callout_card, detail_card, metric_
 from qcchem.workbench.pages.overview import build_sample_view_model
 
 
-def _runtime_figure() -> go.Figure:
+def _runtime_figure(runtime: dict[str, object]) -> go.Figure:
+    usage_seconds = float(runtime.get("returned_job_metadata", {}).get("metadata", {}).get("usage_seconds", 0) or 0)
+    shots = float(runtime.get("returned_job_metadata", {}).get("metadata", {}).get("shots", 0) or 0)
+    precision_target = float(runtime.get("options_snapshot", {}).get("precision_target", 0) or 0)
+    transpiled_depth = float(runtime.get("transpiled_depth") or 0)
     figure = go.Figure()
     figure.add_scatter(
-        x=["Submission", "Queue", "Execution", "Retrieval", "Verification"],
-        y=[3, 24, 132, 9, 18],
+        x=["Attempted", "Shots", "Usage seconds", "Precision target", "Transpiled depth"],
+        y=[
+            1.0 if runtime.get("attempted") else 0.0,
+            shots,
+            usage_seconds,
+            precision_target,
+            transpiled_depth,
+        ],
         mode="lines+markers",
         line={"color": "#20334a", "width": 3},
         marker={"size": 10, "color": "#93a18a"},
     )
     figure.update_layout(
-        title={"text": "Observed runtime path for the current representative job", "x": 0.04},
+        title={"text": "Observed runtime and compilation telemetry for the current representative job", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
         margin={"l": 36, "r": 20, "t": 72, "b": 40},
-        yaxis_title="Seconds",
+        yaxis_title="Observed value",
         font={"color": "#2d2216"},
     )
     return figure
@@ -52,7 +62,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                     ),
                 ],
             ),
-            html.Section(className="qcchem-card", children=[dcc.Graph(figure=_runtime_figure(), config={"displayModeBar": False})]),
+            html.Section(className="qcchem-card", children=[dcc.Graph(figure=_runtime_figure(runtime), config={"displayModeBar": False})]),
             html.Div(
                 style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
                 children=[

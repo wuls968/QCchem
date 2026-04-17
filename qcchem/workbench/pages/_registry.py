@@ -32,14 +32,47 @@ def _register_page(module: str, *, path: str, name: str, title: str, summary: st
     )
 
 
+def _register_alias_page(
+    module: str,
+    *,
+    layout_module: str,
+    path: str,
+    name: str,
+    title: str,
+    summary: str,
+    order: int,
+) -> None:
+    if module in dash.page_registry:
+        return
+    module_object = importlib.import_module(layout_module)
+    dash.register_page(
+        module,
+        path=path,
+        name=name,
+        title=title,
+        order=order,
+        description=summary,
+        layout=getattr(module_object, "layout", _placeholder_layout(title, summary)),
+    )
+
+
 def ensure_pages_registered() -> None:
+    _register_alias_page(
+        "qcchem.workbench.pages.home",
+        layout_module="qcchem.workbench.pages.overview",
+        path="/",
+        name="Home",
+        title="Overview",
+        summary="Landing page for run-level narratives, system context, and key metrics.",
+        order=0,
+    )
     _register_page(
         "qcchem.workbench.pages.overview",
         path="/overview",
         name="Overview",
         title="Overview",
         summary="Landing page for run-level narratives, system context, and key metrics.",
-        order=0,
+        order=1,
     )
     _register_page(
         "qcchem.workbench.pages.structure_orbitals",
