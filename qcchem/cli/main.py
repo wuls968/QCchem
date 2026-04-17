@@ -84,7 +84,10 @@ def _write_aggregate_from_json(result_json: Path, output: Path | None, *, kind: 
 def _run_workbench_command(host: str, port: int, debug: bool) -> int:
     try:
         workbench_server = importlib.import_module("qcchem.workbench.server")
-    except ImportError:
+    except ModuleNotFoundError as exc:
+        optional_ui_modules = {"dash", "plotly", "pandas"}
+        if exc.name not in optional_ui_modules:
+            raise
         print('QCchem workbench requires optional UI dependencies. Install with: pip install -e ".[ui]"')
         return 2
 
