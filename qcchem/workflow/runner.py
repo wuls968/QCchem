@@ -766,6 +766,16 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     verification_notes = [
         f"validation_scope={solver_outcome.metadata.get('validation_scope')}"
     ] if solver_outcome.metadata.get("validation_scope") else []
+    hardware_verified = bool(
+        runtime_submission is not None and runtime_submission.submitted and runtime_submission.succeeded
+    )
+    hardware_evidence_tier = None
+    if hardware_verified:
+        hardware_evidence_tier = "submitted_job"
+    elif runtime_submission is not None and runtime_submission.attempted:
+        hardware_evidence_tier = "runtime_attempt"
+    elif calibration is not None:
+        hardware_evidence_tier = "empirical_calibration"
     result = RunResult(
         schema_version=SCHEMA_VERSION,
         run_id=run_id,
@@ -842,6 +852,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         artifacts=artifacts,
         module_origin=module_origin,
         capability_tier=capability_tier,
+        hardware_verified=hardware_verified,
+        hardware_evidence_tier=hardware_evidence_tier,
         verification_notes=verification_notes,
         scientific_risk_notes=scientific_risk_notes,
     )

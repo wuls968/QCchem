@@ -14,6 +14,58 @@ def _fmt_energy(value: float | None, units: str) -> str:
     return f"`{value:.12f}` {units}"
 
 
+def _calibration_summary_lines(data: dict[str, Any], units: str) -> list[str]:
+    calibration = data.get("calibration")
+    if calibration is None:
+        return []
+    return [
+        "## Calibration Summary",
+        "",
+        f"- available: `{calibration.get('available')}`",
+        f"- measured_wall_time_seconds: `{calibration.get('measured_wall_time_seconds')}`",
+        f"- measured_shot_usage: `{calibration.get('measured_shot_usage')}`",
+        f"- precision_target: `{calibration.get('precision_target')}`",
+        f"- achieved_error: {_fmt_energy(calibration.get('achieved_error'), units)}",
+        f"- estimated_measurement_cost: `{calibration.get('estimated_measurement_cost')}`",
+        f"- estimated_vs_measured_cost: `{calibration.get('estimated_vs_measured_cost')}`",
+        f"- reference_target: `{calibration.get('reference_target')}`",
+        f"- notes: `{calibration.get('notes', [])}`",
+        "",
+    ]
+
+
+def _hardware_execution_lines(data: dict[str, Any]) -> list[str]:
+    runtime_submission = data.get("runtime_submission")
+    if runtime_submission is None:
+        return []
+    return [
+        "## Hardware Execution",
+        "",
+        f"- hardware_verified: `{data.get('hardware_verified', False)}`",
+        f"- hardware_evidence_tier: `{data.get('hardware_evidence_tier')}`",
+        f"- attempted: `{runtime_submission.get('attempted')}`",
+        f"- submitted: `{runtime_submission.get('submitted')}`",
+        f"- succeeded: `{runtime_submission.get('succeeded')}`",
+        f"- service: `{runtime_submission.get('service')}`",
+        f"- mode: `{runtime_submission.get('mode')}`",
+        f"- session_requested: `{runtime_submission.get('session_requested')}`",
+        f"- batch_requested: `{runtime_submission.get('batch_requested')}`",
+        f"- backend_name: `{runtime_submission.get('backend_name')}`",
+        f"- provider: `{runtime_submission.get('provider')}`",
+        f"- job_id: `{runtime_submission.get('job_id')}`",
+        f"- session_id: `{runtime_submission.get('session_id')}`",
+        f"- batch_id: `{runtime_submission.get('batch_id')}`",
+        f"- submission_wall_time_seconds: `{runtime_submission.get('submission_wall_time_seconds')}`",
+        f"- failure_category: `{runtime_submission.get('failure_category')}`",
+        f"- failure_message: `{runtime_submission.get('failure_message')}`",
+        f"- verification_status: `{runtime_submission.get('verification_status')}`",
+        f"- options_snapshot: `{runtime_submission.get('options_snapshot', {})}`",
+        f"- returned_job_metadata: `{runtime_submission.get('returned_job_metadata', {})}`",
+        f"- result_provenance: `{runtime_submission.get('result_provenance', {})}`",
+        "",
+    ]
+
+
 def render_markdown_report(result: Any) -> str:
     """Render a QCchem result as a Markdown report."""
     data = to_primitive(result)
@@ -351,51 +403,8 @@ def render_markdown_report(result: Any) -> str:
             ]
         )
 
-    if calibration is not None:
-        lines.extend(
-            [
-                "## Empirical Calibration",
-                "",
-                f"- available: `{calibration.get('available')}`",
-                f"- measured_wall_time_seconds: `{calibration.get('measured_wall_time_seconds')}`",
-                f"- measured_shot_usage: `{calibration.get('measured_shot_usage')}`",
-                f"- precision_target: `{calibration.get('precision_target')}`",
-                f"- achieved_error: {_fmt_energy(calibration.get('achieved_error'), units)}",
-                f"- estimated_measurement_cost: `{calibration.get('estimated_measurement_cost')}`",
-                f"- estimated_vs_measured_cost: `{calibration.get('estimated_vs_measured_cost')}`",
-                f"- reference_target: `{calibration.get('reference_target')}`",
-                f"- notes: `{calibration.get('notes', [])}`",
-                "",
-            ]
-        )
-
-    if runtime_submission is not None:
-        lines.extend(
-            [
-                "## Runtime Submission",
-                "",
-                f"- attempted: `{runtime_submission.get('attempted')}`",
-                f"- submitted: `{runtime_submission.get('submitted')}`",
-                f"- succeeded: `{runtime_submission.get('succeeded')}`",
-                f"- service: `{runtime_submission.get('service')}`",
-                f"- mode: `{runtime_submission.get('mode')}`",
-                f"- session_requested: `{runtime_submission.get('session_requested')}`",
-                f"- batch_requested: `{runtime_submission.get('batch_requested')}`",
-                f"- backend_name: `{runtime_submission.get('backend_name')}`",
-                f"- provider: `{runtime_submission.get('provider')}`",
-                f"- job_id: `{runtime_submission.get('job_id')}`",
-                f"- session_id: `{runtime_submission.get('session_id')}`",
-                f"- batch_id: `{runtime_submission.get('batch_id')}`",
-                f"- submission_wall_time_seconds: `{runtime_submission.get('submission_wall_time_seconds')}`",
-                f"- failure_category: `{runtime_submission.get('failure_category')}`",
-                f"- failure_message: `{runtime_submission.get('failure_message')}`",
-                f"- verification_status: `{runtime_submission.get('verification_status')}`",
-                f"- options_snapshot: `{runtime_submission.get('options_snapshot', {})}`",
-                f"- returned_job_metadata: `{runtime_submission.get('returned_job_metadata', {})}`",
-                f"- result_provenance: `{runtime_submission.get('result_provenance', {})}`",
-                "",
-            ]
-        )
+    lines.extend(_calibration_summary_lines(data, units))
+    lines.extend(_hardware_execution_lines(data))
 
     if perturbative is not None:
         lines.extend(

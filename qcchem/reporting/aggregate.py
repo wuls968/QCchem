@@ -91,6 +91,7 @@ def render_benchmark_report(result: Any) -> str:
                 f"estimated_cost=`{metrics.get('estimated_measurement_cost')}` "
                 f"measured_cost=`{metrics.get('measured_shot_usage')}` "
                 f"achieved_error=`{metrics.get('achieved_error')}` "
+                f"hardware_verified=`{metrics.get('hardware_verified')}` "
                 f"runtime_service=`{metrics.get('runtime_service')}` "
                 f"grouping_policy=`{metrics.get('runtime_grouping_policy')}` "
                 f"resilience_level=`{metrics.get('runtime_resilience_level')}`"
@@ -160,3 +161,23 @@ def write_aggregate_report(result: Any, path: Path, *, kind: str) -> None:
     else:
         raise ValueError(f"Unsupported aggregate report kind: {kind}")
     path.write_text(content, encoding="utf-8")
+
+
+def write_hardware_calibration_report(summary: dict[str, object], output_path: Path) -> None:
+    """Write a compact hardware calibration dashboard report."""
+    cases = summary.get("cases", [])
+    lines = [
+        "# Hardware Calibration Dashboard",
+        "",
+        "## Estimated vs Measured Cost",
+        "",
+        "| Case | Estimated Cost | Measured Cost | Wall Time (s) | Achieved Error | Hardware Verified |",
+        "| --- | ---: | ---: | ---: | ---: | --- |",
+    ]
+    for case in cases:
+        lines.append(
+            f"| {case['name']} | {case['estimated_measurement_cost']} | "
+            f"{case['measured_shot_usage']} | {case['measured_wall_time_seconds']} | "
+            f"{case['achieved_error']} | {case['hardware_verified']} |"
+        )
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
