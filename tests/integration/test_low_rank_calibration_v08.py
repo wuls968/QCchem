@@ -15,7 +15,7 @@ def test_h2_hardware_probe_config_has_runtime_submission_enabled() -> None:
     assert spec.backend.runtime.batch_ready is False
     assert spec.problem.measurement.execution_mode == "runtime_estimator"
     assert spec.solver.kind == "vqe"
-    assert spec.backend.runtime.options["backend_name"] == "ibm_fez"
+    assert spec.backend.runtime.options["backend_name"] == "ibm_marrakesh"
     assert spec.backend.runtime.options["submit_real_job"] is True
 
 
