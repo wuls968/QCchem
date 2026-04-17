@@ -82,6 +82,10 @@ def test_page_modules_expose_model_driven_builders() -> None:
     model["compression"]["method"] = "tensor_hypercontraction"
     model["mapping"]["kind"] = "parity"
     model["confidence"]["verification_status"] = "review-probe"
+    model["confidence"]["chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
+    model["confidence"]["runtime_chemical_accuracy"] = {"available": False, "meets_chemical_accuracy": False}
+    model["confidence"]["comparison_target"] = "probe-reference"
+    model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
     model["structure"]["active_space_metadata"] = {
         "num_active_orbitals": 6,
         "orbital_window": "Probe Window",
@@ -93,7 +97,7 @@ def test_page_modules_expose_model_driven_builders() -> None:
         "qcchem.workbench.pages.active_space_compression": "tensor_hypercontraction",
         "qcchem.workbench.pages.mapping_resources": "Parity",
         "qcchem.workbench.pages.runtime_monitoring": "backend-probe",
-        "qcchem.workbench.pages.result_confidence": "review-probe",
+        "qcchem.workbench.pages.result_confidence": "probe-reference",
     }
 
     for module_name, (_route, title, builder_name) in SCIENTIFIC_PAGE_MODULES.items():
@@ -104,6 +108,11 @@ def test_page_modules_expose_model_driven_builders() -> None:
 
         assert title in page_text
         assert expected_strings[module_name] in page_text
+
+    confidence_page = importlib.import_module("qcchem.workbench.pages.result_confidence").build_result_confidence_page(model)
+    confidence_text = _collect_text(confidence_page)
+    assert "Chemical accuracy False" in confidence_text
+    assert "Runtime-backed False" in confidence_text
 
 
 @pytest.mark.integration
@@ -140,6 +149,8 @@ def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
     assert "hydrate(id)" in bridge or "hydrate: function" in bridge or "hydrate(id" in bridge
     assert "payload.atoms" in bridge
     assert 'getElementById(id)' in bridge
+    assert "mountNode.dataset[BRIDGE_FLAG] = \"invalid\"" in bridge
+    assert "element.dataset" not in bridge
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:

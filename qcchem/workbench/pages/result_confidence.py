@@ -25,6 +25,11 @@ def _confidence_figure(confidence: dict[str, object]) -> go.Figure:
 
 def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     confidence = model["confidence"]
+    chemical_accuracy = confidence.get("chemical_accuracy") or {}
+    runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
+        "comparison_target", "exact diagonalization"
+    )
     return html.Div(
         className="qcchem-page qcchem-page--confidence",
         style={"display": "grid", "gap": "1rem"},
@@ -56,9 +61,22 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                         "Evidence checklist",
                         [
                             ("Verification status", str(confidence.get("verification_status", "validated"))),
-                            ("Chemical accuracy", "True"),
-                            ("Runtime-backed", "True"),
-                            ("Comparison target", str(confidence.get("boundary", {}).get("comparison_target", "exact diagonalization"))),
+                            (
+                                "Chemical accuracy",
+                                str(
+                                    chemical_accuracy.get("meets_chemical_accuracy", chemical_accuracy.get("available", False))
+                                ),
+                            ),
+                            (
+                                "Runtime-backed",
+                                str(
+                                    runtime_chemical_accuracy.get(
+                                        "available",
+                                        runtime_chemical_accuracy.get("meets_chemical_accuracy", False),
+                                    )
+                                ),
+                            ),
+                            ("Comparison target", str(comparison_target)),
                         ],
                     ),
                     callout_card(

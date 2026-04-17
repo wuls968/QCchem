@@ -47,7 +47,8 @@
     try {
       payload = JSON.parse(moleculeJson);
     } catch (_error) {
-      element.dataset[BRIDGE_FLAG] = "invalid";
+      mountNode.dataset[BRIDGE_FLAG] = "invalid";
+      renderUnavailableState(mountNode.querySelector(CANVAS_SELECTOR) || mountNode);
       return;
     }
 
