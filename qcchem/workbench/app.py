@@ -33,5 +33,5 @@ def create_app() -> Dash:
     ensure_pages_registered()
     app.page_registry = dash.page_registry
     app.layout = build_shell
-    app.validation_layout = build_validation_layout()
+    app.validation_layout = build_validation_layout
     return app

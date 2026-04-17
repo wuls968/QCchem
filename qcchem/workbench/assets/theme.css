@@ -46,7 +46,7 @@ body {
     radial-gradient(circle at top left, rgba(217, 236, 244, 0.55), transparent 28%),
     linear-gradient(180deg, var(--qcchem-surface-paper) 0%, var(--qcchem-surface-canvas) 100%);
   color: var(--qcchem-text-primary);
-  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  font-family: var(--qcchem-type-body);
 }
 
 a {
@@ -91,7 +91,7 @@ a {
 
 .qcchem-context-bar__title {
   margin: 0;
-  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-family: var(--qcchem-type-display);
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 0.96;
 }
@@ -136,7 +136,7 @@ a {
 .qcchem-card-title,
 .qcchem-page-placeholder__title {
   margin: 0 0 12px;
-  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-family: var(--qcchem-type-display);
   font-size: 1.45rem;
   color: var(--qcchem-accent-deep-blue);
 }
