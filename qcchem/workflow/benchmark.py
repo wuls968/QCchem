@@ -93,6 +93,19 @@ def _runtime_returned_shots(runtime_submission: dict[str, Any] | None) -> int | 
     return int(shots) if shots is not None else None
 
 
+def _runtime_usage_value(runtime_submission: dict[str, Any] | None, *keys: str) -> float | int | None:
+    if not runtime_submission:
+        return None
+    current: Any = runtime_submission
+    for key in keys:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    if current is None:
+        return None
+    return current
+
+
 def _runtime_returned_expectation_value(runtime_submission: dict[str, Any] | None) -> float | None:
     if not runtime_submission:
         return None
@@ -162,6 +175,12 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
             runtime_submission.get("submission_wall_time_seconds") if runtime_submission else None
         ),
         "runtime_shots": _runtime_returned_shots(runtime_submission),
+        "runtime_usage_seconds": _runtime_usage_value(runtime_submission, "job_metrics", "usage", "seconds"),
+        "runtime_usage_quantum_seconds": _runtime_usage_value(runtime_submission, "job_metrics", "usage", "quantum_seconds"),
+        "runtime_estimated_quantum_seconds": _runtime_usage_value(runtime_submission, "usage_estimation", "quantum_seconds"),
+        "requested_precision_target": _runtime_usage_value(runtime_submission, "options_snapshot", "precision_target"),
+        "requested_budget_strategy": _runtime_usage_value(runtime_submission, "options_snapshot", "budget_strategy"),
+        "requested_budgeted_shots": _runtime_usage_value(runtime_submission, "options_snapshot", "max_budgeted_shots"),
         "achieved_error": achieved_error,
         "achieved_error_status": achieved_error_status,
         "hardware_verified": bool(runtime_submission and runtime_submission.get("submitted") and runtime_submission.get("succeeded")),
@@ -592,6 +611,9 @@ def build_hardware_calibration_suite(
     for result_json_path in result_json_paths:
         resolved_path = result_json_path.resolve()
         payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+        sidecar_path = resolved_path.parent / "runtime_submission.json"
+        if sidecar_path.exists():
+            payload["runtime_submission"] = json.loads(sidecar_path.read_text(encoding="utf-8"))
         cases.append(_summarize_hardware_calibration_case(payload, resolved_path))
 
     runtime_status_counts: dict[str, int] = {}

@@ -66,6 +66,10 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
                 "runtime_submission_status": "succeeded",
                 "runtime_submission_wall_time_seconds": 15.0,
                 "runtime_shots": 44,
+                "runtime_usage_seconds": 1,
+                "runtime_usage_quantum_seconds": 1,
+                "requested_precision_target": 0.05,
+                "requested_budget_strategy": "shot_budget",
                 "achieved_error": 0.03,
                 "achieved_error_status": "derived_from_runtime_result",
                 "hardware_verified": True,
@@ -97,6 +101,8 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
     assert "Achieved Error Status" in text
     assert "derived_from_runtime_result" in text
     assert "no_runtime_submission" in text
+    assert "Runtime Usage (s)" in text
+    assert "Requested Precision" in text
 
 
 @pytest.mark.integration
@@ -126,6 +132,13 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
             "submission_wall_time_seconds": 388.7,
             "job_id": "job-h2",
             "backend_name": "ibm_marrakesh",
+            "usage_estimation": {"quantum_seconds": 10.99999997},
+            "job_metrics": {"usage": {"seconds": 1, "quantum_seconds": 1}},
+            "options_snapshot": {
+                "precision_target": 0.05,
+                "budget_strategy": "shot_budget",
+                "max_budgeted_shots": 1024,
+            },
             "returned_job_metadata": {
                 "evs": [2.0],
                 "metadata": {"shots": 44},
@@ -184,6 +197,10 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
     assert cases_by_name["h2_runtime_probe"]["hardware_verified"] is True
     assert cases_by_name["h2_runtime_probe"]["runtime_submission_wall_time_seconds"] == pytest.approx(388.7)
     assert cases_by_name["h2_runtime_probe"]["runtime_shots"] == 44
+    assert cases_by_name["h2_runtime_probe"]["runtime_usage_seconds"] == 1
+    assert cases_by_name["h2_runtime_probe"]["runtime_usage_quantum_seconds"] == 1
+    assert cases_by_name["h2_runtime_probe"]["requested_precision_target"] == pytest.approx(0.05)
+    assert cases_by_name["h2_runtime_probe"]["requested_budget_strategy"] == "shot_budget"
     assert cases_by_name["h2_runtime_probe"]["achieved_error"] == pytest.approx(0.15)
     assert cases_by_name["h2_runtime_probe"]["achieved_error_status"] == "derived_from_runtime_result"
     assert cases_by_name["lih_runtime_probe"]["runtime_evidence_status"] == "submitted"
@@ -278,3 +295,63 @@ def test_hardware_calibration_suite_yaml_runs_through_benchmark_entrypoint(tmp_p
     assert summary["summary"]["total_cases"] == 2
     assert (output_dir / "hardware_calibration_summary.json").exists()
     assert (output_dir / "hardware_calibration_report.md").exists()
+
+
+@pytest.mark.integration
+def test_hardware_suite_prefers_runtime_submission_sidecar_when_present(tmp_path: Path) -> None:
+    result_payload = {
+        "run_id": "lih_runtime_probe",
+        "energy": {
+            "constant_energy_correction": -4.0,
+            "nuclear_repulsion_energy": 1.0,
+        },
+        "exact_baseline": {
+            "available": True,
+            "total_energy": -2.75,
+        },
+        "runtime_submission": {
+            "attempted": True,
+            "submitted": True,
+            "succeeded": True,
+            "backend_name": "ibm_fez",
+            "returned_job_metadata": {
+                "evs": [0.0],
+                "metadata": {"shots": 44},
+            },
+        },
+    }
+    sidecar_payload = {
+        "attempted": True,
+        "submitted": True,
+        "succeeded": True,
+        "backend_name": "ibm_fez",
+        "job_id": "job-lih-sidecar",
+        "usage_estimation": {"quantum_seconds": 12.5},
+        "job_metrics": {"usage": {"seconds": 2, "quantum_seconds": 2}},
+        "options_snapshot": {
+            "precision_target": 0.05,
+            "budget_strategy": "shot_budget",
+            "max_budgeted_shots": 1024,
+        },
+        "returned_job_metadata": {
+            "evs": [0.0],
+            "metadata": {"shots": 44},
+        },
+    }
+
+    result_dir = tmp_path / "lih_runtime_probe"
+    result_dir.mkdir(parents=True, exist_ok=True)
+    result_path = result_dir / "result.json"
+    result_path.write_text(json.dumps(result_payload), encoding="utf-8")
+    (result_dir / "runtime_submission.json").write_text(json.dumps(sidecar_payload), encoding="utf-8")
+
+    summary = build_hardware_calibration_suite(
+        [result_path],
+        output_root=tmp_path / "hardware_suite",
+    )
+
+    case = summary["cases"][0]
+    assert case["job_id"] == "job-lih-sidecar"
+    assert case["runtime_usage_seconds"] == 2
+    assert case["runtime_usage_quantum_seconds"] == 2
+    assert case["requested_budget_strategy"] == "shot_budget"

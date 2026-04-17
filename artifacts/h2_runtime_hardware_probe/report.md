@@ -1,27 +1,25 @@
 # QCchem Report: H2-runtime-hardware-probe
 
-> This result is exploratory and is not part of the validated QCchem benchmark path.
-
 ## Verification
 
-- verification_status: `exploratory`
+- verification_status: `validated`
 
 ## Validation Boundary
 
 - Module Origin: `core`
-- Capability Tier: `exploratory`
+- Capability Tier: `validated`
 - Verification Notes: `[]`
 - Scientific Risk Notes: `[]`
 
 ## Energy Summary
 
-- electronic_energy: `-1.860289656957` Hartree
+- electronic_energy: `-1.852388159814` Hartree
 - nuclear_repulsion_energy: `0.715104339081` Hartree
-- total_energy: `-1.145185317876` Hartree
+- total_energy: `-1.137283820733` Hartree
 - hf_reference_energy: `-1.116759307396` Hartree
-- solver_energy: `-1.860289656957` Hartree (raw solver-Hamiltonian energy, before QCchem constant-shift correction)
+- solver_energy: `-1.852388159814` Hartree (raw solver-Hamiltonian energy, before QCchem constant-shift correction)
 - exact_ground_energy: `-1.852388173570` Hartree (raw exact baseline in the same solver-Hamiltonian convention)
-- correlation_energy: `-0.028426010480` Hartree
+- correlation_energy: `-0.020524513337` Hartree
 - energy_units: `Hartree`
 - constant_energy_correction: `0.000000000000` Hartree
 - energy_formula: `total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction`
@@ -46,15 +44,15 @@
 ## Benchmark
 
 - exact_available: `True`
-- comparison_target: `sampled_result`
+- comparison_target: `variational_result`
 - exact_electronic_energy: `-1.852388173570` Hartree
 - exact_total_energy: `-1.137283834489` Hartree
-- absolute_error: `0.019525295878` Hartree
-- relative_error: `0.01054060706950832`
-- statistical_error: `0.023656710330` Hartree
-- absolute_error_threshold: `0.05`
-- relative_error_threshold: `0.05`
-- within_uncertainty: `True`
+- absolute_error: `0.000000013755` Hartree
+- relative_error: `7.4256199571778095e-09`
+- statistical_error: `None`
+- absolute_error_threshold: `0.2`
+- relative_error_threshold: `0.2`
+- within_uncertainty: `None`
 - meets_threshold: `True`
 
 ## Problem Summary
@@ -78,9 +76,9 @@
 
 ## Backend
 
-- Backend kind: `shot_estimator`
+- Backend kind: `statevector`
 - Precision: `None`
-- Shots: `512`
+- Shots: `None`
 - Seed: `303`
 - Repetitions: `1`
 - Abelian grouping: `False`
@@ -89,23 +87,23 @@
 
 ## Backend Capability
 
-- backend_kind: `shot_estimator`
-- statevector: `False`
-- shot_based: `True`
+- backend_kind: `statevector`
+- statevector: `True`
+- shot_based: `False`
 - exact_baseline: `True`
-- runtime_ready: `True`
-- session_ready: `True`
+- runtime_ready: `False`
+- session_ready: `False`
 - batch_ready: `False`
-- mitigation_ready: `True`
-- noise_model_ready: `True`
+- mitigation_ready: `False`
+- noise_model_ready: `False`
 - supports_grouping: `False`
-- supports_repetitions: `True`
-- supports_confidence_metrics: `True`
+- supports_repetitions: `False`
+- supports_confidence_metrics: `False`
 
 ## Execution Policy
 
 - name: `hardware_ready`
-- default_shots: `16384`
+- default_shots: `None`
 - default_repetitions: `7`
 - exact_baseline_required: `True`
 - confidence_rule: `exact baseline preferred and repeated sampling mandatory`
@@ -118,33 +116,36 @@
 ## Chemical Accuracy
 
 - available: `True`
-- status: `exploratory`
-- meets_chemical_accuracy: `False`
-- absolute_error_hartree: `0.007901483388` Hartree
-- absolute_error_kcal_mol: `4.958255684379507`
+- status: `validated`
+- meets_chemical_accuracy: `True`
+- absolute_error_hartree: `0.000000013755` Hartree
+- absolute_error_kcal_mol: `8.631474761394002e-06`
 - threshold_hartree: `0.0016`
 - threshold_kcal_mol: `1.0040151583999999`
-- statistical_error: `0.023656710330` Hartree
-- notes: `['Does not meet chemical accuracy threshold.', 'Observed error lies within 95% statistical uncertainty.']`
+- statistical_error: `None`
+- notes: `['Meets chemical accuracy threshold.']`
 
 ## Runtime Options
 
 - enabled: `True`
 - service: `ibm_quantum_platform`
 - instance: `None`
-- runtime_ready: `True`
-- session_ready: `True`
+- runtime_ready: `False`
+- session_ready: `False`
 - batch_ready: `False`
-- precision_target: `0.15`
-- resilience_level: `0`
+- precision_target: `0.05`
+- max_budgeted_shots: `1024`
+- max_execution_seconds: `240.0`
+- calibration_strategy: `shot_budget`
+- resilience_level: `1`
 - grouping_policy: `default`
 - session_recommendation: `optional`
 - batch_recommendation: `optional`
 - low_rank_workload: `False`
 - measurement_group_count: `5`
-- estimated_shot_cost: `225.0`
+- estimated_shot_cost: `2000.0`
 - options: `{'backend_name': 'ibm_marrakesh', 'optimization_level': 1, 'submit_real_job': True, 'wait_for_result': True}`
-- provenance: `{'adapter': 'runtime_ready_placeholder', 'batch_mode_requested': False, 'compression_method': None, 'low_rank_policy_applied': False, 'remote_execution_configured': False, 'session_mode_requested': True}`
+- provenance: `{'adapter': 'runtime_ready_placeholder', 'remote_execution_configured': False, 'session_mode_requested': True, 'batch_mode_requested': False, 'low_rank_policy_applied': False, 'compression_method': None}`
 
 ## Reduction Audit
 
@@ -173,7 +174,7 @@
 - strategy: `none`
 - recommended_changes: `{}`
 - notes: `['No reduction planning inputs were requested.']`
-- provenance: `{'policy_name': 'hardware_ready', 'source': 'qcchem.chem.reduction_planner'}`
+- provenance: `{'source': 'qcchem.chem.reduction_planner', 'policy_name': 'hardware_ready'}`
 
 ## Measurement Plan
 
@@ -183,25 +184,25 @@
 - low_rank_aware: `False`
 - term_count: `15`
 - group_count: `5`
-- estimated_shot_cost: `225.0`
-- runtime_precision_target: `0.15`
+- estimated_shot_cost: `2000.0`
+- runtime_precision_target: `0.05`
 - uncompressed_group_count: `5`
-- uncompressed_estimated_shot_cost: `225.0`
+- uncompressed_estimated_shot_cost: `2000.0`
 - cost_reduction_ratio: `1.0`
-- notes: `["Measurement groups estimated with strategy 'default'.", 'Per-group shot estimate derived from precision target 0.15.', 'Measurement planning reflects the uncompressed execution path.']`
+- notes: `["Measurement groups estimated with strategy 'default'.", 'Per-group shot estimate derived from precision target 0.05.', 'Measurement planning reflects the uncompressed execution path.']`
 
 ## Local Calibration Summary
 
 > This section covers executed-solver calibration only; runtime-derived hardware evidence is tracked separately below.
 
 - available: `True`
-- measured_wall_time_seconds: `2.1795524589979323`
-- measured_shot_usage: `2565.0`
-- precision_target: `0.15`
-- achieved_error: `0.019525295878` Hartree
-- estimated_measurement_cost: `225.0`
-- estimated_vs_measured_cost: `0.08771929824561403`
-- reference_target: `sampled_result`
+- measured_wall_time_seconds: `0.499309416001779`
+- measured_shot_usage: `None`
+- precision_target: `0.05`
+- achieved_error: `0.000000013755` Hartree
+- estimated_measurement_cost: `2000.0`
+- estimated_vs_measured_cost: `None`
+- reference_target: `variational_result`
 - notes: `['Measured wall time is taken from the executed solver path, not full workflow overhead.', 'Measured shot usage is derived from backend shots, repeat count, and measurement group count.']`
 
 ## Hardware Execution
@@ -217,72 +218,58 @@
 - batch_requested: `False`
 - backend_name: `ibm_marrakesh`
 - provider: `QiskitRuntimeService`
-- job_id: `d7gqrorjne2c739384t0`
+- job_id: `d7gthd493s0c738s1gk0`
 - session_id: `None`
 - batch_id: `None`
-- submission_wall_time_seconds: `388.7044200829987`
+- submission_wall_time_seconds: `59.237931750001735`
+- usage_estimation: `{'quantum_seconds': 12.51918722}`
+- job_metrics: `{'caller': 'qiskit_ibm_runtime~estimator.py', 'qiskit_version': 'qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*', 'timestamps': {'created': '2026-04-17T06:52:36.928458Z', 'finished': '2026-04-17T06:52:56.01504Z', 'running': '2026-04-17T06:52:38.211748Z'}, 'bss': {'seconds': 12}, 'usage': {'quantum_seconds': 12, 'seconds': 12}}`
 - failure_category: `None`
 - failure_message: `None`
 - verification_status: `exploratory`
-- options_snapshot: `{'backend_name': 'ibm_marrakesh', 'grouping_policy': 'default', 'optimization_level': 1, 'precision_target': 0.15, 'resilience_level': 0, 'submit_real_job': True, 'wait_for_result': True}`
-- returned_job_metadata: `{'evs': [-1.6071584150123894], 'metadata': {'circuit_metadata': {}, 'num_randomizations': 1, 'shots': 44, 'target_precision': 0.15}, 'stds': [0.056551944856628726]}`
-- result_provenance: `{'attempt_stage': 'result_retrieved', 'backend_name': 'ibm_marrakesh', 'circuit_qubits': 4, 'operator_qubits': 4, 'parameter_count': 3, 'runtime_package_version': '0.46.1'}`
+- options_snapshot: `{'precision_target': 0.05, 'max_budgeted_shots': 1024, 'max_execution_seconds': 240.0, 'budget_strategy': 'shot_budget', 'resilience_level': 1, 'grouping_policy': 'default', 'backend_name': 'ibm_marrakesh', 'optimization_level': 1, 'submit_real_job': True, 'wait_for_result': True}`
+- returned_job_metadata: `{'evs': [-1.6783174331389565], 'stds': [0.009885620273274427], 'metadata': {'shots': 1024, 'target_precision': 0.03125, 'circuit_metadata': {}, 'resilience': {}, 'num_randomizations': 16}}`
+- result_provenance: `{'attempt_stage': 'result_retrieved', 'runtime_package_version': '0.46.1', 'backend_name': 'ibm_marrakesh', 'parameter_count': 3, 'operator_qubits': 4, 'circuit_qubits': 4}`
 
 ## Variational Result
 
 - available: `True`
 - solver_kind: `vqe`
 - optimizer: `{'kind': 'COBYLA', 'maxiter': 40, 'tol': None}`
-- ansatz: `{'entanglement': 'full', 'entanglement_blocks': 'cz', 'kind': 'uccsd', 'reps': 1, 'rotation_blocks': ['ry', 'rz']}`
+- ansatz: `{'kind': 'uccsd', 'rotation_blocks': ['ry', 'rz'], 'entanglement_blocks': 'cz', 'entanglement': 'full', 'reps': 1}`
 - initial_point_strategy: `zeros`
 - parameter_count: `3`
-- converged: `True`
-- iterations: `33`
-- evaluations: `33`
-- final_objective_energy: `-1.860289656957` Hartree
-- optimizer_message: `Return from COBYLA because the trust region radius reaches its lower bound.`
-
-## Sampled Result
-
-- available: `True`
-- backend_kind: `shot_estimator`
-- shots: `513`
-- num_repeats: `1`
-- seed: `303`
-- repeat_seeds: `[100303]`
-- sampled_solver_energy_mean: `-1.832862877692` Hartree
-- sampled_solver_energy_std: `0.000000000000` Hartree
-- sampled_electronic_energy_mean: `-1.832862877692` Hartree
-- sampled_total_energy_mean: `-1.117758538611` Hartree
-- standard_error: `0.023656710330` Hartree
-- confidence_interval_low: `-1.879230029938` Hartree
-- confidence_interval_high: `-1.786495725446` Hartree
+- converged: `False`
+- iterations: `40`
+- evaluations: `40`
+- final_objective_energy: `-1.852388159814` Hartree
+- optimizer_message: `Return from COBYLA because the objective function has been evaluated MAXFUN times.`
 
 ## Mitigation
 
-- symmetry_check: `{'performed': False, 'requested': True, 'status': 'hook_available_not_implemented', 'strategy': 'parity_placeholder'}`
-- readout_mitigation: `{'method': 'none', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
-- zne: `{'method': 'placeholder', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
-- pec: `{'method': 'placeholder', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
+- symmetry_check: `{'requested': True, 'performed': False, 'status': 'hook_available_not_implemented', 'strategy': 'parity_placeholder'}`
+- readout_mitigation: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'none'}`
+- zne: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
+- pec: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
 - applied_methods: `[]`
 
 ## Provenance
 
 - Schema version: `qcchem.result.v0.8-alpha`
-- Timestamp: `2026-04-17T03:55:54.814532+00:00`
-- Wall time (s): `391.0865004590014`
-- Git commit: `2e67f893086a3f67507cf410603a0671a4c1fbd0`
-- Git commit short: `2e67f893086a`
-- Git branch: `codex/qwen-integration`
-- Git describe: `2e67f89-dirty`
+- Timestamp: `2026-04-17T06:52:57.727732+00:00`
+- Wall time (s): `59.89130941699841`
+- Git commit: `e0f1811a9e3aa47918b74f1558f98aea1e7d055f`
+- Git commit short: `e0f1811a9e3a`
+- Git branch: `master`
+- Git describe: `e0f1811-dirty`
 - Git remote origin: `None`
 - Repo root: `/Users/a0000/QCchem`
 - Workspace dirty: `True`
-- Git status summary: `{'staged': 0, 'unstaged': 1, 'untracked': 96}`
-- Workspace fingerprint: `5def85c315aa150fef9e4a6d3292428b3caaa7265f770b47f1a48b38bc599f05`
-- Dependency versions: `{'numpy': '2.4.1', 'pyscf': '2.12.1', 'python': '3.11.11', 'qiskit': '2.3.0', 'qiskit_aer': '0.17.2', 'qiskit_nature': '0.7.2', 'scipy': '1.17.0'}`
+- Git status summary: `{'staged': 0, 'unstaged': 11, 'untracked': 129}`
+- Workspace fingerprint: `f46c9a310e7b64b4553f1b5e9e6171abf52b6a71cb915c595d7f6ccbe437a3de`
+- Dependency versions: `{'python': '3.11.11', 'qiskit': '2.3.0', 'qiskit_nature': '0.7.2', 'numpy': '2.4.1', 'scipy': '1.17.0', 'pyscf': '2.12.1', 'qiskit_aer': '0.17.2'}`
 - Seed: `303`
-- Source config: `/Users/a0000/QCchem/configs/h2_runtime_hardware_probe.yaml`
+- Source config: `configs/h2_runtime_hardware_probe.yaml`
 
 ## Artifacts
 
@@ -299,17 +286,16 @@
 
 ## Log Summary
 
-- Loading config from /Users/a0000/QCchem/configs/h2_runtime_hardware_probe.yaml
+- Loading config from configs/h2_runtime_hardware_probe.yaml
 - Building electronic structure problem
 - Applying mapping: jordan_wigner
-- Prepared measurement plan: groups=5, cost=225
+- Prepared measurement plan: groups=5, cost=2000
 - Prepared runtime policy snapshot for service=ibm_quantum_platform
-- Preparing backend: shot_estimator
+- Preparing backend: statevector
 - Running solver: vqe
 - Computing exact spectrum for 1 states
 - Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/exact_result.json
-- Collected repeated shot-based sampling statistics
-- Computed empirical calibration: wall_time=2.180s, measured_cost=2565.0
+- Computed empirical calibration: wall_time=0.499s, measured_cost=None
 - Runtime submission attempt recorded: submitted
 - Writing JSON result to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/result.json
 - Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/report.md

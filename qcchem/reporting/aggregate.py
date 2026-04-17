@@ -184,8 +184,8 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
         )
     lines.extend(
         [
-            "| Case | Backend | Runtime Evidence Status | Evidence Tier | Submission Status | Submission Wall Time (s) | Runtime Shots | Achieved Error | Achieved Error Status | Hardware Verified |",
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |",
+            "| Case | Backend | Runtime Evidence Status | Evidence Tier | Submission Status | Submission Wall Time (s) | Runtime Shots | Runtime Usage (s) | Runtime Quantum (s) | Requested Precision | Budget Strategy | Achieved Error | Achieved Error Status | Hardware Verified |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | --- |",
         ]
     )
     for case in cases:
@@ -194,12 +194,17 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
         runtime_submission_status = case.get("runtime_submission_status", runtime_evidence_status)
         runtime_submission_wall_time_seconds = case.get("runtime_submission_wall_time_seconds")
         runtime_shots = case.get("runtime_shots")
+        runtime_usage_seconds = case.get("runtime_usage_seconds")
+        runtime_usage_quantum_seconds = case.get("runtime_usage_quantum_seconds")
+        requested_precision_target = case.get("requested_precision_target")
+        requested_budget_strategy = case.get("requested_budget_strategy")
         achieved_error = case.get("achieved_error")
         achieved_error_status = case.get("achieved_error_status")
         lines.append(
             f"| {case['name']} | {case.get('backend_name')} | "
             f"{runtime_evidence_status} | {runtime_evidence_tier} | {runtime_submission_status} | "
-            f"{runtime_submission_wall_time_seconds} | {runtime_shots} | {achieved_error} | {achieved_error_status} | "
+            f"{runtime_submission_wall_time_seconds} | {runtime_shots} | {runtime_usage_seconds} | {runtime_usage_quantum_seconds} | "
+            f"{requested_precision_target} | {requested_budget_strategy} | {achieved_error} | {achieved_error_status} | "
             f"{case['hardware_verified']} |"
         )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

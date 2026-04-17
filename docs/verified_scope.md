@@ -17,6 +17,8 @@
 - empirical calibration artifact/report path
 - real runtime submission probe artifact with returned job metadata
 - hardware calibration dashboard artifact/report path
+- budget-aware runtime calibration metadata path
+- provider-usage-enriched runtime sidecar ingestion path
 - PySCF NEVPT2 classical-reference correction task
 - LiH active-space compression benchmark suite
 - low-rank benchmark suite exact / ideal cases
@@ -97,8 +99,9 @@
 当前已知边界：
 
 - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json` 中，runtime-derived `achieved_error` 目前约为：
-  - H2 `0.245 Ha`
+  - H2 `0.174 Ha`
   - LiH `0.389 Ha`
+- tighter H2 hardware probe 当前还只能证明 budget-aware runtime calibration 已改善 evidence quality，不能证明真机 chemistry 已经收敛到 chemical accuracy
 - 因此 `hardware_verified=True` 目前只能解释为“真实 runtime result retrieved”，不能解释为“数值结果已可信到可发表 benchmark”
 
 ## mitigation-ready 的含义
@@ -145,6 +148,7 @@
   - runtime-ready sampled 路径目前仍是 unstable
 - runtime-submission-ready
   - 已有 `qiskit-ibm-runtime` 接入与真实远端 job submission/result retrieval
+  - 已有 provider `usage_estimation` / `job_metrics` provenance 落盘
   - 当前已验证范围限定在最小 hardware probe artifact
   - 更大 chemistry workflow 的远端执行仍不在 validated scope
 - perturbative-correction-ready
@@ -154,6 +158,9 @@
   - 已有 `qcschema.json` 与 `result.h5` 可选导出
   - `qcschema.json` extras 现在显式包含 `hardware_verified`、`hardware_evidence_tier`、`runtime_submission`
   - 当前定位为 interoperability / provenance helper
+- artifact-index-ready
+  - 已有轻量 artifact index builder 与脚本入口
+  - 当前定位为 repo hygiene helper，不替代 study/benchmark registry
 - embedding-ready
   - 已有 fragment schema、bath/environment metadata、formal artifact/report
   - 当前仍是 exploratory skeleton，不表示 validated DMET workflow

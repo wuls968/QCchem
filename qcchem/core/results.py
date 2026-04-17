@@ -200,6 +200,9 @@ class RuntimeOptionsSummary:
     session_ready: bool
     batch_ready: bool
     precision_target: float | None = None
+    max_budgeted_shots: int | None = None
+    max_execution_seconds: float | None = None
+    calibration_strategy: str = "default"
     resilience_level: int | None = None
     grouping_policy: str = "default"
     session_recommendation: str | None = None
@@ -305,6 +308,8 @@ class RuntimeSubmissionSummary:
     provider: str | None = None
     submission_wall_time_seconds: float | None = None
     returned_job_metadata: dict[str, Any] = field(default_factory=dict)
+    usage_estimation: dict[str, Any] = field(default_factory=dict)
+    job_metrics: dict[str, Any] = field(default_factory=dict)
     result_provenance: dict[str, Any] = field(default_factory=dict)
     failure_category: str | None = None
     failure_message: str | None = None

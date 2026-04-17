@@ -241,6 +241,17 @@ def _parse_runtime_options(backend_raw: dict[str, Any]) -> RuntimeOptionsSpec:
             if runtime_raw.get("precision_target") is not None
             else None
         ),
+        max_budgeted_shots=(
+            int(runtime_raw["max_budgeted_shots"])
+            if runtime_raw.get("max_budgeted_shots") is not None
+            else None
+        ),
+        max_execution_seconds=(
+            float(runtime_raw["max_execution_seconds"])
+            if runtime_raw.get("max_execution_seconds") is not None
+            else None
+        ),
+        calibration_strategy=str(runtime_raw.get("calibration_strategy", "default")),
         resilience_level=(
             int(runtime_raw["resilience_level"])
             if runtime_raw.get("resilience_level") is not None

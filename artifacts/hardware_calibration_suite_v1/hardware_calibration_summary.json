@@ -2,19 +2,25 @@
   "artifact_root": "/Users/a0000/QCchem/artifacts/hardware_calibration_suite_v1",
   "cases": [
     {
-      "achieved_error": 0.24522975855719475,
+      "achieved_error": 0.1740707404306301,
       "achieved_error_status": "derived_from_runtime_result",
       "artifact_root": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe",
       "backend_name": "ibm_marrakesh",
       "hardware_verified": true,
-      "job_id": "d7gqrorjne2c739384t0",
+      "job_id": "d7gthd493s0c738s1gk0",
       "name": "h2_runtime_hardware_probe",
+      "requested_budget_strategy": "shot_budget",
+      "requested_budgeted_shots": 1024,
+      "requested_precision_target": 0.05,
       "result_json": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/result.json",
+      "runtime_estimated_quantum_seconds": 12.51918722,
       "runtime_evidence_status": "retrieved_result",
       "runtime_evidence_tier": "retrieved_result",
-      "runtime_shots": 44,
+      "runtime_shots": 1024,
       "runtime_submission_status": "succeeded",
-      "runtime_submission_wall_time_seconds": 388.7044200829987
+      "runtime_submission_wall_time_seconds": 59.237931750001735,
+      "runtime_usage_quantum_seconds": 12,
+      "runtime_usage_seconds": 12
     },
     {
       "achieved_error": 0.38879419502160584,
@@ -24,12 +30,18 @@
       "hardware_verified": true,
       "job_id": "d7gr4jc93s0c738rtv10",
       "name": "lih_active_runtime_hardware_probe_v2",
+      "requested_budget_strategy": null,
+      "requested_budgeted_shots": null,
+      "requested_precision_target": 0.15,
       "result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json",
+      "runtime_estimated_quantum_seconds": 10.99999997,
       "runtime_evidence_status": "retrieved_result",
       "runtime_evidence_tier": "retrieved_result",
       "runtime_shots": 44,
       "runtime_submission_status": "succeeded",
-      "runtime_submission_wall_time_seconds": 84.30369187500037
+      "runtime_submission_wall_time_seconds": 84.30369187500037,
+      "runtime_usage_quantum_seconds": 2,
+      "runtime_usage_seconds": 2
     }
   ],
   "suite_name": "hardware_calibration_suite_v1",

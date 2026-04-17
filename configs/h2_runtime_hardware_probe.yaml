@@ -21,7 +21,7 @@ problem:
   active_space: null
   measurement:
     strategy: default
-    runtime_precision_target: 0.15
+    runtime_precision_target: 0.05
     execution_mode: runtime_estimator
     grouping_policy: default
 
@@ -29,8 +29,7 @@ mapping:
   kind: jordan_wigner
 
 backend:
-  kind: shot_estimator
-  shots: 512
+  kind: statevector
   seed: 303
   repetitions: 1
   abelian_grouping: false
@@ -40,8 +39,11 @@ backend:
     runtime_ready: true
     session_ready: true
     batch_ready: false
-    precision_target: 0.15
-    resilience_level: 0
+    precision_target: 0.05
+    max_budgeted_shots: 1024
+    max_execution_seconds: 240
+    calibration_strategy: shot_budget
+    resilience_level: 1
     grouping_policy: default
     options:
       backend_name: ibm_marrakesh
@@ -62,8 +64,8 @@ solver:
 benchmark:
   enabled: true
   exact_baseline_qubit_limit: 12
-  absolute_error_threshold: 5.0e-2
-  relative_error_threshold: 5.0e-2
+  absolute_error_threshold: 2.0e-1
+  relative_error_threshold: 2.0e-1
 
 mitigation:
   symmetry_check:

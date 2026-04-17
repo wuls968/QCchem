@@ -155,6 +155,10 @@ def test_runtime_preview_skips_service_initialization_when_submission_disabled(m
                 enabled=True,
                 service="ibm_runtime",
                 runtime_ready=True,
+                precision_target=0.05,
+                max_budgeted_shots=1024,
+                max_execution_seconds=180,
+                calibration_strategy="shot_budget",
                 options={"submit_real_job": False},
             )
         ),
@@ -170,6 +174,10 @@ def test_runtime_preview_skips_service_initialization_when_submission_disabled(m
     assert summary.failure_category == "runtime_submission_disabled"
     assert summary.provider is None
     assert summary.backend_name is None
+    assert summary.options_snapshot["precision_target"] == 0.05
+    assert summary.options_snapshot["max_budgeted_shots"] == 1024
+    assert summary.options_snapshot["max_execution_seconds"] == 180
+    assert summary.options_snapshot["budget_strategy"] == "shot_budget"
 
 
 def test_benchmark_run_case_preserves_succeeded_runtime_submission_status(

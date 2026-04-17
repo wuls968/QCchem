@@ -143,6 +143,9 @@ class RuntimeOptionsSpec:
     session_ready: bool = False
     batch_ready: bool = False
     precision_target: float | None = None
+    max_budgeted_shots: int | None = None
+    max_execution_seconds: float | None = None
+    calibration_strategy: str = "default"
     resilience_level: int | None = None
     grouping_policy: str = "default"
     options: dict[str, Any] = field(default_factory=dict)

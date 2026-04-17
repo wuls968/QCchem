@@ -38,6 +38,9 @@ def attempt_runtime_submission(
         batch_requested=bool(spec.runtime.batch_ready),
         options_snapshot={
             "precision_target": spec.runtime.precision_target,
+            "max_budgeted_shots": spec.runtime.max_budgeted_shots,
+            "max_execution_seconds": spec.runtime.max_execution_seconds,
+            "budget_strategy": spec.runtime.calibration_strategy,
             "resilience_level": spec.runtime.resilience_level,
             "grouping_policy": spec.runtime.grouping_policy,
             **dict(spec.runtime.options),
@@ -133,10 +136,20 @@ def attempt_runtime_submission(
     optimization_level = int(spec.runtime.options.get("optimization_level", 1))
     precision_target = spec.runtime.precision_target
     if precision_target is None:
-        precision_target = float(spec.runtime.options.get("precision_target", 0.1))
-    estimator_options = {
+        precision_option = spec.runtime.options.get("precision_target")
+        precision_target = float(precision_option) if precision_option is not None else None
+    default_shots = spec.runtime.options.get("default_shots")
+    if default_shots is None and spec.runtime.max_budgeted_shots is not None:
+        default_shots = spec.runtime.max_budgeted_shots
+    estimator_options: dict[str, Any] = {
         "resilience_level": spec.runtime.resilience_level or 0,
     }
+    if default_shots is not None:
+        estimator_options["default_shots"] = int(default_shots)
+    elif precision_target is not None:
+        estimator_options["default_precision"] = float(precision_target)
+    if spec.seed is not None:
+        estimator_options["seed_estimator"] = int(spec.seed)
     try:
         pass_manager = generate_preset_pass_manager(
             backend=backend,
@@ -170,7 +183,10 @@ def attempt_runtime_submission(
             estimator = EstimatorV2(mode=context, options=estimator_options)
         else:
             estimator = EstimatorV2(mode=backend, options=estimator_options)
-        job = estimator.run(pubs, precision=precision_target)
+        run_kwargs: dict[str, Any] = {}
+        if default_shots is None and precision_target is not None:
+            run_kwargs["precision"] = float(precision_target)
+        job = estimator.run(pubs, **run_kwargs)
         summary.submitted = True
         summary.job_id = job.job_id()
         summary.mode = actual_mode
@@ -193,6 +209,18 @@ def attempt_runtime_submission(
                 "stds": np.asarray(pub_result.data.stds).tolist(),
                 "metadata": dict(pub_result.metadata),
             }
+            try:
+                usage_estimation = job.usage_estimation
+                if usage_estimation is not None:
+                    summary.usage_estimation = dict(usage_estimation)
+            except Exception:
+                pass
+            try:
+                metrics = job.metrics()
+                if metrics is not None:
+                    summary.job_metrics = dict(metrics)
+            except Exception:
+                pass
             summary.result_provenance["attempt_stage"] = "result_retrieved"
         else:
             summary.result_provenance["attempt_stage"] = "submitted"

@@ -25,6 +25,7 @@
   - 真实 H2 / LiH runtime probe artifact
   - 统一 hardware calibration dashboard
   - export provenance 补充 `hardware_verified` / `hardware_evidence_tier`
+  - provider `usage_estimation` / `job_metrics` 进入 runtime sidecar 与 dashboard
 - 新增 `calibration` 正式 schema，记录：
   - measured wall time
   - measured shot usage
@@ -38,6 +39,10 @@
   - job metadata 或 failure boundary
 - 已安装并接入 `qiskit-ibm-runtime`
 - 当前环境下 QCchem 已完成一次真实 `QiskitRuntimeService()` job submission/result retrieval
+- 当前环境下 tighter H2 hardware probe 已验证 budget-aware runtime calibration：
+  - requested precision `0.05`
+  - requested shot budget `1024`
+  - provider usage `12 quantum seconds`
 - 真实 hardware probe artifact：
   - `artifacts/h2_runtime_hardware_probe`
   - `artifacts/lih_active_runtime_hardware_probe_v2`
@@ -70,6 +75,7 @@
 - empirical calibration artifact/report path
 - real runtime submission probe artifact with returned job metadata
 - hardware calibration dashboard artifact/report path
+- artifact index helper / repo hygiene path
 - PySCF NEVPT2 classical-reference correction task
 - LiH active-space compression benchmark suite
 - low-rank benchmark suite exact / ideal cases
@@ -104,8 +110,9 @@
 - 还没有验证多 case chemistry workflow 的远端 runtime 稳定性
 - `hardware_verified` 目前只代表真实 runtime result 已取回，不代表 chemistry 数值已验证到 publication-grade
 - 当前 hardware calibration suite 的 runtime-derived achieved error 仍较大：
-  - H2 约 `0.245 Ha`
+  - H2 约 `0.174 Ha`
   - LiH 约 `0.389 Ha`
+- provider usage 已能通过 `runtime_submission.json` sidecar 补齐并进入 dashboard，但 chemistry 数值精度仍未达到 publication-grade
 - mitigation 仍以 schema + metadata + hook 为主
 - embedding 还没有 fragment solver execution，只到 DMET-style recommendation skeleton
 - excited-state 还没有 validated VQD / qEOM implementation
@@ -116,7 +123,7 @@
 ## 建议下一步
 
 1. 把真实 runtime probe 从单 case 扩到小规模 chemistry benchmark
-2. 为 runtime-ready sampled 路径补更稳的 shot allocation / grouping policy benchmark
+2. 为 runtime-ready sampled 路径补更稳的 shot allocation / grouping policy / resilience benchmark
 3. 为 NEVPT2 增加更多体系与 active-space benchmark，确认 correction 的稳定边界
 4. 给 embedding 层接入一个真实 fragment solver plugin
 5. 给 excited-state 增加一个真正可跑的 variational path
@@ -126,6 +133,7 @@
 - local noisy model 目前只证明 QCchem 能走 noisy execution path，不证明它代表真实硬件
 - 当前真实 runtime 只验证了最小 hardware probe，不应外推成整套 remote chemistry workflow 已验证
 - hardware calibration suite 现在以 `runtime_submission` 作为 authoritative runtime-evidence source；它解决的是“有没有真实 runtime 结果”而不是“结果是否已经足够精确”
+- hardware calibration suite 现在还会优先读取同目录 `runtime_submission.json` sidecar，以避免 run-level `result.json` 内嵌副本比 sidecar 更旧
 - `hardware_verified=True` 只能读作“真实 runtime result retrieved”，不能读作“真机 chemistry benchmark 已数值达标”
 - 当前 NEVPT2 是 classical plugin reference augmentation，不应当误读为量子原生后修正已验证
 - `double_factorization` 与 embedding skeleton 已正式落 artifact，但仍是 exploratory
@@ -133,3 +141,4 @@
 - property artifact 的总验证状态可能因为 exploratory property 被拉成 exploratory，因此必须看 property-level status
 - ground-state validated 不会自动推出 excited-state/property validated
 - 由于仓库尚无提交，artifact 的 `git_commit` 仍不是强 provenance 证据
+- 仓库层面现在有 `python scripts/artifact_index.py artifacts` 这个轻量索引入口，适合做 artifact 盘点，但还不是完整 registry replacement
