@@ -40,6 +40,7 @@
       }
       script.onload = () => {
         script.dataset.qcchem3dmolReady = "true";
+        scriptPromise = null;
         resolve();
       };
       script.onerror = () => {
@@ -76,11 +77,13 @@
     }
 
     const bridgeApi = window.$3Dmol;
+    const renderNode = mountNode.querySelector(CANVAS_SELECTOR) || mountNode;
     if (!bridgeApi || typeof bridgeApi.createViewer !== "function") {
+      mountNode.dataset[BRIDGE_FLAG] = "unavailable";
+      renderUnavailableState(renderNode);
       return;
     }
 
-    const renderNode = mountNode.querySelector(CANVAS_SELECTOR) || mountNode;
     renderNode.replaceChildren();
     const viewer = bridgeApi.createViewer(renderNode, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
     if (payload.coordinates) {
@@ -117,7 +120,7 @@
   }
 
   function renderUnavailableState(target) {
-    if (target && !target.textContent) {
+    if (target) {
       target.textContent = "3Dmol viewer unavailable";
     }
   }
@@ -134,7 +137,7 @@
       })
       .catch(() => {
         if (target) {
-          renderUnavailableState(target);
+          renderUnavailableState(target.querySelector(CANVAS_SELECTOR) || target);
         }
         return false;
       });
@@ -146,7 +149,9 @@
         document.querySelectorAll(VIEWER_SELECTOR).forEach(hydrateViewer);
       })
       .catch(() => {
-        document.querySelectorAll(VIEWER_SELECTOR).forEach(renderUnavailableState);
+        document.querySelectorAll(VIEWER_SELECTOR).forEach((mountNode) => {
+          renderUnavailableState(mountNode.querySelector(CANVAS_SELECTOR) || mountNode);
+        });
       });
   }
 

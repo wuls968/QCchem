@@ -9,11 +9,21 @@ from qcchem.workbench.pages.overview import build_sample_view_model
 
 def _confidence_figure(confidence: dict[str, object]) -> go.Figure:
     value = float(confidence.get("absolute_error") or 0.0)
-    threshold = float(confidence.get("threshold") or 0.02)
+    chemical_accuracy = confidence.get("chemical_accuracy") or {}
+    chemical_accuracy_threshold = chemical_accuracy.get("threshold_hartree")
+    threshold = float(chemical_accuracy_threshold or confidence.get("threshold") or 0.02)
+    threshold_label = "Chemical accuracy threshold" if chemical_accuracy_threshold is not None else "Benchmark threshold"
     figure = go.Figure()
-    figure.add_bar(x=["Absolute error", "Threshold"], y=[value, threshold], marker_color=["#9a6b3f", "#315f4a"])
+    figure.add_bar(x=["Absolute error", threshold_label], y=[value, threshold], marker_color=["#9a6b3f", "#315f4a"])
     figure.update_layout(
-        title={"text": "Confidence boundary against the declared chemical-accuracy threshold", "x": 0.04},
+        title={
+            "text": (
+                "Confidence boundary against the chemical-accuracy threshold"
+                if chemical_accuracy_threshold is not None
+                else "Confidence boundary against the benchmark threshold"
+            ),
+            "x": 0.04,
+        },
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
         margin={"l": 36, "r": 20, "t": 72, "b": 40},
@@ -30,6 +40,12 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     runtime_evidence_available = runtime_chemical_accuracy.get("available", False)
     runtime_chemical_accuracy_met = runtime_chemical_accuracy.get("meets_chemical_accuracy")
     runtime_chemical_accuracy_display = "Unknown" if runtime_chemical_accuracy_met is None else str(runtime_chemical_accuracy_met)
+    chemical_accuracy_threshold = chemical_accuracy.get("threshold_hartree")
+    threshold_label = "Chemical accuracy threshold" if chemical_accuracy_threshold is not None else "Benchmark threshold"
+    threshold_note = (
+        "Declared chemical-accuracy line" if chemical_accuracy_threshold is not None else "Benchmark acceptance threshold"
+    )
+    threshold_value = float(chemical_accuracy_threshold or confidence.get("threshold") or 0.0)
     comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
         "comparison_target", "exact diagonalization"
     )
@@ -49,7 +65,7 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                     html.Div(
                         style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
                         children=[
-                            metric_card("Threshold", f'{float(confidence.get("threshold") or 0):.4f} Ha', "Declared chemical-accuracy line"),
+                            metric_card(threshold_label, f"{threshold_value:.4f} Ha", threshold_note),
                             metric_card("Absolute error", f'{float(confidence.get("absolute_error") or 0):.4f} Ha', "Representative measured deviation"),
                             metric_card("Within uncertainty", str(confidence.get("within_uncertainty", False)), "Benchmark consistency"),
                         ],
@@ -70,6 +86,7 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                                     chemical_accuracy.get("meets_chemical_accuracy", chemical_accuracy.get("available", False))
                                 ),
                             ),
+                            (threshold_label, f"{threshold_value:.4f} Ha"),
                             (
                                 "Runtime evidence available",
                                 str(runtime_evidence_available),

@@ -94,7 +94,11 @@ def test_page_modules_expose_model_driven_builders() -> None:
     model["compression"]["rank"] = 5
     model["mapping"]["kind"] = "parity"
     model["confidence"]["verification_status"] = "review-probe"
-    model["confidence"]["chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
+    model["confidence"]["chemical_accuracy"] = {
+        "available": True,
+        "meets_chemical_accuracy": False,
+        "threshold_hartree": 0.0016,
+    }
     model["confidence"]["runtime_chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
     model["confidence"]["comparison_target"] = "probe-reference"
     model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
@@ -130,6 +134,7 @@ def test_page_modules_expose_model_driven_builders() -> None:
     assert "Chemical accuracy False" in confidence_text
     assert "Runtime evidence available True" in confidence_text
     assert "Runtime chemical accuracy False" in confidence_text
+    assert "Chemical accuracy threshold 0.0016 Ha" in confidence_text
 
     overview_module = importlib.import_module("qcchem.workbench.pages.overview")
     overview_page = overview_module.build_overview_page(model)
@@ -152,8 +157,11 @@ def test_page_modules_expose_model_driven_builders() -> None:
     structure_text = _collect_text(structure_page)
     assert "manual_probe" in structure_text
     assert "[0, 2]" in structure_text
+    assert "[7, 8, 9]" in structure_text
     structure_graph = next(component for component in _walk_components(structure_page) if component.__class__.__name__ == "Graph")
-    assert tuple(structure_graph.figure.data[0].x) == (0, 2, 7, 8, 9, 6)
+    assert tuple(structure_graph.figure.data[0].x) == (0, 2, 7, 8, 9)
+    assert tuple(structure_graph.figure.data[0].y) == (0, 0, 1, 1, 1)
+    assert structure_graph.figure.layout.title.text == "Orbital selection map across frozen and active windows"
 
 
 @pytest.mark.integration
@@ -170,6 +178,23 @@ def test_result_confidence_treats_missing_runtime_accuracy_as_unknown_not_succes
     assert "Runtime evidence available True" in text
     assert "Runtime chemical accuracy Unknown" in text
     assert "Runtime chemical accuracy True" not in text
+
+
+@pytest.mark.integration
+def test_result_confidence_uses_benchmark_wording_without_chemical_accuracy_threshold() -> None:
+    from qcchem.workbench.pages.overview import build_sample_view_model
+    from qcchem.workbench.pages.result_confidence import build_result_confidence_page
+
+    model = build_sample_view_model()
+    model["confidence"]["chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
+
+    page = build_result_confidence_page(model)
+    text = _collect_text(page)
+    graph = next(component for component in _walk_components(page) if component.__class__.__name__ == "Graph")
+
+    assert "Benchmark threshold" in text
+    assert "Chemical accuracy threshold" not in text
+    assert "benchmark threshold" in graph.figure.layout.title.text.lower()
 
 
 @pytest.mark.integration
@@ -257,9 +282,12 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
             const mounts = {{
               invalid: makeMount("invalid", "{{bad json"),
               refresh: makeMount("refresh", JSON.stringify({{ atoms: [{{ elem: "H", x: 0, y: 0, z: 0 }}] }})),
+              failed: makeMount("failed", JSON.stringify({{ atoms: [{{ elem: "H", x: 0, y: 0, z: 0 }}] }})),
             }};
+            let includeFailedInQuery = false;
 
             const createdViewers = [];
+            let scriptPresent = false;
             const scriptNode = {{
               id: "qcchem-3dmol-script",
               dataset: {{}},
@@ -278,6 +306,7 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
                 readyState: "complete",
                 head: {{
                   appendChild(node) {{
+                    scriptPresent = true;
                     scriptNode.src = node.src;
                     scriptNode.onload = node.onload;
                     scriptNode.onerror = node.onerror;
@@ -295,11 +324,13 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
                   }};
                 }},
                 getElementById(id) {{
-                  if (id === "qcchem-3dmol-script") return scriptNode;
+                  if (id === "qcchem-3dmol-script") return scriptPresent ? scriptNode : null;
                   return mounts[id] || null;
                 }},
                 querySelectorAll(selector) {{
-                  if (selector === ".qcchem-molecule-viewer") return Object.values(mounts);
+                  if (selector === ".qcchem-molecule-viewer") {{
+                    return includeFailedInQuery ? Object.values(mounts) : [mounts.invalid, mounts.refresh];
+                  }}
                   return [];
                 }},
                 addEventListener() {{}},
@@ -343,19 +374,39 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
               mounts.refresh.setAttribute("data-molecule-json", JSON.stringify({{ atoms: [{{ elem: "H", x: 0, y: 0, z: 0 }}, {{ elem: "H", x: 0, y: 0, z: 0.7 }}] }}));
               await context.QCChem3DMol.hydrate("refresh");
 
-              process.stdout.write(JSON.stringify({{
+              scriptNode.dataset = {{}};
+              scriptPresent = false;
+              includeFailedInQuery = true;
+              context.$3Dmol = null;
+              scriptNode.onerror = null;
+              scriptNode.onload = null;
+              context.document.head.appendChild = function(node) {{
+                scriptPresent = true;
+                scriptNode.src = node.src;
+                scriptNode.onload = node.onload;
+                scriptNode.onerror = node.onerror;
+                if (typeof scriptNode.onerror === "function") scriptNode.onerror(new Error("load failure"));
+              }};
+              await context.QCChem3DMol.hydrate("failed");
+
+              return {{
                 invalidState,
                 refreshFlag: mounts.refresh.dataset.qcchemBridgeHydrated,
                 refreshHash: mounts.refresh.dataset.qcchemPayloadHash,
                 viewersCreated: createdViewers.length,
                 lastViewer: createdViewers[createdViewers.length - 1],
-              }}));
+                failedText: mounts.failed._canvas.textContent,
+              }};
             }}
 
-            run().catch((error) => {{
-              console.error(error);
-              process.exit(1);
-            }});
+            run()
+              .then((payload) => {{
+                process.stdout.write(JSON.stringify(payload));
+              }})
+              .catch((error) => {{
+                console.error(error);
+                process.exit(1);
+              }});
             """
         ),
         encoding="utf-8",
@@ -375,6 +426,7 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
     assert payload["viewersCreated"] >= 2
     assert payload["lastViewer"]["targetId"] == "refresh__canvas"
     assert payload["lastViewer"]["addedAtoms"] == [2]
+    assert payload["failedText"] == "3Dmol viewer unavailable"
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:

@@ -91,8 +91,18 @@ SAMPLE_RUN_PAYLOAD: dict[str, Any] = {
     },
     "verification_status": "validated",
     "hardware_verified": True,
-    "chemical_accuracy": {"available": True, "meets_chemical_accuracy": True, "absolute_error_hartree": 0.0118},
-    "runtime_chemical_accuracy": {"available": True, "meets_chemical_accuracy": True, "absolute_error_hartree": 0.0142},
+    "chemical_accuracy": {
+        "available": True,
+        "meets_chemical_accuracy": False,
+        "absolute_error_hartree": 0.0118,
+        "threshold_hartree": 0.0016,
+    },
+    "runtime_chemical_accuracy": {
+        "available": True,
+        "meets_chemical_accuracy": False,
+        "absolute_error_hartree": 0.0142,
+        "threshold_hartree": 0.0016,
+    },
 }
 
 

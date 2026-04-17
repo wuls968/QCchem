@@ -8,37 +8,32 @@ from qcchem.workbench.components.molecule import build_molecule_viewer
 from qcchem.workbench.pages.overview import SAMPLE_MOLECULE_PAYLOAD, build_sample_view_model
 
 
-def _orbital_figure(metadata: dict[str, object], reduction: dict[str, object]) -> go.Figure:
+def _orbital_selection_figure(metadata: dict[str, object], reduction: dict[str, object]) -> go.Figure:
     frozen_orbitals = [int(value) for value in reduction.get("frozen_orbitals", [])]
     active_orbitals = [int(value) for value in reduction.get("selected_active_orbitals_original", [])]
-    active_count = int(metadata.get("num_active_orbitals") or len(active_orbitals) or 0)
-    orbital_trace = tuple(frozen_orbitals + active_orbitals + [active_count])
-    participation = []
-    for index, orbital in enumerate(orbital_trace):
-        if index < len(frozen_orbitals):
-            participation.append(0.1)
-        elif index < len(frozen_orbitals) + len(active_orbitals):
-            participation.append(0.9 - (0.08 * (index - len(frozen_orbitals))))
-        else:
-            participation.append(max(0.2, active_count / 10.0))
+    orbital_trace = tuple(frozen_orbitals + active_orbitals)
+    selection_state = tuple([0] * len(frozen_orbitals) + [1] * len(active_orbitals))
+    colors = ["#46607a"] * len(frozen_orbitals) + ["#9a6b3f"] * len(active_orbitals)
 
     figure = go.Figure()
-    figure.add_scatter(
+    figure.add_bar(
         x=orbital_trace,
-        y=tuple(participation),
-        mode="lines+markers",
-        line={"color": "#20334a", "width": 3},
-        marker={"size": 10, "color": "#9a6b3f"},
-        fill="tozeroy",
-        fillcolor="rgba(154, 107, 63, 0.15)",
+        y=selection_state,
+        marker_color=colors,
     )
     figure.update_layout(
-        title={"text": "Orbital importance across the selected active window", "x": 0.04},
+        title={"text": "Orbital selection map across frozen and active windows", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
         margin={"l": 36, "r": 20, "t": 72, "b": 40},
-        xaxis_title="Orbital index offset",
-        yaxis_title="Weighted participation",
+        xaxis_title="Original orbital index",
+        yaxis={
+            "title": "Selection state",
+            "tickmode": "array",
+            "tickvals": [0, 1],
+            "ticktext": ["Frozen", "Active"],
+            "range": [-0.25, 1.25],
+        },
         font={"color": "#2d2216"},
     )
     return figure
@@ -87,7 +82,7 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                     ),
                     html.Section(
                         className="qcchem-card",
-                        children=[dcc.Graph(figure=_orbital_figure(metadata, reduction), config={"displayModeBar": False})],
+                        children=[dcc.Graph(figure=_orbital_selection_figure(metadata, reduction), config={"displayModeBar": False})],
                     ),
                 ],
             ),
@@ -100,7 +95,7 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                             ("Selection mode", str(reduction.get("selection_mode", "Automatic reduction audit"))),
                             ("Frozen orbitals", str(reduction.get("frozen_orbitals", []))),
                             ("Window label", metadata.get("orbital_window", "1 sigma to 3 sigma*")),
-                            ("Interpretation", str(reduction.get("selected_active_orbitals_original", []))),
+                            ("Selected active orbitals", str(reduction.get("selected_active_orbitals_original", []))),
                         ],
                     ),
                     callout_card(
