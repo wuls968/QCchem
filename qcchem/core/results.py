@@ -230,6 +230,48 @@ class MeasurementSummary:
 
 
 @dataclass(slots=True)
+class ChemicalAccuracySummary:
+    """Chemical-accuracy comparison summary."""
+
+    available: bool
+    meets_chemical_accuracy: bool | None
+    absolute_error_hartree: float | None
+    absolute_error_kcal_mol: float | None
+    relative_error: float | None
+    threshold_hartree: float
+    threshold_kcal_mol: float
+    statistical_error: float | None = None
+    reference_energy: float | None = None
+    computed_energy: float | None = None
+    status: str = "no_reference"
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class ReductionPlanResult:
+    """Reduction planning summary distinct from the executed reduction audit."""
+
+    enabled: bool
+    mode: str
+    strategy: str
+    recommended_changes: dict[str, Any] = field(default_factory=dict)
+    reduction_audit: ReductionAuditSummary | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class PolicyEngineResult:
+    """Resolved policy preset summary."""
+
+    policy_name: str
+    resolved_policy: dict[str, Any] = field(default_factory=dict)
+    overrides_applied: list[str] = field(default_factory=list)
+    presets_used: list[str] = field(default_factory=list)
+    provenance: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class CalibrationSummary:
     """Empirical calibration of planned vs observed low-rank execution cost."""
 
@@ -483,6 +525,9 @@ class RunResult:
     backend: BackendSummary
     noise_model: NoiseModelSummary | None
     measurement: MeasurementSummary | None
+    chemical_accuracy: ChemicalAccuracySummary | None
+    reduction_plan: ReductionPlanResult | None
+    policy_engine: PolicyEngineResult | None
     calibration: CalibrationSummary | None
     runtime_options: RuntimeOptionsSummary | None
     runtime_submission: RuntimeSubmissionSummary | None
