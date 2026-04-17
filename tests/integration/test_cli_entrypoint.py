@@ -41,25 +41,47 @@ def test_workbench_cli_reports_startup(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    def _fake_serve_workbench(host: str, port: int, debug: bool) -> dict[str, object]:
+    fake_app = object()
+    events: list[tuple[str, object]] = []
+
+    def _fake_prepare_workbench(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
         assert host == "127.0.0.1"
         assert port == 8050
         assert debug is False
-        return {"url": "http://127.0.0.1:8050", "pages": 10}
+        events.append(("prepare", (host, port, debug)))
+        return fake_app, {"url": "http://127.0.0.1:8050", "pages": 10}
+
+    def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
+        assert app is fake_app
+        events.append(("launch", (host, port, debug)))
+
+    def _fake_print_workbench_startup(summary: dict[str, object]) -> None:
+        events.append(("print", summary["url"]))
+        print("QCchem workbench ready")
+        print(f"URL: {summary['url']}")
+        print(f"Pages: {summary['pages']}")
+
+    def _unexpected_serve_workbench(host: str, port: int, debug: bool) -> dict[str, object]:
+        raise AssertionError("CLI startup should use prepare_workbench and launch_app sequencing")
 
     monkeypatch.setattr(
         "qcchem.cli.main.importlib.import_module",
         lambda name: SimpleNamespace(
-            serve_workbench=_fake_serve_workbench,
-            print_workbench_startup=lambda summary: print("QCchem workbench ready")
-            or print(f"URL: {summary['url']}")
-            or print(f"Pages: {summary['pages']}"),
+            prepare_workbench=_fake_prepare_workbench,
+            launch_app=_fake_launch_app,
+            serve_workbench=_unexpected_serve_workbench,
+            print_workbench_startup=_fake_print_workbench_startup,
         ),
     )
 
     exit_code = main(["workbench", "serve"])
 
     assert exit_code == 0
+    assert events == [
+        ("prepare", ("127.0.0.1", 8050, False)),
+        ("print", "http://127.0.0.1:8050"),
+        ("launch", ("127.0.0.1", 8050, False)),
+    ]
     stdout = capsys.readouterr().out
     assert "QCchem workbench ready" in stdout
     assert "http://127.0.0.1:8050" in stdout

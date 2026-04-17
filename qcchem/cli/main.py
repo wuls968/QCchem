@@ -91,6 +91,12 @@ def _run_workbench_command(host: str, port: int, debug: bool) -> int:
         print('QCchem workbench requires optional UI dependencies. Install with: pip install -e ".[ui]"')
         return 2
 
+    if hasattr(workbench_server, "prepare_workbench") and hasattr(workbench_server, "launch_app"):
+        app, summary = workbench_server.prepare_workbench(host=host, port=port, debug=debug)
+        workbench_server.print_workbench_startup(summary)
+        workbench_server.launch_app(app, host=host, port=port, debug=debug)
+        return 0
+
     summary = workbench_server.serve_workbench(host=host, port=port, debug=debug)
     workbench_server.print_workbench_startup(summary)
     return 0
