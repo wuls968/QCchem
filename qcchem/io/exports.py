@@ -12,9 +12,17 @@ import h5py
 from qcchem.io.serialization import to_primitive
 
 
+def _require_sections(data: dict[str, Any], required: tuple[str, ...]) -> None:
+    missing = [section for section in required if data.get(section) in (None, {})]
+    if missing:
+        missing_list = ", ".join(missing)
+        raise ValueError(f"missing required sections: {missing_list}")
+
+
 def build_qcschema_payload(result: Any) -> dict[str, Any]:
     """Build a minimal QCSchema-style export from a QCchem run result."""
     data = to_primitive(result)
+    _require_sections(data, ("problem", "energy", "verification_status"))
     problem = data.get("problem") or {}
     energy = data.get("energy") or {}
     provenance = data.get("provenance") or {}
