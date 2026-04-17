@@ -11,6 +11,16 @@ from qcchem.workbench.pages._registry import build_validation_pages, ensure_page
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
 
+def build_validation_layout() -> html.Div:
+    return html.Div(
+        [
+            dcc.Location(id="qcchem-url"),
+            build_shell(),
+            *build_validation_pages(),
+        ]
+    )
+
+
 def create_app() -> Dash:
     app = Dash(
         __name__,
@@ -22,12 +32,6 @@ def create_app() -> Dash:
     )
     ensure_pages_registered()
     app.page_registry = dash.page_registry
-    app.layout = build_shell()
-    app.validation_layout = html.Div(
-        [
-            dcc.Location(id="qcchem-url"),
-            build_shell(),
-            *build_validation_pages(),
-        ]
-    )
+    app.layout = build_shell
+    app.validation_layout = build_validation_layout()
     return app

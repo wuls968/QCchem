@@ -51,13 +51,12 @@ def build_validation_pages() -> list[html.Div]:
     validation_pages: list[html.Div] = []
     for page in dash.page_registry.values():
         path = page.get("path")
-        layout = page.get("layout")
-        if not path or layout is None:
+        if not path:
             continue
         validation_pages.append(
             html.Div(
                 id={"type": "qcchem-page-validation", "path": path},
-                children=[layout() if callable(layout) else layout],
+                children=page.get("name", path),
             )
         )
     return validation_pages

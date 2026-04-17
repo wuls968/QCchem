@@ -2,6 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
+SHARED_THEME_FAMILIES: tuple[str, ...] = (
+    "surface",
+    "text",
+    "accent",
+    "status",
+    "spacing",
+    "radius",
+    "shadow",
+    "type",
+)
+
 THEME: dict[str, dict[str, Any]] = {
     "surface": {
         "paper": "#f7f1e8",
@@ -57,11 +68,16 @@ THEME: dict[str, dict[str, Any]] = {
 }
 
 
-def css_var_map() -> dict[str, str]:
+def css_var_map(*, families: tuple[str, ...] | None = None) -> dict[str, str]:
     variables: dict[str, str] = {}
-    for section, values in THEME.items():
+    included = families or tuple(THEME.keys())
+    for section in included:
+        values = THEME[section]
         if isinstance(values, dict):
             for key, value in values.items():
                 variables[f"--qcchem-{section}-{key.replace('_', '-')}"] = str(value)
     return variables
 
+
+def css_var_lines(*, families: tuple[str, ...] | None = None) -> list[str]:
+    return [f"  {name}: {value};" for name, value in css_var_map(families=families).items()]

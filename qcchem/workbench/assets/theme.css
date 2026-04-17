@@ -13,8 +13,27 @@
   --qcchem-accent-ice: #d9ecf4;
   --qcchem-accent-sage: #93a18a;
   --qcchem-accent-signal: #c58742;
+  --qcchem-status-validated: #315f4a;
+  --qcchem-status-exploratory: #8b6a3f;
+  --qcchem-status-unstable: #91453f;
+  --qcchem-status-informational: #46607a;
+  --qcchem-spacing-xxs: 0.25rem;
+  --qcchem-spacing-xs: 0.5rem;
+  --qcchem-spacing-sm: 0.75rem;
+  --qcchem-spacing-md: 1rem;
+  --qcchem-spacing-lg: 1.5rem;
+  --qcchem-spacing-xl: 2rem;
+  --qcchem-spacing-xxl: 3rem;
+  --qcchem-radius-sm: 12px;
+  --qcchem-radius-md: 18px;
+  --qcchem-radius-lg: 22px;
+  --qcchem-radius-xl: 32px;
+  --qcchem-radius-pill: 999px;
   --qcchem-shadow-card: 0 18px 48px rgba(84, 63, 36, 0.12);
   --qcchem-shadow-panel: 0 10px 24px rgba(32, 51, 74, 0.08);
+  --qcchem-type-display: 'Iowan Old Style', 'Palatino Linotype', serif;
+  --qcchem-type-body: 'Avenir Next', 'Helvetica Neue', sans-serif;
+  --qcchem-type-mono: 'SFMono-Regular', 'Menlo', monospace;
 }
 
 * {

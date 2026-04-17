@@ -86,13 +86,22 @@ def test_workbench_script_reports_startup(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    def _fake_serve_workbench(host: str, port: int, debug: bool) -> dict[str, object]:
+    fake_app = object()
+
+    def _fake_prepare_workbench(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
         assert host == "0.0.0.0"
         assert port == 9001
         assert debug is True
-        return {"url": "http://0.0.0.0:9001", "pages": 10}
+        return fake_app, {"url": "http://0.0.0.0:9001", "pages": 10}
 
-    monkeypatch.setattr("qcchem.workbench.server.serve_workbench", _fake_serve_workbench)
+    def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
+        assert app is fake_app
+        assert host == "0.0.0.0"
+        assert port == 9001
+        assert debug is True
+
+    monkeypatch.setattr("qcchem.workbench.server.prepare_workbench", _fake_prepare_workbench)
+    monkeypatch.setattr("qcchem.workbench.server.launch_app", _fake_launch_app)
 
     exit_code = workbench_main(["--host", "0.0.0.0", "--port", "9001", "--debug"])
 
