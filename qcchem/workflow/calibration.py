@@ -24,6 +24,15 @@ def build_calibration_summary(
     """Build a calibration summary comparing planned and observed execution cost."""
 
     derived_shot_usage = None
+    used_caller_supplied_values = any(
+        value is not None
+        for value in (
+            measured_shot_usage,
+            precision_target,
+            achieved_error,
+            estimated_measurement_cost,
+        )
+    )
     if measured_shot_usage is not None:
         derived_shot_usage = float(measured_shot_usage)
     elif measurement is not None and sampled_result is not None and sampled_result.shots is not None:
@@ -46,8 +55,13 @@ def build_calibration_summary(
 
     notes = [
         "Measured wall time is taken from the executed solver path, not full workflow overhead.",
-        "Measured shot usage is derived from backend shots, repeat count, and measurement group count.",
     ]
+    if used_caller_supplied_values:
+        notes.append("Measured calibration values were caller-supplied runtime-reported inputs.")
+    else:
+        notes.append(
+            "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+        )
     if benchmark is not None and benchmark.within_uncertainty is False:
         notes.append("Achieved error remains outside the reported statistical uncertainty band.")
 

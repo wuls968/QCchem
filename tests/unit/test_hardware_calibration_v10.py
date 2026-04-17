@@ -1,4 +1,5 @@
 from qcchem.core.results import CalibrationSummary, RunResult
+from qcchem.core.results import BenchmarkSummary, MeasurementSummary, SampledResultSummary
 from qcchem.workflow.calibration import build_calibration_summary
 
 
@@ -24,3 +25,45 @@ def test_calibration_summary_can_use_runtime_measured_values() -> None:
     assert summary.precision_target == 0.1
     assert summary.achieved_error == 0.02
     assert summary.estimated_measurement_cost == 8000.0
+
+
+def test_calibration_summary_derives_values_from_sampled_data() -> None:
+    measurement = MeasurementSummary(
+        strategy="grouped",
+        group_count=2,
+        low_rank_aware=True,
+        estimated_shot_cost=120.0,
+        runtime_precision_target=0.25,
+        execution_mode="local",
+    )
+    sampled_result = SampledResultSummary(
+        available=True,
+        backend_kind="statevector",
+        shots=100,
+        num_repeats=3,
+        seed=7,
+    )
+    benchmark = BenchmarkSummary(
+        exact_available=True,
+        comparison_target="exact_baseline",
+        absolute_error=0.03,
+        relative_error=0.04,
+        statistical_error=0.01,
+        absolute_error_threshold=0.1,
+        relative_error_threshold=0.2,
+        within_uncertainty=True,
+        meets_threshold=True,
+    )
+
+    summary = build_calibration_summary(
+        measurement=measurement,
+        sampled_result=sampled_result,
+        benchmark=benchmark,
+        measured_wall_time_seconds=5.0,
+    )
+
+    assert isinstance(summary, CalibrationSummary)
+    assert summary.measured_shot_usage == 600.0
+    assert summary.precision_target == 0.25
+    assert summary.achieved_error == 0.03
+    assert summary.estimated_vs_measured_cost == 0.2
