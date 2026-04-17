@@ -23,3 +23,4 @@ def test_calibration_summary_can_use_runtime_measured_values() -> None:
     assert summary.measured_shot_usage == 4096
     assert summary.precision_target == 0.1
     assert summary.achieved_error == 0.02
+    assert summary.estimated_measurement_cost == 8000.0
