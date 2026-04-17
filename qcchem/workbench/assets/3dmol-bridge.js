@@ -20,6 +20,10 @@
 
   function ensureScript() {
     const existing = document.getElementById(MOL_SCRIPT_ID);
+    if (existing && (existing.dataset.qcchem3dmolReady === "true" || (window.$3Dmol && typeof window.$3Dmol.createViewer === "function"))) {
+      existing.dataset.qcchem3dmolReady = "true";
+      return Promise.resolve();
+    }
     if (existing && existing.dataset.qcchem3dmolReady === "true") {
       return Promise.resolve();
     }

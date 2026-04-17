@@ -28,10 +28,8 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
     runtime_evidence_available = runtime_chemical_accuracy.get("available", False)
-    runtime_chemical_accuracy_met = runtime_chemical_accuracy.get(
-        "meets_chemical_accuracy",
-        runtime_chemical_accuracy.get("available", False),
-    )
+    runtime_chemical_accuracy_met = runtime_chemical_accuracy.get("meets_chemical_accuracy")
+    runtime_chemical_accuracy_display = "Unknown" if runtime_chemical_accuracy_met is None else str(runtime_chemical_accuracy_met)
     comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
         "comparison_target", "exact diagonalization"
     )
@@ -78,7 +76,7 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                             ),
                             (
                                 "Runtime chemical accuracy",
-                                str(runtime_chemical_accuracy_met),
+                                runtime_chemical_accuracy_display,
                             ),
                             ("Comparison target", str(comparison_target)),
                         ],

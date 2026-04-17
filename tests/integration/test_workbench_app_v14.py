@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import importlib
+import json
 from pathlib import Path
+import subprocess
+import textwrap
 from types import SimpleNamespace
 
 import dash
@@ -97,8 +100,12 @@ def test_page_modules_expose_model_driven_builders() -> None:
     model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
     model["structure"]["active_space_metadata"] = {
         "num_active_orbitals": 6,
+        "num_active_electrons": 8,
         "orbital_window": "Probe Window",
     }
+    model["reduction"]["selection_mode"] = "manual_probe"
+    model["reduction"]["selected_active_orbitals_original"] = [7, 8, 9]
+    model["reduction"]["frozen_orbitals"] = [0, 2]
 
     expected_strings = {
         "qcchem.workbench.pages.overview": "Spec Probe",
@@ -140,6 +147,30 @@ def test_page_modules_expose_model_driven_builders() -> None:
     runtime_graph = next(component for component in _walk_components(runtime_page) if component.__class__.__name__ == "Graph")
     assert runtime_graph.figure.data[0].y[-1] == 987
 
+    structure_module = importlib.import_module("qcchem.workbench.pages.structure_orbitals")
+    structure_page = structure_module.build_structure_orbitals_page(model)
+    structure_text = _collect_text(structure_page)
+    assert "manual_probe" in structure_text
+    assert "[0, 2]" in structure_text
+    structure_graph = next(component for component in _walk_components(structure_page) if component.__class__.__name__ == "Graph")
+    assert tuple(structure_graph.figure.data[0].x) == (0, 2, 7, 8, 9, 6)
+
+
+@pytest.mark.integration
+def test_result_confidence_treats_missing_runtime_accuracy_as_unknown_not_success() -> None:
+    from qcchem.workbench.pages.overview import build_sample_view_model
+    from qcchem.workbench.pages.result_confidence import build_result_confidence_page
+
+    model = build_sample_view_model()
+    model["confidence"]["runtime_chemical_accuracy"] = {"available": True}
+
+    page = build_result_confidence_page(model)
+    text = _collect_text(page)
+
+    assert "Runtime evidence available True" in text
+    assert "Runtime chemical accuracy Unknown" in text
+    assert "Runtime chemical accuracy True" not in text
+
 
 @pytest.mark.integration
 def test_molecule_viewer_exposes_simple_model_contract_for_bridge() -> None:
@@ -180,6 +211,170 @@ def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
     assert "dataset.qcchemPayloadHash" in bridge
     assert "script.dataset.qcchem3dmolReady" in bridge or "qcchem3dmolReady" in bridge
     assert "querySelector(CANVAS_SELECTOR)" in bridge
+
+
+@pytest.mark.integration
+def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path) -> None:
+    bridge_path = REPO_ROOT / "qcchem" / "workbench" / "assets" / "3dmol-bridge.js"
+    script_path = tmp_path / "bridge-smoke.js"
+    script_path.write_text(
+        textwrap.dedent(
+            f"""
+            const fs = require("fs");
+            const vm = require("vm");
+
+            const bridgeCode = fs.readFileSync({json.dumps(str(bridge_path))}, "utf8");
+
+            function makeMount(id, payload) {{
+              const canvas = {{
+                id: id + "__canvas",
+                className: "qcchem-molecule-viewer__canvas",
+                textContent: "",
+                children: [],
+                replaceChildren() {{ this.children = []; this.textContent = ""; }},
+              }};
+              return {{
+                id,
+                className: "qcchem-molecule-viewer",
+                dataset: {{}},
+                textContent: "",
+                _payload: payload,
+                getAttribute(name) {{
+                  if (name === "data-molecule-json") return this._payload;
+                  return null;
+                }},
+                setAttribute(name, value) {{
+                  if (name === "data-molecule-json") this._payload = value;
+                }},
+                querySelector(selector) {{
+                  if (selector === ".qcchem-molecule-viewer__canvas") return canvas;
+                  return null;
+                }},
+                _canvas: canvas,
+              }};
+            }}
+
+            const mounts = {{
+              invalid: makeMount("invalid", "{{bad json"),
+              refresh: makeMount("refresh", JSON.stringify({{ atoms: [{{ elem: "H", x: 0, y: 0, z: 0 }}] }})),
+            }};
+
+            const createdViewers = [];
+            const scriptNode = {{
+              id: "qcchem-3dmol-script",
+              dataset: {{}},
+              async: true,
+              onload: null,
+              onerror: null,
+            }};
+
+            const context = {{
+              console,
+              Promise,
+              setTimeout,
+              clearTimeout,
+              window: {{}},
+              document: {{
+                readyState: "complete",
+                head: {{
+                  appendChild(node) {{
+                    scriptNode.src = node.src;
+                    scriptNode.onload = node.onload;
+                    scriptNode.onerror = node.onerror;
+                    if (typeof scriptNode.onload === "function") scriptNode.onload();
+                  }},
+                }},
+                createElement() {{
+                  return {{
+                    id: "",
+                    dataset: {{}},
+                    async: true,
+                    onload: null,
+                    onerror: null,
+                    src: "",
+                  }};
+                }},
+                getElementById(id) {{
+                  if (id === "qcchem-3dmol-script") return scriptNode;
+                  return mounts[id] || null;
+                }},
+                querySelectorAll(selector) {{
+                  if (selector === ".qcchem-molecule-viewer") return Object.values(mounts);
+                  return [];
+                }},
+                addEventListener() {{}},
+              }},
+            }};
+
+            context.window = context;
+            context.$3Dmol = {{
+              createViewer(target) {{
+                const record = {{ targetId: target.id, addedAtoms: [], renderCount: 0 }};
+                createdViewers.push(record);
+                return {{
+                  addModel() {{
+                    return {{
+                      addAtoms(atoms) {{
+                        record.addedAtoms.push(atoms.length);
+                      }},
+                    }};
+                  }},
+                  setStyle() {{}},
+                  addLabel() {{}},
+                  zoomTo() {{}},
+                  render() {{
+                    record.renderCount += 1;
+                  }},
+                }};
+              }},
+            }};
+
+            vm.createContext(context);
+            vm.runInContext(bridgeCode, context);
+
+            async function run() {{
+              await context.QCChem3DMol.hydrate("invalid");
+              const invalidState = {{
+                flag: mounts.invalid.dataset.qcchemBridgeHydrated,
+                text: mounts.invalid._canvas.textContent,
+              }};
+
+              await context.QCChem3DMol.hydrate("refresh");
+              mounts.refresh.setAttribute("data-molecule-json", JSON.stringify({{ atoms: [{{ elem: "H", x: 0, y: 0, z: 0 }}, {{ elem: "H", x: 0, y: 0, z: 0.7 }}] }}));
+              await context.QCChem3DMol.hydrate("refresh");
+
+              process.stdout.write(JSON.stringify({{
+                invalidState,
+                refreshFlag: mounts.refresh.dataset.qcchemBridgeHydrated,
+                refreshHash: mounts.refresh.dataset.qcchemPayloadHash,
+                viewersCreated: createdViewers.length,
+                lastViewer: createdViewers[createdViewers.length - 1],
+              }}));
+            }}
+
+            run().catch((error) => {{
+              console.error(error);
+              process.exit(1);
+            }});
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        ["node", str(script_path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(result.stdout)
+
+    assert payload["invalidState"]["flag"] == "invalid"
+    assert payload["invalidState"]["text"] == "3Dmol viewer unavailable"
+    assert payload["refreshFlag"] == "true"
+    assert payload["viewersCreated"] >= 2
+    assert payload["lastViewer"]["targetId"] == "refresh__canvas"
+    assert payload["lastViewer"]["addedAtoms"] == [2]
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:
