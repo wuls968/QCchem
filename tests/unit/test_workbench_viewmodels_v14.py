@@ -47,8 +47,10 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     root.mkdir()
     (root / "result.json").write_text('{"problem":{"molecule_name":"H2"}}', encoding="utf-8")
     (root / "qcschema.json").write_text('{"schema_name":"qcschema_output"}', encoding="utf-8")
+    (root / "result.h5").touch()
 
     bundle = load_artifact_bundle(root)
 
     assert bundle["result"]["problem"]["molecule_name"] == "H2"
     assert bundle["qcschema"]["schema_name"] == "qcschema_output"
+    assert bundle["hdf5_path"] == str(root / "result.h5")
