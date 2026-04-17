@@ -23,8 +23,8 @@ def _confidence_figure(confidence: dict[str, object]) -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    confidence = build_sample_view_model()["confidence"]
+def build_result_confidence_page(model: dict[str, object]) -> html.Div:
+    confidence = model["confidence"]
     return html.Div(
         className="qcchem-page qcchem-page--confidence",
         style={"display": "grid", "gap": "1rem"},
@@ -70,3 +70,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_result_confidence_page(build_sample_view_model())

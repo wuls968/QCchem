@@ -27,8 +27,8 @@ def _runtime_figure() -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    runtime = build_sample_view_model()["runtime"]
+def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
+    runtime = model["runtime"]
     return html.Div(
         className="qcchem-page qcchem-page--runtime",
         style={"display": "grid", "gap": "1rem"},
@@ -83,3 +83,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_runtime_monitoring_page(build_sample_view_model())

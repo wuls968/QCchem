@@ -10,17 +10,22 @@ def build_molecule_viewer(
     molecule: dict[str, Any],
     *,
     viewer_id: str,
-    title: str,
+    title: str | None = None,
     caption: str | None = None,
     height: str = "320px",
 ) -> html.Section:
     payload = json.dumps(molecule, separators=(",", ":"))
+    resolved_title = title or str(molecule.get("title") or "Molecule Viewer")
+    resolved_caption = caption or str(
+        molecule.get("caption")
+        or "Hydrated by the 3Dmol.js bridge with orbitals, labels, and style metadata from the page model."
+    )
     return html.Section(
         id=viewer_id,
         className="qcchem-card",
         children=[
             html.P("Molecular Scene", className="qcchem-card-eyebrow"),
-            html.H3(title, className="qcchem-card-title"),
+            html.H3(resolved_title, className="qcchem-card-title"),
             html.Div(
                 id=f"{viewer_id}__canvas",
                 className="qcchem-molecule-viewer",
@@ -36,7 +41,7 @@ def build_molecule_viewer(
                 },
             ),
             html.P(
-                caption or "Hydrated by the 3Dmol.js bridge with orbitals, labels, and style metadata from the page model.",
+                resolved_caption,
                 className="qcchem-card-note",
                 style={"marginTop": "0.85rem"},
             ),

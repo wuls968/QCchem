@@ -4,6 +4,17 @@
   const MOL_SCRIPT_ID = "qcchem-3dmol-script";
   const MOL_SCRIPT_SRC = "https://3Dmol.org/build/3Dmol-min.js";
 
+  function payloadToXYZ(payload) {
+    if (!payload.atoms || !Array.isArray(payload.atoms)) {
+      return null;
+    }
+    const lines = [String(payload.atoms.length), payload.name || payload.title || "QCchem molecule"];
+    payload.atoms.forEach((atom) => {
+      lines.push([atom.elem || atom.element || "X", atom.x || 0, atom.y || 0, atom.z || 0].join(" "));
+    });
+    return lines.join("\n");
+  }
+
   function ensureScript() {
     const existing = document.getElementById(MOL_SCRIPT_ID);
     if (existing) {
@@ -47,6 +58,16 @@
     const viewer = bridgeApi.createViewer(element, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
     if (payload.coordinates) {
       viewer.addModel(payload.coordinates, payload.format || "xyz");
+    } else if (payload.atoms) {
+      const atomModel = viewer.addModel();
+      if (atomModel && typeof atomModel.addAtoms === "function") {
+        atomModel.addAtoms(payload.atoms);
+      } else {
+        const xyz = payloadToXYZ(payload);
+        if (xyz) {
+          viewer.addModel(xyz, payload.format || "xyz");
+        }
+      }
     } else if (payload.models) {
       payload.models.forEach((model) => viewer.addModel(model.coordinates, model.format || payload.format || "xyz"));
     }
@@ -67,26 +88,55 @@
     element.dataset[BRIDGE_FLAG] = "true";
   }
 
-  function hydrateAllViewers() {
+  function renderUnavailableState(target) {
+    if (target && !target.textContent) {
+      target.textContent = "3Dmol viewer unavailable";
+    }
+  }
+
+  function hydrate(id) {
+    const target = id ? document.getElementById(id) : null;
+    return ensureScript()
+      .then(() => {
+        if (!target) {
+          return false;
+        }
+        hydrateViewer(target);
+        return target.dataset[BRIDGE_FLAG] === "true";
+      })
+      .catch(() => {
+        if (target) {
+          renderUnavailableState(target);
+        }
+        return false;
+      });
+  }
+
+  function hydrateAll() {
     ensureScript()
       .then(() => {
         document.querySelectorAll(VIEWER_SELECTOR).forEach(hydrateViewer);
       })
       .catch(() => {
-        document.querySelectorAll(VIEWER_SELECTOR).forEach((element) => {
-          if (!element.textContent) {
-            element.textContent = "3Dmol viewer unavailable";
-          }
-        });
+        document.querySelectorAll(VIEWER_SELECTOR).forEach(renderUnavailableState);
       });
   }
 
+  window.QCChem3DMol = {
+    hydrate(id) {
+      return hydrate(id);
+    },
+    hydrateAll() {
+      hydrateAll();
+    },
+  };
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", hydrateAllViewers);
+    document.addEventListener("DOMContentLoaded", hydrateAll);
   } else {
-    hydrateAllViewers();
+    hydrateAll();
   }
 
-  document.addEventListener("DOMContentLoaded", hydrateAllViewers);
-  document.addEventListener("dashrendered", hydrateAllViewers);
+  document.addEventListener("DOMContentLoaded", hydrateAll);
+  document.addEventListener("dashrendered", hydrateAll);
 })();

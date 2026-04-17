@@ -31,9 +31,10 @@ def _orbital_figure() -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    view = build_sample_view_model()
+def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
+    view = model
     metadata = view["structure"]["active_space_metadata"] or {}
+    molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
     return html.Div(
         className="qcchem-page qcchem-page--structure",
         style={"display": "grid", "gap": "1rem"},
@@ -61,7 +62,7 @@ def layout() -> html.Div:
                 style={"display": "grid", "gridTemplateColumns": "minmax(280px, 0.9fr) minmax(0, 1.1fr)", "gap": "1rem"},
                 children=[
                     build_molecule_viewer(
-                        SAMPLE_MOLECULE_PAYLOAD,
+                        molecule_model,
                         viewer_id="structure-molecule",
                         title="Geometry and label overlay",
                         caption="The bridge payload can also carry orbital surfaces later; for now it anchors the spatial discussion with reproducible JSON.",
@@ -90,3 +91,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_structure_orbitals_page(build_sample_view_model())

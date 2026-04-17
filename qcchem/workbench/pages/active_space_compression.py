@@ -25,8 +25,8 @@ def _compression_figure() -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    view = build_sample_view_model()
+def build_active_space_compression_page(model: dict[str, object]) -> html.Div:
+    view = model
     compression = view["compression"]
     reduction = view["reduction"]
     return html.Div(
@@ -73,3 +73,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_active_space_compression_page(build_sample_view_model())

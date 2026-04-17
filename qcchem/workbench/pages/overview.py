@@ -10,8 +10,14 @@ from qcchem.workbench.components.molecule import build_molecule_viewer
 from qcchem.workbench.viewmodels import build_run_view_model
 
 SAMPLE_MOLECULE_PAYLOAD: dict[str, Any] = {
-    "format": "xyz",
-    "coordinates": "3\nLiH fragment\nLi 0.0 0.0 0.0\nH 0.0 0.0 1.62\nX 0.0 0.0 0.81\n",
+    "name": "LiH fragment",
+    "title": "LiH active fragment",
+    "caption": "Representative fragment and anchor labels used throughout the workbench while full artifact-driven selection lands in Task 7.",
+    "atoms": [
+        {"elem": "Li", "x": 0.0, "y": 0.0, "z": 0.0},
+        {"elem": "H", "x": 0.0, "y": 0.0, "z": 1.62},
+        {"elem": "X", "x": 0.0, "y": 0.0, "z": 0.81},
+    ],
     "style": {"stick": {"radius": 0.18}, "sphere": {"scale": 0.28}},
     "labels": [
         {"text": "Li", "position": {"x": 0.0, "y": 0.0, "z": 0.0}},
@@ -91,7 +97,9 @@ SAMPLE_RUN_PAYLOAD: dict[str, Any] = {
 
 
 def build_sample_view_model() -> dict[str, Any]:
-    return build_run_view_model(SAMPLE_RUN_PAYLOAD)
+    view = build_run_view_model(SAMPLE_RUN_PAYLOAD)
+    view["molecule_viewer"] = SAMPLE_MOLECULE_PAYLOAD
+    return view
 
 
 def _overview_figure(view: dict[str, Any]) -> go.Figure:
@@ -112,8 +120,9 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    view = build_sample_view_model()
+def build_overview_page(model: dict[str, Any]) -> html.Div:
+    view = model
+    molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
     return html.Div(
         className="qcchem-page qcchem-page--overview",
         style={"display": "grid", "gap": "1.25rem"},
@@ -145,10 +154,8 @@ def layout() -> html.Div:
                 children=[
                     html.Section(className="qcchem-card", children=[dcc.Graph(figure=_overview_figure(view), config={"displayModeBar": False})]),
                     build_molecule_viewer(
-                        SAMPLE_MOLECULE_PAYLOAD,
+                        molecule_model,
                         viewer_id="overview-molecule",
-                        title="LiH active fragment",
-                        caption="Representative fragment and anchor labels used throughout the workbench while full artifact-driven selection lands in Task 7.",
                     ),
                 ],
             ),
@@ -173,3 +180,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_overview_page(build_sample_view_model())

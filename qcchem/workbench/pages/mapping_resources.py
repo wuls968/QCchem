@@ -32,8 +32,8 @@ def _resource_figure(view: dict[str, object]) -> go.Figure:
     return figure
 
 
-def layout() -> html.Div:
-    view = build_sample_view_model()
+def build_mapping_resources_page(model: dict[str, object]) -> html.Div:
+    view = model
     mapping = view["mapping"]
     runtime = view["runtime"]
     return html.Div(
@@ -81,3 +81,7 @@ def layout() -> html.Div:
             ),
         ],
     )
+
+
+def layout() -> html.Div:
+    return build_mapping_resources_page(build_sample_view_model())
