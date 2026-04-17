@@ -124,9 +124,10 @@ def test_molecule_viewer_exposes_simple_model_contract_for_bridge() -> None:
     canvas = props["children"][2].to_plotly_json()["props"]
 
     assert props["id"] == "probe-viewer"
-    assert canvas["data-molecule-json"]
-    assert '"atoms"' in canvas["data-molecule-json"]
-    assert "qcchem-molecule-viewer" in canvas["className"]
+    assert props["data-molecule-json"]
+    assert '"atoms"' in props["data-molecule-json"]
+    assert "qcchem-molecule-viewer" in props["className"]
+    assert canvas["id"] == "probe-viewer__canvas"
 
 
 def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
@@ -138,6 +139,7 @@ def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
     assert "QCChem3DMol" in bridge
     assert "hydrate(id)" in bridge or "hydrate: function" in bridge or "hydrate(id" in bridge
     assert "payload.atoms" in bridge
+    assert 'getElementById(id)' in bridge
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:

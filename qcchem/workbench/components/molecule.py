@@ -22,15 +22,15 @@ def build_molecule_viewer(
     )
     return html.Section(
         id=viewer_id,
-        className="qcchem-card",
+        className="qcchem-card qcchem-molecule-viewer",
+        **{"data-molecule-json": payload},
         children=[
             html.P("Molecular Scene", className="qcchem-card-eyebrow"),
             html.H3(resolved_title, className="qcchem-card-title"),
             html.Div(
                 id=f"{viewer_id}__canvas",
-                className="qcchem-molecule-viewer",
+                className="qcchem-molecule-viewer__canvas",
                 **{
-                    "data-molecule-json": payload,
                     "style": {
                         "height": height,
                         "borderRadius": "18px",

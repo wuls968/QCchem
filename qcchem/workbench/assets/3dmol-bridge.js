@@ -1,5 +1,6 @@
 (function () {
   const VIEWER_SELECTOR = ".qcchem-molecule-viewer";
+  const CANVAS_SELECTOR = ".qcchem-molecule-viewer__canvas";
   const BRIDGE_FLAG = "qcchemBridgeHydrated";
   const MOL_SCRIPT_ID = "qcchem-3dmol-script";
   const MOL_SCRIPT_SRC = "https://3Dmol.org/build/3Dmol-min.js";
@@ -32,12 +33,12 @@
     });
   }
 
-  function hydrateViewer(element) {
-    if (!element || element.dataset[BRIDGE_FLAG] === "true") {
+  function hydrateViewer(mountNode) {
+    if (!mountNode || mountNode.dataset[BRIDGE_FLAG] === "true") {
       return;
     }
 
-    const moleculeJson = element.getAttribute("data-molecule-json");
+    const moleculeJson = mountNode.getAttribute("data-molecule-json");
     if (!moleculeJson) {
       return;
     }
@@ -55,7 +56,8 @@
       return;
     }
 
-    const viewer = bridgeApi.createViewer(element, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
+    const renderNode = mountNode.querySelector(CANVAS_SELECTOR) || mountNode;
+    const viewer = bridgeApi.createViewer(renderNode, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
     if (payload.coordinates) {
       viewer.addModel(payload.coordinates, payload.format || "xyz");
     } else if (payload.atoms) {
@@ -85,7 +87,7 @@
     });
     viewer.zoomTo();
     viewer.render();
-    element.dataset[BRIDGE_FLAG] = "true";
+    mountNode.dataset[BRIDGE_FLAG] = "true";
   }
 
   function renderUnavailableState(target) {
