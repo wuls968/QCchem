@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 from pathlib import Path
 
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
-from qcchem.workbench.server import serve_workbench
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.scan import run_scan_from_config
@@ -78,6 +78,18 @@ def _write_aggregate_from_json(result_json: Path, output: Path | None, *, kind: 
     output_path = output or result_json.with_suffix(".md")
     write_aggregate_report(payload, output_path, kind=kind)
     print(f"{kind.capitalize()} report written to {output_path}")
+    return 0
+
+
+def _run_workbench_command(host: str, port: int, debug: bool) -> int:
+    try:
+        workbench_server = importlib.import_module("qcchem.workbench.server")
+    except ImportError:
+        print('QCchem workbench requires optional UI dependencies. Install with: pip install -e ".[ui]"')
+        return 2
+
+    summary = workbench_server.serve_workbench(host=host, port=port, debug=debug)
+    workbench_server.print_workbench_startup(summary)
     return 0
 
 
@@ -237,11 +249,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "workbench":
         if args.workbench_command == "serve":
-            summary = serve_workbench(host=args.host, port=args.port, debug=args.debug)
-            print("QCchem workbench ready")
-            print(f"URL: {summary['url']}")
-            print(f"Pages: {summary['pages']}")
-            return 0
+            return _run_workbench_command(args.host, args.port, args.debug)
 
     parser.error(f"Unsupported command: {args.command}")
     return 2

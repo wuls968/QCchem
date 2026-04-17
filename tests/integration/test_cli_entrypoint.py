@@ -3,10 +3,12 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from qcchem.cli.main import main
+from qcchem.workbench.server import main as workbench_main
 
 
 @pytest.mark.integration
@@ -45,9 +47,54 @@ def test_workbench_cli_reports_startup(
         assert debug is False
         return {"url": "http://127.0.0.1:8050", "pages": 10}
 
-    monkeypatch.setattr("qcchem.cli.main.serve_workbench", _fake_serve_workbench)
+    monkeypatch.setattr(
+        "qcchem.cli.main.importlib.import_module",
+        lambda name: SimpleNamespace(
+            serve_workbench=_fake_serve_workbench,
+            print_workbench_startup=lambda summary: print("QCchem workbench ready")
+            or print(f"URL: {summary['url']}")
+            or print(f"Pages: {summary['pages']}"),
+        ),
+    )
 
     exit_code = main(["workbench", "serve"])
+
+    assert exit_code == 0
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench ready" in stdout
+    assert "http://127.0.0.1:8050" in stdout
+
+
+def test_workbench_cli_reports_missing_optional_dependencies(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _raise_import_error(name: str) -> object:
+        raise ImportError("dash is not installed")
+
+    monkeypatch.setattr("qcchem.cli.main.importlib.import_module", _raise_import_error)
+
+    exit_code = main(["workbench", "serve"])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench requires optional UI dependencies" in stdout
+    assert 'pip install -e ".[ui]"' in stdout
+
+
+def test_workbench_script_reports_startup(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _fake_serve_workbench(host: str, port: int, debug: bool) -> dict[str, object]:
+        assert host == "127.0.0.1"
+        assert port == 8050
+        assert debug is True
+        return {"url": "http://127.0.0.1:8050", "pages": 10}
+
+    monkeypatch.setattr("qcchem.workbench.server.serve_workbench", _fake_serve_workbench)
+
+    exit_code = workbench_main(["--debug"])
 
     assert exit_code == 0
     stdout = capsys.readouterr().out
