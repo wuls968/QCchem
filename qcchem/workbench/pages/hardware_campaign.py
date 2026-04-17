@@ -70,6 +70,22 @@ def sample_hardware_campaign_model() -> dict[str, Any]:
     return build_hardware_campaign_summary(payload)
 
 
+def _select_best_retrieved_case(cases: list[dict[str, Any]]) -> dict[str, Any]:
+    retrieved_cases = [
+        case
+        for case in cases
+        if case.get("achieved_error") is not None
+        and str(case.get("runtime_evidence_status") or "").lower() in {"retrieved", "retrieved_result"}
+    ]
+    if retrieved_cases:
+        return min(retrieved_cases, key=lambda case: float(case.get("achieved_error") or 0.0))
+
+    ranked_cases = [case for case in cases if case.get("achieved_error") is not None]
+    if ranked_cases:
+        return min(ranked_cases, key=lambda case: float(case.get("achieved_error") or 0.0))
+    return {}
+
+
 def _runtime_error_figure(model: dict[str, Any]) -> go.Figure:
     cases = sorted(model.get("cases") or [], key=lambda case: float(case.get("achieved_error") or 0.0))
     figure = go.Figure()
@@ -121,9 +137,13 @@ def _runtime_usage_figure(model: dict[str, Any]) -> go.Figure:
 
 
 def build_hardware_campaign_page(model: dict[str, Any]) -> html.Div:
-    best_case = model.get("best_case") or {}
+    cases = list(model.get("cases") or [])
+    best_case = _select_best_retrieved_case(cases)
+    recommended_case_name = str(best_case.get("name") or model.get("recommended_case_name") or "n/a")
     worst_case = model.get("worst_case") or {}
     status_counts = model.get("runtime_evidence_status_counts") or {}
+    target = float(model.get("chemical_accuracy_target_hartree") or 0.0016)
+    best_distance_to_target = float(best_case.get("achieved_error") or 0.0) - target if best_case else 0.0
     return html.Div(
         className="qcchem-page qcchem-page--hardware-campaign",
         style={"display": "grid", "gap": "1rem"},
@@ -141,9 +161,9 @@ def build_hardware_campaign_page(model: dict[str, Any]) -> html.Div:
                         style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
                         children=[
                             metric_card("Suite", str(model.get("suite_name", "n/a")), "Hardware runtime campaign"),
-                            metric_card("Best case", str(best_case.get("name", "n/a")), f'{float(best_case.get("achieved_error") or 0.0):.4f} Ha'),
+                            metric_card("Best retrieved case", str(best_case.get("name", "n/a")), f'{float(best_case.get("achieved_error") or 0.0):.4f} Ha'),
                             metric_card("Runtime evidence status", str(status_counts), "Retrieved / submitted / failed"),
-                            metric_card("Recommended case", str(model.get("recommended_case_name", "n/a")), "Closest defended runtime result"),
+                            metric_card("Recommended case", recommended_case_name, "Closest defended runtime result"),
                         ],
                     ),
                 ],
@@ -173,7 +193,7 @@ def build_hardware_campaign_page(model: dict[str, Any]) -> html.Div:
                         "Campaign posture",
                         [
                             ("Total cases", str(model.get("total_cases", 0))),
-                            ("Best distance to target", f'{float(model.get("best_distance_to_chemical_accuracy") or 0.0):.4f} Ha'),
+                            ("Best distance to target", f"{best_distance_to_target:.4f} Ha"),
                             ("Worst case", str(worst_case.get("name", "n/a"))),
                             ("Worst error", f'{float(worst_case.get("achieved_error") or 0.0):.4f} Ha'),
                         ],

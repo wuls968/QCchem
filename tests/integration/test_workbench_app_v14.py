@@ -255,33 +255,162 @@ def test_structure_orbitals_labels_original_indices_when_provided() -> None:
 @pytest.mark.integration
 def test_aggregate_pages_surface_real_content() -> None:
     from qcchem.workbench.pages.benchmarks import build_benchmarks_page, sample_benchmark_suite_model
-    from qcchem.workbench.pages.hardware_campaign import build_hardware_campaign_page, sample_hardware_campaign_model
+    from qcchem.workbench.pages.hardware_campaign import (
+        build_hardware_campaign_page,
+        sample_hardware_campaign_model,
+    )
     from qcchem.workbench.pages.scans import build_scans_page, sample_scan_model
     from qcchem.workbench.pages.studies import build_studies_page, sample_study_model
 
     study_page = build_studies_page(sample_study_model())
     study_text = _collect_text(study_page)
     assert "mini_comparison_study" in study_text
-    assert "Validated-like runs" in study_text
-    assert "Exploratory runs" in study_text
+    assert "Run records" in study_text
+    assert "backend.kind" in study_text
 
     benchmark_page = build_benchmarks_page(sample_benchmark_suite_model())
     benchmark_text = _collect_text(benchmark_page)
     assert "Validated" in benchmark_text
     assert "Exploratory" in benchmark_text
-    assert "status band" in benchmark_text.lower()
+    assert "Unstable" in benchmark_text
 
     scan_page = build_scans_page(sample_scan_model())
     scan_text = _collect_text(scan_page)
-    assert "bond_length_angstrom" in scan_text
+    assert "bond_length" in scan_text
     assert "0.5" in scan_text
-    assert "Validated-like points" in scan_text
+    assert "Scan points" in scan_text
 
     hardware_page = build_hardware_campaign_page(sample_hardware_campaign_model())
     hardware_text = _collect_text(hardware_page)
     assert "h2_runtime_hardware_probe_puccd_layout" in hardware_text
     assert "0.0137" in hardware_text
     assert "Runtime evidence status" in hardware_text
+
+
+@pytest.mark.integration
+def test_benchmark_page_uses_model_status_counts_in_chart() -> None:
+    from qcchem.workbench.pages.benchmarks import build_benchmarks_page, sample_benchmark_suite_model
+
+    model = sample_benchmark_suite_model()
+    model["summary"]["status_counts"] = {"validated": 4, "exploratory": 2, "unstable": 1}
+
+    page = build_benchmarks_page(model)
+    graph = next(component for component in _walk_components(page) if component.__class__.__name__ == "Graph")
+
+    assert tuple(graph.figure.data[0].x) == ("validated", "exploratory", "unstable")
+    assert tuple(graph.figure.data[0].y) == (4, 2, 1)
+
+
+@pytest.mark.integration
+def test_study_page_uses_run_records_in_chart() -> None:
+    from qcchem.workbench.pages.studies import build_studies_page, sample_study_model
+
+    model = sample_study_model()
+    model["run_records"] = [
+        {
+            "name": "exact_probe",
+            "verification_status": "validated",
+            "backend_kind": "statevector",
+            "mapping_kind": "jordan_wigner",
+            "policy_name": "benchmark",
+            "total_energy": -1.23,
+        },
+        {
+            "name": "runtime_probe",
+            "verification_status": "exploratory",
+            "backend_kind": "runtime",
+            "mapping_kind": "parity",
+            "policy_name": "hardware_ready",
+            "total_energy": -1.11,
+        },
+    ]
+
+    page = build_studies_page(model)
+    graph = next(component for component in _walk_components(page) if component.__class__.__name__ == "Graph")
+
+    assert tuple(graph.figure.data[0].x) == ("exact_probe", "runtime_probe")
+    assert tuple(graph.figure.data[0].y) == pytest.approx((-1.23, -1.11))
+
+
+@pytest.mark.integration
+def test_scan_page_uses_points_in_curve() -> None:
+    from qcchem.workbench.pages.scans import build_scans_page, sample_scan_model
+
+    model = sample_scan_model()
+    model["points"] = [
+        {"point_label": "p0", "parameter_value": 0.4, "total_energy": -1.0, "verification_status": "validated"},
+        {"point_label": "p1", "parameter_value": 0.8, "total_energy": -1.2, "verification_status": "validated"},
+    ]
+
+    page = build_scans_page(model)
+    graph = next(component for component in _walk_components(page) if component.__class__.__name__ == "Graph")
+
+    assert tuple(graph.figure.data[0].x) == pytest.approx((0.4, 0.8))
+    assert tuple(graph.figure.data[0].y) == pytest.approx((-1.0, -1.2))
+    assert tuple(graph.figure.data[0].customdata) == ("p0", "p1")
+
+
+@pytest.mark.integration
+def test_hardware_campaign_prefers_best_retrieved_case_over_submitted_case() -> None:
+    from qcchem.reporting.hardware_campaign import build_hardware_campaign_summary
+    from qcchem.workbench.pages.hardware_campaign import build_hardware_campaign_page
+
+    model = build_hardware_campaign_summary(
+        {
+            "suite_name": "probe_suite",
+            "summary": {"total_cases": 3, "runtime_evidence_status_counts": {"retrieved": 1, "submitted": 1, "failed": 1}},
+            "cases": [
+                {
+                    "name": "submitted_low_error_case",
+                    "achieved_error": 0.0021,
+                    "runtime_evidence_status": "submitted",
+                    "runtime_usage_seconds": 11.0,
+                    "transpiled_depth": 100,
+                    "backend_name": "ibm_probe",
+                },
+                {
+                    "name": "retrieved_best_case",
+                    "achieved_error": 0.0137,
+                    "runtime_evidence_status": "retrieved_result",
+                    "runtime_usage_seconds": 14.0,
+                    "transpiled_depth": 120,
+                    "backend_name": "ibm_probe",
+                },
+                {
+                    "name": "failed_case",
+                    "achieved_error": 0.0999,
+                    "runtime_evidence_status": "failed",
+                    "runtime_usage_seconds": 0.0,
+                    "transpiled_depth": 140,
+                    "backend_name": "ibm_probe",
+                },
+            ],
+        }
+    )
+
+    page = build_hardware_campaign_page(model)
+    detail_section = next(
+        component
+        for component in _walk_components(page)
+        if getattr(component, "children", None)
+        and component.__class__.__name__ == "Section"
+        and "Best retrieved case" in _collect_text(component)
+    )
+    detail_text = _collect_text(detail_section)
+
+    assert "retrieved_best_case" in detail_text
+    assert "submitted_low_error_case" not in detail_text
+
+    posture_section = next(
+        component
+        for component in _walk_components(page)
+        if getattr(component, "children", None)
+        and component.__class__.__name__ == "Section"
+        and "Campaign posture" in _collect_text(component)
+    )
+    posture_text = _collect_text(posture_section)
+
+    assert "0.0121 Ha" in posture_text
 
 
 @pytest.mark.integration

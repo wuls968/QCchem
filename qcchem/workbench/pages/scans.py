@@ -1,70 +1,54 @@
 from __future__ import annotations
 
-from typing import Any
-
 from dash import dcc, html
 import plotly.graph_objects as go
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
 
 
-def sample_scan_model() -> dict[str, Any]:
-    validated_points = [
-        {"point_label": "0.5 A", "parameter_value": 0.5, "total_energy": -1.0912, "verification_status": "validated"},
-        {"point_label": "0.7 A", "parameter_value": 0.7, "total_energy": -1.1178, "verification_status": "validated"},
-    ]
-    exploratory_points = [
-        {"point_label": "0.9 A", "parameter_value": 0.9, "total_energy": -1.0836, "verification_status": "exploratory"},
+def sample_scan_model() -> dict[str, object]:
+    points = [
+        {"point_label": "point_00_0.500", "parameter_value": 0.5, "total_energy": -1.0551597944706248, "verification_status": "validated"},
+        {"point_label": "point_01_0.735", "parameter_value": 0.735, "total_energy": -1.1373060357534048, "verification_status": "validated"},
+        {"point_label": "point_02_1.000", "parameter_value": 1.0, "total_energy": -1.101150330232619, "verification_status": "validated"},
     ]
     return {
         "scan_name": "h2_short_scan",
-        "parameter_name": "bond_length_angstrom",
-        "summary": {
-            "total_runs": len(validated_points) + len(exploratory_points),
-            "status_counts": {"validated": 2, "exploratory": 1},
-        },
-        "validated_points": validated_points,
-        "exploratory_points": exploratory_points,
+        "parameter_name": "bond_length",
+        "summary": {"total_runs": len(points), "status_counts": {"validated": 3}, "comparison_axes": ["bond_length"]},
+        "points": points,
     }
 
 
-def _scan_curve_figure(model: dict[str, Any]) -> go.Figure:
-    validated_points = model.get("validated_points") or []
-    exploratory_points = model.get("exploratory_points") or []
+def _scan_curve_figure(model: dict[str, object]) -> go.Figure:
+    points = list(model.get("points") or [])
     figure = go.Figure()
     figure.add_scatter(
-        x=[point["parameter_value"] for point in validated_points],
-        y=[point["total_energy"] for point in validated_points],
+        x=[point["parameter_value"] for point in points],
+        y=[point["total_energy"] for point in points],
         mode="lines+markers",
-        name="Validated-like",
         line={"color": "#20334a", "width": 3},
         marker={"size": 10, "color": "#20334a"},
+        customdata=[point["point_label"] for point in points],
+        hovertemplate="%{customdata}<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
     )
-    if exploratory_points:
-        figure.add_scatter(
-            x=[point["parameter_value"] for point in exploratory_points],
-            y=[point["total_energy"] for point in exploratory_points],
-            mode="markers",
-            name="Exploratory",
-            marker={"size": 12, "color": "#c58742", "symbol": "diamond"},
-        )
     figure.update_layout(
-        title={"text": "Energy sweep across the defended scan window", "x": 0.04},
+        title={"text": "Energy sweep across the current scan path", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
         margin={"l": 36, "r": 20, "t": 72, "b": 40},
         xaxis_title=str(model.get("parameter_name", "parameter")),
         yaxis_title="Total energy (Hartree)",
         font={"color": "#2d2216"},
-        legend={"orientation": "h", "x": 0.02, "y": 1.12},
     )
     return figure
 
 
-def build_scans_page(model: dict[str, Any]) -> html.Div:
-    validated_points = model.get("validated_points") or []
-    exploratory_points = model.get("exploratory_points") or []
+def build_scans_page(model: dict[str, object]) -> html.Div:
+    points = list(model.get("points") or [])
     summary = model.get("summary") or {}
+    best_point = min(points, key=lambda point: float(point.get("total_energy") or 0.0)) if points else {}
+
     return html.Div(
         className="qcchem-page qcchem-page--scans",
         style={"display": "grid", "gap": "1rem"},
@@ -75,7 +59,7 @@ def build_scans_page(model: dict[str, Any]) -> html.Div:
                     html.P("Aggregate Atlas", className="qcchem-card-eyebrow"),
                     html.H2("Scans", className="qcchem-card-title", style={"fontSize": "2.1rem"}),
                     html.P(
-                        "A scan control surface for parameter sweeps: the defended curve stays legible, exploratory points remain visible, and the parameter axis is called out as a first-class research control.",
+                        "A scan control surface for parameter sweeps: the defended curve stays legible, point labels stay visible, and the parameter axis remains a first-class research control.",
                         className="qcchem-card-note",
                     ),
                     html.Div(
@@ -83,8 +67,8 @@ def build_scans_page(model: dict[str, Any]) -> html.Div:
                         children=[
                             metric_card("Scan", str(model.get("scan_name", "n/a")), "Aggregate sweep"),
                             metric_card("Parameter", str(model.get("parameter_name", "n/a")), "Named control axis"),
-                            metric_card("Validated-like points", str(len(validated_points)), "On the defended curve"),
-                            metric_card("Exploratory points", str(len(exploratory_points)), "Held out from the defended sweep"),
+                            metric_card("Validated points", str(sum(1 for point in points if point.get("verification_status") == "validated")), "On the defended curve"),
+                            metric_card("Total points", str(summary.get("total_runs", len(points))), "Registered scan samples"),
                         ],
                     ),
                 ],
@@ -94,27 +78,15 @@ def build_scans_page(model: dict[str, Any]) -> html.Div:
                 style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
                 children=[
                     detail_card(
-                        "Validated-like points",
+                        "Scan points",
                         [
                             (
                                 point["point_label"],
                                 f'{point["parameter_value"]} / {point["total_energy"]:.4f} Ha / {point["verification_status"]}',
                             )
-                            for point in validated_points
+                            for point in points
                         ],
                         eyebrow="Defended Sweep",
-                    ),
-                    detail_card(
-                        "Exploratory points",
-                        [
-                            (
-                                point["point_label"],
-                                f'{point["parameter_value"]} / {point["total_energy"]:.4f} Ha / {point["verification_status"]}',
-                            )
-                            for point in exploratory_points
-                        ]
-                        or [("None", "No exploratory points in this scan aggregate")],
-                        eyebrow="Research Scope",
                     ),
                     detail_card(
                         "Sweep posture",
@@ -122,12 +94,13 @@ def build_scans_page(model: dict[str, Any]) -> html.Div:
                             ("Parameter name", str(model.get("parameter_name", "n/a"))),
                             ("Total points", str(summary.get("total_runs", 0))),
                             ("Status counts", str(summary.get("status_counts", {}))),
-                            ("Leading point", str(validated_points[0]["point_label"]) if validated_points else "n/a"),
+                            ("Leading point", str(best_point.get("point_label", "n/a"))),
                         ],
+                        eyebrow="Research Scope",
                     ),
                     callout_card(
                         "Scan framing",
-                        "Scan pages work best when they read like steering surfaces rather than CSV previews, so the chart is centered and the status split stays visible beside the parameter narrative.",
+                        "Scan pages work best when they read like steering surfaces rather than CSV previews, so the chart is centered and the path remains chemically legible.",
                         accent="copper",
                     ),
                 ],

@@ -1,97 +1,76 @@
 from __future__ import annotations
 
-from typing import Any
-
 from dash import dcc, html
 import plotly.graph_objects as go
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
 
 
-def sample_study_model() -> dict[str, Any]:
-    validated_runs = [
+def sample_study_model() -> dict[str, object]:
+    run_records = [
         {
-            "name": "lih_statevector_reference",
+            "name": "h2_exact_reference",
             "verification_status": "validated",
             "backend_kind": "statevector",
-            "mapping_kind": "bravyi_kitaev",
-            "total_energy": -7.8823,
-            "absolute_error": 0.0004,
-        },
-        {
-            "name": "mini_comparison_study",
-            "verification_status": "validated",
-            "backend_kind": "runtime",
-            "mapping_kind": "parity",
-            "total_energy": -7.8751,
-            "absolute_error": 0.0118,
-        },
-    ]
-    exploratory_runs = [
-        {
-            "name": "lih_puccd_probe",
-            "verification_status": "exploratory",
-            "backend_kind": "runtime",
             "mapping_kind": "jordan_wigner",
-            "total_energy": -7.8619,
-            "absolute_error": 0.0214,
+            "policy_name": "benchmark",
+            "total_energy": -1.1373060357534057,
+            "absolute_error": 0.0,
         },
         {
-            "name": "lih_layout_stress_probe",
-            "verification_status": "exploratory",
-            "backend_kind": "runtime",
-            "mapping_kind": "parity",
-            "total_energy": -7.8548,
-            "absolute_error": 0.0286,
+            "name": "h2_variational_reference",
+            "verification_status": "validated",
+            "backend_kind": "statevector",
+            "mapping_kind": "jordan_wigner",
+            "policy_name": "benchmark",
+            "total_energy": -1.1373060346305747,
+            "absolute_error": 0.000001,
         },
     ]
     return {
         "study_name": "mini_comparison_study",
+        "description": "Minimal study comparing exact and variational H2 workflows with shared reporting semantics.",
         "summary": {
-            "total_runs": len(validated_runs) + len(exploratory_runs),
-            "status_counts": {"validated": 2, "exploratory": 2},
-            "comparison_axes": ["backend_kind", "mapping_kind", "ansatz_family"],
+            "total_runs": len(run_records),
+            "status_counts": {"validated": 2},
+            "comparison_axes": ["backend.kind", "mapping.kind", "policy.name"],
         },
-        "validated_runs": validated_runs,
-        "exploratory_runs": exploratory_runs,
+        "run_records": run_records,
     }
 
 
-def _study_energy_figure(model: dict[str, Any]) -> go.Figure:
-    validated_runs = model.get("validated_runs") or []
-    exploratory_runs = model.get("exploratory_runs") or []
+def _study_energy_figure(model: dict[str, object]) -> go.Figure:
+    run_records = list(model.get("run_records") or [])
+    statuses = [str(run.get("verification_status") or "unknown") for run in run_records]
     figure = go.Figure()
     figure.add_bar(
-        x=[run["name"] for run in validated_runs],
-        y=[run["total_energy"] for run in validated_runs],
-        name="Validated-like",
-        marker_color="#20334a",
+        x=[run["name"] for run in run_records],
+        y=[run["total_energy"] for run in run_records],
+        marker_color=[
+            "#20334a" if status == "validated" else "#c58742" if status == "exploratory" else "#7a3f3f"
+            for status in statuses
+        ],
+        customdata=statuses,
+        hovertemplate="%{x}<br>Total energy %{y:.6f} Ha<br>Status %{customdata}<extra></extra>",
     )
-    if exploratory_runs:
-        figure.add_bar(
-            x=[run["name"] for run in exploratory_runs],
-            y=[run["total_energy"] for run in exploratory_runs],
-            name="Exploratory",
-            marker_color="#c58742",
-        )
     figure.update_layout(
-        title={"text": "Study energy stack across defended and exploratory runs", "x": 0.04},
+        title={"text": "Study energy stack across registered run records", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
-        margin={"l": 36, "r": 20, "t": 72, "b": 52},
-        barmode="group",
+        margin={"l": 36, "r": 20, "t": 72, "b": 56},
         yaxis_title="Total energy (Hartree)",
         font={"color": "#2d2216"},
-        legend={"orientation": "h", "x": 0.02, "y": 1.12},
+        xaxis_title="Run record",
     )
     return figure
 
 
-def build_studies_page(model: dict[str, Any]) -> html.Div:
-    validated_runs = model.get("validated_runs") or []
-    exploratory_runs = model.get("exploratory_runs") or []
+def build_studies_page(model: dict[str, object]) -> html.Div:
+    run_records = list(model.get("run_records") or [])
     summary = model.get("summary") or {}
     comparison_axes = summary.get("comparison_axes") or []
+    best_record = min(run_records, key=lambda run: float(run.get("total_energy") or 0.0)) if run_records else {}
+
     return html.Div(
         className="qcchem-page qcchem-page--studies",
         style={"display": "grid", "gap": "1rem"},
@@ -101,17 +80,14 @@ def build_studies_page(model: dict[str, Any]) -> html.Div:
                 children=[
                     html.P("Aggregate Atlas", className="qcchem-card-eyebrow"),
                     html.H2("Studies", className="qcchem-card-title", style={"fontSize": "2.1rem"}),
-                    html.P(
-                        "A research-control surface for cross-run comparisons: defended runs stay visible, exploratory probes stay nearby, and the comparison axes are explicit instead of implicit.",
-                        className="qcchem-card-note",
-                    ),
+                    html.P(str(model.get("description") or ""), className="qcchem-card-note"),
                     html.Div(
                         style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
                         children=[
                             metric_card("Study", str(model.get("study_name", "n/a")), "Aggregate comparison set"),
                             metric_card("Total runs", str(summary.get("total_runs", 0)), "Across all scopes"),
-                            metric_card("Validated-like runs", str(len(validated_runs)), "Ready for defended comparison"),
-                            metric_card("Exploratory runs", str(len(exploratory_runs)), "Held separate from defended evidence"),
+                            metric_card("Validated runs", str(sum(1 for run in run_records if run.get("verification_status") == "validated")), "Ready for defended comparison"),
+                            metric_card("Comparison axes", str(len(comparison_axes)), "Explicit cross-run dimensions"),
                         ],
                     ),
                 ],
@@ -121,34 +97,28 @@ def build_studies_page(model: dict[str, Any]) -> html.Div:
                 style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
                 children=[
                     detail_card(
-                        "Validated-like runs",
+                        "Run records",
                         [
-                            (run["name"], f'{run["backend_kind"]} / {run["mapping_kind"]} / {run["total_energy"]:.4f} Ha')
-                            for run in validated_runs
+                            (
+                                run["name"],
+                                f'{run.get("backend_kind", "n/a")} / {run.get("mapping_kind", "n/a")} / {run.get("verification_status", "n/a")}',
+                            )
+                            for run in run_records
                         ],
                         eyebrow="Defended Scope",
                     ),
                     detail_card(
-                        "Exploratory runs",
+                        "Study posture",
                         [
-                            (run["name"], f'{run["backend_kind"]} / {run["mapping_kind"]} / {run["absolute_error"]:.4f} Ha error')
-                            for run in exploratory_runs
-                        ]
-                        or [("None", "No exploratory runs in this aggregate")],
-                        eyebrow="Research Scope",
-                    ),
-                    detail_card(
-                        "Comparison axes",
-                        [
-                            ("Axis count", str(len(comparison_axes))),
                             ("Axes", ", ".join(str(axis) for axis in comparison_axes) or "n/a"),
                             ("Status counts", str(summary.get("status_counts", {}))),
-                            ("Lead comparison", "Backend and mapping choices remain jointly visible"),
+                            ("Best run", str(best_record.get("name", "n/a"))),
+                            ("Best total energy", f'{float(best_record.get("total_energy") or 0.0):.6f} Ha'),
                         ],
                     ),
                     callout_card(
                         "Study readout",
-                        "This page is meant to feel like a campaign console: enough structure to compare runs quickly, enough narrative to remind the reader why exploratory probes are nearby but not mixed into the defended claim.",
+                        "This page is meant to feel like a campaign console: enough structure to compare runs quickly, enough narrative to remind the reader which comparison axes are carrying the study.",
                         accent="copper",
                     ),
                 ],
