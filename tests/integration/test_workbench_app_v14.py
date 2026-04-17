@@ -99,7 +99,12 @@ def test_page_modules_expose_model_driven_builders() -> None:
         "meets_chemical_accuracy": False,
         "threshold_hartree": 0.0016,
     }
-    model["confidence"]["runtime_chemical_accuracy"] = {"available": True, "meets_chemical_accuracy": False}
+    model["confidence"]["runtime_chemical_accuracy"] = {
+        "available": True,
+        "meets_chemical_accuracy": False,
+        "absolute_error_hartree": 0.0142,
+        "threshold_hartree": 0.0016,
+    }
     model["confidence"]["comparison_target"] = "probe-reference"
     model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
     model["structure"]["active_space_metadata"] = {
@@ -150,8 +155,20 @@ def test_page_modules_expose_model_driven_builders() -> None:
 
     runtime_module = importlib.import_module("qcchem.workbench.pages.runtime_monitoring")
     runtime_page = runtime_module.build_runtime_monitoring_page(model)
-    runtime_graph = next(component for component in _walk_components(runtime_page) if component.__class__.__name__ == "Graph")
-    assert runtime_graph.figure.data[0].y[-1] == 987
+    runtime_text = _collect_text(runtime_page)
+    runtime_graphs = [component for component in _walk_components(runtime_page) if component.__class__.__name__ == "Graph"]
+    telemetry_graph = next(
+        graph for graph in runtime_graphs if "Observed runtime and compilation telemetry" in graph.figure.layout.title.text
+    )
+    comparison_graph = next(
+        graph for graph in runtime_graphs if "Simulator vs Hardware" in graph.figure.layout.title.text
+    )
+    comparison_values = tuple(comparison_graph.figure.data[0].y)
+
+    assert "Simulator vs Hardware" in runtime_text
+    assert telemetry_graph.figure.data[0].y[-1] == 987
+    assert comparison_graph.figure.data[0].x == ("Simulator", "Hardware")
+    assert comparison_values == pytest.approx((0.0118, 0.0142))
 
     structure_module = importlib.import_module("qcchem.workbench.pages.structure_orbitals")
     structure_page = structure_module.build_structure_orbitals_page(model)

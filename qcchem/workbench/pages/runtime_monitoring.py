@@ -37,8 +37,54 @@ def _runtime_figure(runtime: dict[str, object]) -> go.Figure:
     return figure
 
 
+def _comparison_figure(model: dict[str, object]) -> go.Figure:
+    benchmark = model.get("benchmark") or {}
+    confidence = model.get("confidence") or {}
+    chemical_accuracy = confidence.get("chemical_accuracy") or {}
+    runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    simulator_error = float(benchmark.get("absolute_error") or confidence.get("absolute_error") or 0.0)
+    hardware_error = float(runtime_chemical_accuracy.get("absolute_error_hartree") or simulator_error)
+    threshold = float(chemical_accuracy.get("threshold_hartree") or confidence.get("threshold") or benchmark.get("threshold") or 0.02)
+    figure = go.Figure()
+    figure.add_bar(
+        x=["Simulator", "Hardware"],
+        y=[simulator_error, hardware_error],
+        marker_color=["#9a6b3f", "#93a18a"],
+    )
+    figure.add_hline(
+        y=threshold,
+        line_dash="dash",
+        line_color="#20334a",
+        annotation_text="Chemical accuracy threshold",
+        annotation_position="top left",
+    )
+    figure.update_layout(
+        title={"text": "Simulator vs Hardware comparison for the current runtime-backed result", "x": 0.04},
+        paper_bgcolor="#fffaf3",
+        plot_bgcolor="#fffaf3",
+        margin={"l": 36, "r": 20, "t": 72, "b": 40},
+        yaxis_title="Absolute error (Hartree)",
+        font={"color": "#2d2216"},
+    )
+    return figure
+
+
 def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
     runtime = model["runtime"]
+    benchmark = model.get("benchmark") or {}
+    confidence = model.get("confidence") or {}
+    chemical_accuracy = confidence.get("chemical_accuracy") or {}
+    runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    simulator_error = float(benchmark.get("absolute_error") or confidence.get("absolute_error") or 0.0)
+    hardware_error = float(runtime_chemical_accuracy.get("absolute_error_hartree") or simulator_error)
+    error_gap = abs(hardware_error - simulator_error)
+    comparison_target = str(
+        confidence.get("comparison_target")
+        or confidence.get("boundary", {}).get("comparison_target")
+        or benchmark.get("comparison_target")
+        or "exact diagonalization"
+    )
+    threshold = float(chemical_accuracy.get("threshold_hartree") or confidence.get("threshold") or benchmark.get("threshold") or 0.02)
     return html.Div(
         className="qcchem-page qcchem-page--runtime",
         style={"display": "grid", "gap": "1rem"},
@@ -60,6 +106,26 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                             metric_card("Verification", str(runtime.get("verification_status", "pending")).title(), str(runtime.get("service", "n/a"))),
                         ],
                     ),
+                ],
+            ),
+            html.Section(
+                className="qcchem-card",
+                children=[
+                    html.P("Runtime Comparison", className="qcchem-card-eyebrow"),
+                    html.H2("Simulator vs Hardware", className="qcchem-card-title", style={"fontSize": "2rem"}),
+                    html.P(
+                        "The simulator benchmark and runtime-derived hardware result are shown side by side so drift is visible before the telemetry trace.",
+                        className="qcchem-card-note",
+                    ),
+                    html.Div(
+                        style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
+                        children=[
+                            metric_card("Simulator error", f"{simulator_error:.4f} Ha", comparison_target),
+                            metric_card("Hardware error", f"{hardware_error:.4f} Ha", "Runtime-derived result"),
+                            metric_card("Error gap", f"{error_gap:.4f} Ha", f"Threshold {threshold:.4f} Ha"),
+                        ],
+                    ),
+                    dcc.Graph(figure=_comparison_figure(model), config={"displayModeBar": False}),
                 ],
             ),
             html.Section(className="qcchem-card", children=[dcc.Graph(figure=_runtime_figure(runtime), config={"displayModeBar": False})]),
