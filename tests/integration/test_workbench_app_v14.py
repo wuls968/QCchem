@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import importlib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -10,6 +11,14 @@ import pytest
 from qcchem.workbench.theme import SHARED_THEME_FAMILIES, THEME, css_var_map
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+SCIENTIFIC_PAGE_MODULES = {
+    "qcchem.workbench.pages.overview": ("/overview", "Campaign Overview"),
+    "qcchem.workbench.pages.structure_orbitals": ("/structure-orbitals", "Structure and Orbitals"),
+    "qcchem.workbench.pages.active_space_compression": ("/active-space-compression", "Active Space and Compression"),
+    "qcchem.workbench.pages.mapping_resources": ("/mapping-resources", "Mapping, Resources, and Circuit"),
+    "qcchem.workbench.pages.runtime_monitoring": ("/runtime-monitoring", "Runtime Monitoring"),
+    "qcchem.workbench.pages.result_confidence": ("/result-confidence", "Result Confidence Report"),
+}
 
 
 def _walk_components(component: object) -> Iterable[object]:
@@ -28,6 +37,14 @@ def _resolve_layout(layout: object) -> object:
     return layout() if callable(layout) else layout
 
 
+def _collect_text(component: object) -> str:
+    parts: list[str] = []
+    for item in _walk_components(component):
+        if isinstance(item, str):
+            parts.append(item)
+    return " ".join(parts)
+
+
 @pytest.mark.integration
 def test_create_app_registers_primary_pages() -> None:
     from qcchem.workbench.app import create_app
@@ -41,8 +58,48 @@ def test_create_app_registers_primary_pages() -> None:
         if isinstance(getattr(child, "id", None), dict) and child.id.get("type") == "qcchem-page-validation"
     }
 
-    assert "/overview" in page_paths
-    assert "/results" in page_paths
+    assert set(page_paths) >= {route for route, _title in SCIENTIFIC_PAGE_MODULES.values()}
+
+
+@pytest.mark.integration
+def test_scientific_page_modules_render_real_content() -> None:
+    for module_name, (_route, title) in SCIENTIFIC_PAGE_MODULES.items():
+        module = importlib.import_module(module_name)
+        page = _resolve_layout(module.layout)
+        page_text = _collect_text(page)
+
+        assert title in page_text
+        assert "Placeholder Page" not in page_text
+
+
+@pytest.mark.integration
+def test_molecule_viewer_exposes_json_payload_for_bridge() -> None:
+    from qcchem.workbench.components.molecule import build_molecule_viewer
+
+    viewer = build_molecule_viewer(
+        {
+            "format": "xyz",
+            "coordinates": "2\nH2\nH 0.0 0.0 0.0\nH 0.0 0.0 0.74\n",
+            "style": {"stick": {}},
+        },
+        viewer_id="probe-viewer",
+        title="Hydrogen Probe",
+    )
+    props = viewer.to_plotly_json()["props"]
+    canvas = props["children"][2].to_plotly_json()["props"]
+
+    assert props["id"] == "probe-viewer"
+    assert canvas["data-molecule-json"]
+    assert '"format":"xyz"' in canvas["data-molecule-json"]
+    assert "qcchem-molecule-viewer" in canvas["className"]
+
+
+def test_three_dmol_bridge_asset_reads_molecule_payload() -> None:
+    bridge = (REPO_ROOT / "qcchem" / "workbench" / "assets" / "3dmol-bridge.js").read_text(encoding="utf-8")
+
+    assert "data-molecule-json" in bridge
+    assert "3Dmol" in bridge
+    assert "qcchem-molecule-viewer" in bridge
 
 
 def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:
