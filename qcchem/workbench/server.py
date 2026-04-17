@@ -3,9 +3,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from qcchem.workbench.app import create_app
+
 
 def serve_workbench(host: str = "127.0.0.1", port: int = 8050, debug: bool = False) -> dict[str, Any]:
-    return {"url": f"http://{host}:{port}", "pages": 0, "debug": debug}
+    app = create_app()
+    return {"url": f"http://{host}:{port}", "pages": len(app.page_registry), "debug": debug}
 
 
 def print_workbench_startup(summary: dict[str, Any]) -> None:

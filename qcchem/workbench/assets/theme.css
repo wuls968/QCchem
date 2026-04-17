@@ -1,0 +1,212 @@
+:root {
+  --qcchem-surface-paper: #f7f1e8;
+  --qcchem-surface-card: #fffaf3;
+  --qcchem-surface-panel: #fbf5ec;
+  --qcchem-surface-canvas: #efe5d6;
+  --qcchem-surface-line: #dfd0ba;
+  --qcchem-text-primary: #2d2216;
+  --qcchem-text-secondary: #6d5a46;
+  --qcchem-text-muted: #8a765f;
+  --qcchem-text-inverse: #f8f3eb;
+  --qcchem-accent-copper: #9a6b3f;
+  --qcchem-accent-deep-blue: #20334a;
+  --qcchem-accent-ice: #d9ecf4;
+  --qcchem-accent-sage: #93a18a;
+  --qcchem-accent-signal: #c58742;
+  --qcchem-shadow-card: 0 18px 48px rgba(84, 63, 36, 0.12);
+  --qcchem-shadow-panel: 0 10px 24px rgba(32, 51, 74, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(217, 236, 244, 0.55), transparent 28%),
+    linear-gradient(180deg, var(--qcchem-surface-paper) 0%, var(--qcchem-surface-canvas) 100%);
+  color: var(--qcchem-text-primary);
+  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.qcchem-shell {
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.qcchem-context-bar {
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: stretch;
+  margin-bottom: 24px;
+  padding: 26px 28px;
+  border: 1px solid rgba(154, 107, 63, 0.2);
+  border-radius: 32px;
+  background:
+    linear-gradient(140deg, rgba(255, 250, 243, 0.98), rgba(251, 245, 236, 0.9)),
+    linear-gradient(45deg, rgba(217, 236, 244, 0.35), transparent 45%);
+  box-shadow: var(--qcchem-shadow-panel);
+}
+
+.qcchem-context-bar__identity {
+  max-width: 42rem;
+}
+
+.qcchem-context-bar__eyebrow,
+.qcchem-panel__eyebrow,
+.qcchem-card-eyebrow {
+  margin: 0 0 8px;
+  color: var(--qcchem-accent-copper);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.qcchem-context-bar__title {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.96;
+}
+
+.qcchem-context-bar__subtitle {
+  margin: 12px 0 0;
+  max-width: 36rem;
+  color: var(--qcchem-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.qcchem-context-bar__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 14px;
+  min-width: min(100%, 360px);
+}
+
+.qcchem-main-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr) minmax(250px, 320px);
+  gap: 20px;
+  align-items: start;
+}
+
+.qcchem-panel,
+.qcchem-card {
+  background: rgba(255, 250, 243, 0.92);
+  border: 1px solid var(--qcchem-surface-line);
+  border-radius: 22px;
+  box-shadow: var(--qcchem-shadow-card);
+}
+
+.qcchem-panel {
+  padding: 22px;
+  position: sticky;
+  top: 24px;
+}
+
+.qcchem-panel__title,
+.qcchem-card-title,
+.qcchem-page-placeholder__title {
+  margin: 0 0 12px;
+  font-family: "Iowan Old Style", "Palatino Linotype", serif;
+  font-size: 1.45rem;
+  color: var(--qcchem-accent-deep-blue);
+}
+
+.qcchem-research-navigator__links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qcchem-research-navigator__link {
+  padding: 12px 14px;
+  border: 1px solid rgba(32, 51, 74, 0.08);
+  border-radius: 16px;
+  color: var(--qcchem-text-secondary);
+  background: rgba(255, 255, 255, 0.55);
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.qcchem-research-navigator__link:hover {
+  transform: translateX(3px);
+  border-color: rgba(154, 107, 63, 0.42);
+  color: var(--qcchem-text-primary);
+}
+
+.qcchem-page-frame {
+  min-height: 70vh;
+}
+
+.qcchem-page-placeholder {
+  min-height: 100%;
+  padding: 28px;
+  border: 1px dashed rgba(32, 51, 74, 0.18);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(251, 245, 236, 0.82)),
+    linear-gradient(135deg, rgba(217, 236, 244, 0.4), transparent 40%);
+  box-shadow: var(--qcchem-shadow-card);
+}
+
+.qcchem-page-placeholder__body,
+.qcchem-card-note,
+.qcchem-card-value {
+  margin: 0;
+  color: var(--qcchem-text-secondary);
+}
+
+.qcchem-card {
+  padding: 18px;
+}
+
+.qcchem-card-value {
+  color: var(--qcchem-text-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.qcchem-card--compact {
+  padding: 14px 16px;
+}
+
+.qcchem-card--callout {
+  background:
+    linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(217, 236, 244, 0.45));
+}
+
+.qcchem-card--accent-copper {
+  border-color: rgba(154, 107, 63, 0.34);
+}
+
+@media (max-width: 1080px) {
+  .qcchem-shell {
+    padding: 18px;
+  }
+
+  .qcchem-context-bar,
+  .qcchem-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qcchem-context-bar {
+    flex-direction: column;
+  }
+
+  .qcchem-context-bar__metrics {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .qcchem-panel {
+    position: static;
+  }
+}
