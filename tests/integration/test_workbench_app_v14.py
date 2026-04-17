@@ -15,7 +15,11 @@ def test_create_app_registers_primary_pages() -> None:
 
     app = create_app()
 
-    page_paths = {page["path"] for page in app.page_registry.values()}
+    page_paths = {
+        child.id["path"]
+        for child in app.validation_layout.children
+        if isinstance(getattr(child, "id", None), dict) and child.id.get("type") == "qcchem-page-validation"
+    }
 
     assert "/overview" in page_paths
     assert "/results" in page_paths

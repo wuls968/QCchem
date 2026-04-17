@@ -6,7 +6,7 @@ import dash
 from dash import Dash, dcc, html
 
 from qcchem.workbench.components.layout import build_shell
-from qcchem.workbench.pages._registry import ensure_pages_registered
+from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
@@ -27,6 +27,7 @@ def create_app() -> Dash:
         [
             dcc.Location(id="qcchem-url"),
             build_shell(),
+            *build_validation_pages(),
         ]
     )
     return app
