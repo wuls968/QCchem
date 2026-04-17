@@ -16,6 +16,11 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
     properties = qcschema.get("properties") or {}
     molecule = qcschema.get("molecule") or {}
     model = qcschema.get("model") or {}
+    reduction_audit = extras.get("reduction_audit") or {}
+    verification_status = extras.get("verification_status")
+    success = qcschema.get("success")
+    if verification_status is None:
+        verification_status = success
 
     return {
         "problem": {
@@ -23,6 +28,7 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
             "basis": model.get("basis"),
             "charge": molecule.get("charge"),
             "multiplicity": molecule.get("multiplicity"),
+            "active_space_metadata": reduction_audit.get("active_space_metadata"),
         },
         "energy": {
             "total_energy": properties.get("return_energy"),
@@ -31,10 +37,11 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         },
         "mapping": extras.get("mapping") or {},
         "benchmark": extras.get("benchmark"),
-        "reduction_audit": extras.get("reduction_audit"),
+        "reduction_audit": reduction_audit,
         "runtime_submission": extras.get("runtime_submission"),
         "compression_result": extras.get("compression_result"),
-        "verification_status": qcschema.get("success") if qcschema.get("success") is not None else extras.get("verification_status"),
+        "verification_status": verification_status,
+        "success": success,
         "hardware_verified": extras.get("hardware_verified"),
         "hardware_evidence_tier": extras.get("hardware_evidence_tier"),
         "chemical_accuracy": extras.get("chemical_accuracy"),

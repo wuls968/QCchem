@@ -19,6 +19,16 @@ def _require_sections(data: dict[str, Any], required: tuple[str, ...]) -> None:
         raise ValueError(f"missing required sections: {missing_list}")
 
 
+def _require_present_value(section: dict[str, Any], section_name: str, key_path: str) -> None:
+    current: Any = section
+    for key in key_path.split("."):
+        if not isinstance(current, dict) or key not in current:
+            raise ValueError(f"missing required field: {section_name}.{key_path}")
+        current = current[key]
+    if current in (None, ""):
+        raise ValueError(f"missing required field: {section_name}.{key_path}")
+
+
 def build_qcschema_payload(result: Any) -> dict[str, Any]:
     """Build a minimal QCSchema-style export from a QCchem run result."""
     data = to_primitive(result)
@@ -26,8 +36,12 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
     problem = data.get("problem") or {}
     energy = data.get("energy") or {}
     provenance = data.get("provenance") or {}
+    _require_present_value(problem, "problem", "molecule_name")
+    _require_present_value(energy, "energy", "total_energy")
     verification_status = data.get("verification_status")
-    success = verification_status not in (None, "failed", False)
+    success = data.get("success")
+    if success is None:
+        success = verification_status not in (None, "failed", False)
     return {
         "schema_name": "qcschema_output",
         "schema_version": 1,

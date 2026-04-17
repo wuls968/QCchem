@@ -38,6 +38,14 @@ def test_build_run_view_model_extracts_visual_sections() -> None:
             "submitted": True,
             "succeeded": True,
             "runtime_kind": "runtime_estimator",
+            "mode": "runtime",
+            "service": "ibm_runtime",
+            "failure_category": None,
+            "failure_message": None,
+            "options_snapshot": {"precision_target": 0.02},
+            "result_provenance": {"attempt_stage": "result_retrieved"},
+            "returned_job_metadata": {"metadata": {"shots": 4096}},
+            "verification_status": "passed",
             "transpiled_depth": 146,
             "transpiled_two_qubit_gate_count": 42,
             "transpilation": {"optimization_level": 2},
@@ -59,6 +67,11 @@ def test_build_run_view_model_extracts_visual_sections() -> None:
     assert view["mapping"]["num_qubits"] == 4
     assert view["compression"]["method"] == "modified_cholesky"
     assert view["runtime"]["backend_name"] == "ibm_kingston"
+    assert view["runtime"]["failure_category"] is None
+    assert view["runtime"]["mode"] == "runtime"
+    assert view["runtime"]["options_snapshot"]["precision_target"] == 0.02
+    assert view["runtime"]["result_provenance"]["attempt_stage"] == "result_retrieved"
+    assert view["runtime"]["returned_job_metadata"]["metadata"]["shots"] == 4096
     assert view["benchmark"]["relative_error"] == 0.021
     assert view["benchmark"]["comparison_target"] == "exact"
     assert view["confidence"]["threshold"] == 0.02
@@ -72,6 +85,7 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
         """
         {
           "schema_name": "qcschema_output",
+          "success": true,
           "molecule": {
             "name": "H2",
             "charge": 0,
@@ -83,10 +97,16 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
             "nuclear_repulsion_energy": 0.7199
           },
           "extras": {
-            "verification_status": "passed",
+            "verification_status": "exploratory",
+            "hardware_verified": false,
             "mapping": {
               "kind": "jordan_wigner",
               "num_qubits": 4
+            },
+            "reduction_audit": {
+              "active_space_metadata": {
+                "num_active_orbitals": 2
+              }
             },
             "runtime_submission": {
               "backend_name": "ibm_kingston"
@@ -109,7 +129,9 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     assert bundle["artifacts"]["hdf5"]["path"] == str(root / "result.h5")
     assert bundle["preferred_source"] == "qcschema"
     assert bundle["run"]["problem"]["molecule_name"] == "H2"
-    assert bundle["run"]["verification_status"] == "passed"
+    assert bundle["run"]["verification_status"] == "exploratory"
+    assert bundle["run"]["success"] is True
+    assert bundle["run"]["problem"]["active_space_metadata"]["num_active_orbitals"] == 2
     assert bundle["run"]["mapping"]["num_qubits"] == 4
 
 
@@ -137,3 +159,39 @@ def test_build_qcschema_payload_marks_missing_verification_status_as_unsuccessfu
 
     assert qcschema["extras"]["verification_status"] is None
     assert qcschema["success"] is False
+
+
+def test_build_qcschema_payload_rejects_present_problem_without_molecule_name() -> None:
+    payload = {
+        "problem": {
+            "basis": "sto3g",
+            "charge": 0,
+            "multiplicity": 1,
+        },
+        "energy": {
+            "total_energy": -1.1373,
+            "electronic_energy": -1.8572,
+            "nuclear_repulsion_energy": 0.7199,
+        },
+    }
+
+    with pytest.raises(ValueError, match="problem.molecule_name"):
+        build_qcschema_payload(payload)
+
+
+def test_build_qcschema_payload_rejects_present_energy_without_total_energy() -> None:
+    payload = {
+        "problem": {
+            "molecule_name": "H2",
+            "basis": "sto3g",
+            "charge": 0,
+            "multiplicity": 1,
+        },
+        "energy": {
+            "electronic_energy": -1.8572,
+            "nuclear_repulsion_energy": 0.7199,
+        },
+    }
+
+    with pytest.raises(ValueError, match="energy.total_energy"):
+        build_qcschema_payload(payload)
