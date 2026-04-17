@@ -22,6 +22,16 @@ SCIENTIFIC_PAGE_MODULES = {
     "qcchem.workbench.pages.runtime_monitoring": ("/runtime-monitoring", "Runtime Monitoring", "build_runtime_monitoring_page"),
     "qcchem.workbench.pages.result_confidence": ("/result-confidence", "Result Confidence Report", "build_result_confidence_page"),
 }
+AGGREGATE_PAGE_MODULES = {
+    "qcchem.workbench.pages.studies": ("/studies", "Studies", "build_studies_page"),
+    "qcchem.workbench.pages.benchmarks": ("/benchmarks", "Benchmarks", "build_benchmarks_page"),
+    "qcchem.workbench.pages.scans": ("/scans", "Scans", "build_scans_page"),
+    "qcchem.workbench.pages.hardware_campaign": (
+        "/hardware-campaign",
+        "Hardware Campaign",
+        "build_hardware_campaign_page",
+    ),
+}
 
 
 def _walk_components(component: object) -> Iterable[object]:
@@ -63,11 +73,23 @@ def test_create_app_registers_primary_pages() -> None:
 
     assert "/" in page_paths
     assert set(page_paths) >= {route for route, _title, _builder in SCIENTIFIC_PAGE_MODULES.values()}
+    assert set(page_paths) >= {route for route, _title, _builder in AGGREGATE_PAGE_MODULES.values()}
 
 
 @pytest.mark.integration
 def test_scientific_page_modules_render_real_content() -> None:
     for module_name, (_route, title, _builder) in SCIENTIFIC_PAGE_MODULES.items():
+        module = importlib.import_module(module_name)
+        page = _resolve_layout(module.layout)
+        page_text = _collect_text(page)
+
+        assert title in page_text
+        assert "Placeholder Page" not in page_text
+
+
+@pytest.mark.integration
+def test_aggregate_page_modules_render_real_content() -> None:
+    for module_name, (_route, title, _builder) in AGGREGATE_PAGE_MODULES.items():
         module = importlib.import_module(module_name)
         page = _resolve_layout(module.layout)
         page_text = _collect_text(page)
@@ -228,6 +250,38 @@ def test_structure_orbitals_labels_original_indices_when_provided() -> None:
         "pos 3 / orig 8",
         "pos 4 / orig 9",
     )
+
+
+@pytest.mark.integration
+def test_aggregate_pages_surface_real_content() -> None:
+    from qcchem.workbench.pages.benchmarks import build_benchmarks_page, sample_benchmark_suite_model
+    from qcchem.workbench.pages.hardware_campaign import build_hardware_campaign_page, sample_hardware_campaign_model
+    from qcchem.workbench.pages.scans import build_scans_page, sample_scan_model
+    from qcchem.workbench.pages.studies import build_studies_page, sample_study_model
+
+    study_page = build_studies_page(sample_study_model())
+    study_text = _collect_text(study_page)
+    assert "mini_comparison_study" in study_text
+    assert "Validated-like runs" in study_text
+    assert "Exploratory runs" in study_text
+
+    benchmark_page = build_benchmarks_page(sample_benchmark_suite_model())
+    benchmark_text = _collect_text(benchmark_page)
+    assert "Validated" in benchmark_text
+    assert "Exploratory" in benchmark_text
+    assert "status band" in benchmark_text.lower()
+
+    scan_page = build_scans_page(sample_scan_model())
+    scan_text = _collect_text(scan_page)
+    assert "bond_length_angstrom" in scan_text
+    assert "0.5" in scan_text
+    assert "Validated-like points" in scan_text
+
+    hardware_page = build_hardware_campaign_page(sample_hardware_campaign_model())
+    hardware_text = _collect_text(hardware_page)
+    assert "h2_runtime_hardware_probe_puccd_layout" in hardware_text
+    assert "0.0137" in hardware_text
+    assert "Runtime evidence status" in hardware_text
 
 
 @pytest.mark.integration

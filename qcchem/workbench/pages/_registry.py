@@ -114,6 +114,38 @@ def ensure_pages_registered() -> None:
         summary="Accuracy boundary, verification status, and report-grade scientific confidence.",
         order=5,
     )
+    _register_page(
+        "qcchem.workbench.pages.studies",
+        path="/studies",
+        name="Studies",
+        title="Studies",
+        summary="Aggregate study comparisons across defended runs, exploratory probes, and campaign axes.",
+        order=6,
+    )
+    _register_page(
+        "qcchem.workbench.pages.benchmarks",
+        path="/benchmarks",
+        name="Benchmarks",
+        title="Benchmarks",
+        summary="Benchmark suite control surface with status bands, defended scope, and exploratory separation.",
+        order=7,
+    )
+    _register_page(
+        "qcchem.workbench.pages.scans",
+        path="/scans",
+        name="Scans",
+        title="Scans",
+        summary="Aggregate parameter-scan view across validated-like and exploratory sweep points.",
+        order=8,
+    )
+    _register_page(
+        "qcchem.workbench.pages.hardware_campaign",
+        path="/hardware-campaign",
+        name="Hardware Campaign",
+        title="Hardware Campaign",
+        summary="Hardware runtime campaign ranking, best-case evidence, and runtime status posture.",
+        order=9,
+    )
 
 
 def build_validation_pages() -> list[html.Div]:
