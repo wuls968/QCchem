@@ -15,13 +15,11 @@ def _fmt_energy(value: float | None, units: str) -> str:
 
 
 def _calibration_summary_lines(data: dict[str, Any], units: str) -> list[str]:
-    calibration = data.get("calibration")
-    if calibration is None:
-        return []
+    calibration = data.get("calibration") or {}
     return [
         "## Calibration Summary",
         "",
-        f"- available: `{calibration.get('available')}`",
+        f"- available: `{calibration.get('available', False)}`",
         f"- measured_wall_time_seconds: `{calibration.get('measured_wall_time_seconds')}`",
         f"- measured_shot_usage: `{calibration.get('measured_shot_usage')}`",
         f"- precision_target: `{calibration.get('precision_target')}`",
@@ -35,9 +33,7 @@ def _calibration_summary_lines(data: dict[str, Any], units: str) -> list[str]:
 
 
 def _hardware_execution_lines(data: dict[str, Any]) -> list[str]:
-    runtime_submission = data.get("runtime_submission")
-    if runtime_submission is None:
-        return []
+    runtime_submission = data.get("runtime_submission") or {}
     return [
         "## Hardware Execution",
         "",

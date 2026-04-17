@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 
 from qcchem.reporting.aggregate import write_hardware_calibration_report
+from qcchem.reporting.markdown import render_markdown_report
+from qcchem.io.serialization import to_primitive
 from qcchem.workflow.runner import run_from_config
 
 
@@ -18,6 +20,26 @@ def test_hardware_run_report_mentions_hardware_sections(tmp_path: Path) -> None:
     report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")
     assert "Hardware Execution" in report_text
     assert "Calibration Summary" in report_text
+
+
+@pytest.mark.integration
+def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tmp_path: Path) -> None:
+    result = run_from_config(
+        Path("/Users/a0000/QCchem/configs/h2_exact.yaml"),
+        output_dir=tmp_path / "h2_exact_preview",
+    )
+    payload = to_primitive(result)
+    payload["calibration"] = None
+    payload["runtime_submission"] = None
+    payload["hardware_verified"] = False
+    payload["hardware_evidence_tier"] = None
+    report_text = render_markdown_report(payload)
+
+    assert "Calibration Summary" in report_text
+    assert "- available: `False`" in report_text
+    assert "Hardware Execution" in report_text
+    assert "- hardware_verified: `False`" in report_text
+    assert "- attempted: `None`" in report_text
 
 
 @pytest.mark.integration
