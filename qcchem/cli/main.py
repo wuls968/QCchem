@@ -9,6 +9,7 @@ from pathlib import Path
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
+from qcchem.workbench.server import serve_workbench
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.scan import run_scan_from_config
@@ -62,6 +63,13 @@ def _build_parser() -> argparse.ArgumentParser:
     exploratory_run = exploratory_subparsers.add_parser("run", help="Run an exploratory QCchem calculation.")
     exploratory_run.add_argument("-c", "--config", type=Path, required=True)
     exploratory_run.add_argument("-o", "--output-dir", type=Path)
+
+    workbench_parser = subparsers.add_parser("workbench", help="Local QCchem visual workbench.")
+    workbench_subparsers = workbench_parser.add_subparsers(dest="workbench_command", required=True)
+    workbench_serve = workbench_subparsers.add_parser("serve", help="Serve the local QCchem workbench.")
+    workbench_serve.add_argument("--host", default="127.0.0.1")
+    workbench_serve.add_argument("--port", type=int, default=8050)
+    workbench_serve.add_argument("--debug", action="store_true")
     return parser
 
 
@@ -225,6 +233,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Module origin: {result.module_origin}")
             print(f"Capability tier: {result.capability_tier}")
             print(f"Artifacts: {result.artifacts.root}")
+            return 0
+
+    if args.command == "workbench":
+        if args.workbench_command == "serve":
+            summary = serve_workbench(host=args.host, port=args.port, debug=args.debug)
+            print("QCchem workbench ready")
+            print(f"URL: {summary['url']}")
+            print(f"Pages: {summary['pages']}")
             return 0
 
     parser.error(f"Unsupported command: {args.command}")

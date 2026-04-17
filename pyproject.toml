@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "QCchem"
+version = "0.1.0a0"
+description = "Research-grade quantum chemistry workflow scaffold built on Qiskit and Qiskit Nature."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "QCchem Contributors" }
+]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "PyYAML>=6.0",
+  "qiskit>=2.3.0",
+  "qiskit-nature>=0.7.0",
+  "pyscf>=2.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+runtime = [
+  "qiskit-ibm-runtime>=0.46.0",
+]
+ui = [
+  "dash>=2.18",
+  "plotly>=5.24",
+  "pandas>=2.2",
+]
+
+[project.scripts]
+qcchem = "qcchem.cli.main:main"
+qcchem-workbench = "qcchem.workbench.server:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["qcchem*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "integration: integration tests requiring the quantum chemistry stack",
+]
+filterwarnings = [
+  "ignore:The class ``qiskit\\..*`` is deprecated.*:DeprecationWarning",
+]
