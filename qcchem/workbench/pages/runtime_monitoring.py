@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
 from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.viewmodels import build_runtime_comparison_model
 
 
 def _runtime_figure(runtime: dict[str, object]) -> go.Figure:
@@ -71,20 +72,11 @@ def _comparison_figure(model: dict[str, object]) -> go.Figure:
 
 def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
     runtime = model["runtime"]
-    benchmark = model.get("benchmark") or {}
-    confidence = model.get("confidence") or {}
-    chemical_accuracy = confidence.get("chemical_accuracy") or {}
-    runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
-    simulator_error = float(benchmark.get("absolute_error") or confidence.get("absolute_error") or 0.0)
-    hardware_error = float(runtime_chemical_accuracy.get("absolute_error_hartree") or simulator_error)
-    error_gap = abs(hardware_error - simulator_error)
-    comparison_target = str(
-        confidence.get("comparison_target")
-        or confidence.get("boundary", {}).get("comparison_target")
-        or benchmark.get("comparison_target")
-        or "exact diagonalization"
-    )
-    threshold = float(chemical_accuracy.get("threshold_hartree") or confidence.get("threshold") or benchmark.get("threshold") or 0.02)
+    comparison = build_runtime_comparison_model(model)
+    simulator_error = float(comparison["simulator_error_hartree"])
+    hardware_error = float(comparison["hardware_error_hartree"])
+    error_gap = float(comparison["error_gap_hartree"])
+    threshold = float(comparison["threshold_hartree"])
     return html.Div(
         className="qcchem-page qcchem-page--runtime",
         style={"display": "grid", "gap": "1rem"},
@@ -114,18 +106,36 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                     html.P("Runtime Comparison", className="qcchem-card-eyebrow"),
                     html.H2("Simulator vs Hardware", className="qcchem-card-title", style={"fontSize": "2rem"}),
                     html.P(
-                        "The simulator benchmark and runtime-derived hardware result are shown side by side so drift is visible before the telemetry trace.",
+                        "The defended simulator reference and the runtime-backed hardware result are called out explicitly here so backend drift is visible before the telemetry trace.",
                         className="qcchem-card-note",
                     ),
                     html.Div(
                         style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
                         children=[
-                            metric_card("Simulator error", f"{simulator_error:.4f} Ha", comparison_target),
-                            metric_card("Hardware error", f"{hardware_error:.4f} Ha", "Runtime-derived result"),
+                            metric_card("Simulator reference", str(comparison["simulator_reference"]), f"Simulator error {simulator_error:.4f} Ha"),
+                            metric_card("Hardware backend", str(comparison["hardware_backend"]), str(comparison["shot_note"])),
+                            metric_card("Hardware verdict", str(comparison["hardware_verdict"]), str(comparison["hardware_verdict_note"])),
                             metric_card("Error gap", f"{error_gap:.4f} Ha", f"Threshold {threshold:.4f} Ha"),
                         ],
                     ),
-                    dcc.Graph(figure=_comparison_figure(model), config={"displayModeBar": False}),
+                    html.Div(
+                        style={"display": "grid", "gridTemplateColumns": "minmax(0, 1.15fr) minmax(260px, 0.85fr)", "gap": "1rem", "marginTop": "1rem"},
+                        children=[
+                            dcc.Graph(figure=_comparison_figure(model), config={"displayModeBar": False}),
+                            detail_card(
+                                "Comparison evidence",
+                                [
+                                    ("Simulator reference", str(comparison["simulator_reference"])),
+                                    ("Hardware backend", str(comparison["hardware_backend_label"])),
+                                    ("Hardware verdict", str(comparison["hardware_verdict"])),
+                                    ("Hardware error", f"{hardware_error:.4f} Ha"),
+                                    ("Simulator error", f"{simulator_error:.4f} Ha"),
+                                    ("Queue stage", str(comparison["queue_stage"])),
+                                ],
+                                eyebrow="Side-by-Side Evidence",
+                            ),
+                        ],
+                    ),
                 ],
             ),
             html.Section(className="qcchem-card", children=[dcc.Graph(figure=_runtime_figure(runtime), config={"displayModeBar": False})]),
@@ -153,7 +163,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                     ),
                     callout_card(
                         "Operational signal",
-                        "Later artifact selection will swap in the live runtime sidecar, but this page already mirrors the telemetry vocabulary used by current QCchem runtime outputs.",
+                        "Later artifact selection will swap in the live runtime sidecar, but this page now pairs backend telemetry with a direct simulator-versus-hardware reading before the deeper operational trace.",
                     ),
                 ],
             ),

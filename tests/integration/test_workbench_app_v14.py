@@ -166,6 +166,10 @@ def test_page_modules_expose_model_driven_builders() -> None:
     comparison_values = tuple(comparison_graph.figure.data[0].y)
 
     assert "Simulator vs Hardware" in runtime_text
+    assert "Comparison evidence" in runtime_text
+    assert "Simulator reference" in runtime_text
+    assert "Hardware backend" in runtime_text
+    assert "Hardware verdict" in runtime_text
     assert telemetry_graph.figure.data[0].y[-1] == 987
     assert comparison_graph.figure.data[0].x == ("Simulator", "Hardware")
     assert comparison_values == pytest.approx((0.0118, 0.0142))
