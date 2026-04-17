@@ -11,11 +11,13 @@ from qcchem.io.serialization import to_primitive
 from qcchem.workflow.benchmark import build_hardware_calibration_suite, run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 @pytest.mark.integration
 def test_hardware_run_report_mentions_hardware_sections(tmp_path: Path) -> None:
     result = run_from_config(
-        Path("/Users/a0000/QCchem/configs/lih_active_shot_runtime_ready_compressed.yaml"),
+        REPO_ROOT / "configs" / "lih_active_shot_runtime_ready_compressed.yaml",
         output_dir=tmp_path / "lih_runtime_preview",
     )
 
@@ -28,7 +30,7 @@ def test_hardware_run_report_mentions_hardware_sections(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tmp_path: Path) -> None:
     result = run_from_config(
-        Path("/Users/a0000/QCchem/configs/h2_exact.yaml"),
+        REPO_ROOT / "configs" / "h2_exact.yaml",
         output_dir=tmp_path / "h2_exact_preview",
     )
     assert result.hardware_verified is False

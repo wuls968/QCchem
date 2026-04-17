@@ -1,11 +1,18 @@
 import json
+import types
+from pathlib import Path
+from types import SimpleNamespace
 
 import h5py
+import pytest
 
+from qcchem.backends.runtime_submission import attempt_runtime_submission
+from qcchem.core import BackendSpec, BenchmarkCaseSpec, RuntimeOptionsSpec
 from qcchem.core.results import CalibrationSummary, RunResult
 from qcchem.core.results import BenchmarkSummary, MeasurementSummary, SampledResultSummary
 from qcchem.io.exports import build_qcschema_payload, write_hdf5_result
 from qcchem.workflow.calibration import build_calibration_summary
+from qcchem.workflow.benchmark import _run_case
 
 
 def test_run_result_exposes_hardware_evidence_fields() -> None:
@@ -129,3 +136,82 @@ def test_exports_include_hardware_execution_metadata(tmp_path) -> None:
         assert json.loads(handle.attrs["hardware_evidence_tier"]) == "retrieved_result"
         assert json.loads(handle["runtime_submission"].attrs["submitted"]) is True
         assert json.loads(handle["runtime_submission"].attrs["job_id"]) == "job-123"
+
+
+def test_runtime_preview_skips_service_initialization_when_submission_disabled(monkeypatch) -> None:
+    fake_runtime_module = types.ModuleType("qiskit_ibm_runtime")
+    fake_runtime_module.__version__ = "test-version"
+
+    class _ExplodingService:
+        def __init__(self) -> None:
+            raise AssertionError("QiskitRuntimeService should not be initialized for preview-only runs")
+
+    fake_runtime_module.QiskitRuntimeService = _ExplodingService
+    monkeypatch.setitem(__import__("sys").modules, "qiskit_ibm_runtime", fake_runtime_module)
+
+    summary = attempt_runtime_submission(
+        spec=BackendSpec(
+            runtime=RuntimeOptionsSpec(
+                enabled=True,
+                service="ibm_runtime",
+                runtime_ready=True,
+                options={"submit_real_job": False},
+            )
+        ),
+        circuit=SimpleNamespace(num_qubits=2, num_parameters=0),
+        operator=SimpleNamespace(num_qubits=2),
+        parameter_values=[],
+    )
+
+    assert summary is not None
+    assert summary.attempted is True
+    assert summary.submitted is False
+    assert summary.succeeded is False
+    assert summary.failure_category == "runtime_submission_disabled"
+    assert summary.provider is None
+    assert summary.backend_name is None
+
+
+def test_benchmark_run_case_preserves_succeeded_runtime_submission_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case = BenchmarkCaseSpec(
+        name="runtime_case",
+        kind="run",
+        config=tmp_path / "runtime_case.yaml",
+    )
+    fake_result = SimpleNamespace(
+        verification_status="unstable",
+        energy=SimpleNamespace(total_energy=-7.86),
+        benchmark=SimpleNamespace(
+            absolute_error=0.2,
+            relative_error=0.03,
+            comparison_target="exact_baseline",
+            within_uncertainty=False,
+            compressed_vs_uncompressed=None,
+        ),
+        execution_policy=SimpleNamespace(name="hardware_ready"),
+        compression_result=None,
+        measurement=None,
+        calibration=None,
+        runtime_options=None,
+        runtime_submission=SimpleNamespace(
+            attempted=True,
+            submitted=True,
+            succeeded=True,
+            failure_category=None,
+        ),
+        hardware_verified=True,
+        hardware_evidence_tier="retrieved_result",
+        provenance=SimpleNamespace(wall_time_seconds=12.0),
+        artifacts=SimpleNamespace(root=tmp_path / "runtime_case"),
+    )
+
+    monkeypatch.setattr("qcchem.workflow.benchmark.load_run_spec", lambda path: object())
+    monkeypatch.setattr("qcchem.workflow.benchmark.run_spec", lambda spec, source_config, output_dir: fake_result)
+
+    case_result = _run_case(case, tmp_path / "runtime_case")
+
+    assert case_result.metrics["runtime_evidence_status"] == "retrieved_result"
+    assert case_result.metrics["runtime_submission_status"] == "succeeded"

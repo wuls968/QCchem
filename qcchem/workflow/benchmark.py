@@ -45,28 +45,37 @@ def _prepare_benchmark_artifacts(root: Path) -> BenchmarkArtifactPaths:
     )
 
 
-def _runtime_evidence_status_from_submission(runtime_submission: dict[str, Any] | None) -> str:
+def _runtime_submission_value(runtime_submission: Any, key: str) -> Any:
+    if runtime_submission is None:
+        return None
+    if isinstance(runtime_submission, dict):
+        return runtime_submission.get(key)
+    return getattr(runtime_submission, key, None)
+
+
+def _runtime_evidence_status_from_submission(runtime_submission: Any) -> str:
     if not runtime_submission:
         return "none"
-    if runtime_submission.get("submitted") and runtime_submission.get("succeeded"):
+    if _runtime_submission_value(runtime_submission, "submitted") and _runtime_submission_value(runtime_submission, "succeeded"):
         return "retrieved_result"
-    if runtime_submission.get("submitted"):
+    if _runtime_submission_value(runtime_submission, "submitted"):
         return "submitted"
-    if runtime_submission.get("attempted"):
+    if _runtime_submission_value(runtime_submission, "attempted"):
         return "runtime_attempt"
     return "none"
 
 
-def _runtime_submission_status_from_submission(runtime_submission: dict[str, Any] | None) -> str | None:
+def _runtime_submission_status_from_submission(runtime_submission: Any) -> str | None:
     if not runtime_submission:
         return None
-    if runtime_submission.get("failure_category"):
-        return str(runtime_submission["failure_category"])
-    if runtime_submission.get("submitted") and runtime_submission.get("succeeded"):
+    failure_category = _runtime_submission_value(runtime_submission, "failure_category")
+    if failure_category:
+        return str(failure_category)
+    if _runtime_submission_value(runtime_submission, "submitted") and _runtime_submission_value(runtime_submission, "succeeded"):
         return "succeeded"
-    if runtime_submission.get("submitted"):
+    if _runtime_submission_value(runtime_submission, "submitted"):
         return "submitted"
-    if runtime_submission.get("attempted"):
+    if _runtime_submission_value(runtime_submission, "attempted"):
         return "attempted"
     return None
 
@@ -164,13 +173,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
     if case.overrides:
         spec = clone_spec_with_overrides(spec, case.overrides)
     result = run_spec(spec, source_config=str(case.config), output_dir=case_root)
-    runtime_evidence_status = "none"
-    if result.runtime_submission is not None and result.runtime_submission.submitted and result.runtime_submission.succeeded:
-        runtime_evidence_status = "retrieved_result"
-    elif result.runtime_submission is not None and result.runtime_submission.submitted:
-        runtime_evidence_status = "submitted"
-    elif result.runtime_submission is not None and result.runtime_submission.attempted:
-        runtime_evidence_status = "runtime_attempt"
+    runtime_evidence_status = _runtime_evidence_status_from_submission(result.runtime_submission)
     return BenchmarkCaseResult(
         name=case.name,
         kind=case.kind,
@@ -240,17 +243,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
             "hardware_verified": result.hardware_verified,
             "hardware_evidence_tier": result.hardware_evidence_tier,
             "runtime_evidence_status": runtime_evidence_status,
-            "runtime_submission_status": (
-                (
-                    "submitted"
-                    if result.runtime_submission is not None and result.runtime_submission.submitted
-                    else (
-                        result.runtime_submission.failure_category
-                        if result.runtime_submission is not None
-                        else None
-                    )
-                )
-            ),
+            "runtime_submission_status": _runtime_submission_status_from_submission(result.runtime_submission),
             "compressed_vs_uncompressed": result.benchmark.compressed_vs_uncompressed,
             "wall_time_seconds": result.provenance.wall_time_seconds,
         },
