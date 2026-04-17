@@ -44,10 +44,10 @@ backend:
     resilience_level: 0
     grouping_policy: default
     options:
-      backend_name: ibm_fez
+      backend_name: ibm_marrakesh
       optimization_level: 1
       submit_real_job: true
-      wait_for_result: false
+      wait_for_result: true
 
 solver:
   kind: vqe
