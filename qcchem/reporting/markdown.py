@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from qcchem.core.chemical_accuracy import CHEMICAL_ACCURACY_HARTREE
 from qcchem.io.serialization import to_primitive
 
 
@@ -50,6 +51,12 @@ def _hardware_execution_lines(data: dict[str, Any]) -> list[str]:
         f"- batch_requested: `{runtime_submission.get('batch_requested')}`",
         f"- backend_name: `{runtime_submission.get('backend_name')}`",
         f"- provider: `{runtime_submission.get('provider')}`",
+        f"- layout_strategy: `{runtime_submission.get('layout_strategy')}`",
+        f"- selected_layout: `{runtime_submission.get('selected_layout', [])}`",
+        f"- layout_score: `{runtime_submission.get('layout_score')}`",
+        f"- transpiled_depth: `{runtime_submission.get('transpiled_depth')}`",
+        f"- transpiled_two_qubit_gate_count: `{runtime_submission.get('transpiled_two_qubit_gate_count')}`",
+        f"- transpilation_options: `{runtime_submission.get('transpilation_options', {})}`",
         f"- job_id: `{runtime_submission.get('job_id')}`",
         f"- session_id: `{runtime_submission.get('session_id')}`",
         f"- batch_id: `{runtime_submission.get('batch_id')}`",
@@ -62,6 +69,155 @@ def _hardware_execution_lines(data: dict[str, Any]) -> list[str]:
         f"- options_snapshot: `{runtime_submission.get('options_snapshot', {})}`",
         f"- returned_job_metadata: `{runtime_submission.get('returned_job_metadata', {})}`",
         f"- result_provenance: `{runtime_submission.get('result_provenance', {})}`",
+        "",
+    ]
+
+
+def _chemical_accuracy_lines(summary: dict[str, Any], units: str) -> list[str]:
+    assessment_target = str(summary.get("assessment_target", "local_execution"))
+    title_suffix = "Local Execution" if assessment_target == "local_execution" else "Runtime-Derived"
+    return [
+        f"## Chemical Accuracy ({title_suffix})",
+        "",
+        f"- available: `{summary.get('available')}`",
+        f"- assessment_target: `{assessment_target}`",
+        f"- status: `{summary.get('status')}`",
+        f"- meets_chemical_accuracy: `{summary.get('meets_chemical_accuracy')}`",
+        f"- absolute_error_hartree: {_fmt_energy(summary.get('absolute_error_hartree'), units)}",
+        f"- absolute_error_kcal_mol: `{summary.get('absolute_error_kcal_mol')}`",
+        f"- threshold_hartree: `{summary.get('threshold_hartree')}`",
+        f"- threshold_kcal_mol: `{summary.get('threshold_kcal_mol')}`",
+        f"- statistical_error: {_fmt_energy(summary.get('statistical_error'), units)}",
+        f"- notes: `{summary.get('notes', [])}`",
+        "",
+    ]
+
+
+def _method_label(data: dict[str, Any]) -> str:
+    variational = data.get("variational_result") or {}
+    sampled = data.get("sampled_result") or {}
+    solver_kind = variational.get("solver_kind")
+    ansatz = variational.get("ansatz")
+    if solver_kind and ansatz:
+        return f"{solver_kind} / {ansatz}"
+    if solver_kind:
+        return str(solver_kind)
+    if sampled.get("backend_kind"):
+        return f"sampled / {sampled.get('backend_kind')}"
+    backend = data.get("backend") or {}
+    return str(backend.get("kind", "n/a"))
+
+
+def _chemical_accuracy_distance(summary: dict[str, Any]) -> float | None:
+    absolute_error = summary.get("absolute_error_hartree")
+    threshold = summary.get("threshold_hartree")
+    if absolute_error is None or threshold is None:
+        return None
+    return max(float(absolute_error) - float(threshold), 0.0)
+
+
+def _primary_chemical_accuracy_summary(data: dict[str, Any]) -> dict[str, Any] | None:
+    candidates: list[dict[str, Any]] = []
+    for summary in (data.get("chemical_accuracy"), data.get("runtime_chemical_accuracy")):
+        if isinstance(summary, dict) and summary.get("available") is not False:
+            candidates.append(summary)
+    if not candidates:
+        return None
+    return min(
+        candidates,
+        key=lambda item: float(item.get("absolute_error_hartree"))
+        if item.get("absolute_error_hartree") is not None
+        else float("inf"),
+    )
+
+
+def _report_cover_lines(data: dict[str, Any], units: str) -> list[str]:
+    problem = data["problem"]
+    mapping = data["mapping"]
+    backend = data["backend"]
+    benchmark = data["benchmark"]
+    confidence = _primary_chemical_accuracy_summary(data) or {}
+    return [
+        "## Report Cover",
+        "",
+        "> Scientific Atelier framing for export-grade review: lead with chemistry confidence, runtime evidence, and the minimum context needed to defend the result.",
+        "",
+        f"- molecule: `{problem['molecule_name']}`",
+        f"- basis: `{problem['basis']}`",
+        f"- method: `{_method_label(data)}`",
+        f"- mapping_kind: `{mapping['kind']}`",
+        f"- num_qubits: `{mapping['num_qubits']}`",
+        f"- verification_status: `{data.get('verification_status')}`",
+        f"- hardware_verified: `{data.get('hardware_verified', False)}`",
+        f"- hardware_evidence_tier: `{data.get('hardware_evidence_tier')}`",
+        f"- benchmark_absolute_error: {_fmt_energy(benchmark.get('absolute_error'), units)}",
+        f"- best_available_assessment: `{confidence.get('assessment_target')}`",
+        f"- backend_kind: `{backend['kind']}`",
+        "",
+    ]
+
+
+def _hero_lines(data: dict[str, Any], units: str) -> list[str]:
+    energy = data["energy"]
+    benchmark = data["benchmark"]
+    problem = data["problem"]
+    runtime_submission = data.get("runtime_submission") or {}
+    return [
+        "## Hero",
+        "",
+        f"- headline_total_energy: {_fmt_energy(energy.get('total_energy'), units)}",
+        f"- headline_correlation_energy: {_fmt_energy(energy.get('correlation_energy'), units)}",
+        f"- headline_absolute_error: {_fmt_energy(benchmark.get('absolute_error'), units)}",
+        f"- comparison_target: `{benchmark.get('comparison_target')}`",
+        f"- active_space_metadata: `{problem.get('active_space_metadata')}`",
+        f"- runtime_backend: `{runtime_submission.get('backend_name')}`",
+        f"- runtime_job_id: `{runtime_submission.get('job_id')}`",
+        "",
+    ]
+
+
+def _chemical_accuracy_frame_lines(data: dict[str, Any], units: str) -> list[str]:
+    primary = _primary_chemical_accuracy_summary(data) or {}
+    assessments = [
+        summary.get("assessment_target")
+        for summary in (data.get("chemical_accuracy"), data.get("runtime_chemical_accuracy"))
+        if isinstance(summary, dict)
+    ]
+    distance = _chemical_accuracy_distance(primary)
+    return [
+        "## Chemical Accuracy Frame",
+        "",
+        f"- available_assessments: `{assessments}`",
+        f"- best_available_assessment: `{primary.get('assessment_target')}`",
+        f"- status: `{primary.get('status')}`",
+        f"- meets_chemical_accuracy: `{primary.get('meets_chemical_accuracy')}`",
+        f"- absolute_error_hartree: {_fmt_energy(primary.get('absolute_error_hartree'), units)}",
+        f"- threshold_hartree: `{primary.get('threshold_hartree')}`",
+        f"- distance_to_chemical_accuracy: `{distance}`",
+        f"- statistical_error: {_fmt_energy(primary.get('statistical_error'), units)}",
+        f"- notes: `{primary.get('notes', [])}`",
+        "",
+    ]
+
+
+def _runtime_evidence_frame_lines(data: dict[str, Any]) -> list[str]:
+    runtime_submission = data.get("runtime_submission") or {}
+    return [
+        "## Runtime Evidence",
+        "",
+        "> Runtime evidence is surfaced explicitly so exported reports separate chemistry confidence from execution provenance.",
+        "",
+        f"- hardware_verified: `{data.get('hardware_verified', False)}`",
+        f"- hardware_evidence_tier: `{data.get('hardware_evidence_tier')}`",
+        f"- service: `{runtime_submission.get('service')}`",
+        f"- provider: `{runtime_submission.get('provider')}`",
+        f"- backend_name: `{runtime_submission.get('backend_name')}`",
+        f"- job_id: `{runtime_submission.get('job_id')}`",
+        f"- verification_status: `{runtime_submission.get('verification_status')}`",
+        f"- layout_strategy: `{runtime_submission.get('layout_strategy')}`",
+        f"- selected_layout: `{runtime_submission.get('selected_layout', [])}`",
+        f"- transpiled_depth: `{runtime_submission.get('transpiled_depth')}`",
+        f"- transpiled_two_qubit_gate_count: `{runtime_submission.get('transpiled_two_qubit_gate_count')}`",
         "",
     ]
 
@@ -86,6 +242,7 @@ def render_markdown_report(result: Any) -> str:
     runtime_options = data.get("runtime_options")
     runtime_submission = data.get("runtime_submission")
     chemical_accuracy = data.get("chemical_accuracy")
+    runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")
     reduction_plan = data.get("reduction_plan")
     module_origin = data.get("module_origin", "core")
     capability_tier = data.get("capability_tier", data.get("verification_status"))
@@ -113,6 +270,10 @@ def render_markdown_report(result: Any) -> str:
         )
     lines.extend(
         [
+        *_report_cover_lines(data, units),
+        *_hero_lines(data, units),
+        *_chemical_accuracy_frame_lines(data, units),
+        *_runtime_evidence_frame_lines(data),
         "## Verification",
         "",
         f"- verification_status: `{data.get('verification_status')}`",
@@ -230,22 +391,9 @@ def render_markdown_report(result: Any) -> str:
     )
 
     if chemical_accuracy is not None:
-        lines.extend(
-            [
-                "## Chemical Accuracy",
-                "",
-                f"- available: `{chemical_accuracy.get('available')}`",
-                f"- status: `{chemical_accuracy.get('status')}`",
-                f"- meets_chemical_accuracy: `{chemical_accuracy.get('meets_chemical_accuracy')}`",
-                f"- absolute_error_hartree: {_fmt_energy(chemical_accuracy.get('absolute_error_hartree'), units)}",
-                f"- absolute_error_kcal_mol: `{chemical_accuracy.get('absolute_error_kcal_mol')}`",
-                f"- threshold_hartree: `{chemical_accuracy.get('threshold_hartree')}`",
-                f"- threshold_kcal_mol: `{chemical_accuracy.get('threshold_kcal_mol')}`",
-                f"- statistical_error: {_fmt_energy(chemical_accuracy.get('statistical_error'), units)}",
-                f"- notes: `{chemical_accuracy.get('notes', [])}`",
-                "",
-            ]
-        )
+        lines.extend(_chemical_accuracy_lines(chemical_accuracy, units))
+    if runtime_chemical_accuracy is not None:
+        lines.extend(_chemical_accuracy_lines(runtime_chemical_accuracy, units))
 
     compressed_comparison = benchmark.get("compressed_vs_uncompressed")
     if compressed_comparison is not None:

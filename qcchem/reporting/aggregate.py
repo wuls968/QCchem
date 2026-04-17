@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from qcchem.core.chemical_accuracy import CHEMICAL_ACCURACY_HARTREE
 from qcchem.io.serialization import to_primitive
 
 
@@ -14,12 +15,60 @@ def _split_items_by_scope(items: list[dict[str, Any]], status_key: str) -> tuple
     return validated_like, exploratory
 
 
+def _distance_to_chemical_accuracy(value: Any, *, target: float = CHEMICAL_ACCURACY_HARTREE) -> float | None:
+    if value is None:
+        return None
+    return max(float(value) - float(target), 0.0)
+
+
+def _benchmark_case_error(case: dict[str, Any]) -> float | None:
+    absolute_error = case.get("absolute_error")
+    if absolute_error is not None:
+        return float(absolute_error)
+    metrics = case.get("metrics") or {}
+    achieved_error = metrics.get("achieved_error")
+    if achieved_error is not None:
+        return float(achieved_error)
+    return None
+
+
+def _best_benchmark_case(cases: list[dict[str, Any]]) -> dict[str, Any] | None:
+    ranked = [case for case in cases if _benchmark_case_error(case) is not None]
+    if not ranked:
+        return None
+    return min(ranked, key=lambda case: float(_benchmark_case_error(case) or 0.0))
+
+
+def _best_hardware_case(cases: list[dict[str, Any]]) -> dict[str, Any] | None:
+    preferred = [
+        case
+        for case in cases
+        if case.get("achieved_error") is not None
+        and str(case.get("runtime_evidence_status") or "").lower() in {"retrieved", "retrieved_result"}
+    ]
+    if preferred:
+        return min(preferred, key=lambda case: float(case.get("achieved_error") or 0.0))
+    ranked = [case for case in cases if case.get("achieved_error") is not None]
+    if not ranked:
+        return None
+    return min(ranked, key=lambda case: float(case.get("achieved_error") or 0.0))
+
+
 def render_study_report(result: Any) -> str:
     """Render a study result as Markdown."""
     data = to_primitive(result)
     validated_runs, exploratory_runs = _split_items_by_scope(data["run_records"], "verification_status")
     lines = [
         f"# Study Report: {data['study_name']}",
+        "",
+        "## Report Cover",
+        "",
+        "> Study reports now open with a concise editorial frame so the run inventory reads like a research companion instead of a registry dump.",
+        "",
+        f"- total_runs: `{data['summary']['total_runs']}`",
+        f"- comparison_axes: `{data['summary']['comparison_axes']}`",
+        f"- validated_like_runs: `{len(validated_runs)}`",
+        f"- exploratory_runs: `{len(exploratory_runs)}`",
         "",
         "## Study Summary",
         "",
@@ -54,10 +103,28 @@ def render_benchmark_report(result: Any) -> str:
     """Render a benchmark-suite result as Markdown."""
     data = to_primitive(result)
     validated_cases, exploratory_cases = _split_items_by_scope(data["cases"], "status")
+    best_case = _best_benchmark_case(validated_cases or data["cases"])
+    best_case_error = None if best_case is None else _benchmark_case_error(best_case)
+    best_case_distance = _distance_to_chemical_accuracy(best_case_error)
     lines = [
         f"# Benchmark Suite Report: {data['suite_name']}",
         "",
         "> Validated-like and exploratory cases are separated below to avoid mixing benchmark scopes.",
+        "",
+        "## Report Cover",
+        "",
+        f"- total_cases: `{data['summary']['total_cases']}`",
+        f"- validated_like_cases: `{len(validated_cases)}`",
+        f"- exploratory_cases: `{len(exploratory_cases)}`",
+        f"- chemical_accuracy_target_hartree: `{CHEMICAL_ACCURACY_HARTREE}`",
+        f"- dashboard_summary: `{data.get('dashboard_summary', {})}`",
+        "",
+        "## Best Case",
+        "",
+        f"- case: `{None if best_case is None else best_case.get('name')}`",
+        f"- status: `{None if best_case is None else best_case.get('status')}`",
+        f"- absolute_error: `{best_case_error}`",
+        f"- distance_to_chemical_accuracy: `{best_case_distance}`",
         "",
         "## Benchmark Suite Summary",
         "",
@@ -120,8 +187,19 @@ def render_scan_report(result: Any) -> str:
     """Render a scan result as Markdown."""
     data = to_primitive(result)
     validated_points, exploratory_points = _split_items_by_scope(data["points"], "verification_status")
+    best_point = None
+    ranked_points = [point for point in data["points"] if point.get("total_energy") is not None]
+    if ranked_points:
+        best_point = min(ranked_points, key=lambda point: float(point.get("total_energy") or 0.0))
     lines = [
         f"# Scan Report: {data['scan_name']}",
+        "",
+        "## Report Cover",
+        "",
+        f"- parameter_name: `{data['parameter_name']}`",
+        f"- validated_like_points: `{len(validated_points)}`",
+        f"- exploratory_points: `{len(exploratory_points)}`",
+        f"- lowest_energy_point: `{None if best_point is None else best_point.get('point_label')}`",
         "",
         "## Scan Summary",
         "",
@@ -166,8 +244,20 @@ def write_aggregate_report(result: Any, path: Path, *, kind: str) -> None:
 def write_hardware_calibration_report(summary: dict[str, object], output_path: Path) -> None:
     """Write a compact hardware calibration dashboard report."""
     cases = summary.get("cases", [])
+    if not isinstance(cases, list):
+        cases = []
+    best_case = _best_hardware_case(cases)
+    best_case_distance = None
+    if best_case is not None:
+        best_case_distance = best_case.get("distance_to_chemical_accuracy")
+        if best_case_distance is None:
+            best_case_distance = _distance_to_chemical_accuracy(best_case.get("achieved_error"))
     lines = [
         "# Hardware Calibration Dashboard",
+        "",
+        "## Report Cover",
+        "",
+        "> Hardware campaign reports foreground the cleanest retrieved evidence first, then preserve the full runtime submission table for auditability.",
         "",
         "## Runtime Submission Evidence",
         "",
@@ -184,27 +274,50 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
         )
     lines.extend(
         [
-            "| Case | Backend | Runtime Evidence Status | Evidence Tier | Submission Status | Submission Wall Time (s) | Runtime Shots | Runtime Usage (s) | Runtime Quantum (s) | Requested Precision | Budget Strategy | Achieved Error | Achieved Error Status | Hardware Verified |",
-            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | --- |",
+            "## Best Case",
+            "",
+            f"- case: `{None if best_case is None else best_case.get('name')}`",
+            f"- backend_name: `{None if best_case is None else best_case.get('backend_name')}`",
+            f"- runtime_evidence_status: `{None if best_case is None else best_case.get('runtime_evidence_status')}`",
+            f"- achieved_error: `{None if best_case is None else best_case.get('achieved_error')}`",
+            f"- meets_chemical_accuracy: `{None if best_case is None else best_case.get('meets_chemical_accuracy')}`",
+            f"- distance_to_chemical_accuracy: `{best_case_distance}`",
+            "",
+        ]
+    )
+    lines.extend(
+        [
+            "| Case | Backend | Layout Strategy | Layout | 2Q Gates | Depth | Runtime Evidence Status | Evidence Tier | Submission Status | Submission Wall Time (s) | Runtime Shots | Runtime Usage (s) | Runtime Quantum (s) | Requested Precision | Budget Strategy | Achieved Error | Meets Chem Acc | Distance to Target | Achieved Error Status | Hardware Verified |",
+            "| --- | --- | --- | --- | ---: | ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | ---: | --- | --- |",
         ]
     )
     for case in cases:
+        layout = case.get("selected_layout") or []
+        if isinstance(layout, list):
+            layout_text = ",".join(str(item) for item in layout)
+        else:
+            layout_text = str(layout)
         runtime_evidence_status = case.get("runtime_evidence_status", "none")
         runtime_evidence_tier = case.get("runtime_evidence_tier")
         runtime_submission_status = case.get("runtime_submission_status", runtime_evidence_status)
         runtime_submission_wall_time_seconds = case.get("runtime_submission_wall_time_seconds")
+        layout_strategy = case.get("layout_strategy")
+        transpiled_two_qubit_gate_count = case.get("transpiled_two_qubit_gate_count")
+        transpiled_depth = case.get("transpiled_depth")
         runtime_shots = case.get("runtime_shots")
         runtime_usage_seconds = case.get("runtime_usage_seconds")
         runtime_usage_quantum_seconds = case.get("runtime_usage_quantum_seconds")
         requested_precision_target = case.get("requested_precision_target")
         requested_budget_strategy = case.get("requested_budget_strategy")
         achieved_error = case.get("achieved_error")
+        meets_chemical_accuracy = case.get("meets_chemical_accuracy")
+        distance_to_chemical_accuracy = case.get("distance_to_chemical_accuracy")
         achieved_error_status = case.get("achieved_error_status")
         lines.append(
-            f"| {case['name']} | {case.get('backend_name')} | "
+            f"| {case['name']} | {case.get('backend_name')} | {layout_strategy} | {layout_text} | {transpiled_two_qubit_gate_count} | {transpiled_depth} | "
             f"{runtime_evidence_status} | {runtime_evidence_tier} | {runtime_submission_status} | "
             f"{runtime_submission_wall_time_seconds} | {runtime_shots} | {runtime_usage_seconds} | {runtime_usage_quantum_seconds} | "
-            f"{requested_precision_target} | {requested_budget_strategy} | {achieved_error} | {achieved_error_status} | "
+            f"{requested_precision_target} | {requested_budget_strategy} | {achieved_error} | {meets_chemical_accuracy} | {distance_to_chemical_accuracy} | {achieved_error_status} | "
             f"{case['hardware_verified']} |"
         )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
