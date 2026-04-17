@@ -1,0 +1,42 @@
+molecule:
+  name: H2-exploratory-vqd
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+solver:
+  kind: vqd
+  experimental: true
+  optimizer:
+    kind: COBYLA
+    maxiter: 50
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: ["solvers.vqd"]
+  notes:
+    - "VQD remains exploratory and currently delegates to QCchem VQE."
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-6
+  relative_error_threshold: 1.0e-6
+
+run:
+  seed: 17
+  output_dir: artifacts/h2_exploratory_vqd
+  overwrite: true

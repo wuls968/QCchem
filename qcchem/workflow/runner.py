@@ -53,6 +53,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.mapping import MappedHamiltonian, map_fermionic_hamiltonian
 from qcchem.mitigation import build_mitigation_summary
 from qcchem.reporting import write_calibration_report, write_markdown_report, write_result_json
+from qcchem.exploratory.solvers.registry import build_exploratory_solver
 from qcchem.solvers import ExactDiagonalizationSolver, build_solver
 from qcchem.solvers.spectrum import ExactSpectrum, compute_exact_spectrum
 from qcchem.workflow.tasks import (
@@ -482,20 +483,33 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
 
     solver_kind = spec.solver.kind.strip().lower()
     backend = None
-    if solver_kind == "vqe":
+    backend_required = solver_kind == "vqe" or (
+        spec.solver.experimental and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum"}
+    )
+    if backend_required:
         _record(logger, events, f"Preparing backend: {spec.backend.kind}")
         backend = build_backend(spec.backend)
     else:
         _record(logger, events, f"Skipping backend construction for solver: {spec.solver.kind}")
 
     _record(logger, events, f"Running solver: {spec.solver.kind}")
-    solver = build_solver(
-        spec.solver,
-        backend=backend,
-        seed=spec.run.seed,
-        problem_summary=chemistry.summary,
-        mapper=mapping.mapper,
-    )
+    if spec.solver.experimental:
+        solver = build_exploratory_solver(
+            spec.solver.kind,
+            spec=spec.solver,
+            backend=backend,
+            seed=spec.run.seed,
+            problem_summary=chemistry.summary,
+            mapper=mapping.mapper,
+        )
+    else:
+        solver = build_solver(
+            spec.solver,
+            backend=backend,
+            seed=spec.run.seed,
+            problem_summary=chemistry.summary,
+            mapper=mapping.mapper,
+        )
     solver_outcome, compressed_solve_wall_time = _solve_with_timing(solver, mapping.qubit_hamiltonian)
 
     spectrum = _compute_exact_spectrum_if_needed(spec, mapping, logger, events)
@@ -740,8 +754,18 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         and verification_status == "validated"
     ):
         verification_status = "exploratory"
+    if spec.solver.experimental and verification_status == "validated":
+        verification_status = "exploratory"
 
     run_id = artifacts.root.name
+    module_origin = str(solver_outcome.metadata.get("module_origin", "core"))
+    capability_tier = str(solver_outcome.metadata.get("capability_tier", verification_status))
+    scientific_risk_notes = [
+        str(item) for item in solver_outcome.metadata.get("scientific_risk_notes", [])
+    ]
+    verification_notes = [
+        f"validation_scope={solver_outcome.metadata.get('validation_scope')}"
+    ] if solver_outcome.metadata.get("validation_scope") else []
     result = RunResult(
         schema_version=SCHEMA_VERSION,
         run_id=run_id,
@@ -816,6 +840,10 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         ),
         log_summary=LogSummary(events=list(events)),
         artifacts=artifacts,
+        module_origin=module_origin,
+        capability_tier=capability_tier,
+        verification_notes=verification_notes,
+        scientific_risk_notes=scientific_risk_notes,
     )
 
     _record(logger, events, f"Writing JSON result to {artifacts.result_json}")
