@@ -59,10 +59,11 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
     run = result or (_normalize_qcschema_payload(qcschema) if qcschema is not None else None)
     bundle = {
         "root": str(root),
-        "preferred_source": preferred_source,
-        "run": run,
         "result": result,
         "qcschema": qcschema,
+        "hdf5_path": str(hdf5_path) if hdf5_path.exists() else None,
+        "preferred_source": preferred_source,
+        "run": run,
         "artifacts": {
             "result": {
                 "source": "result.json",

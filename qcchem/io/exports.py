@@ -22,10 +22,12 @@ def _require_sections(data: dict[str, Any], required: tuple[str, ...]) -> None:
 def build_qcschema_payload(result: Any) -> dict[str, Any]:
     """Build a minimal QCSchema-style export from a QCchem run result."""
     data = to_primitive(result)
-    _require_sections(data, ("problem", "energy", "verification_status"))
+    _require_sections(data, ("problem", "energy"))
     problem = data.get("problem") or {}
     energy = data.get("energy") or {}
     provenance = data.get("provenance") or {}
+    verification_status = data.get("verification_status")
+    success = verification_status not in (None, "failed", False)
     return {
         "schema_name": "qcschema_output",
         "schema_version": 1,
@@ -54,7 +56,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
         },
         "extras": {
             "qcchem_run_id": data.get("run_id"),
-            "verification_status": data.get("verification_status"),
+            "verification_status": verification_status,
             "hardware_verified": data.get("hardware_verified", False),
             "hardware_evidence_tier": data.get("hardware_evidence_tier"),
             "mapping": data.get("mapping"),
@@ -69,7 +71,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "perturbative_correction_result": data.get("perturbative_correction_result"),
         },
         "return_result": energy.get("total_energy"),
-        "success": data.get("verification_status") != "failed",
+        "success": success,
     }
 
 

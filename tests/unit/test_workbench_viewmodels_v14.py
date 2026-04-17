@@ -100,6 +100,9 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
 
     bundle = load_artifact_bundle(root)
 
+    assert bundle["result"] is None
+    assert bundle["qcschema"]["schema_name"] == "qcschema_output"
+    assert bundle["hdf5_path"] == str(root / "result.h5")
     assert bundle["artifacts"]["result"]["present"] is False
     assert bundle["artifacts"]["qcschema"]["present"] is True
     assert bundle["artifacts"]["hdf5"]["present"] is True
@@ -113,3 +116,24 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:
     with pytest.raises(ValueError, match="missing required sections"):
         build_qcschema_payload({"problem": {"molecule_name": "H2"}})
+
+
+def test_build_qcschema_payload_marks_missing_verification_status_as_unsuccessful() -> None:
+    payload = {
+        "problem": {
+            "molecule_name": "H2",
+            "basis": "sto3g",
+            "charge": 0,
+            "multiplicity": 1,
+        },
+        "energy": {
+            "total_energy": -1.1373,
+            "electronic_energy": -1.8572,
+            "nuclear_repulsion_energy": 0.7199,
+        },
+    }
+
+    qcschema = build_qcschema_payload(payload)
+
+    assert qcschema["extras"]["verification_status"] is None
+    assert qcschema["success"] is False
