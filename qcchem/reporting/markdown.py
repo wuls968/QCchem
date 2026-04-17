@@ -51,16 +51,26 @@ def render_markdown_report(result: Any) -> str:
     lines = [
         f"# QCchem Report: {data['problem']['molecule_name']}",
         "",
+    ]
+    if module_origin == "exploratory" or capability_tier == "exploratory":
+        lines.extend(
+            [
+                "> This result is exploratory and is not part of the validated QCchem benchmark path.",
+                "",
+            ]
+        )
+    lines.extend(
+        [
         "## Verification",
         "",
         f"- verification_status: `{data.get('verification_status')}`",
         "",
         "## Validation Boundary",
         "",
-        f"- module_origin: `{module_origin}`",
-        f"- capability_tier: `{capability_tier}`",
-        f"- verification_notes: `{verification_notes}`",
-        f"- scientific_risk_notes: `{scientific_risk_notes}`",
+        f"- Module Origin: `{module_origin}`",
+        f"- Capability Tier: `{capability_tier}`",
+        f"- Verification Notes: `{verification_notes}`",
+        f"- Scientific Risk Notes: `{scientific_risk_notes}`",
         "",
         "## Energy Summary",
         "",
@@ -164,7 +174,8 @@ def render_markdown_report(result: Any) -> str:
         f"- batch_ready_expected: `{policy.get('batch_ready_expected')}`",
         f"- noise_ready_expected: `{policy.get('noise_ready_expected')}`",
         "",
-    ]
+        ]
+    )
 
     if chemical_accuracy is not None:
         lines.extend(
