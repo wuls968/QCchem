@@ -1,0 +1,95 @@
+molecule:
+  name: LiH-active-runtime-hardware-probe-v2
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: publication
+
+exploratory:
+  enabled: false
+  modules: []
+  notes: []
+
+problem:
+  freeze_core: true
+  active_space:
+    selection_mode: manual
+    num_electrons: 2
+    num_spatial_orbitals: 2
+    active_orbitals: [1, 2]
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-3
+    max_rank: 2
+    execution_enabled: true
+  measurement:
+    strategy: low_rank_commuting
+    runtime_precision_target: 0.15
+    execution_mode: runtime_estimator
+    grouping_policy: commuting_low_rank
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: shot_estimator
+  shots: 1024
+  seed: 111
+  repetitions: 1
+  runtime:
+    enabled: true
+    service: ibm_quantum_platform
+    runtime_ready: true
+    session_ready: true
+    batch_ready: true
+    precision_target: 0.15
+    resilience_level: 0
+    grouping_policy: commuting_low_rank
+    options:
+      backend_name: ibm_fez
+      submit_real_job: true
+      wait_for_result: true
+      optimization_level: 1
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 40
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 0.2
+  relative_error_threshold: 0.2
+
+mitigation:
+  symmetry_check: {}
+  readout: {}
+  zne: {}
+  pec: {}
+
+tasks:
+  excited_state: {}
+  properties: []
+  perturbative_correction: {}
+
+run:
+  seed: 111
+  output_dir: artifacts/lih_active_runtime_hardware_probe_v2
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true
