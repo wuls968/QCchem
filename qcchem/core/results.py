@@ -543,6 +543,8 @@ class RunResult:
     artifacts: ArtifactPaths
     module_origin: str = "core"
     capability_tier: str = "validated"
+    hardware_verified: bool = False
+    hardware_evidence_tier: str | None = None
     verification_notes: list[str] = field(default_factory=list)
     scientific_risk_notes: list[str] = field(default_factory=list)
 
