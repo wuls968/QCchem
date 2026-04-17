@@ -770,12 +770,12 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         runtime_submission is not None and runtime_submission.submitted and runtime_submission.succeeded
     )
     hardware_evidence_tier = None
-    if hardware_verified:
-        hardware_evidence_tier = "submitted_job"
+    if runtime_submission is not None and runtime_submission.submitted and runtime_submission.succeeded:
+        hardware_evidence_tier = "retrieved_result"
+    elif runtime_submission is not None and runtime_submission.submitted:
+        hardware_evidence_tier = "submitted"
     elif runtime_submission is not None and runtime_submission.attempted:
         hardware_evidence_tier = "runtime_attempt"
-    elif calibration is not None:
-        hardware_evidence_tier = "empirical_calibration"
     result = RunResult(
         schema_version=SCHEMA_VERSION,
         run_id=run_id,

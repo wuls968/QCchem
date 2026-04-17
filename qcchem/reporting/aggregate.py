@@ -171,13 +171,14 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
         "",
         "## Estimated vs Measured Cost",
         "",
-        "| Case | Estimated Cost | Measured Cost | Wall Time (s) | Achieved Error | Hardware Verified |",
-        "| --- | ---: | ---: | ---: | ---: | --- |",
+        "| Case | Estimated Cost | Measured Cost | Wall Time (s) | Achieved Error | Runtime Evidence | Hardware Verified |",
+        "| --- | ---: | ---: | ---: | ---: | --- | --- |",
     ]
     for case in cases:
         lines.append(
             f"| {case['name']} | {case['estimated_measurement_cost']} | "
             f"{case['measured_shot_usage']} | {case['measured_wall_time_seconds']} | "
-            f"{case['achieved_error']} | {case['hardware_verified']} |"
+            f"{case['achieved_error']} | {case.get('runtime_evidence_status', case.get('hardware_evidence_tier', 'none'))} | "
+            f"{case['hardware_verified']} |"
         )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

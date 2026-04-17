@@ -45,6 +45,13 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
     if case.overrides:
         spec = clone_spec_with_overrides(spec, case.overrides)
     result = run_spec(spec, source_config=str(case.config), output_dir=case_root)
+    runtime_evidence_status = "none"
+    if result.runtime_submission is not None and result.runtime_submission.submitted and result.runtime_submission.succeeded:
+        runtime_evidence_status = "retrieved_result"
+    elif result.runtime_submission is not None and result.runtime_submission.submitted:
+        runtime_evidence_status = "submitted"
+    elif result.runtime_submission is not None and result.runtime_submission.attempted:
+        runtime_evidence_status = "runtime_attempt"
     return BenchmarkCaseResult(
         name=case.name,
         kind=case.kind,
@@ -113,6 +120,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
             ),
             "hardware_verified": result.hardware_verified,
             "hardware_evidence_tier": result.hardware_evidence_tier,
+            "runtime_evidence_status": runtime_evidence_status,
             "runtime_submission_status": (
                 (
                     "submitted"
@@ -393,6 +401,8 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
                 "measured_wall_time_seconds": case.metrics.get("measured_wall_time_seconds"),
                 "achieved_error": case.metrics.get("achieved_error"),
                 "hardware_verified": case.metrics.get("hardware_verified"),
+                "hardware_evidence_tier": case.metrics.get("hardware_evidence_tier"),
+                "runtime_evidence_status": case.metrics.get("runtime_evidence_status", "none"),
             }
             for case in case_results
             if case.metrics.get("estimated_measurement_cost") is not None

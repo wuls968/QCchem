@@ -28,6 +28,9 @@ def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tm
         Path("/Users/a0000/QCchem/configs/h2_exact.yaml"),
         output_dir=tmp_path / "h2_exact_preview",
     )
+    assert result.hardware_verified is False
+    assert result.hardware_evidence_tier is None
+
     payload = to_primitive(result)
     payload["calibration"] = None
     payload["runtime_submission"] = None
@@ -53,6 +56,18 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
                 "measured_wall_time_seconds": 15.0,
                 "achieved_error": 0.03,
                 "hardware_verified": True,
+                "hardware_evidence_tier": "retrieved_result",
+                "runtime_evidence_status": "retrieved_result",
+            },
+            {
+                "name": "h2_local_reference",
+                "estimated_measurement_cost": 1000,
+                "measured_shot_usage": None,
+                "measured_wall_time_seconds": 1.0,
+                "achieved_error": 0.0,
+                "hardware_verified": False,
+                "hardware_evidence_tier": None,
+                "runtime_evidence_status": "none",
             }
         ]
     }
@@ -62,3 +77,6 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
     text = output.read_text(encoding="utf-8")
     assert "estimated vs measured cost" in text.lower()
     assert "h2_runtime_probe" in text
+    assert "retrieved_result" in text
+    assert "h2_local_reference" in text
+    assert "| none |" in text.lower()
