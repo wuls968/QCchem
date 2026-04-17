@@ -9,31 +9,35 @@ from qcchem.workbench.pages.overview import SAMPLE_MOLECULE_PAYLOAD, build_sampl
 
 
 def _orbital_selection_figure(metadata: dict[str, object], reduction: dict[str, object]) -> go.Figure:
-    frozen_orbitals = [int(value) for value in reduction.get("frozen_orbitals", [])]
-    active_orbitals = [int(value) for value in reduction.get("selected_active_orbitals_original", [])]
-    orbital_trace = tuple(frozen_orbitals + active_orbitals)
-    selection_state = tuple([0] * len(frozen_orbitals) + [1] * len(active_orbitals))
-    colors = ["#46607a"] * len(frozen_orbitals) + ["#9a6b3f"] * len(active_orbitals)
+    orbital_levels = tuple(float(value) for value in metadata.get("orbital_levels_ev", []))
+    orbital_indices = tuple(range(len(orbital_levels)))
+    active_orbitals = set(int(value) for value in reduction.get("selected_active_orbitals_original", []))
+    frozen_orbitals = set(int(value) for value in reduction.get("frozen_orbitals", []))
+    colors = [
+        "#9a6b3f" if index in active_orbitals else "#46607a" if index in frozen_orbitals else "#93a18a"
+        for index in orbital_indices
+    ]
+    labels = [
+        "Active" if index in active_orbitals else "Frozen" if index in frozen_orbitals else "Context"
+        for index in orbital_indices
+    ]
 
     figure = go.Figure()
-    figure.add_bar(
-        x=orbital_trace,
-        y=selection_state,
-        marker_color=colors,
+    figure.add_scatter(
+        x=orbital_indices,
+        y=orbital_levels,
+        mode="markers",
+        marker={"size": 14, "color": colors},
+        customdata=labels,
+        hovertemplate="Orbital %{x}<br>Energy %{y:.2f} eV<br>%{customdata}<extra></extra>",
     )
     figure.update_layout(
-        title={"text": "Orbital selection map across frozen and active windows", "x": 0.04},
+        title={"text": "Orbital energy ladder across the selected model window", "x": 0.04},
         paper_bgcolor="#fffaf3",
         plot_bgcolor="#fffaf3",
         margin={"l": 36, "r": 20, "t": 72, "b": 40},
-        xaxis_title="Original orbital index",
-        yaxis={
-            "title": "Selection state",
-            "tickmode": "array",
-            "tickvals": [0, 1],
-            "ticktext": ["Frozen", "Active"],
-            "range": [-0.25, 1.25],
-        },
+        xaxis_title="Orbital index",
+        yaxis_title="Orbital energy (eV)",
         font={"color": "#2d2216"},
     )
     return figure
@@ -54,7 +58,7 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                     html.P("Electronic Structure", className="qcchem-card-eyebrow"),
                     html.H2("Structure and Orbitals", className="qcchem-card-title", style={"fontSize": "2.1rem"}),
                     html.P(
-                        "Geometry, orbital selection, and chemically meaningful symmetry cues for the current active-space model.",
+                        "Geometry context plus a model-driven orbital energy ladder showing which levels are frozen, active, or retained as surrounding context.",
                         className="qcchem-card-note",
                     ),
                     html.Div(
@@ -77,8 +81,8 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                     build_molecule_viewer(
                         molecule_model,
                         viewer_id="structure-molecule",
-                        title="Geometry and label overlay",
-                        caption="The bridge payload can also carry orbital surfaces later; for now it anchors the spatial discussion with reproducible JSON.",
+                        title="Geometry reference",
+                        caption="A simple atom-based geometry reference for the current orbital selection narrative.",
                     ),
                     html.Section(
                         className="qcchem-card",
@@ -95,6 +99,7 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                             ("Selection mode", str(reduction.get("selection_mode", "Automatic reduction audit"))),
                             ("Frozen orbitals", str(reduction.get("frozen_orbitals", []))),
                             ("Window label", metadata.get("orbital_window", "1 sigma to 3 sigma*")),
+                            ("Orbital levels (eV)", str(metadata.get("orbital_levels_ev", []))),
                             ("Selected active orbitals", str(reduction.get("selected_active_orbitals_original", []))),
                         ],
                     ),

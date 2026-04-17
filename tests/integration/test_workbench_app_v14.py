@@ -106,6 +106,7 @@ def test_page_modules_expose_model_driven_builders() -> None:
         "num_active_orbitals": 6,
         "num_active_electrons": 8,
         "orbital_window": "Probe Window",
+        "orbital_levels_ev": [-18.4, -11.2, -1.8, -0.6, 0.9],
     }
     model["reduction"]["selection_mode"] = "manual_probe"
     model["reduction"]["selected_active_orbitals_original"] = [7, 8, 9]
@@ -158,10 +159,11 @@ def test_page_modules_expose_model_driven_builders() -> None:
     assert "manual_probe" in structure_text
     assert "[0, 2]" in structure_text
     assert "[7, 8, 9]" in structure_text
+    assert "orbital level" in structure_text.lower()
     structure_graph = next(component for component in _walk_components(structure_page) if component.__class__.__name__ == "Graph")
-    assert tuple(structure_graph.figure.data[0].x) == (0, 2, 7, 8, 9)
-    assert tuple(structure_graph.figure.data[0].y) == (0, 0, 1, 1, 1)
-    assert structure_graph.figure.layout.title.text == "Orbital selection map across frozen and active windows"
+    assert tuple(structure_graph.figure.data[0].x) == (0, 1, 2, 3, 4)
+    assert tuple(structure_graph.figure.data[0].y) == (-18.4, -11.2, -1.8, -0.6, 0.9)
+    assert structure_graph.figure.layout.title.text == "Orbital energy ladder across the selected model window"
 
 
 @pytest.mark.integration
@@ -178,6 +180,21 @@ def test_result_confidence_treats_missing_runtime_accuracy_as_unknown_not_succes
     assert "Runtime evidence available True" in text
     assert "Runtime chemical accuracy Unknown" in text
     assert "Runtime chemical accuracy True" not in text
+
+
+@pytest.mark.integration
+def test_result_confidence_treats_missing_primary_accuracy_as_unknown_not_success() -> None:
+    from qcchem.workbench.pages.overview import build_sample_view_model
+    from qcchem.workbench.pages.result_confidence import build_result_confidence_page
+
+    model = build_sample_view_model()
+    model["confidence"]["chemical_accuracy"] = {"available": True}
+
+    page = build_result_confidence_page(model)
+    text = _collect_text(page)
+
+    assert "Chemical accuracy Unknown" in text
+    assert "Chemical accuracy True" not in text
 
 
 @pytest.mark.integration

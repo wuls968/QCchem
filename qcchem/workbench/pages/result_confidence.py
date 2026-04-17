@@ -37,6 +37,8 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     confidence = model["confidence"]
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    chemical_accuracy_met = chemical_accuracy.get("meets_chemical_accuracy")
+    chemical_accuracy_display = "Unknown" if chemical_accuracy_met is None else str(chemical_accuracy_met)
     runtime_evidence_available = runtime_chemical_accuracy.get("available", False)
     runtime_chemical_accuracy_met = runtime_chemical_accuracy.get("meets_chemical_accuracy")
     runtime_chemical_accuracy_display = "Unknown" if runtime_chemical_accuracy_met is None else str(runtime_chemical_accuracy_met)
@@ -82,9 +84,7 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
                             ("Verification status", str(confidence.get("verification_status", "validated"))),
                             (
                                 "Chemical accuracy",
-                                str(
-                                    chemical_accuracy.get("meets_chemical_accuracy", chemical_accuracy.get("available", False))
-                                ),
+                                chemical_accuracy_display,
                             ),
                             (threshold_label, f"{threshold_value:.4f} Ha"),
                             (

@@ -16,7 +16,6 @@ SAMPLE_MOLECULE_PAYLOAD: dict[str, Any] = {
     "atoms": [
         {"elem": "Li", "x": 0.0, "y": 0.0, "z": 0.0},
         {"elem": "H", "x": 0.0, "y": 0.0, "z": 1.62},
-        {"elem": "X", "x": 0.0, "y": 0.0, "z": 0.81},
     ],
     "style": {"stick": {"radius": 0.18}, "sphere": {"scale": 0.28}},
     "labels": [
@@ -35,6 +34,7 @@ SAMPLE_RUN_PAYLOAD: dict[str, Any] = {
             "num_active_orbitals": 4,
             "num_active_electrons": 2,
             "orbital_window": "1 sigma to 3 sigma*",
+            "orbital_levels_ev": [-21.4, -10.2, -1.4, 0.6],
         },
     },
     "energy": {
