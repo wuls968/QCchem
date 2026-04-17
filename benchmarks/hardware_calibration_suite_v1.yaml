@@ -1,0 +1,9 @@
+hardware_calibration_suite:
+  name: hardware_calibration_suite_v1
+  description: Compact dashboard inputs for the H2 and LiH runtime hardware probes.
+  output_root: artifacts/hardware_calibration_suite_v1
+  cases:
+    - name: h2_runtime_hardware_probe
+      result_json: artifacts/h2_runtime_hardware_probe/result.json
+    - name: lih_active_runtime_hardware_probe_v2
+      result_json: artifacts/lih_active_runtime_hardware_probe_v2/result.json

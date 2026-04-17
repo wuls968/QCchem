@@ -169,16 +169,41 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
     lines = [
         "# Hardware Calibration Dashboard",
         "",
-        "## Estimated vs Measured Cost",
+        "## Estimated vs Measured Cost and Runtime Evidence",
         "",
-        "| Case | Estimated Cost | Measured Cost | Wall Time (s) | Achieved Error | Runtime Evidence | Hardware Verified |",
-        "| --- | ---: | ---: | ---: | ---: | --- | --- |",
     ]
+    summary_block = summary.get("summary")
+    if isinstance(summary_block, dict):
+        lines.extend(
+            [
+                f"- total_cases: `{summary_block.get('total_cases')}`",
+                f"- runtime_evidence_status_counts: `{summary_block.get('runtime_evidence_status_counts')}`",
+                f"- hardware_verified_cases: `{summary_block.get('hardware_verified_cases')}`",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "| Case | Backend | Runtime Evidence Status | Evidence Tier | Submission Status | Submission Wall Time (s) | Runtime Shots | Achieved Error | Hardware Verified |",
+            "| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |",
+        ]
+    )
     for case in cases:
+        runtime_evidence_status = case.get("runtime_evidence_status", case.get("hardware_evidence_tier", "none"))
+        runtime_evidence_tier = case.get("runtime_evidence_tier", case.get("hardware_evidence_tier"))
+        runtime_submission_status = case.get("runtime_submission_status", runtime_evidence_status)
+        runtime_submission_wall_time_seconds = case.get(
+            "runtime_submission_wall_time_seconds",
+            case.get("measured_wall_time_seconds"),
+        )
+        runtime_shots = case.get("runtime_shots", case.get("measured_shot_usage"))
+        achieved_error = case.get("achieved_error")
+        if achieved_error is None:
+            achieved_error = case.get("runtime_achieved_error")
         lines.append(
-            f"| {case['name']} | {case['estimated_measurement_cost']} | "
-            f"{case['measured_shot_usage']} | {case['measured_wall_time_seconds']} | "
-            f"{case['achieved_error']} | {case.get('runtime_evidence_status', case.get('hardware_evidence_tier', 'none'))} | "
+            f"| {case['name']} | {case.get('backend_name')} | "
+            f"{runtime_evidence_status} | {runtime_evidence_tier} | {runtime_submission_status} | "
+            f"{runtime_submission_wall_time_seconds} | {runtime_shots} | {achieved_error} | "
             f"{case['hardware_verified']} |"
         )
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

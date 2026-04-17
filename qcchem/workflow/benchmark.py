@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import math
 import shutil
 from pathlib import Path
+from typing import Any
 
 from qcchem.chem import build_electronic_structure_context
 from qcchem.core import (
@@ -38,6 +40,92 @@ def _prepare_benchmark_artifacts(root: Path) -> BenchmarkArtifactPaths:
         report_markdown=resolved_root / "benchmark_report.md",
         registry_json=resolved_root / "registry.json",
     )
+
+
+def _runtime_evidence_status_from_submission(runtime_submission: dict[str, Any] | None) -> str:
+    if not runtime_submission:
+        return "none"
+    if runtime_submission.get("submitted") and runtime_submission.get("succeeded"):
+        return "retrieved_result"
+    if runtime_submission.get("submitted"):
+        return "submitted"
+    if runtime_submission.get("attempted"):
+        return "runtime_attempt"
+    return "none"
+
+
+def _runtime_submission_status_from_submission(runtime_submission: dict[str, Any] | None) -> str | None:
+    if not runtime_submission:
+        return None
+    if runtime_submission.get("failure_category"):
+        return str(runtime_submission["failure_category"])
+    if runtime_submission.get("submitted") and runtime_submission.get("succeeded"):
+        return "succeeded"
+    if runtime_submission.get("submitted"):
+        return "submitted"
+    if runtime_submission.get("attempted"):
+        return "attempted"
+    return None
+
+
+def _runtime_returned_shots(runtime_submission: dict[str, Any] | None) -> int | None:
+    if not runtime_submission:
+        return None
+    returned_job_metadata = runtime_submission.get("returned_job_metadata")
+    if not isinstance(returned_job_metadata, dict):
+        return None
+    metadata = returned_job_metadata.get("metadata")
+    if not isinstance(metadata, dict):
+        return None
+    shots = metadata.get("shots")
+    return int(shots) if shots is not None else None
+
+
+def _runtime_achieved_error_from_payload(payload: dict[str, Any]) -> float | None:
+    runtime_submission = payload.get("runtime_submission")
+    if not isinstance(runtime_submission, dict):
+        return None
+    if not runtime_submission.get("submitted") or not runtime_submission.get("succeeded"):
+        return None
+
+    benchmark = payload.get("benchmark")
+    if isinstance(benchmark, dict) and benchmark.get("absolute_error") is not None:
+        return float(benchmark["absolute_error"])
+
+    exact_baseline = payload.get("exact_baseline")
+    sampled_result = payload.get("sampled_result")
+    if not isinstance(exact_baseline, dict) or not isinstance(sampled_result, dict):
+        return None
+    exact_total = exact_baseline.get("total_energy")
+    sampled_total = sampled_result.get("sampled_total_energy_mean")
+    if exact_total is None or sampled_total is None:
+        return None
+    return abs(float(sampled_total) - float(exact_total))
+
+
+def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_path: Path) -> dict[str, Any]:
+    runtime_submission = payload.get("runtime_submission")
+    runtime_submission = runtime_submission if isinstance(runtime_submission, dict) else None
+    runtime_evidence_status = _runtime_evidence_status_from_submission(runtime_submission)
+    runtime_evidence_tier = payload.get("hardware_evidence_tier")
+    if runtime_evidence_tier is None and runtime_evidence_status != "none":
+        runtime_evidence_tier = runtime_evidence_status
+    return {
+        "name": str(payload.get("run_id") or result_json_path.parent.name),
+        "artifact_root": str(result_json_path.parent),
+        "result_json": str(result_json_path),
+        "backend_name": (runtime_submission.get("backend_name") if runtime_submission else None),
+        "job_id": (runtime_submission.get("job_id") if runtime_submission else None),
+        "runtime_evidence_status": runtime_evidence_status,
+        "runtime_evidence_tier": runtime_evidence_tier,
+        "runtime_submission_status": _runtime_submission_status_from_submission(runtime_submission),
+        "runtime_submission_wall_time_seconds": (
+            runtime_submission.get("submission_wall_time_seconds") if runtime_submission else None
+        ),
+        "runtime_shots": _runtime_returned_shots(runtime_submission),
+        "achieved_error": _runtime_achieved_error_from_payload(payload),
+        "hardware_verified": bool(payload.get("hardware_verified")),
+    }
 
 
 def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
@@ -465,6 +553,41 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
     write_aggregate_report(result, artifacts.report_markdown, kind="benchmark")
     write_hardware_calibration_report(dashboard_summary, artifacts.root / "hardware_dashboard.md")
     return result
+
+
+def build_hardware_calibration_suite(
+    result_json_paths: list[Path],
+    *,
+    output_root: Path,
+) -> dict[str, Any]:
+    """Build a compact hardware-calibration dashboard from run result artifacts."""
+    resolved_output_root = resolve_artifact_root(output_root)
+    resolved_output_root.mkdir(parents=True, exist_ok=True)
+
+    cases: list[dict[str, Any]] = []
+    for result_json_path in result_json_paths:
+        resolved_path = result_json_path.resolve()
+        payload = json.loads(resolved_path.read_text(encoding="utf-8"))
+        cases.append(_summarize_hardware_calibration_case(payload, resolved_path))
+
+    runtime_status_counts: dict[str, int] = {}
+    for case in cases:
+        status = str(case["runtime_evidence_status"])
+        runtime_status_counts[status] = runtime_status_counts.get(status, 0) + 1
+
+    summary = {
+        "suite_name": resolved_output_root.name,
+        "summary": {
+            "total_cases": len(cases),
+            "runtime_evidence_status_counts": runtime_status_counts,
+            "hardware_verified_cases": [case["name"] for case in cases if case["hardware_verified"]],
+        },
+        "cases": cases,
+    }
+
+    write_result_json(summary, resolved_output_root / "hardware_calibration_summary.json")
+    write_hardware_calibration_report(summary, resolved_output_root / "hardware_calibration_report.md")
+    return summary
 
 
 def run_benchmark_suite_from_config(path: Path, output_dir: Path | None = None) -> BenchmarkSuiteResult:
