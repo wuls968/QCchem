@@ -81,35 +81,62 @@ def _runtime_returned_shots(runtime_submission: dict[str, Any] | None) -> int | 
     return int(shots) if shots is not None else None
 
 
-def _runtime_achieved_error_from_payload(payload: dict[str, Any]) -> float | None:
+def _runtime_returned_expectation_value(runtime_submission: dict[str, Any] | None) -> float | None:
+    if not runtime_submission:
+        return None
+    returned_job_metadata = runtime_submission.get("returned_job_metadata")
+    if not isinstance(returned_job_metadata, dict):
+        return None
+    evs = returned_job_metadata.get("evs")
+    if not isinstance(evs, list) or not evs:
+        return None
+    return float(evs[0])
+
+
+def _runtime_achieved_error_from_payload(payload: dict[str, Any]) -> tuple[float | None, str]:
     runtime_submission = payload.get("runtime_submission")
     if not isinstance(runtime_submission, dict):
-        return None
-    if not runtime_submission.get("submitted") or not runtime_submission.get("succeeded"):
-        return None
+        return None, "no_runtime_submission"
+    if not runtime_submission.get("attempted"):
+        return None, "no_runtime_submission"
+    if not runtime_submission.get("submitted"):
+        return None, "runtime_not_submitted"
+    if not runtime_submission.get("succeeded"):
+        return None, "runtime_result_not_retrieved"
 
-    benchmark = payload.get("benchmark")
-    if isinstance(benchmark, dict) and benchmark.get("absolute_error") is not None:
-        return float(benchmark["absolute_error"])
+    runtime_expectation_value = _runtime_returned_expectation_value(runtime_submission)
+    if runtime_expectation_value is None:
+        return None, "runtime_result_missing_expectation"
+
+    energy = payload.get("energy")
+    if not isinstance(energy, dict):
+        return None, "missing_energy_components"
+    constant_energy_correction = energy.get("constant_energy_correction")
+    nuclear_repulsion_energy = energy.get("nuclear_repulsion_energy")
+    if constant_energy_correction is None or nuclear_repulsion_energy is None:
+        return None, "missing_energy_components"
 
     exact_baseline = payload.get("exact_baseline")
-    sampled_result = payload.get("sampled_result")
-    if not isinstance(exact_baseline, dict) or not isinstance(sampled_result, dict):
-        return None
+    if not isinstance(exact_baseline, dict) or not exact_baseline.get("available", False):
+        return None, "missing_exact_baseline"
     exact_total = exact_baseline.get("total_energy")
-    sampled_total = sampled_result.get("sampled_total_energy_mean")
-    if exact_total is None or sampled_total is None:
-        return None
-    return abs(float(sampled_total) - float(exact_total))
+    if exact_total is None:
+        return None, "missing_exact_baseline"
+
+    runtime_total_energy = (
+        runtime_expectation_value
+        + float(constant_energy_correction)
+        + float(nuclear_repulsion_energy)
+    )
+    return abs(runtime_total_energy - float(exact_total)), "derived_from_runtime_result"
 
 
 def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_path: Path) -> dict[str, Any]:
     runtime_submission = payload.get("runtime_submission")
     runtime_submission = runtime_submission if isinstance(runtime_submission, dict) else None
     runtime_evidence_status = _runtime_evidence_status_from_submission(runtime_submission)
-    runtime_evidence_tier = payload.get("hardware_evidence_tier")
-    if runtime_evidence_tier is None and runtime_evidence_status != "none":
-        runtime_evidence_tier = runtime_evidence_status
+    runtime_evidence_tier = None if runtime_evidence_status == "none" else runtime_evidence_status
+    achieved_error, achieved_error_status = _runtime_achieved_error_from_payload(payload)
     return {
         "name": str(payload.get("run_id") or result_json_path.parent.name),
         "artifact_root": str(result_json_path.parent),
@@ -123,8 +150,9 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
             runtime_submission.get("submission_wall_time_seconds") if runtime_submission else None
         ),
         "runtime_shots": _runtime_returned_shots(runtime_submission),
-        "achieved_error": _runtime_achieved_error_from_payload(payload),
-        "hardware_verified": bool(payload.get("hardware_verified")),
+        "achieved_error": achieved_error,
+        "achieved_error_status": achieved_error_status,
+        "hardware_verified": bool(runtime_submission and runtime_submission.get("submitted") and runtime_submission.get("succeeded")),
     }
 
 

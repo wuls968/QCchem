@@ -50,52 +50,71 @@ def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tm
 @pytest.mark.integration
 def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
     dashboard = {
+        "summary": {
+            "total_cases": 2,
+            "runtime_evidence_status_counts": {"retrieved_result": 1, "none": 1},
+            "hardware_verified_cases": ["h2_runtime_probe"],
+        },
         "cases": [
             {
                 "name": "h2_runtime_probe",
-                "estimated_measurement_cost": 8000,
-                "measured_shot_usage": 4096,
-                "measured_wall_time_seconds": 15.0,
+                "backend_name": "ibm_marrakesh",
+                "runtime_submission_status": "succeeded",
+                "runtime_submission_wall_time_seconds": 15.0,
+                "runtime_shots": 44,
                 "achieved_error": 0.03,
+                "achieved_error_status": "derived_from_runtime_result",
                 "hardware_verified": True,
-                "hardware_evidence_tier": "retrieved_result",
+                "runtime_evidence_tier": "retrieved_result",
                 "runtime_evidence_status": "retrieved_result",
             },
             {
                 "name": "h2_local_reference",
-                "estimated_measurement_cost": 1000,
-                "measured_shot_usage": None,
-                "measured_wall_time_seconds": 1.0,
-                "achieved_error": 0.0,
+                "backend_name": None,
+                "runtime_submission_status": None,
+                "runtime_submission_wall_time_seconds": None,
+                "runtime_shots": None,
+                "achieved_error": None,
+                "achieved_error_status": "no_runtime_submission",
                 "hardware_verified": False,
-                "hardware_evidence_tier": None,
+                "runtime_evidence_tier": None,
                 "runtime_evidence_status": "none",
-            }
+            },
         ]
     }
 
     output = tmp_path / "hardware_dashboard.md"
     write_hardware_calibration_report(dashboard, output)
     text = output.read_text(encoding="utf-8")
-    assert "estimated vs measured cost" in text.lower()
+    assert "runtime submission evidence" in text.lower()
     assert "h2_runtime_probe" in text
     assert "retrieved_result" in text
     assert "h2_local_reference" in text
-    assert "| none |" in text.lower()
+    assert "Achieved Error Status" in text
+    assert "derived_from_runtime_result" in text
+    assert "no_runtime_submission" in text
 
 
 @pytest.mark.integration
 def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path) -> None:
     h2_result = {
         "run_id": "h2_runtime_probe",
-        "hardware_verified": True,
-        "hardware_evidence_tier": "retrieved_result",
+        "hardware_verified": False,
+        "hardware_evidence_tier": None,
+        "energy": {
+            "constant_energy_correction": 1.25,
+            "nuclear_repulsion_energy": 0.5,
+        },
+        "exact_baseline": {
+            "available": True,
+            "total_energy": 3.6,
+        },
         "calibration": {
             "measured_wall_time_seconds": 1.5,
             "measured_shot_usage": 9999,
             "achieved_error": 9.9,
         },
-        "benchmark": {"absolute_error": 0.0195},
+        "benchmark": {"absolute_error": 9.9},
         "runtime_submission": {
             "attempted": True,
             "submitted": True,
@@ -103,13 +122,24 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
             "submission_wall_time_seconds": 388.7,
             "job_id": "job-h2",
             "backend_name": "ibm_marrakesh",
-            "returned_job_metadata": {"metadata": {"shots": 44}},
+            "returned_job_metadata": {
+                "evs": [2.0],
+                "metadata": {"shots": 44},
+            },
         },
     }
     lih_result = {
         "run_id": "lih_runtime_probe",
-        "hardware_verified": False,
-        "hardware_evidence_tier": None,
+        "hardware_verified": True,
+        "hardware_evidence_tier": "retrieved_result",
+        "energy": {
+            "constant_energy_correction": -4.0,
+            "nuclear_repulsion_energy": 1.0,
+        },
+        "exact_baseline": {
+            "available": True,
+            "total_energy": -2.75,
+        },
         "calibration": {
             "measured_wall_time_seconds": 2.5,
             "measured_shot_usage": 8888,
@@ -147,17 +177,22 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
     cases_by_name = {case["name"]: case for case in summary["cases"]}
     assert cases_by_name["h2_runtime_probe"]["runtime_evidence_status"] == "retrieved_result"
     assert cases_by_name["h2_runtime_probe"]["runtime_evidence_tier"] == "retrieved_result"
+    assert cases_by_name["h2_runtime_probe"]["hardware_verified"] is True
     assert cases_by_name["h2_runtime_probe"]["runtime_submission_wall_time_seconds"] == pytest.approx(388.7)
     assert cases_by_name["h2_runtime_probe"]["runtime_shots"] == 44
-    assert cases_by_name["h2_runtime_probe"]["achieved_error"] == pytest.approx(0.0195)
+    assert cases_by_name["h2_runtime_probe"]["achieved_error"] == pytest.approx(0.15)
+    assert cases_by_name["h2_runtime_probe"]["achieved_error_status"] == "derived_from_runtime_result"
     assert cases_by_name["lih_runtime_probe"]["runtime_evidence_status"] == "submitted"
     assert cases_by_name["lih_runtime_probe"]["runtime_evidence_tier"] == "submitted"
+    assert cases_by_name["lih_runtime_probe"]["hardware_verified"] is False
     assert cases_by_name["lih_runtime_probe"]["runtime_submission_status"] == "job_result_failed"
     assert cases_by_name["lih_runtime_probe"]["runtime_submission_wall_time_seconds"] == pytest.approx(22.4)
     assert cases_by_name["lih_runtime_probe"]["runtime_shots"] is None
     assert cases_by_name["lih_runtime_probe"]["achieved_error"] is None
+    assert cases_by_name["lih_runtime_probe"]["achieved_error_status"] == "runtime_result_not_retrieved"
 
     report_text = report_path.read_text(encoding="utf-8")
     assert "Runtime Evidence Status" in report_text
+    assert "Achieved Error Status" in report_text
     assert "h2_runtime_probe" in report_text
     assert "lih_runtime_probe" in report_text
