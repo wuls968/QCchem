@@ -14,7 +14,12 @@ from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_STATUS_NEEDS_CONFIRMATION,
 )
 from qcchem.workflow.ai_store import list_ticket_records, workspace_root, write_ticket_record
-from qcchem.workflow.ai_workspace import run_ticket
+from qcchem.workflow.ai_workspace import (
+    accept_ticket,
+    draft_ticket_from_form,
+    handle_ticket_editor_action,
+    run_ticket,
+)
 from qcchem.workbench.app import create_app
 
 
@@ -62,6 +67,25 @@ def test_workbench_shell_contains_floating_assistant_ids() -> None:
 
 
 @pytest.mark.integration
+def test_workbench_shell_contains_ticket_editor_controls() -> None:
+    app = create_app()
+    layout = _resolve_layout(app.layout)
+    rendered = str(layout)
+
+    assert "qcchem-ai-task-type" in rendered
+    assert "qcchem-ai-title-input" in rendered
+    assert "qcchem-ai-linked-artifacts-input" in rendered
+    assert "qcchem-ai-plan-summary-input" in rendered
+    assert "qcchem-ai-expected-outputs-input" in rendered
+    assert "qcchem-ai-risk-notes-input" in rendered
+    assert "qcchem-ai-accept-ticket" in rendered
+    assert "qcchem-ai-run-ticket" in rendered
+    assert "qcchem-ai-confirm-run" in rendered
+    assert "qcchem-ai-return-ticket" in rendered
+    assert "qcchem-ai-run-guard" in rendered
+
+
+@pytest.mark.integration
 def test_workbench_shell_registers_dash_owned_ai_shell_state_callbacks() -> None:
     app = create_app()
     layout = _resolve_layout(app.layout)
@@ -75,6 +99,17 @@ def test_workbench_shell_registers_dash_owned_ai_shell_state_callbacks() -> None
     assert "qcchem-ai-shell-ui-state.data" in app.callback_map
     assert "qcchem-ai-assistant-body.hidden" in app.callback_map
     assert "qcchem-ai-provider-drawer.hidden" in app.callback_map
+
+
+@pytest.mark.integration
+def test_workbench_shell_registers_ticket_editor_callbacks() -> None:
+    app = create_app()
+    callback_outputs = "\n".join(app.callback_map.keys())
+
+    assert "qcchem-ai-current-ticket-preview.children" in app.callback_map
+    assert "qcchem-ai-current-ticket-record.data" in callback_outputs
+    assert "qcchem-ai-current-ticket-path.data" in callback_outputs
+    assert "qcchem-ai-task-inbox.children" in app.callback_map
 
 
 @pytest.mark.integration
@@ -230,3 +265,97 @@ def test_ai_workspace_delivery_persists_under_ticket_workspace_when_run_from_els
     assert submitted_lane is not None
     assert "delivery-002" in str(submitted_lane)
     assert "Submit artifact bundle" in str(submitted_lane)
+
+
+@pytest.mark.integration
+def test_ticket_editor_action_requires_double_confirm_for_high_risk_execution(tmp_path) -> None:
+    workspace = tmp_path / "workspace"
+    suite_dir = workspace / "artifacts" / "benchmark_suite_v1"
+    suite_dir.mkdir(parents=True, exist_ok=True)
+    (suite_dir / "hardware_calibration_summary.json").write_text(
+        """
+{
+  "suite_name": "benchmark_suite_v1",
+  "artifact_root": "",
+  "summary": {
+    "total_cases": 1,
+    "runtime_evidence_status_counts": {"retrieved_result": 1}
+  },
+  "cases": [
+    {
+      "name": "case_a",
+      "achieved_error": 0.012,
+      "meets_chemical_accuracy": false
+    }
+  ]
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    ticket_path = draft_ticket_from_form(
+        task_type="execution",
+        title="Run hardware benchmark",
+        request_text="Run the benchmark through IBM runtime and collect the hardware result.",
+        linked_artifacts_text="artifacts/benchmark_suite_v1",
+        plan_summary="Benchmark the runtime-facing path and bundle the outputs.",
+        expected_outputs_text="execution summary\nartifact bundle",
+        risk_notes_text="Respect validated boundaries",
+        workspace_base=workspace,
+    )
+    accepted_record = accept_ticket(ticket_path)
+
+    guarded = handle_ticket_editor_action(
+        action="run",
+        task_type="execution",
+        title="Run hardware benchmark",
+        request_text="Run the benchmark through IBM runtime and collect the hardware result.",
+        linked_artifacts_text="artifacts/benchmark_suite_v1",
+        plan_summary="Benchmark the runtime-facing path and bundle the outputs.",
+        expected_outputs_text="execution summary\nartifact bundle",
+        risk_notes_text="Respect validated boundaries",
+        current_ticket_path=str(ticket_path),
+        current_ticket_record=accepted_record,
+        workspace_base=workspace,
+    )
+
+    assert guarded["guard_state"]["visible"] is True
+    assert guarded["did_change_workspace"] is False
+    assert list_ticket_records(workspace_root(workspace), lane=AI_WORKSPACE_TICKET_LANE_INBOX)[0]["task_id"] == accepted_record["task_id"]
+
+    guarded_again = handle_ticket_editor_action(
+        action="run",
+        task_type="execution",
+        title="Run hardware benchmark",
+        request_text="Run the benchmark through IBM runtime and collect the hardware result.",
+        linked_artifacts_text="artifacts/benchmark_suite_v1",
+        plan_summary="Benchmark the runtime-facing path and bundle the outputs.",
+        expected_outputs_text="execution summary\nartifact bundle",
+        risk_notes_text="Respect validated boundaries",
+        current_ticket_path=str(ticket_path),
+        current_ticket_record=accepted_record,
+        guard_state=guarded["guard_state"],
+        workspace_base=workspace,
+    )
+
+    assert guarded_again["guard_state"]["visible"] is True
+    assert guarded_again["did_change_workspace"] is False
+
+    confirmed = handle_ticket_editor_action(
+        action="confirm_run",
+        task_type="execution",
+        title="Run hardware benchmark",
+        request_text="Run the benchmark through IBM runtime and collect the hardware result.",
+        linked_artifacts_text="artifacts/benchmark_suite_v1",
+        plan_summary="Benchmark the runtime-facing path and bundle the outputs.",
+        expected_outputs_text="execution summary\nartifact bundle",
+        risk_notes_text="Respect validated boundaries",
+        current_ticket_path=str(ticket_path),
+        current_ticket_record=accepted_record,
+        guard_state=guarded["guard_state"],
+        workspace_base=workspace,
+    )
+
+    assert confirmed["current_ticket_record"]["status"] == AI_WORKSPACE_TICKET_STATUS_COMPLETED
+    assert confirmed["guard_state"]["visible"] is False
+    assert confirmed["did_change_workspace"] is True
