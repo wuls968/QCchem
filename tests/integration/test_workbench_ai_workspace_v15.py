@@ -22,6 +22,8 @@ from qcchem.workflow.ai_workspace import (
 )
 from qcchem.workbench.app import create_app
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _resolve_layout(layout: object) -> object:
     return layout() if callable(layout) else layout
@@ -72,6 +74,8 @@ def test_workbench_shell_contains_ticket_editor_controls() -> None:
     layout = _resolve_layout(app.layout)
     rendered = str(layout)
 
+    assert "qcchem-ai-assistant-drag-handle" in rendered
+    assert "qcchem-ai-assistant-resize-handle" in rendered
     assert "qcchem-ai-task-type" in rendered
     assert "qcchem-ai-title-input" in rendered
     assert "qcchem-ai-linked-artifacts-input" in rendered
@@ -110,6 +114,17 @@ def test_workbench_shell_registers_ticket_editor_callbacks() -> None:
     assert "qcchem-ai-current-ticket-record.data" in callback_outputs
     assert "qcchem-ai-current-ticket-path.data" in callback_outputs
     assert "qcchem-ai-task-inbox.children" in app.callback_map
+
+
+@pytest.mark.integration
+def test_assistant_window_asset_supports_drag_and_resize_behavior() -> None:
+    script = (REPO_ROOT / "qcchem" / "workbench" / "assets" / "assistant-window.js").read_text(encoding="utf-8")
+
+    assert "qcchem-ai-assistant-drag-handle" in script
+    assert "qcchem-ai-assistant-resize-handle" in script
+    assert "localStorage" in script
+    assert "pointerdown" in script
+    assert "clamp" in script or "Math.min" in script
 
 
 @pytest.mark.integration

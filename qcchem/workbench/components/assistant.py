@@ -27,9 +27,19 @@ def build_floating_assistant() -> html.Div:
                 className="qcchem-ai-assistant-window__header",
                 children=[
                     html.Div(
+                        id="qcchem-ai-assistant-drag-handle",
+                        className="qcchem-ai-assistant-window__drag-handle",
                         children=[
-                            html.P("Workbench Copilot", className="qcchem-ai-assistant-window__eyebrow"),
-                            html.H2("Research Ticket Editor", className="qcchem-ai-assistant-window__title"),
+                            html.Div(
+                                className="qcchem-ai-assistant-window__drag-grip",
+                                children=[html.Span() for _ in range(3)],
+                            ),
+                            html.Div(
+                                children=[
+                                    html.P("Workbench Copilot", className="qcchem-ai-assistant-window__eyebrow"),
+                                    html.H2("Research Ticket Editor", className="qcchem-ai-assistant-window__title"),
+                                ],
+                            ),
                         ]
                     ),
                     html.Div(
@@ -251,6 +261,11 @@ def build_floating_assistant() -> html.Div:
                         ],
                     ),
                 ],
+            ),
+            html.Div(
+                id="qcchem-ai-assistant-resize-handle",
+                className="qcchem-ai-assistant-window__resize-handle",
+                children=html.Span("Resize", className="qcchem-ai-assistant-window__resize-label"),
             ),
         ],
     )
