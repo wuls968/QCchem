@@ -1,0 +1,14 @@
+ai_provider:
+  provider_name: research-openai
+  provider_kind: openai_compatible
+  base_url: https://api.example.com/v1
+  api_key_ref: OPENAI_API_KEY
+  model: gpt-5.4
+  timeout_seconds: 60
+  default_temperature: 0.1
+  default_max_tokens: 2000
+  capabilities:
+    - research_qa
+    - task_drafting
+    - analysis
+  enabled: true

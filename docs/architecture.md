@@ -24,7 +24,7 @@
 : mitigation schema、metadata、symmetry check hook、readout/ZNE/PEC placeholder。
 
 `qcchem/workflow`
-: run、study、benchmark、scan、task 编排和 registry 写出。
+: run、study、benchmark、scan、task 编排、runtime collect/rehydrate 和 registry 写出。
 
 `qcchem/reporting`
 : run report 与 aggregate report 生成。
@@ -34,6 +34,12 @@
 
 `qcchem/cli`
 : 单点 run 与 aggregate workflow 的命令行入口。
+
+`qcchem/workbench`
+: Dash 驱动的本地 visual workbench，负责多页面工作台壳层、共享视觉系统、floating AI assistant、AI workspace page、结果页/聚合页组件，以及带有 `/overview` 默认路由、page inventory 和 artifact inventory 的 startup summary。
+
+`examples/agents`
+: 面向 Codex/OpenClaw 等终端代理的最小任务模板。
 
 ## 当前数据流
 
@@ -85,6 +91,14 @@
 3. workflow 汇总 point table 和 scan summary
 4. 写 `scan_table.csv`、`scan_result.json`、`scan_report.md`
 
+### Workbench
+
+1. `qcchem workbench serve` 通过 `qcchem/workbench/server.py` 创建 Dash app
+2. startup summary 统计 page inventory、default route 与真实 artifact 根目录盘面
+3. 页面层复用 QCchem run/study/benchmark/scan schema 对齐的 view model
+4. AI workspace page 从 `artifacts/ai_workspace/` 读取 ticket / delivery 记录，floating preview 通过 Dash callback 绑定当前请求输入
+5. 当前工作台既服务人类用户，也为未来 AI 代理调用提供稳定入口语义
+
 ## 关键抽象
 
 `RunSpec`
@@ -107,6 +121,8 @@
 
 `RuntimeSubmissionSummary`
 : 记录真实 runtime 提交尝试，包括 service、mode、options snapshot、returned job metadata 或认证/提交失败边界。
+  对于 real hardware job，QCchem 现在会在 `job_id` 产生后立刻把这一段 sidecar 落盘，因此等待过程被打断时也不会丢失 runtime provenance。
+  后续 `runtime collect` 会以这个 sidecar 为入口，把 provider 返回结果再并回 run artifact。
 
 `PerturbativeCorrectionResultSummary`
 : 记录 active-space energy、perturbative correction、corrected total energy 与 plugin provenance。
@@ -122,6 +138,7 @@
 
 `RunResult`
 : 原子级 artifact；benchmark/study/scan/task 都围绕它组织。
+  当前它会显式区分 `chemical_accuracy` 和 `runtime_chemical_accuracy`，避免把“本地 solver 达标”和“真实 runtime 推导总能量达标”混成同一个判断。
 
 `hardware_verified`
 : 表示真实 runtime result 已取回并写入 artifact 的证据位；它不等于 chemistry 数值已经通过 publication-grade 精度验证。
@@ -151,6 +168,8 @@
 - backend capability 和 execution policy 分离：
   - capability 回答“这个 backend 能做什么”
   - policy 回答“这次 run 想按什么标准执行和解释”
+- visual workbench 复用同一套 schema/artifact 语言，而不是另造一套 UI 专用数据模型；这样 CLI、报告、AI task interface 和本地工作台始终围绕同一批证据对象组织
+- AI workspace ticket / delivery state 也落在 `artifacts/ai_workspace/`，page render 只读这些持久化 JSON，不自行创造独立状态源
 
 ## 能量口径
 
@@ -225,14 +244,44 @@
 
 - `qiskit-ibm-runtime` 已接入
 - QCchem 会真实调用 `QiskitRuntimeService()` 并可提交最小 remote estimator job
+- 一旦 job 成功提交，`runtime_submission.json` 会立即写出，保留 `job_id`、layout strategy、selected layout、transpiled depth、2Q gate count 和 runtime options snapshot
+- 若运行过程被打断或需要稍后补回，`qcchem runtime collect <artifact-dir>` 可以基于已落盘 `job_id` 轮询 provider，并在结果就绪后补写 `result.json` 与 `report.md`
 - 若缺少账户或权限，失败会以 `RuntimeSubmissionSummary` 形式落盘
 - 一旦 job 成功，returned job metadata 与 result provenance 会进入 artifact
 - 当前仍只验证到最小 hardware probe，不表示完整远端 chemistry workflow 已验证
 - hardware calibration/dashboard 以 `runtime_submission` 为 authoritative runtime-evidence source；一个 case 是否被视为 hardware-verified，首先取决于真实提交与结果取回是否存在
 - 当前 `artifacts/hardware_calibration_suite_v1` 的 runtime-derived achieved error 仍明显偏大：
-  - H2 约 `0.245 Ha`
-  - LiH 约 `0.389 Ha`
-- 因此 `hardware_verified=True` 应解释为“真实 runtime 结果已取回”，不能解释为“真机 chemistry 精度已经达到 publication 标准”
+  - H2 baseline runtime probe 约 `0.174 Ha`
+  - H2 tighter UCCSD hardware push 约 `0.0468 Ha`
+  - H2 compact `PUCCD` hardware push 约 `0.0537 Ha`
+
+## Agent Interface 层
+
+QCchem 当前没有单独起一个 HTTP 服务，而是在已有 CLI 和 artifact 之上增加了一层轻量 agent protocol：
+
+- `qcchem agent validate-task`
+- `qcchem agent run-task`
+- `qcchem agent summarize`
+
+这层接口的核心目标是：
+
+- 让 AI 优先消费结构化 JSON，而不是二次解析 Markdown
+- 让任务输入固定成 task schema，而不是让代理在会话里临时拼命令
+- 继续复用已有 `run / benchmark / runtime collect` workflow，而不分叉出第二套执行引擎
+
+当前支持的 agent task kind：
+
+- `run_config`
+- `runtime_collect`
+- `benchmark_suite`
+- `hardware_campaign_summary`
+
+这类 task 会把执行结果重新整理成结构化 summary，供终端型 AI 代理继续消费，而不是要求代理直接解析报告正文。
+
+`hardware_campaign_summary` 这类聚合任务仍然必须遵守 QCchem 现有的证据边界：
+
+- `hardware_verified=True` 只表示真实 runtime 结果已取回
+- 它不能自动等价于“真机 chemistry 精度已经达到 publication 标准”
 
 当 compression-aware execution 启用时，runtime snapshot 还会记录：
 

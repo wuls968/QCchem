@@ -43,8 +43,71 @@
   - requested precision `0.05`
   - requested shot budget `1024`
   - provider usage `12 quantum seconds`
+- 当前环境下又新增了两条更激进的 H2 hardware chemistry push：
+  - `artifacts/h2_runtime_hardware_probe_ca`
+    - `ibm_kingston`
+    - `4096 shots`
+    - runtime-derived error 约 `0.0468 Ha`
+  - `artifacts/h2_runtime_hardware_probe_puccd`
+    - `ibm_kingston`
+    - `PUCCD` compact ansatz
+    - `4096 shots`
+    - runtime-derived error 约 `0.0537 Ha`
+  - `artifacts/h2_runtime_hardware_probe_puccd_layout`
+    - `ibm_kingston`
+    - `PUCCD` + layout-aware runtime planning
+    - selected layout `[44, 45, 46, 47]`
+    - transpiled depth `146`, 2Q gates `42`
+    - runtime-derived error 约 `0.0137 Ha`
+- runtime submission robustness 已补强：
+  - remote job 一旦提交，`runtime_submission.json` 会立即写出
+  - 即使本地等待被打断，也会保留 `job_id`、layout、transpilation 与 runtime options provenance
+- runtime collect/rehydrate 已正式落地：
+  - `qcchem runtime collect <artifact-dir>`
+  - 可以轮询已有 `runtime_submission.json`
+  - 若 provider 结果就绪，则自动补写 `result.json`、`report.md`、`runtime_chemical_accuracy`
+- AI agent interface 已正式落地：
+  - `qcchem agent validate-task`
+  - `qcchem agent run-task`
+  - `qcchem agent summarize`
+  - `examples/agents/*` 提供了可直接给 Codex/OpenClaw 复用的任务模板
+  - `docs/agent_interface.md` 说明 task schema 与推荐调用顺序
+  - `docs/hardware_runtime_campaign_report.md` 汇总了真实 IBM chemistry runtime campaign
+- AI workspace 文档与示例已落地：
+  - `docs/ai_workspace.md`
+  - `examples/ai_workspace/provider.openai-compatible.yaml`
+  - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
+  - workbench page 读取持久化 ticket state，floating preview 只镜像当前输入的 request 草稿
+- visual workbench startup contract 已落地：
+  - `qcchem workbench serve`
+  - Dash 驱动的多页面 workbench 壳层
+  - 页面顺序以 `/overview` 为 canonical landing route
+  - workbench startup summary 现在会报告真实 page inventory、default route、artifact inventory 与页面总数
+  - `docs/workbench.md` 记录了 workbench 启动路径、页面顺序与当前边界
+- 当前有一个额外的 in-flight control case 已成功提交但尚未回收最终结果：
+  - `artifacts/h2_runtime_hardware_probe_ca_layout/runtime_submission.json`
+  - backend `ibm_kingston`
+  - job_id `d7guiki2khts739p1pd0`
+  - 已于后续 `runtime collect` 中成功回收
+  - runtime-derived error 约 `0.0404 Ha`
+- 当前又新增一条更激进的 H2 chemical-accuracy push，已成功提交并保留完整 sidecar：
+  - `artifacts/h2_runtime_hardware_probe_puccd_layout_mitigated/runtime_submission.json`
+  - backend `ibm_kingston`
+  - job_id `d7guuejjne2c7393e7d0`
+  - strategy: `layout-aware PUCCD + 8192 shots + DD + twirling + measure mitigation`
+  - 已于后续 `runtime collect` 中成功回收
+  - runtime-derived error 约 `0.2673 Ha`
+- 当前又追加了一条最克制的 H2 chemical-accuracy push：
+  - `artifacts/h2_runtime_hardware_probe_puccd_layout_highshots/runtime_submission.json`
+  - backend `ibm_kingston`
+  - job_id `d7h01qnb91ec73au3eag`
+  - strategy: `layout-aware PUCCD + 8192 shots`
+  - 已于后续 `runtime collect` 中成功回收
+  - runtime-derived error 约 `0.0533 Ha`
 - 真实 hardware probe artifact：
   - `artifacts/h2_runtime_hardware_probe`
+  - `artifacts/h2_runtime_hardware_probe_ca`
+  - `artifacts/h2_runtime_hardware_probe_puccd`
   - `artifacts/lih_active_runtime_hardware_probe_v2`
 - 真实 hardware calibration suite artifact：
   - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json`
@@ -76,6 +139,8 @@
 - real runtime submission probe artifact with returned job metadata
 - hardware calibration dashboard artifact/report path
 - artifact index helper / repo hygiene path
+- workbench startup summary, page inventory, and `/overview` default route
+- AI workspace docs/examples and persisted ticket visibility
 - PySCF NEVPT2 classical-reference correction task
 - LiH active-space compression benchmark suite
 - low-rank benchmark suite exact / ideal cases
@@ -108,10 +173,23 @@
 - exploratory benchmark/study 的更深集成目前仍以显式隔离为主，尚未成为独立 aggregate workflow
 - 还没有把完整 low-rank benchmark suite 接到真实远程 estimator primitive result
 - 还没有验证多 case chemistry workflow 的远端 runtime 稳定性
+- agent interface 目前是 CLI-first 协议层，不是 MCP server 或 HTTP service
+- visual workbench 当前仍是 read-only preview layer；默认页面内容以 schema-driven curated view model 为主，深层 live artifact picker 仍在推进
+- AI workspace page 现在会读取 `artifacts/ai_workspace/` 中的 ticket / delivery JSON，但它仍然不是任意 artifact 的通用编辑器
 - `hardware_verified` 目前只代表真实 runtime result 已取回，不代表 chemistry 数值已验证到 publication-grade
 - 当前 hardware calibration suite 的 runtime-derived achieved error 仍较大：
-  - H2 约 `0.174 Ha`
+  - H2 baseline probe 约 `0.174 Ha`
+  - H2 tighter UCCSD push 约 `0.0468 Ha`
+  - H2 compact `PUCCD` push 约 `0.0537 Ha`
+  - H2 layout-aware `PUCCD` push 约 `0.0137 Ha`
+  - H2 layout-aware `UCCSD` push 约 `0.0404 Ha`
+  - H2 layout-aware `PUCCD + DD/twirling/measure mitigation` push 约 `0.2673 Ha`
+  - H2 layout-aware `PUCCD + 8192 shots` push 约 `0.0533 Ha`
   - LiH 约 `0.389 Ha`
+- 到目前为止，最佳真实 H2 结果仍然是 `layout-aware PUCCD` 的 `0.0137 Ha`。更激进的 mitigation 组合和更高 shot budget 都没有继续改善它。
+- 当前主干 artifact 已把 `chemical_accuracy` 与 `runtime_chemical_accuracy` 分开：
+  - 前者回答本地 solver 路径是否达到 chemical accuracy
+  - 后者回答真实 runtime 返回值推导出的总能量是否达到 chemical accuracy
 - provider usage 已能通过 `runtime_submission.json` sidecar 补齐并进入 dashboard，但 chemistry 数值精度仍未达到 publication-grade
 - mitigation 仍以 schema + metadata + hook 为主
 - embedding 还没有 fragment solver execution，只到 DMET-style recommendation skeleton
@@ -127,6 +205,7 @@
 3. 为 NEVPT2 增加更多体系与 active-space benchmark，确认 correction 的稳定边界
 4. 给 embedding 层接入一个真实 fragment solver plugin
 5. 给 excited-state 增加一个真正可跑的 variational path
+6. 把 workbench 从 curated preview 推进到更完整的 artifact-driven browser
 
 ## 风险提醒
 

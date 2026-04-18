@@ -7,11 +7,14 @@ import importlib
 import json
 from pathlib import Path
 
+from qcchem.io.agent_config import load_agent_task_spec
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
+from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
+from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.scan import run_scan_from_config
 from qcchem.workflow.study import run_study_from_config
 
@@ -70,6 +73,46 @@ def _build_parser() -> argparse.ArgumentParser:
     workbench_serve.add_argument("--host", default="127.0.0.1")
     workbench_serve.add_argument("--port", type=int, default=8050)
     workbench_serve.add_argument("--debug", action="store_true")
+
+    runtime_parser = subparsers.add_parser("runtime", help="Runtime artifact commands.")
+    runtime_subparsers = runtime_parser.add_subparsers(dest="runtime_command", required=True)
+    runtime_collect = runtime_subparsers.add_parser(
+        "collect",
+        help="Poll a submitted runtime job and merge returned data back into an artifact directory.",
+    )
+    runtime_collect.add_argument("artifact_root", type=Path, help="Artifact directory containing runtime_submission.json.")
+
+    agent_parser = subparsers.add_parser("agent", help="Agent-friendly QCchem task commands.")
+    agent_subparsers = agent_parser.add_subparsers(dest="agent_command", required=True)
+    agent_validate = agent_subparsers.add_parser("validate-task", help="Validate one agent task file.")
+    agent_validate.add_argument("task_file", type=Path, help="Path to one agent task YAML/JSON file.")
+    agent_run = agent_subparsers.add_parser("run-task", help="Run one agent task file and emit JSON summary.")
+    agent_run.add_argument("task_file", type=Path, help="Path to one agent task YAML/JSON file.")
+    agent_summarize = agent_subparsers.add_parser(
+        "summarize",
+        help="Summarize a hardware runtime campaign directory or summary JSON into agent-friendly outputs.",
+    )
+    agent_summarize.add_argument("target", type=Path, help="Hardware suite artifact root or summary JSON path.")
+
+    ai_parser = subparsers.add_parser("ai", help="AI workspace commands.")
+    ai_subparsers = ai_parser.add_subparsers(dest="ai_command", required=True)
+    ai_draft = ai_subparsers.add_parser("draft-ticket", help="Draft an AI workspace task ticket.")
+    ai_draft.add_argument("--provider-config", type=Path, required=True, help="Path to AI provider YAML config.")
+    ai_draft.add_argument(
+        "--task-type",
+        choices=["analysis", "execution", "delivery"],
+        required=True,
+        help="Ticket category to draft.",
+    )
+    ai_draft.add_argument("--request", required=True, help="Free-form user request to structure into a ticket.")
+    ai_draft.add_argument(
+        "--artifact",
+        action="append",
+        default=[],
+        help="Linked artifact path. Repeat for multiple artifacts.",
+    )
+    ai_run = ai_subparsers.add_parser("run-ticket", help="Run an accepted AI workspace ticket.")
+    ai_run.add_argument("ticket", type=Path, help="Path to one AI workspace ticket JSON file.")
     return parser
 
 
@@ -259,6 +302,49 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "workbench":
         if args.workbench_command == "serve":
             return _run_workbench_command(args.host, args.port, args.debug)
+
+    if args.command == "runtime":
+        if args.runtime_command == "collect":
+            summary = collect_runtime_artifact(args.artifact_root)
+            print("Runtime collect completed")
+            print(f"Artifact root: {summary['artifact_root']}")
+            print(f"Job id: {summary['job_id']}")
+            print(f"Status: {summary['status']}")
+            print(f"Result updated: {summary['result_updated']}")
+            return 0
+
+    if args.command == "agent":
+        if args.agent_command == "validate-task":
+            spec = load_agent_task_spec(args.task_file)
+            print(f"Agent task is valid: {spec.name}")
+            print(f"Kind: {spec.kind}")
+            print(f"Source: {spec.source_path}")
+            return 0
+        if args.agent_command == "run-task":
+            summary = run_agent_task_from_config(args.task_file)
+            print(json.dumps(to_primitive(summary), indent=2, sort_keys=True))
+            return 0
+        if args.agent_command == "summarize":
+            summary = summarize_agent_target(args.target)
+            print(json.dumps(to_primitive(summary), indent=2, sort_keys=True))
+            return 0
+
+    if args.command == "ai":
+        from qcchem.workflow.ai_workspace import draft_ticket_from_request, run_ticket
+
+        if args.ai_command == "draft-ticket":
+            ticket_path = draft_ticket_from_request(
+                provider_config=args.provider_config,
+                task_type=args.task_type,
+                request_text=args.request,
+                linked_artifacts=args.artifact,
+            )
+            print(json.dumps({"ticket_path": str(ticket_path)}, indent=2, sort_keys=True))
+            return 0
+        if args.ai_command == "run-ticket":
+            result = run_ticket(args.ticket)
+            print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
+            return 0
 
     parser.error(f"Unsupported command: {args.command}")
     return 2

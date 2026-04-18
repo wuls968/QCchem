@@ -44,6 +44,7 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at top left, rgba(217, 236, 244, 0.55), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(154, 107, 63, 0.1), transparent 24%),
     linear-gradient(180deg, var(--qcchem-surface-paper) 0%, var(--qcchem-surface-canvas) 100%);
   color: var(--qcchem-text-primary);
   font-family: var(--qcchem-type-body);
@@ -59,8 +60,16 @@ a {
   padding: 28px;
 }
 
+.qcchem-shell *,
+.qcchem-shell *::before,
+.qcchem-shell *::after {
+  min-width: 0;
+}
+
 .qcchem-context-bar {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   justify-content: space-between;
   align-items: stretch;
@@ -72,10 +81,22 @@ a {
     linear-gradient(140deg, rgba(255, 250, 243, 0.98), rgba(251, 245, 236, 0.9)),
     linear-gradient(45deg, rgba(217, 236, 244, 0.35), transparent 45%);
   box-shadow: var(--qcchem-shadow-panel);
+  overflow: hidden;
+}
+
+.qcchem-context-bar::after {
+  content: "";
+  position: absolute;
+  inset: auto -12% -28% auto;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(147, 161, 138, 0.16), transparent 68%);
+  pointer-events: none;
 }
 
 .qcchem-context-bar__identity {
   max-width: 42rem;
+  min-width: 0;
 }
 
 .qcchem-context-bar__eyebrow,
@@ -93,7 +114,9 @@ a {
   margin: 0;
   font-family: var(--qcchem-type-display);
   font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 0.96;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .qcchem-context-bar__subtitle {
@@ -102,20 +125,85 @@ a {
   color: var(--qcchem-text-secondary);
   font-size: 1rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-context-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.qcchem-context-bar__route {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(32, 51, 74, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+  max-width: 42rem;
+}
+
+.qcchem-context-bar__route-eyebrow {
+  margin: 0 0 6px;
+  color: var(--qcchem-text-muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.qcchem-context-bar__route-title {
+  margin: 0;
+  font-family: var(--qcchem-type-display);
+  font-size: 1.22rem;
+  color: var(--qcchem-accent-deep-blue);
+}
+
+.qcchem-context-bar__route-summary {
+  margin: 8px 0 0;
+  color: var(--qcchem-text-secondary);
+  line-height: 1.55;
+}
+
+.qcchem-context-bar__chip {
+  padding: 7px 11px;
+  border: 1px solid rgba(32, 51, 74, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--qcchem-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.2;
 }
 
 .qcchem-context-bar__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(140px, 1fr));
   gap: 14px;
-  min-width: min(100%, 360px);
+  min-width: min(100%, 320px);
+  align-self: start;
 }
 
 .qcchem-main-grid {
   display: grid;
   grid-template-columns: minmax(220px, 270px) minmax(0, 1fr) minmax(250px, 320px);
+  grid-template-areas: "nav main rail";
   gap: 20px;
   align-items: start;
+}
+
+.qcchem-research-navigator {
+  grid-area: nav;
+  min-width: 0;
+}
+
+.qcchem-page-frame {
+  grid-area: main;
+  min-width: 0;
+}
+
+.qcchem-interpretation-rail {
+  grid-area: rail;
+  min-width: 0;
 }
 
 .qcchem-panel,
@@ -124,12 +212,20 @@ a {
   border: 1px solid var(--qcchem-surface-line);
   border-radius: 22px;
   box-shadow: var(--qcchem-shadow-card);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
 }
 
 .qcchem-panel {
   padding: 22px;
   position: sticky;
   top: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 243, 0.97), rgba(251, 245, 236, 0.92)),
+    linear-gradient(145deg, rgba(217, 236, 244, 0.18), transparent 48%);
 }
 
 .qcchem-panel__title,
@@ -138,7 +234,18 @@ a {
   margin: 0 0 12px;
   font-family: var(--qcchem-type-display);
   font-size: 1.45rem;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
   color: var(--qcchem-accent-deep-blue);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.qcchem-panel__note {
+  margin: 0 0 14px;
+  color: var(--qcchem-text-secondary);
+  line-height: 1.55;
+  font-size: 0.95rem;
 }
 
 .qcchem-research-navigator__links {
@@ -153,6 +260,8 @@ a {
   border-radius: 16px;
   color: var(--qcchem-text-secondary);
   background: rgba(255, 255, 255, 0.55);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
   transition: transform 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
@@ -162,9 +271,55 @@ a {
   color: var(--qcchem-text-primary);
 }
 
+.qcchem-research-navigator__link--active {
+  border-color: rgba(154, 107, 63, 0.38);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 243, 0.94), rgba(217, 236, 244, 0.34));
+  box-shadow: 0 10px 22px rgba(32, 51, 74, 0.08);
+}
+
+.qcchem-research-navigator__link--active .qcchem-research-navigator__link-title {
+  color: var(--qcchem-accent-deep-blue);
+}
+
+.qcchem-research-navigator__link--active .qcchem-research-navigator__link-meta {
+  color: var(--qcchem-accent-copper);
+}
+
+.qcchem-research-navigator__link-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qcchem-research-navigator__link-title {
+  font-weight: 600;
+  color: var(--qcchem-text-primary);
+}
+
+.qcchem-research-navigator__link-meta {
+  font-size: 0.78rem;
+  color: var(--qcchem-text-muted);
+  font-family: var(--qcchem-type-mono);
+}
+
 .qcchem-page-frame {
   min-height: 70vh;
 }
+
+.qcchem-page {
+  animation: qcchem-page-fade 320ms ease both;
+}
+
+.qcchem-page > * {
+  animation: qcchem-section-rise 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.qcchem-page > *:nth-child(1) { animation-delay: 30ms; }
+.qcchem-page > *:nth-child(2) { animation-delay: 70ms; }
+.qcchem-page > *:nth-child(3) { animation-delay: 110ms; }
+.qcchem-page > *:nth-child(4) { animation-delay: 150ms; }
+.qcchem-page > *:nth-child(5) { animation-delay: 190ms; }
 
 .qcchem-page-placeholder {
   min-height: 100%;
@@ -182,20 +337,46 @@ a {
 .qcchem-card-value {
   margin: 0;
   color: var(--qcchem-text-secondary);
+  overflow-wrap: anywhere;
 }
 
 .qcchem-card {
   padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.qcchem-card::before,
+.qcchem-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(154, 107, 63, 0.42), rgba(32, 51, 74, 0.1), transparent 78%);
+}
+
+@media (hover: hover) {
+  .qcchem-card:hover,
+  .qcchem-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 52px rgba(84, 63, 36, 0.14);
+    border-color: rgba(154, 107, 63, 0.26);
+  }
 }
 
 .qcchem-card-value {
   color: var(--qcchem-text-primary);
   font-size: 1.2rem;
   font-weight: 700;
+  line-height: 1.18;
+  text-wrap: balance;
 }
 
 .qcchem-card--compact {
   padding: 14px 16px;
+  min-height: 100%;
+  backdrop-filter: blur(8px);
 }
 
 .qcchem-card--callout {
@@ -207,14 +388,321 @@ a {
   border-color: rgba(154, 107, 63, 0.34);
 }
 
+.qcchem-detail-card__row {
+  align-items: start;
+}
+
+.qcchem-detail-card__grid {
+  display: grid;
+  gap: 0;
+}
+
+.qcchem-detail-card__row:last-child {
+  border-bottom: none !important;
+  padding-bottom: 0;
+}
+
+.qcchem-detail-card__label {
+  color: var(--qcchem-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.qcchem-detail-card__value {
+  color: var(--qcchem-accent-deep-blue);
+  text-align: right;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-card-note--compact {
+  font-size: 0.92rem;
+}
+
+.qcchem-rail-checklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.qcchem-rail-checklist__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(32, 51, 74, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.qcchem-rail-checklist__item span {
+  color: var(--qcchem-text-secondary);
+  font-size: 0.86rem;
+}
+
+.qcchem-rail-checklist__item strong {
+  color: var(--qcchem-text-primary);
+  font-size: 0.9rem;
+}
+
+.qcchem-molecule-viewer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.qcchem-molecule-viewer__meta-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(223, 208, 186, 0.9);
+  background: rgba(255, 255, 255, 0.46);
+  color: var(--qcchem-text-secondary);
+  font-size: 0.8rem;
+}
+
+.qcchem-ai-assistant-window {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 20;
+  width: min(420px, calc(100vw - 32px));
+  border: 1px solid rgba(32, 51, 74, 0.14);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 243, 0.98), rgba(251, 245, 236, 0.94)),
+    linear-gradient(135deg, rgba(217, 236, 244, 0.24), transparent 55%);
+  box-shadow: 0 24px 60px rgba(32, 51, 74, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.qcchem-ai-assistant-window__header,
+.qcchem-ai-provider-drawer__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.qcchem-ai-assistant-window__header {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid rgba(32, 51, 74, 0.08);
+}
+
+.qcchem-ai-assistant-window__title,
+.qcchem-ai-provider-drawer__title {
+  margin: 0;
+  font-family: var(--qcchem-type-display);
+  color: var(--qcchem-accent-deep-blue);
+  letter-spacing: -0.01em;
+}
+
+.qcchem-ai-assistant-window__eyebrow,
+.qcchem-ai-provider-drawer__eyebrow,
+.qcchem-ai-assistant-window__preview-title {
+  margin: 0 0 6px;
+  color: var(--qcchem-accent-copper);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.qcchem-ai-assistant-window__controls,
+.qcchem-ai-assistant-window__actions,
+.qcchem-ai-workspace-page__hero-chips,
+.qcchem-ai-assistant-window__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qcchem-ai-assistant-window__body {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px 18px;
+}
+
+.qcchem-ai-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: var(--qcchem-radius-pill);
+  border: 1px solid rgba(32, 51, 74, 0.1);
+  background: rgba(255, 255, 255, 0.54);
+  font-size: 0.78rem;
+  color: var(--qcchem-text-secondary);
+}
+
+.qcchem-ai-chip--validated {
+  color: var(--qcchem-status-validated);
+}
+
+.qcchem-ai-chip--exploratory {
+  color: var(--qcchem-status-exploratory);
+}
+
+.qcchem-ai-chip--informational {
+  color: var(--qcchem-status-informational);
+}
+
+.qcchem-ai-assistant-window__input,
+.qcchem-ai-provider-drawer__input {
+  width: 100%;
+  border: 1px solid rgba(32, 51, 74, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--qcchem-text-primary);
+  font: inherit;
+}
+
+.qcchem-ai-assistant-window__input {
+  min-height: 136px;
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.qcchem-ai-provider-drawer__input {
+  padding: 12px 14px;
+}
+
+.qcchem-ai-assistant-window__input::placeholder,
+.qcchem-ai-provider-drawer__input::placeholder {
+  color: var(--qcchem-text-muted);
+}
+
+.qcchem-ai-assistant-window__ticket-preview,
+.qcchem-ai-provider-drawer,
+.qcchem-ai-workspace-page__lane {
+  border: 1px solid rgba(32, 51, 74, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.qcchem-ai-assistant-window__ticket-preview {
+  padding: 14px 16px;
+}
+
+.qcchem-ai-assistant-window__preview-body,
+.qcchem-ai-provider-drawer__note,
+.qcchem-ai-workspace-page__hero-body,
+.qcchem-ai-workspace-page__placeholder {
+  margin: 0;
+  color: var(--qcchem-text-secondary);
+  line-height: 1.55;
+}
+
+.qcchem-ai-assistant-window__control,
+.qcchem-ai-assistant-window__action {
+  border: 1px solid rgba(32, 51, 74, 0.12);
+  border-radius: var(--qcchem-radius-pill);
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--qcchem-accent-deep-blue);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.qcchem-ai-assistant-window__control {
+  padding: 9px 12px;
+}
+
+.qcchem-ai-assistant-window__action {
+  padding: 10px 14px;
+}
+
+.qcchem-ai-provider-drawer {
+  margin: 0 18px 18px;
+  padding: 16px;
+}
+
+.qcchem-ai-provider-drawer__fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.qcchem-ai-workspace-page {
+  display: grid;
+  gap: 18px;
+}
+
+.qcchem-ai-workspace-page__hero {
+  padding: 24px;
+}
+
+.qcchem-ai-workspace-page__hero-body {
+  max-width: 44rem;
+}
+
+.qcchem-ai-workspace-page__board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.qcchem-ai-workspace-page__lane {
+  padding: 20px;
+}
+
+.qcchem-ai-workspace-page__placeholder {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(239, 229, 214, 0.6);
+  font-size: 0.92rem;
+}
+
+@keyframes qcchem-page-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes qcchem-section-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.js-plotly-plot,
+.js-plotly-plot .plot-container,
+.js-plotly-plot .svg-container {
+  max-width: 100%;
+}
+
+@media (max-width: 1460px) {
+  .qcchem-main-grid {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+    grid-template-areas:
+      "nav main"
+      "rail main";
+  }
+
+  .qcchem-context-bar {
+    flex-direction: column;
+  }
+
+  .qcchem-context-bar__metrics {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
 @media (max-width: 1080px) {
   .qcchem-shell {
     padding: 18px;
   }
 
-  .qcchem-context-bar,
   .qcchem-main-grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "nav"
+      "main"
+      "rail";
   }
 
   .qcchem-context-bar {
@@ -227,5 +715,17 @@ a {
 
   .qcchem-panel {
     position: static;
+  }
+
+  .qcchem-ai-workspace-page__board {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .qcchem-ai-assistant-window {
+    right: 16px;
+    bottom: 16px;
+    width: calc(100vw - 32px);
   }
 }

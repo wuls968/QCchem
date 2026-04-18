@@ -1,0 +1,20 @@
+{
+  "task_id": "analysis-h2-campaign-demo",
+  "task_type": "analysis",
+  "title": "Summarize the H2 hardware campaign",
+  "request_text": "Compare the recent H2 hardware probes and recommend the next best convergence step.",
+  "plan_summary": "Read the hardware calibration suite, compare ideal/sampled/runtime evidence, and return a constrained recommendation.",
+  "expected_outputs": [
+    "analysis summary",
+    "recommendation"
+  ],
+  "risk_notes": [
+    "Do not overstate chemical accuracy.",
+    "Respect validated/exploratory/unstable boundaries."
+  ],
+  "linked_artifacts": [
+    "artifacts/hardware_calibration_suite_v1"
+  ],
+  "status": "accepted",
+  "execution_target": "analysis_only_assistant"
+}

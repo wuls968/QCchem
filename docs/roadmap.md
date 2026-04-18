@@ -74,9 +74,22 @@
   - make exploratory CLI/reporting behavior first-class
 - hardware calibration phase:
   - real H2 / LiH runtime probes
+  - chemistry-informed compact hardware ansatz comparison for H2 (`UCCSD` vs `PUCCD`)
+  - layout-aware hardware transpilation / qubit-selection heuristics for H2 chemistry pushes
   - unified hardware calibration dashboard
   - exports carrying `hardware_verified` / `hardware_evidence_tier` / `runtime_submission` provenance
-  - explicit docs boundary that `hardware_verified` means runtime result retrieved, not publication-grade chemistry validation
+  - separate `chemical_accuracy` vs `runtime_chemical_accuracy` semantics in run artifacts
+  - immediate runtime sidecar persistence so queued remote jobs retain provenance before result retrieval
+  - runtime collect / rehydrate command so submitted jobs can be merged back into artifacts later
+- explicit docs boundary that `hardware_verified` means runtime result retrieved, not publication-grade chemistry validation
+- CLI-first AI agent interface:
+  - task schema for `run_config` / `runtime_collect` / `benchmark_suite` / `hardware_campaign_summary`
+  - `qcchem agent` command group
+  - agent-facing hardware runtime campaign summary/report
+- AI workspace docs/examples:
+  - `docs/ai_workspace.md`
+  - `examples/ai_workspace/provider.openai-compatible.yaml`
+  - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
 - successful remote runtime / session execution integration
 - 更丰富的 noise model suite 与 mitigation experiment layer
 - 更稳的 variational excited-state solver 路径
@@ -86,6 +99,17 @@
 - 资源估计工作流
 - 更完整的 campaign workflow
 - 更系统的 benchmark acceptance policy
+
+## v0.10
+
+- Dash-driven local research workbench
+- report-engine visual refresh
+- startup artifact inventory and user-facing workbench path
+- `qcchem workbench serve`
+- floating AI workspace shell and task lanes
+- `/overview` canonical landing route and ordered page inventory
+- stronger bridge between CLI artifacts, reports, and visual analysis surfaces
+- 逐步从 curated page model 过渡到更完整的 artifact-driven browser
 
 ## v1.0 愿景
 

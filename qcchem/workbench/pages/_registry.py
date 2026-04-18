@@ -146,6 +146,14 @@ def ensure_pages_registered() -> None:
         summary="Hardware runtime campaign ranking, best-case evidence, and runtime status posture.",
         order=9,
     )
+    _register_page(
+        "qcchem.workbench.pages.ai_workspace",
+        path="/ai-workspace",
+        name="AI Workspace",
+        title="AI Workspace",
+        summary="Task-centric AI ticket surface for drafting, review lanes, and provider shell controls.",
+        order=11,
+    )
 
 
 def build_validation_pages() -> list[html.Div]:
