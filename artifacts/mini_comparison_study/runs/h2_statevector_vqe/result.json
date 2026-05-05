@@ -1,0 +1,190 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "precision": null,
+    "repetitions": 1,
+    "seed": null,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 1.122391735108863e-09,
+    "absolute_error_threshold": 1e-06,
+    "comparison_target": "variational_result",
+    "exact_available": true,
+    "exact_electronic_energy": -1.857275030202377,
+    "exact_total_energy": -1.1373060357533973,
+    "meets_threshold": true,
+    "relative_error": 6.04321770796952e-10,
+    "relative_error_threshold": 1e-06,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.020307037877001388,
+    "electronic_energy": -1.8572750290799853,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.857275030202377,
+    "hf_reference_energy": -1.1169989967540044,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "solver_energy": -1.8572750290799853,
+    "total_energy": -1.1373060346310058
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -1.857275030202377,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.857275030202377,
+    "source": "exact_diagonalization",
+    "total_energy": -1.1373060357533973
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "runtime_ready_expected": false
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/QCchem/configs/h2.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Preparing backend: statevector",
+      "Running solver: vqe",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/exact_result.json",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 36,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 15
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "molecule_name": "H2",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": []
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 7,
+    "source_config": "/Users/a0000/QCchem/configs/h2.yaml",
+    "timestamp": "2026-04-11T03:35:54.435693+00:00",
+    "wall_time_seconds": 0.7009672079948359,
+    "workspace_dirty": true
+  },
+  "run_id": "h2_statevector_vqe",
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.3-alpha",
+  "variational_result": {
+    "ansatz": {
+      "entanglement": "full",
+      "entanglement_blocks": "cz",
+      "kind": "uccsd",
+      "reps": 1,
+      "rotation_blocks": [
+        "ry",
+        "rz"
+      ]
+    },
+    "available": true,
+    "converged": true,
+    "evaluations": 42,
+    "final_objective_energy": -1.8572750290799853,
+    "initial_point_strategy": "zeros",
+    "iterations": 42,
+    "optimal_parameters": [
+      2.747994633505213e-05,
+      2.0095055598396875e-05,
+      -0.11176980819446494
+    ],
+    "optimizer": {
+      "kind": "COBYLA",
+      "maxiter": 100,
+      "tol": null
+    },
+    "optimizer_message": "Return from COBYLA because the trust region radius reaches its lower bound.",
+    "parameter_count": 3,
+    "solver_kind": "vqe"
+  },
+  "verification_status": "validated"
+}

@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pytest
 
+from qcchem.io.config import load_run_spec
 from qcchem.reporting.aggregate import write_hardware_calibration_report
 from qcchem.reporting.markdown import render_markdown_report
 from qcchem.io.serialization import to_primitive
 from qcchem.workflow.benchmark import build_hardware_calibration_suite, run_benchmark_suite_from_config
-from qcchem.workflow.runner import run_from_config
+from qcchem.workflow.runner import run_from_config, run_spec
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -25,6 +26,27 @@ def test_hardware_run_report_mentions_hardware_sections(tmp_path: Path) -> None:
     assert "Hardware Execution" in report_text
     assert "Local Calibration Summary" in report_text
     assert "executed-solver calibration only" in report_text
+
+
+@pytest.mark.integration
+def test_h2_puccd_preview_keeps_chemical_accuracy_with_fewer_parameters(tmp_path: Path) -> None:
+    spec = load_run_spec(REPO_ROOT / "configs" / "h2_runtime_hardware_probe_ca.yaml")
+    spec.backend.runtime.enabled = False
+    spec.backend.runtime.options["submit_real_job"] = False
+    spec.solver.ansatz.kind = "puccd"
+    spec.run.output_dir = tmp_path / "h2_puccd_preview"
+
+    result = run_spec(
+        spec,
+        source_config=str(REPO_ROOT / "configs" / "h2_runtime_hardware_probe_ca.yaml"),
+        output_dir=tmp_path / "h2_puccd_preview",
+    )
+
+    assert result.variational_result is not None
+    assert result.variational_result.parameter_count == 1
+    assert result.chemical_accuracy is not None
+    assert result.chemical_accuracy.meets_chemical_accuracy is True
+    assert result.energy.total_energy == pytest.approx(result.exact_baseline.total_energy, abs=1.0e-6)
 
 
 @pytest.mark.integration
@@ -52,6 +74,37 @@ def test_hardware_run_report_keeps_hardware_sections_when_data_is_unavailable(tm
 
 
 @pytest.mark.integration
+def test_render_markdown_report_distinguishes_local_and_runtime_chemical_accuracy(tmp_path: Path) -> None:
+    result = run_from_config(
+        REPO_ROOT / "configs" / "h2_exact.yaml",
+        output_dir=tmp_path / "h2_exact_preview_for_accuracy_sections",
+    )
+    payload = to_primitive(result)
+    payload["chemical_accuracy"]["assessment_target"] = "local_execution"
+    payload["runtime_chemical_accuracy"] = {
+        "available": True,
+        "assessment_target": "runtime_derived",
+        "status": "exploratory",
+        "meets_chemical_accuracy": False,
+        "absolute_error_hartree": 0.05,
+        "absolute_error_kcal_mol": 31.3754737,
+        "threshold_hartree": 0.0016,
+        "threshold_kcal_mol": 1.0040151584,
+        "statistical_error": 0.02,
+        "reference_energy": payload["exact_baseline"]["total_energy"],
+        "computed_energy": payload["exact_baseline"]["total_energy"] + 0.05,
+        "notes": ["Runtime-derived chemistry estimate does not meet chemical accuracy."],
+    }
+
+    report_text = render_markdown_report(payload)
+
+    assert "## Chemical Accuracy (Local Execution)" in report_text
+    assert "## Chemical Accuracy (Runtime-Derived)" in report_text
+    assert "assessment_target: `runtime_derived`" in report_text
+    assert "Runtime-derived chemistry estimate does not meet chemical accuracy." in report_text
+
+
+@pytest.mark.integration
 def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
     dashboard = {
         "summary": {
@@ -63,6 +116,10 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
             {
                 "name": "h2_runtime_probe",
                 "backend_name": "ibm_marrakesh",
+                "layout_strategy": "min_weighted_error",
+                "selected_layout": [12, 15, 18, 19],
+                "transpiled_two_qubit_gate_count": 42,
+                "transpiled_depth": 138,
                 "runtime_submission_status": "succeeded",
                 "runtime_submission_wall_time_seconds": 15.0,
                 "runtime_shots": 44,
@@ -72,6 +129,9 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
                 "requested_budget_strategy": "shot_budget",
                 "achieved_error": 0.03,
                 "achieved_error_status": "derived_from_runtime_result",
+                "chemical_accuracy_target_hartree": 0.0016,
+                "meets_chemical_accuracy": False,
+                "distance_to_chemical_accuracy": 0.0284,
                 "hardware_verified": True,
                 "runtime_evidence_tier": "retrieved_result",
                 "runtime_evidence_status": "retrieved_result",
@@ -103,6 +163,10 @@ def test_hardware_dashboard_serializes_summary(tmp_path: Path) -> None:
     assert "no_runtime_submission" in text
     assert "Runtime Usage (s)" in text
     assert "Requested Precision" in text
+    assert "Meets Chem Acc" in text
+    assert "Layout Strategy" in text
+    assert "2Q Gates" in text
+    assert "12,15,18,19" in text
 
 
 @pytest.mark.integration
@@ -203,6 +267,9 @@ def test_hardware_suite_builder_uses_runtime_submission_evidence(tmp_path: Path)
     assert cases_by_name["h2_runtime_probe"]["requested_budget_strategy"] == "shot_budget"
     assert cases_by_name["h2_runtime_probe"]["achieved_error"] == pytest.approx(0.15)
     assert cases_by_name["h2_runtime_probe"]["achieved_error_status"] == "derived_from_runtime_result"
+    assert cases_by_name["h2_runtime_probe"]["chemical_accuracy_target_hartree"] == pytest.approx(0.0016)
+    assert cases_by_name["h2_runtime_probe"]["meets_chemical_accuracy"] is False
+    assert cases_by_name["h2_runtime_probe"]["distance_to_chemical_accuracy"] == pytest.approx(0.1484)
     assert cases_by_name["lih_runtime_probe"]["runtime_evidence_status"] == "submitted"
     assert cases_by_name["lih_runtime_probe"]["runtime_evidence_tier"] == "submitted"
     assert cases_by_name["lih_runtime_probe"]["hardware_verified"] is False
@@ -355,3 +422,4 @@ def test_hardware_suite_prefers_runtime_submission_sidecar_when_present(tmp_path
     assert case["runtime_usage_seconds"] == 2
     assert case["runtime_usage_quantum_seconds"] == 2
     assert case["requested_budget_strategy"] == "shot_budget"
+    assert case["meets_chemical_accuracy"] is False

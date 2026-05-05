@@ -1,0 +1,97 @@
+{
+  "artifacts": {
+    "registry_json": "/Users/a0000/QCchem/artifacts/h2_short_scan/registry.json",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/h2_short_scan/scan_report.md",
+    "result_json": "/Users/a0000/QCchem/artifacts/h2_short_scan/scan_result.json",
+    "root": "/Users/a0000/QCchem/artifacts/h2_short_scan",
+    "scan_table_csv": "/Users/a0000/QCchem/artifacts/h2_short_scan/scan_table.csv"
+  },
+  "parameter_name": "bond_length",
+  "points": [
+    {
+      "exact_error": 1.3322676295501878e-15,
+      "parameter_value": 0.5,
+      "point_label": "point_00_0.500",
+      "run_artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_00_0.500",
+      "total_energy": -1.0551597944706248,
+      "verification_status": "validated"
+    },
+    {
+      "exact_error": 5.10702591327572e-15,
+      "parameter_value": 0.735,
+      "point_label": "point_01_0.735",
+      "run_artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_01_0.735",
+      "total_energy": -1.137306035753404,
+      "verification_status": "validated"
+    },
+    {
+      "exact_error": 5.329070518200751e-15,
+      "parameter_value": 1.0,
+      "point_label": "point_02_1.000",
+      "run_artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_02_1.000",
+      "total_energy": -1.1011503302326187,
+      "verification_status": "validated"
+    }
+  ],
+  "registry_entries": [
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_00_0.500",
+      "created_at": "2026-04-11T03:35:53.761017+00:00",
+      "kind": "scan_point",
+      "name": "point_00_0.500",
+      "source": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+      "status": "validated",
+      "tags": [
+        "scan",
+        "validated"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_01_0.735",
+      "created_at": "2026-04-11T03:35:53.869903+00:00",
+      "kind": "scan_point",
+      "name": "point_01_0.735",
+      "source": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+      "status": "validated",
+      "tags": [
+        "scan",
+        "validated"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_02_1.000",
+      "created_at": "2026-04-11T03:35:53.984529+00:00",
+      "kind": "scan_point",
+      "name": "point_02_1.000",
+      "source": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+      "status": "validated",
+      "tags": [
+        "scan",
+        "validated"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan",
+      "created_at": "2026-04-11T03:35:53.984742+00:00",
+      "kind": "scan",
+      "name": "h2_short_scan",
+      "source": "configs/scans/h2_short_scan.yaml",
+      "status": "validated",
+      "tags": [
+        "scan",
+        "validated"
+      ]
+    }
+  ],
+  "scan_name": "h2_short_scan",
+  "schema_version": "qcchem.scan.v0.3-alpha",
+  "summary": {
+    "comparison_axes": [
+      "bond_length"
+    ],
+    "status_counts": {
+      "validated": 3
+    },
+    "total_runs": 3
+  }
+}

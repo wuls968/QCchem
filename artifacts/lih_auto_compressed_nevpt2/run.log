@@ -1,0 +1,14 @@
+2026-04-11 18:18:43,557 INFO Loading config from /Users/a0000/QCchem/configs/lih_auto_compressed_nevpt2.yaml
+2026-04-11 18:18:43,559 INFO Building electronic structure problem
+2026-04-11 18:18:43,616 INFO Applying mapping: jordan_wigner
+2026-04-11 18:18:43,656 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-04-11 18:18:43,656 INFO Computed compression audit: modified_cholesky
+2026-04-11 18:18:43,656 INFO Skipping backend construction for solver: exact
+2026-04-11 18:18:43,656 INFO Running solver: exact
+2026-04-11 18:18:43,657 INFO Computing exact spectrum for 1 states
+2026-04-11 18:18:43,658 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/exact_result.json
+2026-04-11 18:18:43,659 INFO Computed compressed-vs-uncompressed execution comparison
+2026-04-11 18:18:43,806 INFO Computed perturbative correction: nevpt2
+2026-04-11 18:18:43,872 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json
+2026-04-11 18:18:43,873 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/report.md
+2026-04-11 18:18:43,874 INFO Run completed

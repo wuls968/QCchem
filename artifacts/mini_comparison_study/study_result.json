@@ -1,0 +1,88 @@
+{
+  "artifacts": {
+    "registry_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/registry.json",
+    "root": "/Users/a0000/QCchem/artifacts/mini_comparison_study",
+    "study_report_markdown": "/Users/a0000/QCchem/artifacts/mini_comparison_study/study_report.md",
+    "study_result_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/study_result.json"
+  },
+  "description": "Minimal study comparing exact and variational H2 workflows.",
+  "registry_entries": [
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_exact_reference",
+      "created_at": "2026-04-11T03:35:53.761301+00:00",
+      "kind": "run",
+      "name": "h2_exact_reference",
+      "source": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+      "status": "validated",
+      "tags": [
+        "validated"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe",
+      "created_at": "2026-04-11T03:35:54.466091+00:00",
+      "kind": "run",
+      "name": "h2_statevector_vqe",
+      "source": "/Users/a0000/QCchem/configs/h2.yaml",
+      "status": "validated",
+      "tags": [
+        "validated"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study",
+      "created_at": "2026-04-11T03:35:54.466123+00:00",
+      "kind": "study",
+      "name": "mini_comparison_study",
+      "source": "configs/studies/mini_comparison.yaml",
+      "status": "validated",
+      "tags": [
+        "study",
+        "mini"
+      ]
+    }
+  ],
+  "run_records": [
+    {
+      "absolute_error": 6.661338147750939e-15,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_exact_reference",
+      "backend_kind": "statevector",
+      "mapping_kind": "jordan_wigner",
+      "name": "h2_exact_reference",
+      "policy_name": "benchmark",
+      "source_config": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+      "tags": [
+        "validated"
+      ],
+      "total_energy": -1.1373060357534057,
+      "verification_status": "validated"
+    },
+    {
+      "absolute_error": 1.122391735108863e-09,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe",
+      "backend_kind": "statevector",
+      "mapping_kind": "jordan_wigner",
+      "name": "h2_statevector_vqe",
+      "policy_name": "benchmark",
+      "source_config": "/Users/a0000/QCchem/configs/h2.yaml",
+      "tags": [
+        "validated"
+      ],
+      "total_energy": -1.1373060346310058,
+      "verification_status": "validated"
+    }
+  ],
+  "schema_version": "qcchem.study.v0.3-alpha",
+  "study_name": "mini_comparison_study",
+  "summary": {
+    "comparison_axes": [
+      "backend.kind",
+      "mapping.kind",
+      "policy.name"
+    ],
+    "status_counts": {
+      "validated": 2
+    },
+    "total_runs": 2
+  }
+}

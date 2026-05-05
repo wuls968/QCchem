@@ -1,0 +1,47 @@
+molecule:
+  name: LiH-active-exact-compressed-cholesky
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  freeze_core: true
+  active_space:
+    selection_mode: manual
+    num_electrons: 2
+    num_spatial_orbitals: 2
+    active_orbitals: [1, 2]
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-3
+    max_rank: 2
+    execution_enabled: true
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 5.0e-3
+  relative_error_threshold: 5.0e-3
+
+run:
+  seed: 67
+  output_dir: artifacts/lih_active_exact_compressed_cholesky
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true

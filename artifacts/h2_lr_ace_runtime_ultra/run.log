@@ -1,0 +1,18 @@
+2026-05-02 15:07:24,283 INFO Loading config from /Users/a0000/QCchem/configs/exploratory/h2_lr_ace_runtime.yaml
+2026-05-02 15:07:24,295 INFO Building electronic structure problem
+2026-05-02 15:07:24,351 INFO Applying mapping: parity_two_qubit_reduction
+2026-05-02 15:07:24,416 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-05-02 15:07:24,416 INFO Computed compression audit: modified_cholesky
+2026-05-02 15:07:24,417 INFO Prepared measurement plan: groups=2, cost=8890
+2026-05-02 15:07:24,417 INFO Prepared runtime policy snapshot for service=ibm_quantum_platform
+2026-05-02 15:07:24,417 INFO Preparing backend: statevector
+2026-05-02 15:07:24,417 INFO Running solver: lr_ace
+2026-05-02 15:07:24,646 INFO Computing exact spectrum for 1 states
+2026-05-02 15:07:24,647 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_ultra/exact_result.json
+2026-05-02 15:07:24,840 INFO Computed compressed-vs-uncompressed execution comparison
+2026-05-02 15:07:24,841 INFO Computed empirical calibration: wall_time=0.227s, measured_cost=None
+2026-05-02 15:07:49,012 INFO Persisted runtime submission sidecar after job submit: d7qq5hfljm6s73b9ig40
+2026-05-02 15:07:49,012 INFO Runtime submission attempt recorded: submitted
+2026-05-02 15:07:49,017 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_ultra/result.json
+2026-05-02 15:07:49,020 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_ultra/report.md
+2026-05-02 15:07:49,022 INFO Run completed

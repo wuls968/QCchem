@@ -1,0 +1,10 @@
+2026-04-10 22:22:12,469 INFO Loading config from configs/h2.yaml
+2026-04-10 22:22:12,470 INFO Building electronic structure problem
+2026-04-10 22:22:12,652 INFO Applying mapping: jordan_wigner
+2026-04-10 22:22:12,668 INFO Preparing backend: statevector
+2026-04-10 22:22:12,668 INFO Running solver: vqe
+2026-04-10 22:22:13,324 INFO Computing exact baseline by diagonalization
+2026-04-10 22:22:13,325 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2/exact_result.json
+2026-04-10 22:22:13,357 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2/result.json
+2026-04-10 22:22:13,358 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2/report.md
+2026-04-10 22:22:13,359 INFO Run completed

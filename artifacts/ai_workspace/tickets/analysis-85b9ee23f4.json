@@ -1,0 +1,23 @@
+{
+  "boundary_notes": [],
+  "confirmation_required": true,
+  "execution_target": "analysis_only_assistant",
+  "expected_outputs": [
+    "analysis summary",
+    "follow-up recommendation"
+  ],
+  "inputs": {},
+  "linked_artifacts": [
+    "artifacts/hardware_calibration_suite_v1"
+  ],
+  "linked_session_id": null,
+  "plan_summary": "Read the linked QCchem artifacts, summarize the main findings, and produce a recommendation.",
+  "request_text": "Compare the recent H2 hardware campaign artifacts.",
+  "risk_notes": [
+    "Respect validated, exploratory, and unstable boundaries in the write-up."
+  ],
+  "status": "needs_confirmation",
+  "task_id": "analysis-85b9ee23f4",
+  "task_type": "analysis",
+  "title": "Research Analysis Ticket"
+}

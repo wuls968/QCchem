@@ -1,0 +1,13 @@
+study:
+  name: mini_comparison_study
+  description: Minimal study comparing exact and variational H2 workflows.
+  registry_name: mini_comparison_study
+  policy_name: benchmark
+  tags: [study, mini]
+  runs:
+    - name: h2_exact_reference
+      config: configs/h2_exact.yaml
+      tags: [validated]
+    - name: h2_statevector_vqe
+      config: configs/h2.yaml
+      tags: [validated]

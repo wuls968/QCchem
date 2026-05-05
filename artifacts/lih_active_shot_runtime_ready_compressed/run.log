@@ -1,0 +1,18 @@
+2026-04-12 08:35:55,981 INFO Loading config from configs/lih_active_shot_runtime_ready_compressed.yaml
+2026-04-12 08:35:55,984 INFO Building electronic structure problem
+2026-04-12 08:35:56,026 INFO Applying mapping: jordan_wigner
+2026-04-12 08:35:56,063 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-04-12 08:35:56,064 INFO Computed compression audit: modified_cholesky
+2026-04-12 08:35:56,064 INFO Prepared measurement plan: groups=2, cost=80000
+2026-04-12 08:35:56,064 INFO Prepared runtime policy snapshot for service=ibm_quantum_platform
+2026-04-12 08:35:56,064 INFO Preparing backend: shot_estimator
+2026-04-12 08:35:56,064 INFO Running solver: vqe
+2026-04-12 08:35:57,077 INFO Computing exact spectrum for 1 states
+2026-04-12 08:35:57,078 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_shot_runtime_ready_compressed/exact_result.json
+2026-04-12 08:35:57,142 INFO Collected repeated shot-based sampling statistics
+2026-04-12 08:35:58,603 INFO Computed compressed-vs-uncompressed execution comparison
+2026-04-12 08:35:58,603 INFO Computed empirical calibration: wall_time=1.013s, measured_cost=24576.0
+2026-04-12 08:35:58,603 INFO Runtime submission attempt recorded: account_not_found
+2026-04-12 08:35:58,606 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_shot_runtime_ready_compressed/result.json
+2026-04-12 08:35:58,607 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_shot_runtime_ready_compressed/report.md
+2026-04-12 08:35:58,608 INFO Run completed

@@ -1,0 +1,42 @@
+molecule:
+  name: LiH-embedding
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  embedding:
+    enabled: true
+    method: dmet_skeleton
+    bath_threshold: 0.05
+    solver_plugin: placeholder_fragment_solver
+    fragments:
+      - name: Li_fragment
+        atom_indices: [0]
+      - name: H_fragment
+        atom_indices: [1]
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+run:
+  seed: 53
+  output_dir: artifacts/lih_embedding
+  overwrite: true

@@ -102,6 +102,7 @@ def test_workbench_shell_registers_dash_owned_ai_shell_state_callbacks() -> None
     assert "qcchem-ai-shell-ui-state" in store_ids
     assert "qcchem-ai-shell-ui-state.data" in app.callback_map
     assert "qcchem-ai-assistant-body.hidden" in app.callback_map
+    assert "qcchem-ai-assistant-minimize.children" in app.callback_map
     assert "qcchem-ai-provider-drawer.hidden" in app.callback_map
 
 
@@ -122,9 +123,16 @@ def test_assistant_window_asset_supports_drag_and_resize_behavior() -> None:
 
     assert "qcchem-ai-assistant-drag-handle" in script
     assert "qcchem-ai-assistant-resize-handle" in script
+    assert "qcchem-ai-assistant-reset-position" in script
+    assert "safeViewportTop" in script
+    assert "minWindowWidth" in script
+    assert "COMPACT_MIN_HEIGHT" in script
+    assert "allowCompactHeight" in script
     assert "localStorage" in script
     assert "pointerdown" in script
+    assert "dblclick" in script
     assert "clamp" in script or "Math.min" in script
+    assert "MutationObserver" in script or "requestAnimationFrame" in script
 
 
 @pytest.mark.integration

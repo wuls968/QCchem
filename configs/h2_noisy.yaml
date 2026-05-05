@@ -1,0 +1,70 @@
+molecule:
+  name: H2-noisy
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+
+mapping:
+  kind: jordan_wigner
+
+policy:
+  name: hardware_ready
+
+backend:
+  kind: shot_estimator
+  shots: 2048
+  seed: 515
+  repetitions: 5
+  abelian_grouping: false
+  noise:
+    enabled: true
+    profile: depolarizing_readout
+    depolarizing_probability_1q: 0.001
+    depolarizing_probability_2q: 0.01
+    readout_error_probability: 0.02
+  runtime:
+    enabled: true
+    service: local_aer
+    runtime_ready: true
+    session_ready: true
+    batch_ready: true
+    options:
+      optimization_level: 1
+      resilience_level: 0
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 40
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 5.0e-1
+  relative_error_threshold: 5.0e-1
+
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: true
+    method: placeholder
+
+run:
+  seed: 515
+  output_dir: artifacts/h2_noisy
+  overwrite: true

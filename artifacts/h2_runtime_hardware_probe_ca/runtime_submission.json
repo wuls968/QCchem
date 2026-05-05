@@ -1,0 +1,79 @@
+{
+  "attempted": true,
+  "backend_name": "ibm_kingston",
+  "batch_id": null,
+  "batch_requested": false,
+  "failure_category": null,
+  "failure_message": null,
+  "job_id": "d7gtv5493s0c738s29r0",
+  "job_metrics": {
+    "bss": {
+      "seconds": 28
+    },
+    "caller": "qiskit_ibm_runtime~estimator.py",
+    "qiskit_version": "qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*",
+    "timestamps": {
+      "created": "2026-04-17T07:21:56.113348Z",
+      "finished": "2026-04-17T07:22:33.779685Z",
+      "running": "2026-04-17T07:21:57.317526Z"
+    },
+    "usage": {
+      "quantum_seconds": 28,
+      "seconds": 28
+    }
+  },
+  "mode": "backend",
+  "options_snapshot": {
+    "backend_name": "ibm_kingston",
+    "budget_strategy": "chemical_accuracy_push",
+    "grouping_policy": "default",
+    "max_budgeted_shots": 4096,
+    "max_execution_seconds": 300.0,
+    "optimization_level": 3,
+    "precision_target": 0.02,
+    "resilience_level": 2,
+    "submit_real_job": true,
+    "wait_for_result": true
+  },
+  "provider": "QiskitRuntimeService",
+  "result_provenance": {
+    "attempt_stage": "result_retrieved",
+    "backend_name": "ibm_kingston",
+    "circuit_qubits": 4,
+    "operator_qubits": 4,
+    "parameter_count": 3,
+    "runtime_package_version": "0.46.1"
+  },
+  "returned_job_metadata": {
+    "evs": [
+      -1.8055391034678427
+    ],
+    "metadata": {
+      "circuit_metadata": {},
+      "num_randomizations": 32,
+      "resilience": {
+        "zne": {
+          "extrapolator": [
+            "multiple"
+          ]
+        }
+      },
+      "shots": 4096,
+      "target_precision": 0.015625
+    },
+    "stds": [
+      0.019618258753612238
+    ]
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 56.549181249996764,
+  "submitted": true,
+  "succeeded": true,
+  "usage_estimation": {
+    "quantum_seconds": 35.014459732
+  },
+  "verification_status": "exploratory"
+}

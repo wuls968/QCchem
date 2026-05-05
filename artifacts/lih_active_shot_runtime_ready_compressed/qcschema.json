@@ -1,0 +1,208 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 0.001093321738540709,
+      "available": true,
+      "estimated_measurement_cost": 80000.0,
+      "estimated_vs_measured_cost": 3.2552083333333335,
+      "measured_shot_usage": 24576.0,
+      "measured_wall_time_seconds": 1.0126971669997147,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count.",
+        "Achieved error remains outside the reported statistical uncertainty band."
+      ],
+      "precision_target": 0.005,
+      "reference_target": "compressed_vs_uncompressed"
+    },
+    "compression_result": {
+      "apply_to_solver": false,
+      "compressed_num_qubits": 4,
+      "compressed_term_count_estimate": 12,
+      "enabled": true,
+      "execution_enabled": true,
+      "max_rank": 2,
+      "method": "modified_cholesky",
+      "notes": [
+        "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+      ],
+      "original_fermionic_term_count": 72,
+      "original_num_qubits": 4,
+      "original_qubit_term_count": 27,
+      "post_term_count": 12,
+      "pre_term_count": 27,
+      "primary_rank": 2,
+      "rank": 2,
+      "reconstruction_error": 0.008905643352596537,
+      "reconstruction_error_frobenius": 0.008905643352596537,
+      "secondary_rank": null,
+      "threshold": 0.001,
+      "verification_status": "validated"
+    },
+    "mapping": {
+      "fermionic_term_count": 72,
+      "kind": "jordan_wigner",
+      "num_qubits": 4,
+      "qubit_term_count": 12
+    },
+    "measurement": {
+      "cost_reduction_ratio": 0.2222222222222222,
+      "estimated_shot_cost": 80000.0,
+      "execution_mode": "runtime_estimator",
+      "group_count": 2,
+      "grouping_policy": "commuting_low_rank",
+      "low_rank_aware": true,
+      "notes": [
+        "Measurement groups estimated with strategy 'low_rank_commuting'.",
+        "Per-group shot estimate derived from precision target 0.005.",
+        "Compressed Hamiltonian enabled low-rank-aware grouping and cost estimation."
+      ],
+      "runtime_precision_target": 0.005,
+      "strategy": "low_rank_commuting",
+      "term_count": 12,
+      "uncompressed_estimated_shot_cost": 360000.0,
+      "uncompressed_group_count": 9
+    },
+    "perturbative_correction_result": null,
+    "qcchem_run_id": "lih_active_shot_runtime_ready_compressed",
+    "reduction_audit": {
+      "active_space_metadata": {
+        "active_orbitals": [
+          0,
+          1
+        ],
+        "active_orbitals_original": [
+          1,
+          2
+        ],
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "constant_energy_correction": -7.796219568777051,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [
+        0
+      ],
+      "hamiltonian_constants": {
+        "ActiveSpaceTransformer": 0.0,
+        "FreezeCoreTransformer": -7.796219568777051,
+        "nuclear_repulsion_energy": 0.992207270475
+      },
+      "nuclear_repulsion_energy": 0.992207270475,
+      "original_num_particles": [
+        2,
+        2
+      ],
+      "original_num_spatial_orbitals": 6,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [
+        0,
+        1
+      ],
+      "selected_active_orbitals_original": [
+        1,
+        2
+      ],
+      "selection_mode": "manual",
+      "selection_reason": "Manual active-space selection from user-provided orbital list and electron counts.",
+      "total_constant_correction": -6.804012298302051,
+      "transformers_applied": [
+        "FreezeCoreTransformer",
+        "ActiveSpaceTransformer"
+      ]
+    },
+    "runtime_options": {
+      "batch_ready": true,
+      "batch_recommendation": "recommended",
+      "enabled": true,
+      "estimated_shot_cost": 80000.0,
+      "grouping_policy": "commuting_low_rank",
+      "instance": null,
+      "low_rank_workload": true,
+      "measurement_group_count": 2,
+      "options": {
+        "low_rank_workload": true,
+        "optimizer_mode": "precision",
+        "session_mode": "recommended"
+      },
+      "precision_target": 0.005,
+      "provenance": {
+        "adapter": "runtime_ready_placeholder",
+        "batch_mode_requested": true,
+        "compression_method": "modified_cholesky",
+        "low_rank_policy_applied": true,
+        "remote_execution_configured": false,
+        "session_mode_requested": true
+      },
+      "resilience_level": 1,
+      "runtime_ready": true,
+      "service": "ibm_quantum_platform",
+      "session_ready": true,
+      "session_recommendation": "recommended"
+    },
+    "runtime_submission": {
+      "attempted": true,
+      "backend_name": null,
+      "batch_id": null,
+      "batch_requested": true,
+      "failure_category": "account_not_found",
+      "failure_message": "AccountNotFoundError: \"Unable to find account. Please make sure an account with the channel name 'ibm_quantum_platform' is saved.\"",
+      "job_id": null,
+      "mode": "batch",
+      "options_snapshot": {
+        "grouping_policy": "commuting_low_rank",
+        "low_rank_workload": true,
+        "optimizer_mode": "precision",
+        "precision_target": 0.005,
+        "resilience_level": 1,
+        "session_mode": "recommended"
+      },
+      "provider": null,
+      "result_provenance": {
+        "attempt_stage": "initialize_service",
+        "runtime_package_version": "0.46.1"
+      },
+      "returned_job_metadata": {},
+      "service": "ibm_quantum_platform",
+      "session_id": null,
+      "session_requested": true,
+      "submission_wall_time_seconds": 0.00040508300025976496,
+      "submitted": false,
+      "succeeded": false,
+      "verification_status": "exploratory"
+    },
+    "verification_status": "unstable"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "LiH-active-shot-runtime-ready-compressed"
+  },
+  "properties": {
+    "electronic_energy": -8.856317746968237,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "return_energy": -7.864110476493236
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": null,
+    "git_commit": null,
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "89d48a5b7aa5ebec3a7ae75b62a1836a45e4d16364bac3f56c129d030b2d9e2f"
+  },
+  "return_result": -7.864110476493236,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

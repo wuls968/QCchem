@@ -1,0 +1,12 @@
+scan:
+  name: h2_short_scan
+  description: Short H2 bond scan for v0.3 workflow verification.
+  base_config: configs/h2_exact.yaml
+  policy_name: benchmark
+  tags: [scan, validated]
+  parameter:
+    name: bond_length
+    kind: bond_distance
+    atom_indices: [0, 1]
+    axis: [0.0, 0.0, 1.0]
+    values: [0.5, 0.735, 1.0]

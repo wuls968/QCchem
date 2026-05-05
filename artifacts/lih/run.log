@@ -1,0 +1,9 @@
+2026-04-10 22:22:12,469 INFO Loading config from configs/lih.yaml
+2026-04-10 22:22:12,470 INFO Building electronic structure problem
+2026-04-10 22:22:12,677 INFO Applying mapping: bravyi_kitaev
+2026-04-10 22:22:13,442 INFO Skipping backend construction for solver: exact
+2026-04-10 22:22:13,442 INFO Running solver: exact
+2026-04-10 22:22:13,679 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih/exact_result.json
+2026-04-10 22:22:13,708 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih/result.json
+2026-04-10 22:22:13,708 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih/report.md
+2026-04-10 22:22:13,709 INFO Run completed

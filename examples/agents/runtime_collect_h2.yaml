@@ -1,0 +1,9 @@
+agent_task:
+  version: 1
+  name: collect_h2_runtime_result
+  kind: runtime_collect
+  description: Poll one persisted H2 runtime artifact and merge any returned IBM result back into QCchem outputs.
+  inputs:
+    artifact_root: ../../artifacts/h2_runtime_hardware_probe_puccd_layout
+  outputs:
+    summary_json: ../../artifacts/h2_runtime_hardware_probe_puccd_layout/agent_collect_summary.json

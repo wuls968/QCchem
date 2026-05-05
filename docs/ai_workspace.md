@@ -2,9 +2,11 @@
 
 QCchem AI Workspace adds a floating research copilot to the Dash workbench and a dedicated task hub at `/ai-workspace`. The flow stays plan-first: free-form requests become structured tickets, and accepted tickets are then executed through the existing QCchem workflow and agent path.
 
+Within the current `Trust-First Release`, AI Workspace is intentionally conservative: it is an `evidence-aware`, `ticket-mediated`, `artifact-grounded` research copilot.
+
 ## What lives where
 
-- Workbench preview shell: floating assistant, draft preview, provider drawer
+- Workbench preview shell: floating assistant, draft preview, provider drawer, position recovery control
 - Workspace page: inbox, running, submitted, completed, and returned lanes
 - Example provider config: `examples/ai_workspace/provider.openai-compatible.yaml`
 - Example ticket: `examples/ai_workspace/tickets/analysis_h2_campaign.json`
@@ -32,6 +34,63 @@ The example file includes the same shape plus the runtime defaults QCchem expect
 4. Run the ticket through `qcchem ai run-ticket <ticket.json>`.
 5. Review the updated lane in the workspace page and the delivery record under `artifacts/ai_workspace/deliveries/`.
 
+The floating assistant preview is no longer just a request echo. When the ticket links a QCchem artifact, the preview can now surface:
+
+- primary scientific claim
+- trust tier
+- runtime evidence status
+- recommended action
+- evidence scope
+- limitation notes
+
+That keeps the copilot aligned with the same Evidence Core language used by reports and the Research Console.
+
+The floating assistant is intentionally persistent, but it must never trap the user. The `Reset` control and double-clicking the title grip both restore the assistant to a safe bottom-right position. This is useful when a previous browser session saved an awkward drag/resize state in local storage.
+
+Delivery history now mirrors that same evidence-first contract. A durable delivery should preserve the review status, linked evidence summary, evidence scope, limitation notes, and recommended action so later agents do not have to reinterpret raw artifacts from scratch.
+
+## Default AI posture
+
+QCchem AI does not treat chat as an execution authority. Its default behavior is:
+
+1. explain the current artifact evidence and trust boundary
+2. suggest a `recommended next action`
+3. create a structured ticket when the task deserves persistence
+4. execute only after ticket acceptance / confirmation
+
+That means the AI layer is designed to be a conservative evidence interpreter first, and an execution mediator second.
+
+## Evidence inputs
+
+When AI summarizes or drafts work, it should preferentially ground itself in:
+
+- current page context
+- selected artifact paths
+- `evidence_summary`
+- `trust_tier`
+- baseline metadata
+- runtime / calibration / hardware campaign metadata
+- linked tickets and deliveries
+
+### AI reads these fields first
+
+In Trust-First mode, the minimum evidence tuple AI should read before offering a recommendation is:
+
+- `primary_scientific_claim`
+- `primary_baseline`
+- `primary_error_metric`
+- `chemical_accuracy_status`
+- `runtime_evidence_status`
+- `trust_tier`
+- `recommended_action`
+
+Companion boundary language should also be preserved when present:
+
+- `baseline strength`
+- `hardware verification boundary`
+
+This is what keeps the copilot in its intended role: interpret evidence conservatively first, then propose the next ticket-worthy action.
+
 ## Useful commands
 
 ```bash
@@ -42,6 +101,7 @@ qcchem workbench serve
 
 ## Notes
 
-- The floating preview is intentionally lightweight and mirrors the current typed request.
+- The floating preview is intentionally lightweight and mirrors the current typed request, plus linked artifact evidence when available.
+- If the assistant window is in the way, use `Minimize` for a compact bar or `Reset` to recover a safe docked position.
 - The workspace page reads persisted ticket state from the artifact tree; it does not invent its own copy of task data.
 - Execution is guarded by ticket status, not by free-form chat alone.

@@ -1,0 +1,145 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 2.220446049250313e-16,
+      "available": true,
+      "estimated_measurement_cost": 20000.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.21463387500261888,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.01,
+      "reference_target": "compressed_vs_uncompressed"
+    },
+    "chemical_accuracy": {
+      "absolute_error_hartree": 4.77500483597737e-10,
+      "absolute_error_kcal_mol": 2.9963607729716156e-07,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.1372838340109996,
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.1372838344885001,
+      "relative_error": 4.1986043335654687e-10,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": {
+      "apply_to_solver": true,
+      "compressed_num_qubits": 2,
+      "compressed_term_count_estimate": 5,
+      "enabled": true,
+      "execution_enabled": true,
+      "max_rank": 4,
+      "method": "modified_cholesky",
+      "notes": [
+        "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+      ],
+      "original_fermionic_term_count": 36,
+      "original_num_qubits": 2,
+      "original_qubit_term_count": 5,
+      "post_term_count": 5,
+      "pre_term_count": 5,
+      "primary_rank": 3,
+      "rank": 3,
+      "reconstruction_error": 1.2412670766236366e-16,
+      "reconstruction_error_frobenius": 1.2412670766236366e-16,
+      "secondary_rank": null,
+      "threshold": 1e-10,
+      "verification_status": "validated"
+    },
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "parity_two_qubit_reduction",
+      "num_qubits": 2,
+      "qubit_term_count": 5
+    },
+    "measurement": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "low_rank_factor_aware",
+      "low_rank_aware": true,
+      "notes": [
+        "Measurement groups estimated with strategy 'low_rank_lr_ace_local'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Compressed Hamiltonian enabled low-rank-aware grouping and cost estimation."
+      ],
+      "runtime_precision_target": 0.01,
+      "strategy": "low_rank_lr_ace_local",
+      "term_count": 5,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "perturbative_correction_result": null,
+    "qcchem_run_id": "h2_lr_ace",
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7151043390810812
+      },
+      "nuclear_repulsion_energy": 0.7151043390810812,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7151043390810812,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "verification_status": "exploratory"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-LR-ACE"
+  },
+  "properties": {
+    "electronic_energy": -1.8523881730920808,
+    "nuclear_repulsion_energy": 0.7151043390810812,
+    "return_energy": -1.1372838340109996
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "codex/qcchem-visual-workbench",
+    "git_commit": "adb7dad10aed10ad7b2c73d1a778c9bce42840ed",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "f73d26e0b32a6a6b1459ece995e145ac5dbef52828afc4107989b8f92c74e0e0"
+  },
+  "return_result": -1.1372838340109996,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

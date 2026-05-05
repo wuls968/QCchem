@@ -1,0 +1,115 @@
+{
+  "driver": "energy",
+  "extras": {
+    "compression_result": {
+      "apply_to_solver": false,
+      "compressed_num_qubits": 4,
+      "compressed_term_count_estimate": 12,
+      "enabled": true,
+      "execution_enabled": true,
+      "max_rank": 2,
+      "method": "modified_cholesky",
+      "notes": [
+        "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+      ],
+      "original_fermionic_term_count": 72,
+      "original_num_qubits": 4,
+      "original_qubit_term_count": 27,
+      "post_term_count": 12,
+      "pre_term_count": 27,
+      "primary_rank": 2,
+      "rank": 2,
+      "reconstruction_error": 0.008905643352596537,
+      "reconstruction_error_frobenius": 0.008905643352596537,
+      "secondary_rank": null,
+      "threshold": 0.001,
+      "verification_status": "validated"
+    },
+    "mapping": {
+      "fermionic_term_count": 72,
+      "kind": "jordan_wigner",
+      "num_qubits": 4,
+      "qubit_term_count": 12
+    },
+    "perturbative_correction_result": null,
+    "qcchem_run_id": "lih_active_exact_compressed",
+    "reduction_audit": {
+      "active_space_metadata": {
+        "active_orbitals": [
+          0,
+          1
+        ],
+        "active_orbitals_original": [
+          1,
+          2
+        ],
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "constant_energy_correction": -7.796219568777051,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [
+        0
+      ],
+      "hamiltonian_constants": {
+        "ActiveSpaceTransformer": 0.0,
+        "FreezeCoreTransformer": -7.796219568777051,
+        "nuclear_repulsion_energy": 0.992207270475
+      },
+      "nuclear_repulsion_energy": 0.992207270475,
+      "original_num_particles": [
+        2,
+        2
+      ],
+      "original_num_spatial_orbitals": 6,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [
+        0,
+        1
+      ],
+      "selected_active_orbitals_original": [
+        1,
+        2
+      ],
+      "selection_mode": "manual",
+      "selection_reason": "Manual active-space selection from user-provided orbital list and electron counts.",
+      "total_constant_correction": -6.804012298302051,
+      "transformers_applied": [
+        "FreezeCoreTransformer",
+        "ActiveSpaceTransformer"
+      ]
+    },
+    "verification_status": "validated"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "LiH-active-exact-compressed-cholesky"
+  },
+  "properties": {
+    "electronic_energy": -8.855345889472604,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "return_energy": -7.863138618997603
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": null,
+    "git_commit": null,
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.6-alpha",
+    "workspace_fingerprint": "af3b233dde34e2532909758bfb8ab13194dff75f23d6094da04777cb13f0a68d"
+  },
+  "return_result": -7.863138618997603,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

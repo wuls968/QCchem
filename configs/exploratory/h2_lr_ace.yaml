@@ -1,0 +1,67 @@
+molecule:
+  name: H2-LR-ACE
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lr_ace
+  notes:
+    - "LR-ACE is a low-rank-factor-informed exploratory solver."
+    - "Local chemical-accuracy success does not imply publication-validated algorithm status."
+
+problem:
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-10
+    max_rank: 4
+    apply_to_solver: true
+    execution_enabled: true
+  measurement:
+    strategy: low_rank_lr_ace_local
+    execution_mode: estimator
+    grouping_policy: low_rank_factor_aware
+
+mapping:
+  kind: parity_two_qubit_reduction
+
+backend:
+  kind: statevector
+  seed: 1729
+
+solver:
+  kind: lr_ace
+  experimental: true
+  optimizer:
+    kind: COBYLA
+    maxiter: 220
+  ansatz:
+    kind: lr_ace
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.6e-3
+  relative_error_threshold: 1.6e-3
+
+run:
+  seed: 1729
+  output_dir: artifacts/h2_lr_ace
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true

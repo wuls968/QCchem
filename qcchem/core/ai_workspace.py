@@ -99,6 +99,7 @@ class AIDeliveryRecord:
     submitted_to: str = "user"
     review_status: str = "submitted"
     return_notes: str = ""
+    evidence_summary: dict[str, Any] | None = None
 
     def to_record(self) -> dict[str, Any]:
         """Convert the delivery into a JSON-safe record."""

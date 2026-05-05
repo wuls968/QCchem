@@ -13,6 +13,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
+from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.scan import run_scan_from_config
@@ -81,6 +82,23 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Poll a submitted runtime job and merge returned data back into an artifact directory.",
     )
     runtime_collect.add_argument("artifact_root", type=Path, help="Artifact directory containing runtime_submission.json.")
+
+    hardware_parser = subparsers.add_parser("hardware", help="Hardware optimization workflow commands.")
+    hardware_subparsers = hardware_parser.add_subparsers(dest="hardware_command", required=True)
+    hardware_optimize = hardware_subparsers.add_parser(
+        "optimize",
+        help="Preview, submit, or collect a budget-guarded hardware optimization campaign.",
+    )
+    hardware_optimize.add_argument("-c", "--config", type=Path, required=True)
+    hardware_optimize.add_argument("-o", "--output-dir", type=Path)
+    hardware_mode = hardware_optimize.add_mutually_exclusive_group(required=True)
+    hardware_mode.add_argument("--preview", action="store_true", help="Build local candidate ranking only.")
+    hardware_mode.add_argument("--submit", action="store_true", help="Submit one guarded real runtime job.")
+    hardware_mode.add_argument("--collect", action="store_true", help="Collect submitted runtime jobs.")
+    hardware_optimize.add_argument(
+        "--confirm-runtime-budget",
+        help="Required for --submit when the config requests action-time confirmation.",
+    )
 
     agent_parser = subparsers.add_parser("agent", help="Agent-friendly QCchem task commands.")
     agent_subparsers = agent_parser.add_subparsers(dest="agent_command", required=True)
@@ -159,6 +177,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"QCchem run completed: {result.problem.molecule_name}")
         print(f"Verification status: {result.verification_status}")
         print(f"Total energy: {result.energy.total_energy:.12f} {result.energy.energy_units}")
+        if result.evidence_summary is not None:
+            print(f"Best evidence: {result.evidence_summary.primary_scientific_claim}")
+            print(f"Trust tier: {result.evidence_summary.trust_tier}")
+            print(f"Recommended action: {result.evidence_summary.recommended_action}")
         if result.noise_model is not None:
             print(f"Noise model: {result.noise_model.profile} ({result.noise_model.model_kind})")
         if result.runtime_options is not None:
@@ -249,6 +271,10 @@ def main(argv: list[str] | None = None) -> int:
             result = run_study_from_config(args.config, output_dir=args.output_dir)
             print(f"Study completed: {result.study_name}")
             print(f"Runs: {result.summary.total_runs}")
+            if result.evidence_summary is not None:
+                print(f"Best evidence: {result.evidence_summary.primary_scientific_claim}")
+                print(f"Trust tier: {result.evidence_summary.trust_tier}")
+                print(f"Recommended action: {result.evidence_summary.recommended_action}")
             print(f"Artifacts: {result.artifacts.root}")
             return 0
         if args.study_command == "report":
@@ -261,6 +287,11 @@ def main(argv: list[str] | None = None) -> int:
                 summary = result.get("summary", {})
                 print(f"Benchmark suite completed: {result.get('suite_name')}")
                 print(f"Cases: {summary.get('total_cases')}")
+                evidence_summary = result.get("evidence_summary") or {}
+                if evidence_summary:
+                    print(f"Best evidence: {evidence_summary.get('primary_scientific_claim')}")
+                    print(f"Trust tier: {evidence_summary.get('trust_tier')}")
+                    print(f"Recommended action: {evidence_summary.get('recommended_action')}")
                 print(
                     "Runtime evidence status counts: "
                     f"{summary.get('runtime_evidence_status_counts', {})}"
@@ -270,6 +301,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Benchmark suite completed: {result.suite_name}")
             print(f"Cases: {result.summary.total_cases}")
             print(f"Status counts: {result.summary.status_counts}")
+            if result.evidence_summary is not None:
+                print(f"Best evidence: {result.evidence_summary.primary_scientific_claim}")
+                print(f"Trust tier: {result.evidence_summary.trust_tier}")
+                print(f"Recommended action: {result.evidence_summary.recommended_action}")
             print(f"Artifacts: {result.artifacts.root}")
             return 0
         if args.benchmark_command == "report":
@@ -280,6 +315,10 @@ def main(argv: list[str] | None = None) -> int:
             result = run_scan_from_config(args.config, output_dir=args.output_dir)
             print(f"Scan completed: {result.scan_name}")
             print(f"Points: {result.summary.total_runs}")
+            if result.evidence_summary is not None:
+                print(f"Best evidence: {result.evidence_summary.primary_scientific_claim}")
+                print(f"Trust tier: {result.evidence_summary.trust_tier}")
+                print(f"Recommended action: {result.evidence_summary.recommended_action}")
             print(f"Artifacts: {result.artifacts.root}")
             return 0
         if args.scan_command == "report":
@@ -311,6 +350,33 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Job id: {summary['job_id']}")
             print(f"Status: {summary['status']}")
             print(f"Result updated: {summary['result_updated']}")
+            return 0
+
+    if args.command == "hardware":
+        if args.hardware_command == "optimize":
+            mode = "preview"
+            if args.submit:
+                mode = "submit"
+            elif args.collect:
+                mode = "collect"
+            try:
+                summary = run_hardware_optimization_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    mode=mode,
+                    confirm_runtime_budget=args.confirm_runtime_budget,
+                )
+            except PermissionError as exc:
+                print(f"Hardware optimization rejected: {exc}")
+                return 2
+            except ValueError as exc:
+                print(f"Hardware optimization rejected: {exc}")
+                return 2
+            print(f"Hardware optimization {mode} completed: {summary.get('suite_name')}")
+            print(f"Stop reason: {summary.get('stop_reason')}")
+            print(f"Budget ledger: {summary.get('runtime_budget_ledger')}")
+            print(f"Plan: {summary.get('plan_json')}")
+            print(f"Report: {summary.get('report_markdown')}")
             return 0
 
     if args.command == "agent":

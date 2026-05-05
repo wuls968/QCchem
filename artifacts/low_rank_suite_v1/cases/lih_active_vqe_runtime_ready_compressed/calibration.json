@@ -1,0 +1,16 @@
+{
+  "achieved_error": 0.00027638823081055364,
+  "available": true,
+  "estimated_measurement_cost": 80000.0,
+  "estimated_vs_measured_cost": 3.2552083333333335,
+  "measured_shot_usage": 24576.0,
+  "measured_wall_time_seconds": 1.0354859170001873,
+  "notes": [
+    "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+    "Measured shot usage is derived from backend shots, repeat count, and measurement group count.",
+    "Achieved error remains outside the reported statistical uncertainty band."
+  ],
+  "precision_target": 0.005,
+  "reference_target": "compressed_vs_uncompressed",
+  "schema_version": "qcchem.result.v0.8-alpha"
+}

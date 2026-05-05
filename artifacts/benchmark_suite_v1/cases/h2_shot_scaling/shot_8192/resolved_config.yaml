@@ -1,0 +1,91 @@
+molecule:
+  name: H2-shot
+  geometry:
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.0
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.735
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+problem:
+  active_space: null
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: shot_estimator
+  shots: 8192
+  precision: null
+  seed: 101
+  repetitions: 5
+  abelian_grouping: false
+  noise:
+    enabled: false
+    profile: none
+    depolarizing_probability_1q: 0.0
+    depolarizing_probability_2q: 0.0
+    readout_error_probability: 0.0
+    basis_gates: []
+  runtime:
+    enabled: false
+    service: local
+    instance: null
+    runtime_ready: false
+    session_ready: false
+    batch_ready: false
+    options: {}
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 80
+    tol: null
+  ansatz:
+    kind: uccsd
+    rotation_blocks:
+    - ry
+    - rz
+    entanglement_blocks: cz
+    entanglement: full
+    reps: 1
+    skip_final_rotation_layer: false
+  initial_point: zeros
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 0.05
+  relative_error_threshold: 0.05
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: none
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+policy:
+  name: benchmark
+tasks:
+  excited_state:
+    enabled: false
+    method: exact_spectrum
+    num_states: 2
+    state_indices:
+    - 1
+  properties: []
+run:
+  seed: 101
+  output_dir: /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_8192
+  overwrite: true

@@ -1,0 +1,50 @@
+{
+  "attempted": true,
+  "backend_name": "ibm_fez",
+  "batch_id": null,
+  "batch_requested": true,
+  "failure_category": null,
+  "failure_message": null,
+  "job_id": "d7deocr0g7hs73drrrf0",
+  "mode": "backend",
+  "options_snapshot": {
+    "backend_name": "ibm_fez",
+    "grouping_policy": "commuting_low_rank",
+    "optimization_level": 1,
+    "precision_target": 0.15,
+    "resilience_level": 0,
+    "submit_real_job": true,
+    "wait_for_result": true
+  },
+  "provider": "QiskitRuntimeService",
+  "result_provenance": {
+    "attempt_stage": "result_retrieved",
+    "backend_name": "ibm_fez",
+    "circuit_qubits": 4,
+    "operator_qubits": 4,
+    "parameter_count": 3,
+    "runtime_package_version": "0.46.1"
+  },
+  "returned_job_metadata": {
+    "evs": [
+      -0.6622242755762507
+    ],
+    "metadata": {
+      "circuit_metadata": {},
+      "num_randomizations": 1,
+      "shots": 44,
+      "target_precision": 0.15
+    },
+    "stds": [
+      0.040638818097580645
+    ]
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 22.443625707999672,
+  "submitted": true,
+  "succeeded": true,
+  "verification_status": "exploratory"
+}

@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 
 from qcchem.core.ai_workspace import (
-    AIProviderSpec,
     AITaskTicket,
     AI_WORKSPACE_TICKET_STATUS_ACCEPTED,
     AI_WORKSPACE_TICKET_STATUS_NEEDS_CONFIRMATION,

@@ -1,0 +1,13 @@
+2026-04-11 18:18:54,544 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_exact_compressed_double_factorization.yaml
+2026-04-11 18:18:54,547 INFO Building electronic structure problem
+2026-04-11 18:18:54,581 INFO Applying mapping: jordan_wigner
+2026-04-11 18:18:54,615 INFO Constructed compressed mapped Hamiltonian via double_factorization
+2026-04-11 18:18:54,615 INFO Computed compression audit: double_factorization
+2026-04-11 18:18:54,615 INFO Skipping backend construction for solver: exact
+2026-04-11 18:18:54,615 INFO Running solver: exact
+2026-04-11 18:18:54,616 INFO Computing exact spectrum for 1 states
+2026-04-11 18:18:54,617 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_double_factorization/exact_result.json
+2026-04-11 18:18:54,617 INFO Computed compressed-vs-uncompressed execution comparison
+2026-04-11 18:18:54,667 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_double_factorization/result.json
+2026-04-11 18:18:54,667 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_double_factorization/report.md
+2026-04-11 18:18:54,668 INFO Run completed

@@ -1,0 +1,12 @@
+2026-04-12 08:38:39,506 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_exact_uncompressed.yaml
+2026-04-12 08:38:39,510 INFO Building electronic structure problem
+2026-04-12 08:38:39,601 INFO Applying mapping: jordan_wigner
+2026-04-12 08:38:39,630 INFO Prepared measurement plan: groups=9, cost=90000
+2026-04-12 08:38:39,630 INFO Skipping backend construction for solver: exact
+2026-04-12 08:38:39,630 INFO Running solver: exact
+2026-04-12 08:38:39,645 INFO Computing exact spectrum for 1 states
+2026-04-12 08:38:39,646 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed/exact_result.json
+2026-04-12 08:38:39,646 INFO Computed empirical calibration: wall_time=0.015s, measured_cost=None
+2026-04-12 08:38:39,648 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed/result.json
+2026-04-12 08:38:39,650 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed/report.md
+2026-04-12 08:38:39,652 INFO Run completed

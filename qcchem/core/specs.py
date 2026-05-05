@@ -309,6 +309,28 @@ class TaskSpec:
 
 
 @dataclass(slots=True)
+class HardwareOptimizationSpec:
+    """Budget-guarded hardware precision optimization settings."""
+
+    enabled: bool = False
+    profile: str = "h2_precision_push"
+    max_real_jobs: int = 3
+    max_total_budgeted_shots: int = 40_960
+    max_total_estimated_quantum_seconds: float | None = 600.0
+    stop_if_error_below: float = 1.6e-3
+    candidate_strategies: list[str] = field(
+        default_factory=lambda: [
+            "jw_puccd_layout_baseline",
+            "parity_puccd_layout",
+            "parity_succd_layout",
+            "parity_uccsd_layout",
+        ]
+    )
+    selection_metric: str = "accuracy_then_cost"
+    requires_confirmation: bool = True
+
+
+@dataclass(slots=True)
 class RunConfig:
     """Run-level execution and artifact options."""
 
@@ -340,6 +362,7 @@ class RunSpec:
     policy: PolicySpec = field(default_factory=PolicySpec)
     exploratory: ExploratorySpec = field(default_factory=ExploratorySpec)
     tasks: TaskSpec = field(default_factory=TaskSpec)
+    hardware_optimization: HardwareOptimizationSpec = field(default_factory=HardwareOptimizationSpec)
     run: RunConfig = field(default_factory=RunConfig)
 
 

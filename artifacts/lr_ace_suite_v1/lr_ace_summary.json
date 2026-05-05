@@ -1,0 +1,245 @@
+{
+  "algorithm_full_name": "Low-Rank Adaptive Chemistry Eigensolver",
+  "algorithm_name": "LR-ACE",
+  "best_runtime_case": {
+    "artifact_root": "/Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_highshots",
+    "local_error_hartree": 4.77500483597737e-10,
+    "local_meets_chemical_accuracy": true,
+    "lr_ace": {
+      "factor_rank": 3,
+      "low_rank_method": "modified_cholesky",
+      "selected_factor_count": 1,
+      "selected_generators": [
+        {
+          "coefficient_imag": 0.0,
+          "coefficient_real": 0.1812104620151966,
+          "pauli": "YX",
+          "source_pauli": "XX",
+          "source_weight": 0.1812104620151966
+        }
+      ]
+    },
+    "molecule": "H2-LR-ACE-runtime-probe",
+    "name": "h2_lr_ace_runtime_highshots",
+    "parameters": 1,
+    "quantum_seconds": 152.716887595,
+    "qubits": 2,
+    "runtime_backend": "ibm_marrakesh",
+    "runtime_depth": 12,
+    "runtime_error_hartree": 0.001698796357201715,
+    "runtime_job_id": "d7qq387ljm6s73b9idcg",
+    "runtime_meets_chemical_accuracy": false,
+    "runtime_shots": 65536,
+    "runtime_std_hartree": 0.004686430902491931,
+    "runtime_two_qubit_gates": 2,
+    "terms": 5,
+    "verification_status": "exploratory"
+  },
+  "cases": [
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_lr_ace",
+      "local_error_hartree": 4.77500483597737e-10,
+      "local_meets_chemical_accuracy": true,
+      "lr_ace": {
+        "factor_rank": 3,
+        "low_rank_method": "modified_cholesky",
+        "selected_factor_count": 1,
+        "selected_generators": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.1812104620151966,
+            "pauli": "YX",
+            "source_pauli": "XX",
+            "source_weight": 0.1812104620151966
+          }
+        ]
+      },
+      "molecule": "H2-LR-ACE",
+      "name": "h2_lr_ace",
+      "parameters": 1,
+      "quantum_seconds": null,
+      "qubits": 2,
+      "runtime_backend": null,
+      "runtime_depth": null,
+      "runtime_error_hartree": null,
+      "runtime_job_id": null,
+      "runtime_meets_chemical_accuracy": null,
+      "runtime_shots": null,
+      "runtime_std_hartree": null,
+      "runtime_two_qubit_gates": null,
+      "terms": 5,
+      "verification_status": "exploratory"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_lr_ace",
+      "local_error_hartree": 6.617701941991072e-10,
+      "local_meets_chemical_accuracy": true,
+      "lr_ace": {
+        "factor_rank": 3,
+        "low_rank_method": "modified_cholesky",
+        "selected_factor_count": 5,
+        "selected_generators": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.02803189488746322,
+            "pauli": "IY",
+            "source_pauli": "IX",
+            "source_weight": 0.02803189488746322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.02803189488746322,
+            "pauli": "YI",
+            "source_pauli": "XI",
+            "source_weight": 0.02803189488746322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028031882173134164,
+            "pauli": "YZ",
+            "source_pauli": "XZ",
+            "source_weight": 0.028031882173134164
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028031882173134164,
+            "pauli": "ZY",
+            "source_pauli": "ZX",
+            "source_weight": 0.028031882173134164
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01306398358080487,
+            "pauli": "YX",
+            "source_pauli": "XX",
+            "source_weight": 0.01306398358080487
+          }
+        ]
+      },
+      "molecule": "LiH-active-LR-ACE",
+      "name": "lih_active_lr_ace",
+      "parameters": 5,
+      "quantum_seconds": null,
+      "qubits": 2,
+      "runtime_backend": null,
+      "runtime_depth": null,
+      "runtime_error_hartree": null,
+      "runtime_job_id": null,
+      "runtime_meets_chemical_accuracy": null,
+      "runtime_shots": null,
+      "runtime_std_hartree": null,
+      "runtime_two_qubit_gates": null,
+      "terms": 9,
+      "verification_status": "exploratory"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_real",
+      "local_error_hartree": 4.77500483597737e-10,
+      "local_meets_chemical_accuracy": true,
+      "lr_ace": {
+        "factor_rank": 3,
+        "low_rank_method": "modified_cholesky",
+        "selected_factor_count": 1,
+        "selected_generators": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.1812104620151966,
+            "pauli": "YX",
+            "source_pauli": "XX",
+            "source_weight": 0.1812104620151966
+          }
+        ]
+      },
+      "molecule": "H2-LR-ACE-runtime-probe",
+      "name": "h2_lr_ace_runtime_real",
+      "parameters": 1,
+      "quantum_seconds": 17.709296003,
+      "qubits": 2,
+      "runtime_backend": "ibm_marrakesh",
+      "runtime_depth": 12,
+      "runtime_error_hartree": 0.003446986692515086,
+      "runtime_job_id": "d7qq2cnljm6s73b9icf0",
+      "runtime_meets_chemical_accuracy": false,
+      "runtime_shots": 4096,
+      "runtime_std_hartree": 0.005774758847564092,
+      "runtime_two_qubit_gates": 2,
+      "terms": 5,
+      "verification_status": "exploratory"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_highshots",
+      "local_error_hartree": 4.77500483597737e-10,
+      "local_meets_chemical_accuracy": true,
+      "lr_ace": {
+        "factor_rank": 3,
+        "low_rank_method": "modified_cholesky",
+        "selected_factor_count": 1,
+        "selected_generators": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.1812104620151966,
+            "pauli": "YX",
+            "source_pauli": "XX",
+            "source_weight": 0.1812104620151966
+          }
+        ]
+      },
+      "molecule": "H2-LR-ACE-runtime-probe",
+      "name": "h2_lr_ace_runtime_highshots",
+      "parameters": 1,
+      "quantum_seconds": 152.716887595,
+      "qubits": 2,
+      "runtime_backend": "ibm_marrakesh",
+      "runtime_depth": 12,
+      "runtime_error_hartree": 0.001698796357201715,
+      "runtime_job_id": "d7qq387ljm6s73b9idcg",
+      "runtime_meets_chemical_accuracy": false,
+      "runtime_shots": 65536,
+      "runtime_std_hartree": 0.004686430902491931,
+      "runtime_two_qubit_gates": 2,
+      "terms": 5,
+      "verification_status": "exploratory"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_lr_ace_runtime_ultra",
+      "local_error_hartree": 4.77500483597737e-10,
+      "local_meets_chemical_accuracy": true,
+      "lr_ace": {
+        "factor_rank": 3,
+        "low_rank_method": "modified_cholesky",
+        "selected_factor_count": 1,
+        "selected_generators": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.1812104620151966,
+            "pauli": "YX",
+            "source_pauli": "XX",
+            "source_weight": 0.1812104620151966
+          }
+        ]
+      },
+      "molecule": "H2-LR-ACE-runtime-probe",
+      "name": "h2_lr_ace_runtime_ultra",
+      "parameters": 1,
+      "quantum_seconds": 290.813745573,
+      "qubits": 2,
+      "runtime_backend": "ibm_marrakesh",
+      "runtime_depth": 12,
+      "runtime_error_hartree": 0.0025783161795416287,
+      "runtime_job_id": "d7qq5hfljm6s73b9ig40",
+      "runtime_meets_chemical_accuracy": false,
+      "runtime_shots": 131072,
+      "runtime_std_hartree": 0.0014218733640510401,
+      "runtime_two_qubit_gates": 2,
+      "terms": 5,
+      "verification_status": "exploratory"
+    }
+  ],
+  "chemical_accuracy_target_hartree": 0.0016,
+  "created_at": "2026-05-02T07:16:35.222506+00:00",
+  "hardware_scope": "retrieved IBM Runtime H2 probes; hardware_verified does not imply chemistry validated",
+  "recommended_action": "pause_runtime_spend_and_analyze_bias",
+  "schema_version": "qcchem.lr_ace_suite.v0.1-alpha",
+  "status": "exploratory",
+  "validated_scope": "local exact-baseline gates for H2 and LiH active-space only"
+}

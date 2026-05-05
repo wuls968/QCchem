@@ -1,0 +1,11 @@
+2026-04-11 15:45:35,364 INFO Loading config from /Users/a0000/QCchem/configs/lih_embedding.yaml
+2026-04-11 15:45:35,367 INFO Building electronic structure problem
+2026-04-11 15:45:35,433 INFO Applying mapping: jordan_wigner
+2026-04-11 15:45:35,937 INFO Skipping backend construction for solver: exact
+2026-04-11 15:45:35,937 INFO Running solver: exact
+2026-04-11 15:45:36,024 INFO Computing exact spectrum for 1 states
+2026-04-11 15:45:36,134 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_embedding/exact_result.json
+2026-04-11 15:45:36,191 INFO Computed embedding audit: dmet_skeleton
+2026-04-11 15:45:36,212 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_embedding/result.json
+2026-04-11 15:45:36,212 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_embedding/report.md
+2026-04-11 15:45:36,213 INFO Run completed

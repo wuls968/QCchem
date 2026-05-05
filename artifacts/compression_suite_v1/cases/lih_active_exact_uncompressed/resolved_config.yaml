@@ -1,0 +1,125 @@
+molecule:
+  name: LiH-active-exact-uncompressed
+  geometry:
+  - symbol: Li
+    coords:
+    - 0.0
+    - 0.0
+    - 0.0
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 1.6
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+problem:
+  active_space:
+    num_electrons: 2
+    num_spatial_orbitals: 2
+    active_orbitals:
+    - 1
+    - 2
+    selection_mode: manual
+    auto:
+      enabled: false
+      strategy: frontier_orbitals
+      num_occupied: 1
+      num_virtual: 1
+  freeze_core: true
+  remove_orbitals: []
+  compression:
+    enabled: false
+    method: modified_cholesky
+    threshold: 1.0e-08
+    max_rank: null
+    apply_to_solver: false
+    execution_enabled: false
+  embedding:
+    enabled: false
+    method: dmet_skeleton
+    bath_threshold: 0.05
+    solver_plugin: placeholder_fragment_solver
+    fragments: []
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+  shots: null
+  precision: null
+  seed: null
+  repetitions: 1
+  abelian_grouping: true
+  noise:
+    enabled: false
+    profile: none
+    depolarizing_probability_1q: 0.0
+    depolarizing_probability_2q: 0.0
+    readout_error_probability: 0.0
+    basis_gates: []
+  runtime:
+    enabled: false
+    service: local
+    instance: null
+    runtime_ready: false
+    session_ready: false
+    batch_ready: false
+    options: {}
+solver:
+  kind: exact
+  optimizer:
+    kind: COBYLA
+    maxiter: 100
+    tol: null
+  ansatz:
+    kind: twolocal
+    rotation_blocks:
+    - ry
+    - rz
+    entanglement_blocks: cz
+    entanglement: full
+    reps: 2
+    skip_final_rotation_layer: false
+  initial_point: zeros
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: placeholder
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+policy:
+  name: benchmark
+tasks:
+  excited_state:
+    enabled: false
+    method: exact_spectrum
+    num_states: 2
+    state_indices:
+    - 1
+  properties: []
+  perturbative_correction:
+    enabled: false
+    method: nevpt2
+    plugin: pyscf
+    root: 0
+run:
+  seed: 61
+  output_dir: /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed
+  overwrite: true
+  exports:
+    qcschema_json: false
+    hdf5: false

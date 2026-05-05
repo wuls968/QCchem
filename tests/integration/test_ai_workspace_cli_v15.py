@@ -9,6 +9,8 @@ from qcchem.cli.main import main
 from qcchem.io.ai_workspace_config import load_ai_provider_spec
 from qcchem.workflow.ai_store import workspace_root
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _write_hardware_suite(suite_dir: Path, *, suite_name: str, best_case_name: str, achieved_error: float) -> None:
     suite_dir.mkdir(parents=True, exist_ok=True)
@@ -36,7 +38,7 @@ def _write_hardware_suite(suite_dir: Path, *, suite_name: str, best_case_name: s
 
 
 def test_ai_workspace_docs_and_examples_exist() -> None:
-    root = Path("/Users/a0000/QCchem")
+    root = REPO_ROOT
     docs_path = root / "docs" / "ai_workspace.md"
     readme_path = root / "README.md"
     architecture_path = root / "docs" / "architecture.md"

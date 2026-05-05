@@ -1,0 +1,10 @@
+2026-04-11 14:58:25,524 INFO Loading config from /Users/a0000/QCchem/configs/h2_exact.yaml
+2026-04-11 14:58:25,525 INFO Building electronic structure problem
+2026-04-11 14:58:25,664 INFO Applying mapping: jordan_wigner
+2026-04-11 14:58:25,676 INFO Skipping backend construction for solver: exact
+2026-04-11 14:58:25,676 INFO Running solver: exact
+2026-04-11 14:58:25,682 INFO Computing exact spectrum for 1 states
+2026-04-11 14:58:25,682 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_exact_reference/exact_result.json
+2026-04-11 14:58:25,708 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_exact_reference/result.json
+2026-04-11 14:58:25,709 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_exact_reference/report.md
+2026-04-11 14:58:25,709 INFO Run completed

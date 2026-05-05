@@ -1,0 +1,317 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/exact_result.json",
+    "hdf5_file": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.h5",
+    "log_file": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/run.log",
+    "qcschema_json": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/qcschema.json",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": null,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 0.0010097855590158744,
+    "absolute_error_threshold": 0.005,
+    "comparison_target": "compressed_vs_uncompressed",
+    "compressed_vs_uncompressed": {
+      "absolute_error": 0.0010097855590158744,
+      "available": true,
+      "compressed_solve_wall_time_seconds": 0.0010431250120745972,
+      "compressed_solver_energy": -1.0591263206955546,
+      "compressed_total_energy": -7.863138618997605,
+      "method": "modified_cholesky",
+      "post_term_count": 12,
+      "pre_term_count": 27,
+      "rank": 2,
+      "relative_error": 0.00012843665887553681,
+      "threshold": 0.001,
+      "uncompressed_solve_wall_time_seconds": 0.0007428340031765401,
+      "uncompressed_solver_energy": -1.0581165351365387,
+      "uncompressed_total_energy": -7.8621288334385895
+    },
+    "exact_available": true,
+    "exact_electronic_energy": -8.855345889472604,
+    "exact_total_energy": -7.863138618997604,
+    "meets_threshold": true,
+    "relative_error": 0.00012843665887553681,
+    "relative_error_threshold": 0.005,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "compression_result": {
+    "apply_to_solver": false,
+    "compressed_num_qubits": 4,
+    "compressed_term_count_estimate": 12,
+    "enabled": true,
+    "execution_enabled": true,
+    "max_rank": 2,
+    "method": "modified_cholesky",
+    "notes": [
+      "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+    ],
+    "original_fermionic_term_count": 72,
+    "original_num_qubits": 4,
+    "original_qubit_term_count": 27,
+    "post_term_count": 12,
+    "pre_term_count": 27,
+    "primary_rank": 2,
+    "rank": 2,
+    "reconstruction_error": 0.008905643352596537,
+    "reconstruction_error_frobenius": 0.008905643352596537,
+    "secondary_rank": null,
+    "threshold": 0.001,
+    "verification_status": "validated"
+  },
+  "embedding_result": null,
+  "energy": {
+    "constant_energy_correction": -7.796219568777051,
+    "correlation_energy": -0.0012738491889567882,
+    "electronic_energy": -8.855345889472606,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.0591263206955528,
+    "hf_reference_energy": -7.861864769808649,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "solver_energy": -1.0591263206955546,
+    "total_energy": -7.863138618997605
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -8.855345889472604,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.0591263206955528,
+    "source": "exact_diagonalization",
+    "total_energy": -7.863138618997604
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/QCchem/configs/lih_auto_compressed_nevpt2.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Constructed compressed mapped Hamiltonian via modified_cholesky",
+      "Computed compression audit: modified_cholesky",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/exact_result.json",
+      "Computed compressed-vs-uncompressed execution comparison",
+      "Computed perturbative correction: nevpt2",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 72,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 12
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "noise_model": null,
+  "perturbative_correction_result": {
+    "active_space_energy": -7.863138618997605,
+    "compressed_active_space_energy": -7.863138618997605,
+    "corrected_total_energy": -7.873394956274726,
+    "enabled": true,
+    "method": "nevpt2",
+    "notes": [
+      "PySCF NEVPT2 plugin path; validated as a classical-reference correction within QCchem v0.6 scope.",
+      "When compression-aware execution is enabled, the perturbative correction is sourced from the classical reduced active space and applied to the compressed active-space energy for reporting."
+    ],
+    "perturbative_correction": -0.0102563372771213,
+    "plugin": "pyscf",
+    "provenance": {
+      "compressed_active_space_energy": -7.863138618997605,
+      "reduced_active_space_energy": -7.8621288334385895,
+      "root": 0,
+      "selected_active_orbitals_original": [
+        1,
+        2
+      ],
+      "source": "pyscf.mrpt.nevpt2"
+    },
+    "reduced_active_space_energy": -7.8621288334385895,
+    "verification_status": "validated"
+  },
+  "problem": {
+    "active_space_metadata": {
+      "active_orbitals": [
+        0,
+        1
+      ],
+      "active_orbitals_original": [
+        1,
+        2
+      ],
+      "num_electrons": [
+        1,
+        1
+      ],
+      "num_spatial_orbitals": 2
+    },
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": -7.796219568777051,
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": 0.0,
+      "FreezeCoreTransformer": -7.796219568777051,
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "molecule_name": "LiH-auto-compressed-nevpt2",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": [
+      "FreezeCoreTransformer",
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_branch": null,
+    "git_commit": null,
+    "git_commit_short": null,
+    "seed": 83,
+    "source_config": "/Users/a0000/QCchem/configs/lih_auto_compressed_nevpt2.yaml",
+    "timestamp": "2026-04-11T10:18:43.806865+00:00",
+    "wall_time_seconds": 0.320453209002153,
+    "workspace_dirty": true,
+    "workspace_fingerprint": "226a593790b63b751a482fdb7a579a393d85c6b208872739aee8307425fd7d5e"
+  },
+  "reduction_audit": {
+    "active_space_metadata": {
+      "active_orbitals": [
+        0,
+        1
+      ],
+      "active_orbitals_original": [
+        1,
+        2
+      ],
+      "num_electrons": [
+        1,
+        1
+      ],
+      "num_spatial_orbitals": 2
+    },
+    "constant_energy_correction": -7.796219568777051,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "frozen_core_orbitals": [
+      0
+    ],
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": 0.0,
+      "FreezeCoreTransformer": -7.796219568777051,
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "nuclear_repulsion_energy": 0.992207270475,
+    "original_num_particles": [
+      2,
+      2
+    ],
+    "original_num_spatial_orbitals": 6,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 2,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [
+      0,
+      1
+    ],
+    "selected_active_orbitals_original": [
+      1,
+      2
+    ],
+    "selection_mode": "auto",
+    "selection_reason": "Frontier-orbitals heuristic selected a contiguous active window around the occupied/virtual boundary with 2 orbitals.",
+    "total_constant_correction": -6.804012298302051,
+    "transformers_applied": [
+      "FreezeCoreTransformer",
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "run_id": "lih_auto_compressed_nevpt2",
+  "runtime_options": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.6-alpha",
+  "variational_result": null,
+  "verification_status": "validated"
+}

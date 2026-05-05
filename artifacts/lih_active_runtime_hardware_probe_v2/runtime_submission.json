@@ -1,0 +1,69 @@
+{
+  "attempted": true,
+  "backend_name": "ibm_fez",
+  "batch_id": null,
+  "batch_requested": true,
+  "failure_category": null,
+  "failure_message": null,
+  "job_id": "d7gr4jc93s0c738rtv10",
+  "job_metrics": {
+    "bss": {
+      "seconds": 2
+    },
+    "caller": "qiskit_ibm_runtime~estimator.py",
+    "qiskit_version": "qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*",
+    "timestamps": {
+      "created": "2026-04-17T04:08:45.891557Z",
+      "finished": "2026-04-17T04:08:52.265298Z",
+      "running": "2026-04-17T04:08:46.750856Z"
+    },
+    "usage": {
+      "quantum_seconds": 2,
+      "seconds": 2
+    }
+  },
+  "mode": "backend",
+  "options_snapshot": {
+    "backend_name": "ibm_fez",
+    "grouping_policy": "commuting_low_rank",
+    "optimization_level": 1,
+    "precision_target": 0.15,
+    "resilience_level": 0,
+    "submit_real_job": true,
+    "wait_for_result": true
+  },
+  "provider": "QiskitRuntimeService",
+  "result_provenance": {
+    "attempt_stage": "result_retrieved",
+    "backend_name": "ibm_fez",
+    "circuit_qubits": 4,
+    "operator_qubits": 4,
+    "parameter_count": 3,
+    "runtime_package_version": "0.46.1"
+  },
+  "returned_job_metadata": {
+    "evs": [
+      -0.6703321256739458
+    ],
+    "metadata": {
+      "circuit_metadata": {},
+      "num_randomizations": 1,
+      "shots": 44,
+      "target_precision": 0.15
+    },
+    "stds": [
+      0.04136933838034907
+    ]
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 84.30369187500037,
+  "submitted": true,
+  "succeeded": true,
+  "usage_estimation": {
+    "quantum_seconds": 10.99999997
+  },
+  "verification_status": "exploratory"
+}

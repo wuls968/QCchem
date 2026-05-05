@@ -1,0 +1,10 @@
+2026-04-11 14:58:32,386 INFO Loading config from /Users/a0000/QCchem/configs/lih.yaml
+2026-04-11 14:58:32,387 INFO Building electronic structure problem
+2026-04-11 14:58:32,433 INFO Applying mapping: bravyi_kitaev
+2026-04-11 14:58:32,898 INFO Skipping backend construction for solver: exact
+2026-04-11 14:58:32,898 INFO Running solver: exact
+2026-04-11 14:58:32,991 INFO Computing exact spectrum for 1 states
+2026-04-11 14:58:33,083 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_exact_reference/exact_result.json
+2026-04-11 14:58:33,106 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_exact_reference/result.json
+2026-04-11 14:58:33,108 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_exact_reference/report.md
+2026-04-11 14:58:33,108 INFO Run completed

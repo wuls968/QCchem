@@ -2,6 +2,7 @@
 
 from .base import BackendAdapter, BackendEstimate
 from .capabilities import describe_backend_capabilities
+from .layout import LayoutPlan, recommend_initial_layout
 from .measurement import plan_measurement as build_measurement_plan
 from .noise import build_noise_model_summary
 from .policy import apply_policy_defaults, resolve_execution_policy
@@ -28,6 +29,7 @@ def build_backend(spec):
 __all__ = [
     "BackendAdapter",
     "BackendEstimate",
+    "LayoutPlan",
     "ShotEstimatorBackend",
     "StatevectorBackend",
     "apply_policy_defaults",
@@ -37,6 +39,7 @@ __all__ = [
     "build_runtime_options_summary",
     "build_backend",
     "describe_backend_capabilities",
+    "recommend_initial_layout",
     "resolve_execution_policy",
     "resolve_policy",
 ]

@@ -1,0 +1,14 @@
+2026-05-02 14:37:02,373 INFO Loading config from /Users/a0000/QCchem/configs/h2_hardware_precision_push.yaml
+2026-05-02 14:37:02,384 INFO Building electronic structure problem
+2026-05-02 14:37:02,445 INFO Applying mapping: jordan_wigner
+2026-05-02 14:37:02,473 INFO Prepared measurement plan: groups=5, cost=22225
+2026-05-02 14:37:02,473 INFO Prepared runtime policy snapshot for service=ibm_quantum_platform
+2026-05-02 14:37:02,473 INFO Preparing backend: statevector
+2026-05-02 14:37:02,473 INFO Running solver: vqe
+2026-05-02 14:37:02,798 INFO Computing exact spectrum for 1 states
+2026-05-02 14:37:02,800 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/jw_puccd_layout_baseline/preview/exact_result.json
+2026-05-02 14:37:02,801 INFO Computed empirical calibration: wall_time=0.324s, measured_cost=None
+2026-05-02 14:37:02,801 INFO Runtime submission attempt recorded: runtime_submission_disabled
+2026-05-02 14:37:02,810 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/jw_puccd_layout_baseline/preview/result.json
+2026-05-02 14:37:02,815 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/jw_puccd_layout_baseline/preview/report.md
+2026-05-02 14:37:02,818 INFO Run completed

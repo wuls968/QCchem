@@ -1,0 +1,96 @@
+molecule:
+  name: H2-runtime-hardware-probe-ca-layout
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: publication
+
+exploratory:
+  enabled: false
+  modules: []
+  notes: []
+
+problem:
+  active_space: null
+  measurement:
+    strategy: default
+    runtime_precision_target: 0.02
+    execution_mode: runtime_estimator
+    grouping_policy: default
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 737
+  repetitions: 1
+  abelian_grouping: false
+  runtime:
+    enabled: true
+    service: ibm_quantum_platform
+    runtime_ready: true
+    session_ready: true
+    batch_ready: false
+    precision_target: 0.02
+    max_budgeted_shots: 4096
+    max_execution_seconds: 300
+    calibration_strategy: chemical_accuracy_push
+    resilience_level: 2
+    grouping_policy: default
+    options:
+      backend_name: ibm_kingston
+      optimization_level: 3
+      layout_strategy: min_weighted_error
+      layout_method: sabre
+      routing_method: sabre
+      seed_transpiler: 737
+      submit_real_job: true
+      wait_for_result: true
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 40
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 2.0e-1
+  relative_error_threshold: 2.0e-1
+
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: none
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+
+tasks:
+  excited_state: {}
+  properties: []
+  perturbative_correction: {}
+
+run:
+  seed: 737
+  output_dir: artifacts/h2_runtime_hardware_probe_ca_layout
+  overwrite: true

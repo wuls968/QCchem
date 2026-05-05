@@ -1,0 +1,32 @@
+{
+  "attempted": true,
+  "backend_name": null,
+  "batch_id": null,
+  "batch_requested": true,
+  "failure_category": "account_not_found",
+  "failure_message": "AccountNotFoundError: \"Unable to find account. Please make sure an account with the channel name 'ibm_quantum_platform' is saved.\"",
+  "job_id": null,
+  "mode": "batch",
+  "options_snapshot": {
+    "grouping_policy": "commuting_low_rank",
+    "low_rank_workload": true,
+    "optimizer_mode": "precision",
+    "precision_target": 0.005,
+    "resilience_level": 1,
+    "session_mode": "recommended"
+  },
+  "provider": null,
+  "result_provenance": {
+    "attempt_stage": "initialize_service",
+    "runtime_package_version": "0.46.1"
+  },
+  "returned_job_metadata": {},
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 0.00040508300025976496,
+  "submitted": false,
+  "succeeded": false,
+  "verification_status": "exploratory"
+}

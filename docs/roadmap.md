@@ -109,6 +109,18 @@
 - floating AI workspace shell and task lanes
 - `/overview` canonical landing route and ordered page inventory
 - stronger bridge between CLI artifacts, reports, and visual analysis surfaces
+- Evidence Console v2 shared decision model for Overview / Runtime Monitoring / Hardware Campaign / AI Workspace
+- H2 runtime micro probe config with explicit budget cap and action-time confirmation metadata
+- H2 hardware precision optimization:
+  - `parity_two_qubit_reduction` mapping for two-qubit H2 workloads
+  - hardware-aware candidate ranking before real runtime submission
+  - budget ledger and explicit confirmation gate for IBM Runtime jobs
+  - Hardware Campaign `Optimization Trial` section
+  - first real optimization campaign submitted two controlled H2 probes; neither reached chemical accuracy, so the next milestone is bias-aware mitigation rather than more blind shots
+- LR-ACE exploratory algorithm:
+  - local exact-baseline gates now pass for H2 and LiH active-space with 2-qubit parity-reduced workloads
+  - retrieved H2 hardware probes reached a best runtime error of `0.001699 Ha`, just above chemical accuracy
+  - next milestone is bias-aware mitigation / calibration for LR-ACE rather than simply increasing shots
 - 逐步从 curated page model 过渡到更完整的 artifact-driven browser
 
 ## v1.0 愿景
@@ -118,3 +130,47 @@ QCchem 成为一个面向真实研究活动的量子化学平台：
 - 不只支持单点运行，也支持 benchmark、study、scan 和任务编排
 - ground-state / excited-state / property / optimization workflow 共用统一 schema
 - 可以在 validated 与 exploratory 边界清晰的前提下承载持续演化的研究平台能力
+
+## Trust-First Release
+
+当前主线不是继续平均扩功能，而是把 QCchem 收成发布级研究主力平台。这个阶段的完成标准是 `证据闭环完成`。
+
+### Evidence Core
+
+- 为 `run / benchmark / study / scan / hardware / AI` 统一 `Evidence Summary`
+- 统一 `trust_tier / baseline descriptor / primary claim / primary error metric / recommended action`
+- 保留严格 trust tier：
+  - `validated`
+  - `exploratory`
+  - `unstable`
+  - `hardware_verified`
+- 把 `reduction / compression / correction` 正式并入证据链
+
+### Research Console
+
+- 把 workbench 收成 artifact-driven 主控制台
+- 首页固定为“最佳证据优先”
+- 固定 showcase path：
+  - `Overview -> Result Confidence -> Benchmarks -> Hardware Campaign -> AI Workspace`
+
+### AI Research Copilot
+
+- AI 默认作为 `保守证据解释器`
+- 先解释 evidence 与边界，再给 recommended actions，再在 ticket 门控下执行
+- 浮动窗口负责快速提问与起单，AI Workspace 负责历史、lane、delivery 和审阅
+
+### Hardware Verification Layer
+
+- 继续保持“小而硬”的现实验证层
+- 主输出不是更多 case，而是行动判断：
+  - `continue`
+  - `pause`
+  - `not_worth_additional_budget`
+  - `needs_better_local_baseline_first`
+  - `worth_one_more_controlled_attempt`
+
+### Release Surface
+
+- 统一 README、report、CLI、workbench、AI、docs 的核心术语
+- 明确 curated release artifacts
+- 做适量清理，但不破坏真实研究痕迹

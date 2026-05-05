@@ -1,0 +1,33 @@
+benchmark_suite:
+  name: low_rank_suite_v1
+  description: >
+    LiH active-space low-rank measurement and runtime suite comparing
+    uncompressed, compressed, ideal, sampled, and runtime-ready execution paths.
+  registry_name: low_rank_suite_v1
+  tags: [low-rank, compression, measurement, runtime]
+  cases:
+    - name: lih_active_exact_uncompressed
+      kind: run
+      config: configs/lih_active_exact_uncompressed.yaml
+      expected_status: validated
+      tags: [exact, uncompressed]
+    - name: lih_active_exact_compressed
+      kind: run
+      config: configs/lih_active_exact_compressed_cholesky.yaml
+      expected_status: validated
+      tags: [exact, compressed, low-rank]
+    - name: lih_active_vqe_ideal_uncompressed
+      kind: run
+      config: configs/lih_active_vqe_statevector.yaml
+      expected_status: validated
+      tags: [ideal, variational, uncompressed]
+    - name: lih_active_vqe_ideal_compressed
+      kind: run
+      config: configs/lih_active_vqe_statevector_compressed.yaml
+      expected_status: validated
+      tags: [ideal, variational, compressed]
+    - name: lih_active_vqe_runtime_ready_compressed
+      kind: run
+      config: configs/lih_active_shot_runtime_ready_compressed.yaml
+      expected_status: exploratory
+      tags: [sampled, runtime-ready, compressed]

@@ -1,0 +1,154 @@
+{
+  "attempted": true,
+  "backend_name": "ibm_kingston",
+  "batch_id": null,
+  "batch_requested": false,
+  "failure_category": null,
+  "failure_message": null,
+  "job_id": "d7qpl6cf3ras73b64hsg",
+  "job_metrics": {
+    "bss": {
+      "seconds": 45
+    },
+    "caller": "qiskit_ibm_runtime~estimator.py",
+    "qiskit_version": "qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*",
+    "timestamps": {
+      "created": "2026-05-02T06:32:57.507579Z",
+      "finished": "2026-05-02T06:33:52.925806Z",
+      "running": "2026-05-02T06:32:58.77627Z"
+    },
+    "usage": {
+      "quantum_seconds": 45,
+      "seconds": 45
+    }
+  },
+  "layout_score": 0.009055889890685592,
+  "layout_strategy": "min_weighted_error",
+  "mode": "backend",
+  "options_snapshot": {
+    "budget_strategy": "h2_hardware_precision_push",
+    "confirmation_message": "This hardware optimization campaign can submit real IBM Runtime jobs and consume monthly quota.",
+    "default_shots": 8192,
+    "grouping_policy": "hardware_aware_grouping",
+    "layout_method": "sabre",
+    "layout_strategy": "min_weighted_error",
+    "max_budgeted_shots": 8192,
+    "max_execution_seconds": 420.0,
+    "optimization_level": 3,
+    "precision_target": 0.015,
+    "requires_action_time_confirmation": true,
+    "resilience_level": 2,
+    "routing_method": "sabre",
+    "seed_transpiler": 1729,
+    "submit_real_job": true,
+    "wait_for_result": false
+  },
+  "provider": "QiskitRuntimeService",
+  "result_provenance": {
+    "attempt_stage": "result_retrieved",
+    "backend_name": "ibm_kingston",
+    "backend_selection_strategy": "min_weighted_error",
+    "candidates": [
+      {
+        "backend_name": "ibm_kingston",
+        "entangling_score": 0.003928936765685592,
+        "layout_score": 0.009055889890685592,
+        "pending_jobs": 0,
+        "readout_score": 0.0205078125,
+        "selected_layout": [
+          109,
+          108,
+          107,
+          97
+        ]
+      },
+      {
+        "backend_name": "ibm_marrakesh",
+        "entangling_score": 0.004927266902349209,
+        "layout_score": 0.010603536433599209,
+        "pending_jobs": 0,
+        "readout_score": 0.022705078125,
+        "selected_layout": [
+          2,
+          1,
+          3,
+          4
+        ]
+      },
+      {
+        "backend_name": "ibm_fez",
+        "entangling_score": 0.005506442005316664,
+        "layout_score": 0.015241549427191664,
+        "pending_jobs": 1,
+        "readout_score": 0.0389404296875,
+        "selected_layout": [
+          136,
+          143,
+          142,
+          141
+        ]
+      }
+    ],
+    "circuit_qubits": 4,
+    "last_polled_at": "2026-05-02T06:36:59.360185+00:00",
+    "last_polled_status": "DONE",
+    "layout_strategy": "min_weighted_error",
+    "operator_qubits": 4,
+    "parameter_count": 1,
+    "runtime_package_version": "0.46.1",
+    "selected_backend": "ibm_kingston"
+  },
+  "returned_job_metadata": {
+    "evs": [
+      -1.8046872750945395
+    ],
+    "metadata": {
+      "circuit_metadata": {},
+      "num_randomizations": 32,
+      "resilience": {
+        "zne": {
+          "extrapolator": [
+            "multiple"
+          ]
+        }
+      },
+      "shots": 8192,
+      "target_precision": 0.011048543456039804
+    },
+    "stds": [
+      0.007588620404836616
+    ]
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "selected_layout": [
+    109,
+    108,
+    107,
+    97
+  ],
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 97.94168395802262,
+  "submitted": true,
+  "succeeded": true,
+  "transpilation_options": {
+    "approximation_degree": 1.0,
+    "initial_layout": [
+      109,
+      108,
+      107,
+      97
+    ],
+    "layout_method": "sabre",
+    "optimization_level": 3,
+    "routing_method": "sabre",
+    "seed_transpiler": 1729
+  },
+  "transpiled_depth": 149,
+  "transpiled_two_qubit_gate_count": 42,
+  "usage_estimation": {
+    "quantum_seconds": 45.164042271
+  },
+  "verification_status": "exploratory"
+}

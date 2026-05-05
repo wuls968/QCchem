@@ -1,21 +1,33 @@
 # QCchem Architecture
 
+## Trust-First Release 主轴
+
+QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
+
+- `run / benchmark / study / scan / hardware / AI` 必须用同一套证据语义表达结论
+- workbench、report、CLI、AI Workspace 不再各自发明“主结论”
+- 真机层保持“小而硬”的现实验证角色
+- AI 默认扮演 `保守证据解释器`，而不是无门控执行器
+
+这一阶段的完成标志不是功能数量，而是 `证据闭环完成`。
+
 ## 模块划分
 
 `qcchem/core`
-: QCchem 自有 schema，覆盖 run、task、study、benchmark、scan、noise、runtime、policy、capability、registry 与 aggregate result。
+: QCchem 自有 schema，覆盖 run、task、study、benchmark、scan、noise、runtime、policy、capability、registry、aggregate result 与统一 `Evidence Summary`。
 
 `qcchem/chem`
 : 分子输入到 Qiskit Nature problem 的经典前处理，负责 active-space resolution、FreezeCore/remove-virtual reduction、Hamiltonian compression audit、classical plugin workflow，以及 reduction audit 所需信息。
 
 `qcchem/mapping`
-: fermion-to-qubit 映射、JW/BK 兼容层、Hamiltonian term counting。
+: fermion-to-qubit 映射、JW/BK 兼容层、H2 hardware precision push 使用的 parity two-qubit reduction，以及 Hamiltonian term counting。
 
 `qcchem/solvers`
 : ground-state solver 抽象与 exact spectrum utility。
 
 `qcchem/exploratory`
 : 显式隔离的实验性 solver / mitigation / benchmark 模块。它们可以落正式 artifact，但不会默认进入 validated 主链。
+  当前包含 LR-ACE (`Low-Rank Adaptive Chemistry Eigensolver`) 原型：它从 mapped low-rank/compressed Hamiltonian 的 dominant non-diagonal factors 生成 compact real-mixing Pauli-evolution ansatz，并通过 QCchem evidence gate 标注为 exploratory。
 
 `qcchem/backends`
 : backend adapter、measurement planner、noise model helper、runtime/session-ready snapshot、runtime submission attempt helper、capability snapshot、execution policy defaults。
@@ -24,7 +36,7 @@
 : mitigation schema、metadata、symmetry check hook、readout/ZNE/PEC placeholder。
 
 `qcchem/workflow`
-: run、study、benchmark、scan、task 编排、runtime collect/rehydrate 和 registry 写出。
+: run、study、benchmark、scan、task 编排、runtime collect/rehydrate、hardware optimization candidate planning 和 registry 写出。
 
 `qcchem/reporting`
 : run report 与 aggregate report 生成。
@@ -37,6 +49,10 @@
 
 `qcchem/workbench`
 : Dash 驱动的本地 visual workbench，负责多页面工作台壳层、共享视觉系统、floating AI assistant、AI workspace page、结果页/聚合页组件，以及带有 `/overview` 默认路由、page inventory 和 artifact inventory 的 startup summary。
+  在当前阶段，它承担 `Research Console` 角色，并按三层组织页面：
+  - `Decision Pages`: Overview / Result Confidence / Studies / Benchmarks / Hardware Campaign
+  - `Mechanism Pages`: Structure-Orbitals / Active-Space-Compression / Mapping-Resources-Circuit / Runtime Monitoring
+  - `Operational Pages`: AI Workspace / runtime collect entry / 后续 Compose-Run
 
 `examples/agents`
 : 面向 Codex/OpenClaw 等终端代理的最小任务模板。
@@ -63,7 +79,22 @@
 12. 可选写出 QCSchema-style JSON / HDF5 export
 13. 把 reduction/compression/measurement/plugin/noise/runtime/capability/policy/mitigation/task status 与 provenance 一并落盘
 14. 如启用 runtime path，额外记录 empirical calibration 与 real runtime submission attempt
-15. hardware calibration suite 以 `runtime_submission` 为 authoritative runtime-evidence source 聚合 dashboard，并把 `hardware_verified` / `hardware_evidence_tier` 一起纳入导出和汇总
+15. 构建 `Evidence Summary`，把 scientific claim、baseline、error metric、trust tier 和 recommended action 收成统一读口
+16. hardware calibration suite 以 `runtime_submission` 为 authoritative runtime-evidence source 聚合 dashboard，并把 `hardware_verified` / `hardware_evidence_tier` 一起纳入导出和汇总
+
+### Hardware Optimization
+
+1. `qcchem hardware optimize --preview` 读取普通 `RunSpec` 加 `HardwareOptimizationSpec`
+2. workflow 固定生成 H2 候选：
+   - `jw_puccd_layout_baseline`
+   - `parity_puccd_layout`
+   - `parity_succd_layout`
+   - `parity_uccsd_layout`
+3. 每个候选先跑本地 VQE/exact baseline，只有 local chemical accuracy pass 的候选才可进入 runtime 队列
+4. candidate planner 按 local pass、qubit 数、estimated 2Q gates、depth、layout score 排序
+5. `--submit` 必须带 `--confirm-runtime-budget`，并且 budget ledger 会限制真实 jobs 与 total budgeted shots
+6. `--collect` 复用 runtime collect/rehydrate，把真实 Runtime result 合并回候选 artifact
+7. `Hardware Campaign` 页面显示 `Optimization Trial`，但继续把 `hardware_verified` 与 chemistry validated 分开
 
 ### Benchmark
 
@@ -104,6 +135,9 @@
 `RunSpec`
 : 单次计算根配置，持有 molecule/problem/mapping/backend/solver/benchmark/mitigation/policy/tasks/run。
 
+`HardwareOptimizationSpec`
+: H2 hardware precision push 的预算与候选策略 schema，记录 `max_real_jobs`、`max_total_budgeted_shots`、`stop_if_error_below`、`candidate_strategies` 与 `requires_confirmation`。对应 workflow 现在还会持久化 empirical best attempt、prior hardware reference、delta vs reference、chemical-accuracy gap 和下一步预算建议，避免把重复候选机械送上真机。
+
 `BackendSpec`
 : 现在不只描述 `kind/shots/seed`，还持有 `noise` 与 `runtime` 子 schema。
 
@@ -112,6 +146,9 @@
 
 `CompressionResultSummary`
 : 记录 modified Cholesky / double factorization 的 method、rank、pre/post term count、reconstruction error、execution_enabled 与 verification status。
+
+`LR-ACE metadata`
+: 作为 `variational_result.ansatz.lr_ace` 持久化，记录 `low_rank_method`、`factor_rank`、`selected_factor_count`、`selected_generators` 与 `local_accuracy_gate`。它是 algorithm provenance，不替代 compression audit。
 
 `MeasurementSummary`
 : 记录 measurement strategy、group count、estimated shot cost、runtime precision target、execution mode，以及 compressed/uncompressed 的测量复杂度比较。
@@ -140,11 +177,41 @@
 : 原子级 artifact；benchmark/study/scan/task 都围绕它组织。
   当前它会显式区分 `chemical_accuracy` 和 `runtime_chemical_accuracy`，避免把“本地 solver 达标”和“真实 runtime 推导总能量达标”混成同一个判断。
 
+`EvidenceSummary`
+: 轻量证据摘要层，当前统一至少覆盖：
+  - `result_identity`
+  - `primary_scientific_claim`
+  - `primary_baseline`
+  - `primary_error_metric`
+  - `chemical_accuracy_status`
+  - `runtime_evidence_status`
+  - `trust_tier`
+  - `recommended_action`
+  release-facing 术语 `baseline strength` 与 `hardware verification boundary` 继续作为 derived companion language 出现，而不额外扩成第二套顶层 schema。
+
+`BaselineDescriptorSummary`
+: comparison 口径描述层，显式记录：
+  - `baseline_kind`
+  - `baseline_source`
+  - `baseline_scope`
+  - `baseline_strength`
+
 `hardware_verified`
 : 表示真实 runtime result 已取回并写入 artifact 的证据位；它不等于 chemistry 数值已经通过 publication-grade 精度验证。
 
+`decision_worthiness`
+: 尤其用于 hardware aggregate 的行动判断层，回答当前 evidence 更适合：
+  - `continue`
+  - `pause`
+  - `not_worth_additional_budget`
+  - `needs_better_local_baseline_first`
+  - `worth_one_more_controlled_attempt`
+
 `hardware_evidence_tier`
 : 对 hardware evidence 的来源分层；当前 hardware calibration 主要使用 `retrieved_result` 这类 tier。
+
+`hardware_optimization`
+: hardware optimization artifact section，记录 `candidate_id`、`selection_score`、local accuracy gate、compiled burden、runtime budget ledger 和 stop reason。
 
 `BackendCapabilitySummary`
 : capability snapshot，回答 backend 是否 statevector、shot-based、noise-model-ready、runtime-ready、session-ready、batch-ready。
@@ -164,12 +231,14 @@
 - noise provenance、runtime snapshot、reduction audit 都落在 run artifact 里，避免研究活动层再发明自己的字段。
 - property 和 excited-state 不是塞进 solver 里的“附加结果”，而是正式 task section；这让 ground-state validated 与 task-level exploratory 可以并存且不混淆。
 - active-space / compression / perturbative / embedding 也遵循同一原则：能进入统一 schema 的能力统一落 schema，尚未 fully validated 的能力仍然落正式 artifact，但保留 exploratory 标签。
+- `reduction / compression / correction` 不再只是附属审计块，而是正式并入证据链；最终 scientific claim 必须清楚落在哪一层成立。
 - exploratory 模块采用单独包边界，而不是直接塞进主干 solver/mitigation 目录；这样我们可以持续完善实验能力，同时保持 validated 主链稳定。
 - backend capability 和 execution policy 分离：
   - capability 回答“这个 backend 能做什么”
   - policy 回答“这次 run 想按什么标准执行和解释”
 - visual workbench 复用同一套 schema/artifact 语言，而不是另造一套 UI 专用数据模型；这样 CLI、报告、AI task interface 和本地工作台始终围绕同一批证据对象组织
 - AI workspace ticket / delivery state 也落在 `artifacts/ai_workspace/`，page render 只读这些持久化 JSON，不自行创造独立状态源
+- AI 默认先消费 `Evidence Summary`，先解释 evidence 与边界，再在 ticket 门控下推进执行；这样 artifact 主链始终是权威来源。
 
 ## 能量口径
 

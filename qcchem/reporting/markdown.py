@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from qcchem.core.chemical_accuracy import CHEMICAL_ACCURACY_HARTREE
 from qcchem.io.serialization import to_primitive
 
 
@@ -116,11 +115,26 @@ def _chemical_accuracy_distance(summary: dict[str, Any]) -> float | None:
     return max(float(absolute_error) - float(threshold), 0.0)
 
 
-def _primary_chemical_accuracy_summary(data: dict[str, Any]) -> dict[str, Any] | None:
-    candidates: list[dict[str, Any]] = []
+def _explicit_available_chemical_accuracy_summaries(data: dict[str, Any]) -> list[dict[str, Any]]:
+    available: list[dict[str, Any]] = []
     for summary in (data.get("chemical_accuracy"), data.get("runtime_chemical_accuracy")):
-        if isinstance(summary, dict) and summary.get("available") is not False:
-            candidates.append(summary)
+        if isinstance(summary, dict) and summary.get("available") is True:
+            available.append(summary)
+    return available
+
+
+def _primary_chemical_accuracy_summary(data: dict[str, Any]) -> dict[str, Any] | None:
+    candidates = _explicit_available_chemical_accuracy_summaries(data)
+    if not candidates:
+        legacy_candidates: list[dict[str, Any]] = []
+        for summary in (data.get("chemical_accuracy"), data.get("runtime_chemical_accuracy")):
+            if (
+                isinstance(summary, dict)
+                and "available" not in summary
+                and summary.get("absolute_error_hartree") is not None
+            ):
+                legacy_candidates.append(summary)
+        candidates = legacy_candidates
     if not candidates:
         return None
     return min(
@@ -180,8 +194,7 @@ def _chemical_accuracy_frame_lines(data: dict[str, Any], units: str) -> list[str
     primary = _primary_chemical_accuracy_summary(data) or {}
     assessments = [
         summary.get("assessment_target")
-        for summary in (data.get("chemical_accuracy"), data.get("runtime_chemical_accuracy"))
-        if isinstance(summary, dict)
+        for summary in _explicit_available_chemical_accuracy_summaries(data)
     ]
     distance = _chemical_accuracy_distance(primary)
     return [
@@ -222,6 +235,70 @@ def _runtime_evidence_frame_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _evidence_summary_lines(data: dict[str, Any]) -> list[str]:
+    evidence = data.get("evidence_summary") or {}
+    baseline = evidence.get("primary_baseline") or {}
+    metric = evidence.get("primary_error_metric") or {}
+    return [
+        "## Evidence Summary",
+        "",
+        f"- result_identity: `{evidence.get('result_identity')}`",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- primary_baseline: `{baseline}`",
+        f"- primary_error_metric: `{metric}`",
+        f"- chemical_accuracy_status: `{evidence.get('chemical_accuracy_status')}`",
+        f"- runtime_evidence_status: `{evidence.get('runtime_evidence_status')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
+        "",
+    ]
+
+
+def _claim_lines(data: dict[str, Any]) -> list[str]:
+    evidence = data.get("evidence_summary") or {}
+    return [
+        "## Claim",
+        "",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
+        "",
+    ]
+
+
+def _chain_lines(data: dict[str, Any], units: str) -> list[str]:
+    evidence = data.get("evidence_summary") or {}
+    reduction = data.get("reduction_audit") or {}
+    compression = data.get("compression_result") or {}
+    perturbative = data.get("perturbative_correction_result") or {}
+    return [
+        "## Chain",
+        "",
+        f"- reduction: `{reduction.get('selection_mode')}` / transformers=`{reduction.get('transformers_applied', [])}`",
+        f"- compression: `{compression.get('method')}` / status=`{compression.get('verification_status')}`",
+        f"- correction: `{perturbative.get('method')}` / delta={_fmt_energy(perturbative.get('perturbative_correction'), units)}",
+        f"- comparison_evidence: `{evidence.get('comparison_evidence')}`",
+        "",
+    ]
+
+
+def _proof_lines(data: dict[str, Any]) -> list[str]:
+    evidence = data.get("evidence_summary") or {}
+    provenance = data.get("provenance") or {}
+    runtime_submission = data.get("runtime_submission") or {}
+    artifacts = data.get("artifacts") or {}
+    return [
+        "## Proof",
+        "",
+        f"- execution_evidence: `{evidence.get('execution_evidence')}`",
+        f"- trust_judgment: `{evidence.get('trust_judgment')}`",
+        f"- provenance_timestamp: `{provenance.get('timestamp')}`",
+        f"- runtime_job_id: `{runtime_submission.get('job_id')}`",
+        f"- artifact_root: `{artifacts.get('root')}`",
+        "",
+    ]
+
+
 def render_markdown_report(result: Any) -> str:
     """Render a QCchem result as a Markdown report."""
     data = to_primitive(result)
@@ -238,9 +315,7 @@ def render_markdown_report(result: Any) -> str:
     embedding = data.get("embedding_result")
     noise_model = data.get("noise_model")
     measurement = data.get("measurement")
-    calibration = data.get("calibration")
     runtime_options = data.get("runtime_options")
-    runtime_submission = data.get("runtime_submission")
     chemical_accuracy = data.get("chemical_accuracy")
     runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")
     reduction_plan = data.get("reduction_plan")
@@ -272,6 +347,10 @@ def render_markdown_report(result: Any) -> str:
         [
         *_report_cover_lines(data, units),
         *_hero_lines(data, units),
+        *_evidence_summary_lines(data),
+        *_claim_lines(data),
+        *_chain_lines(data, units),
+        *_proof_lines(data),
         *_chemical_accuracy_frame_lines(data, units),
         *_runtime_evidence_frame_lines(data),
         "## Verification",
@@ -600,6 +679,7 @@ def render_markdown_report(result: Any) -> str:
         lines.append("")
 
     if variational is not None:
+        lr_ace = (variational.get("ansatz") or {}).get("lr_ace") if isinstance(variational.get("ansatz"), dict) else None
         lines.extend(
             [
                 "## Variational Result",
@@ -618,6 +698,20 @@ def render_markdown_report(result: Any) -> str:
                 "",
             ]
         )
+        if isinstance(lr_ace, dict):
+            lines.extend(
+                [
+                    "## LR-ACE Exploratory Algorithm",
+                    "",
+                    f"- algorithm_name: `{lr_ace.get('algorithm_name')}`",
+                    f"- low_rank_method: `{lr_ace.get('low_rank_method')}`",
+                    f"- factor_rank: `{lr_ace.get('factor_rank')}`",
+                    f"- selected_factor_count: `{lr_ace.get('selected_factor_count')}`",
+                    f"- local_accuracy_gate: `{lr_ace.get('local_accuracy_gate')}`",
+                    f"- selected_generators: `{lr_ace.get('selected_generators')}`",
+                    "",
+                ]
+            )
 
     if sampled is not None:
         lines.extend(

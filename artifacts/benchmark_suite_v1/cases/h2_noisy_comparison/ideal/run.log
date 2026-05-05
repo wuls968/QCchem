@@ -1,0 +1,11 @@
+2026-04-11 14:58:30,712 INFO Loading config from /Users/a0000/QCchem/configs/h2_noisy.yaml
+2026-04-11 14:58:30,714 INFO Building electronic structure problem
+2026-04-11 14:58:30,733 INFO Applying mapping: jordan_wigner
+2026-04-11 14:58:30,741 INFO Preparing backend: shot_estimator
+2026-04-11 14:58:30,742 INFO Running solver: vqe
+2026-04-11 14:58:32,160 INFO Computing exact spectrum for 1 states
+2026-04-11 14:58:32,161 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/ideal/exact_result.json
+2026-04-11 14:58:32,357 INFO Collected repeated shot-based sampling statistics
+2026-04-11 14:58:32,380 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/ideal/result.json
+2026-04-11 14:58:32,381 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/ideal/report.md
+2026-04-11 14:58:32,382 INFO Run completed

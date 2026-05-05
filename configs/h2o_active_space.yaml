@@ -1,0 +1,37 @@
+molecule:
+  name: H2O
+  geometry:
+    - symbol: O
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.757, 0.587]
+    - symbol: H
+      coords: [0.0, -0.757, 0.587]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space:
+    num_electrons: 4
+    num_spatial_orbitals: 4
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+run:
+  seed: 21
+  output_dir: artifacts/h2o_active_space
+  overwrite: true

@@ -1,0 +1,14 @@
+2026-04-11 23:24:30,270 INFO Loading config from configs/lih_active_exact_compressed_cholesky.yaml
+2026-04-11 23:24:30,273 INFO Building electronic structure problem
+2026-04-11 23:24:30,310 INFO Applying mapping: jordan_wigner
+2026-04-11 23:24:30,345 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-04-11 23:24:30,345 INFO Computed compression audit: modified_cholesky
+2026-04-11 23:24:30,346 INFO Prepared measurement plan: groups=2, cost=20000
+2026-04-11 23:24:30,346 INFO Skipping backend construction for solver: exact
+2026-04-11 23:24:30,346 INFO Running solver: exact
+2026-04-11 23:24:30,347 INFO Computing exact spectrum for 1 states
+2026-04-11 23:24:30,347 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_cholesky/exact_result.json
+2026-04-11 23:24:30,348 INFO Computed compressed-vs-uncompressed execution comparison
+2026-04-11 23:24:30,351 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_cholesky/result.json
+2026-04-11 23:24:30,351 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_exact_compressed_cholesky/report.md
+2026-04-11 23:24:30,352 INFO Run completed

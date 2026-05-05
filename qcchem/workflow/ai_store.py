@@ -37,6 +37,11 @@ def read_ticket_record(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def read_delivery_record(path: Path) -> dict[str, Any]:
+    """Read a delivery record from JSON."""
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def list_ticket_records(
     root: Path,
     *,
@@ -58,3 +63,14 @@ def list_ticket_records(
             continue
         tickets.append(payload)
     return tickets
+
+
+def list_delivery_records(root: Path) -> list[dict[str, Any]]:
+    """Return persisted delivery records ordered by file name."""
+    deliveries: list[dict[str, Any]] = []
+    deliveries_dir = root / "deliveries"
+    if not deliveries_dir.exists():
+        return deliveries
+    for path in sorted(deliveries_dir.glob("*.json")):
+        deliveries.append(read_delivery_record(path))
+    return deliveries

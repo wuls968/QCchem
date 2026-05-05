@@ -8,11 +8,14 @@ from typing import Any
 
 from qcchem.io.agent_config import AgentTaskSpec, load_agent_task_spec
 from qcchem.io.config import resolve_user_path
+from qcchem.io.serialization import to_primitive
 from qcchem.reporting.hardware_campaign import (
     build_hardware_campaign_summary,
     write_hardware_campaign_report,
     write_hardware_campaign_summary,
 )
+from qcchem.reporting.jsonio import write_result_json
+from qcchem.core.evidence import summarize_artifact_payload
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
@@ -36,23 +39,76 @@ def run_analysis_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
 
 
 def summarize_agent_target(target: Path) -> dict[str, Any]:
-    """Summarize a hardware calibration suite for AI-agent consumption."""
+    """Summarize one QCchem artifact target for AI-agent consumption."""
     resolved_target = target.expanduser().resolve()
     if resolved_target.is_dir():
-        summary_path = resolved_target / "hardware_calibration_summary.json"
+        candidates = [
+            ("hardware_campaign", resolved_target / "hardware_calibration_summary.json"),
+            ("benchmark_suite", resolved_target / "benchmark_result.json"),
+            ("study", resolved_target / "study_result.json"),
+            ("scan", resolved_target / "scan_result.json"),
+            ("run", resolved_target / "result.json"),
+        ]
+        artifact_kind, summary_path = next(
+            ((kind, path) for kind, path in candidates if path.exists()),
+            (None, None),
+        )
+        if summary_path is None:
+            raise FileNotFoundError(f"No supported QCchem artifact summary found under '{resolved_target}'.")
         output_root = resolved_target
     else:
         summary_path = resolved_target
         output_root = resolved_target.parent
+        name = summary_path.name
+        artifact_kind = {
+            "hardware_calibration_summary.json": "hardware_campaign",
+            "benchmark_result.json": "benchmark_suite",
+            "study_result.json": "study",
+            "scan_result.json": "scan",
+            "result.json": "run",
+        }.get(name)
+        if artifact_kind is None:
+            raise ValueError(f"Unsupported artifact summary path: '{summary_path}'.")
+
     payload = json.loads(summary_path.read_text(encoding="utf-8"))
-    summary = build_hardware_campaign_summary(payload)
-    summary_json = output_root / "hardware_runtime_campaign_summary.json"
-    report_markdown = output_root / "hardware_runtime_campaign_report.md"
-    write_hardware_campaign_summary(summary, summary_json)
-    write_hardware_campaign_report(summary, report_markdown)
+    if artifact_kind == "hardware_campaign":
+        summary = build_hardware_campaign_summary(payload)
+        summary_json = output_root / "hardware_runtime_campaign_summary.json"
+        report_markdown = output_root / "hardware_runtime_campaign_report.md"
+        write_hardware_campaign_summary(summary, summary_json)
+        write_hardware_campaign_report(summary, report_markdown)
+        summary["summary_json"] = str(summary_json)
+        summary["report_markdown"] = str(report_markdown)
+        summary["artifact_kind"] = "hardware_campaign"
+        return summary
+
+    normalized = summarize_artifact_payload(payload, artifact_kind=artifact_kind)
+    evidence_summary = normalized["evidence_summary"]
+    summary = {
+        "artifact_kind": artifact_kind,
+        "artifact_root": str(output_root),
+        "evidence_summary": evidence_summary,
+        "summary_title": f"{artifact_kind.replace('_', ' ').title()} Evidence Summary",
+    }
+    summary_json = output_root / "artifact_evidence_summary.json"
+    report_markdown = output_root / "artifact_evidence_report.md"
+    write_result_json(summary, summary_json)
+    report_lines = [
+        f"# {summary['summary_title']}",
+        "",
+        f"- artifact_kind: `{artifact_kind}`",
+        f"- primary_scientific_claim: `{evidence_summary.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence_summary.get('trust_tier')}`",
+        f"- runtime_evidence_status: `{evidence_summary.get('runtime_evidence_status')}`",
+        f"- recommended_action: `{evidence_summary.get('recommended_action')}`",
+        f"- baseline: `{evidence_summary.get('primary_baseline')}`",
+        f"- primary_error_metric: `{evidence_summary.get('primary_error_metric')}`",
+        "",
+    ]
+    report_markdown.write_text("\n".join(report_lines), encoding="utf-8")
     summary["summary_json"] = str(summary_json)
     summary["report_markdown"] = str(report_markdown)
-    return summary
+    return to_primitive(summary)
 
 
 def _write_optional_summary_output(

@@ -1,0 +1,10 @@
+2026-04-11 18:21:27,416 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_vqe_statevector.yaml
+2026-04-11 18:21:27,418 INFO Building electronic structure problem
+2026-04-11 18:21:27,450 INFO Applying mapping: jordan_wigner
+2026-04-11 18:21:27,467 INFO Preparing backend: statevector
+2026-04-11 18:21:27,467 INFO Running solver: vqe
+2026-04-11 18:21:27,796 INFO Computing exact spectrum for 1 states
+2026-04-11 18:21:27,796 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_uncompressed/exact_result.json
+2026-04-11 18:21:27,844 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_uncompressed/result.json
+2026-04-11 18:21:27,845 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_uncompressed/report.md
+2026-04-11 18:21:27,846 INFO Run completed

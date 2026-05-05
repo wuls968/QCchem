@@ -1,0 +1,294 @@
+{
+  "cases": [
+    {
+      "achieved_error": 0.018253500584027416,
+      "ansatz_kind": "puccd",
+      "backend_name": "ibm_kingston",
+      "hardware_verified": true,
+      "job_id": "d7qph0cf3ras73b64dcg",
+      "mapping_kind": "parity_two_qubit_reduction",
+      "meets_chemical_accuracy": false,
+      "name": "parity_puccd_layout",
+      "runtime_evidence_status": "retrieved_result",
+      "runtime_usage_seconds": 26.095501966,
+      "transpiled_depth": 22,
+      "transpiled_two_qubit_gate_count": 4
+    },
+    {
+      "achieved_error": 0.04770089847504311,
+      "ansatz_kind": "puccd",
+      "backend_name": "ibm_kingston",
+      "hardware_verified": true,
+      "job_id": "d7qpl6cf3ras73b64hsg",
+      "mapping_kind": "jordan_wigner",
+      "meets_chemical_accuracy": false,
+      "name": "jw_puccd_layout_baseline",
+      "runtime_evidence_status": "retrieved_result",
+      "runtime_usage_seconds": 45.164042271,
+      "transpiled_depth": 149,
+      "transpiled_two_qubit_gate_count": 42
+    }
+  ],
+  "hardware_optimization": {
+    "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push",
+    "best_existing_reference": "artifacts/h2_runtime_hardware_probe_puccd_layout",
+    "best_existing_reference_summary": {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe_puccd_layout",
+      "available": true,
+      "backend_name": "ibm_kingston",
+      "candidate_id": "h2_runtime_hardware_probe_puccd_layout",
+      "job_id": "d7gucqbjne2c7393dl50",
+      "meets_chemical_accuracy": false,
+      "runtime_error_hartree": 0.013673650274335092,
+      "transpiled_depth": 146,
+      "transpiled_two_qubit_gate_count": 42
+    },
+    "chemical_accuracy_target_hartree": 0.0016,
+    "collect_summaries": [
+      {
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_01_parity_puccd_layout_8192",
+        "job_id": "d7qph0cf3ras73b64dcg",
+        "result_updated": true,
+        "status": "DONE"
+      },
+      {
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_02_jw_puccd_layout_baseline_8192",
+        "job_id": "d7qpl6cf3ras73b64hsg",
+        "result_updated": true,
+        "status": "DONE"
+      }
+    ],
+    "created_at": "2026-05-02T06:37:06.165567+00:00",
+    "empirical_best_attempt": {
+      "ansatz_kind": "puccd",
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_01_parity_puccd_layout_8192",
+      "backend_name": "ibm_kingston",
+      "budgeted_shots": 8192,
+      "candidate_id": "parity_puccd_layout",
+      "estimated_quantum_seconds": 26.095501966,
+      "job_id": "d7qph0cf3ras73b64dcg",
+      "mapping_kind": "parity_two_qubit_reduction",
+      "meets_chemical_accuracy": false,
+      "runtime_error_hartree": 0.018253500584027416,
+      "submitted": true,
+      "succeeded": true,
+      "transpiled_depth": 22,
+      "transpiled_two_qubit_gate_count": 4
+    },
+    "empirical_gap_to_chemical_accuracy_hartree": 0.016653500584027415,
+    "hardware_optimization": {
+      "best_existing_reference_summary": {
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe_puccd_layout",
+        "available": true,
+        "backend_name": "ibm_kingston",
+        "candidate_id": "h2_runtime_hardware_probe_puccd_layout",
+        "job_id": "d7gucqbjne2c7393dl50",
+        "meets_chemical_accuracy": false,
+        "runtime_error_hartree": 0.013673650274335092,
+        "transpiled_depth": 146,
+        "transpiled_two_qubit_gate_count": 42
+      },
+      "candidate_id": "parity_puccd_layout",
+      "chemical_accuracy_target_hartree": 0.0016,
+      "empirical_best_attempt": {
+        "ansatz_kind": "puccd",
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_01_parity_puccd_layout_8192",
+        "backend_name": "ibm_kingston",
+        "budgeted_shots": 8192,
+        "candidate_id": "parity_puccd_layout",
+        "estimated_quantum_seconds": 26.095501966,
+        "job_id": "d7qph0cf3ras73b64dcg",
+        "mapping_kind": "parity_two_qubit_reduction",
+        "meets_chemical_accuracy": false,
+        "runtime_error_hartree": 0.018253500584027416,
+        "submitted": true,
+        "succeeded": true,
+        "transpiled_depth": 22,
+        "transpiled_two_qubit_gate_count": 4
+      },
+      "empirical_gap_to_chemical_accuracy_hartree": 0.016653500584027415,
+      "local_accuracy_pass": true,
+      "recommended_action": "pause_hardware_spend_and_analyze_bias",
+      "reference_gap_to_chemical_accuracy_hartree": 0.012073650274335091,
+      "runtime_accuracy_delta_vs_best_existing": 0.004579850309692324,
+      "runtime_budget_ledger": {
+        "can_submit_more": true,
+        "max_real_jobs": 3,
+        "max_total_budgeted_shots": 40960,
+        "max_total_estimated_quantum_seconds": 600.0,
+        "real_jobs_submitted": 2,
+        "total_budgeted_shots": 16384,
+        "total_estimated_quantum_seconds": 71.259544237
+      },
+      "selection_score": [
+        0,
+        2,
+        9,
+        37,
+        1000000000.0,
+        "parity_puccd_layout"
+      ],
+      "stop_reason": "pause_after_diverse_strategy_probe",
+      "transpiled_depth": 37,
+      "transpiled_two_qubit_gate_count": 9
+    },
+    "mode": "collect",
+    "profile": "h2_precision_push",
+    "ranked_candidates": [
+      {
+        "ansatz_kind": "puccd",
+        "candidate_id": "parity_puccd_layout",
+        "eligible_for_runtime": true,
+        "layout_score": null,
+        "local_accuracy_pass": true,
+        "local_error_hartree": 4.77500483597737e-10,
+        "mapping_kind": "parity_two_qubit_reduction",
+        "preview_artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/parity_puccd_layout/preview",
+        "preview_status": "previewed",
+        "qubits": 2,
+        "runtime_artifact_root": null,
+        "selection_score": [
+          0,
+          2,
+          9,
+          37,
+          1000000000.0,
+          "parity_puccd_layout"
+        ],
+        "terms": 5,
+        "transpiled_depth": 37,
+        "transpiled_two_qubit_gate_count": 9
+      },
+      {
+        "ansatz_kind": "succd",
+        "candidate_id": "parity_succd_layout",
+        "eligible_for_runtime": true,
+        "layout_score": null,
+        "local_accuracy_pass": true,
+        "local_error_hartree": 4.77500483597737e-10,
+        "mapping_kind": "parity_two_qubit_reduction",
+        "preview_artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/parity_succd_layout/preview",
+        "preview_status": "previewed",
+        "qubits": 2,
+        "runtime_artifact_root": null,
+        "selection_score": [
+          0,
+          2,
+          9,
+          37,
+          1000000000.0,
+          "parity_succd_layout"
+        ],
+        "terms": 5,
+        "transpiled_depth": 37,
+        "transpiled_two_qubit_gate_count": 9
+      },
+      {
+        "ansatz_kind": "uccsd",
+        "candidate_id": "parity_uccsd_layout",
+        "eligible_for_runtime": true,
+        "layout_score": null,
+        "local_accuracy_pass": true,
+        "local_error_hartree": 1.3755125038983351e-08,
+        "mapping_kind": "parity_two_qubit_reduction",
+        "preview_artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/parity_uccsd_layout/preview",
+        "preview_status": "previewed",
+        "qubits": 2,
+        "runtime_artifact_root": null,
+        "selection_score": [
+          0,
+          2,
+          17,
+          61,
+          1000000000.0,
+          "parity_uccsd_layout"
+        ],
+        "terms": 5,
+        "transpiled_depth": 61,
+        "transpiled_two_qubit_gate_count": 17
+      },
+      {
+        "ansatz_kind": "puccd",
+        "candidate_id": "jw_puccd_layout_baseline",
+        "eligible_for_runtime": true,
+        "layout_score": null,
+        "local_accuracy_pass": true,
+        "local_error_hartree": 4.775011497315518e-10,
+        "mapping_kind": "jordan_wigner",
+        "preview_artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/candidates/jw_puccd_layout_baseline/preview",
+        "preview_status": "previewed",
+        "qubits": 4,
+        "runtime_artifact_root": null,
+        "selection_score": [
+          0,
+          4,
+          23,
+          89,
+          1000000000.0,
+          "jw_puccd_layout_baseline"
+        ],
+        "terms": 15,
+        "transpiled_depth": 89,
+        "transpiled_two_qubit_gate_count": 23
+      }
+    ],
+    "recommended_action": "pause_hardware_spend_and_analyze_bias",
+    "reference_gap_to_chemical_accuracy_hartree": 0.012073650274335091,
+    "runtime_accuracy_delta_vs_best_existing": 0.004579850309692324,
+    "runtime_budget_ledger": {
+      "can_submit_more": true,
+      "max_real_jobs": 3,
+      "max_total_budgeted_shots": 40960,
+      "max_total_estimated_quantum_seconds": 600.0,
+      "real_jobs_submitted": 2,
+      "total_budgeted_shots": 16384,
+      "total_estimated_quantum_seconds": 71.259544237
+    },
+    "schema_version": "qcchem.hardware_optimization.v0.1-alpha",
+    "stop_reason": "pause_after_diverse_strategy_probe",
+    "submitted_attempts": [
+      {
+        "ansatz_kind": "puccd",
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_01_parity_puccd_layout_8192",
+        "backend_name": "ibm_kingston",
+        "budgeted_shots": 8192,
+        "candidate_id": "parity_puccd_layout",
+        "estimated_quantum_seconds": 26.095501966,
+        "job_id": "d7qph0cf3ras73b64dcg",
+        "mapping_kind": "parity_two_qubit_reduction",
+        "meets_chemical_accuracy": false,
+        "runtime_error_hartree": 0.018253500584027416,
+        "submitted": true,
+        "succeeded": true,
+        "transpiled_depth": 22,
+        "transpiled_two_qubit_gate_count": 4
+      },
+      {
+        "ansatz_kind": "puccd",
+        "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_precision_push/runtime_jobs/job_02_jw_puccd_layout_baseline_8192",
+        "backend_name": "ibm_kingston",
+        "budgeted_shots": 8192,
+        "candidate_id": "jw_puccd_layout_baseline",
+        "estimated_quantum_seconds": 45.164042271,
+        "job_id": "d7qpl6cf3ras73b64hsg",
+        "mapping_kind": "jordan_wigner",
+        "meets_chemical_accuracy": false,
+        "runtime_error_hartree": 0.04770089847504311,
+        "submitted": true,
+        "succeeded": true,
+        "transpiled_depth": 149,
+        "transpiled_two_qubit_gate_count": 42
+      }
+    ],
+    "suite_name": "h2_hardware_precision_push"
+  },
+  "schema_version": "qcchem.hardware_optimization.v0.1-alpha",
+  "suite_name": "h2_hardware_precision_push",
+  "summary": {
+    "hardware_verified_cases": [
+      "parity_puccd_layout",
+      "jw_puccd_layout_baseline"
+    ],
+    "total_cases": 2
+  }
+}

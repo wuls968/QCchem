@@ -1,0 +1,15 @@
+2026-05-02 14:59:38,913 INFO Loading config from /Users/a0000/QCchem/configs/exploratory/lih_active_lr_ace.yaml
+2026-05-02 14:59:38,924 INFO Building electronic structure problem
+2026-05-02 14:59:39,025 INFO Applying mapping: parity_two_qubit_reduction
+2026-05-02 14:59:39,159 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-05-02 14:59:39,159 INFO Computed compression audit: modified_cholesky
+2026-05-02 14:59:39,160 INFO Prepared measurement plan: groups=4, cost=40000
+2026-05-02 14:59:39,161 INFO Preparing backend: statevector
+2026-05-02 14:59:39,161 INFO Running solver: lr_ace
+2026-05-02 14:59:41,156 INFO Computing exact spectrum for 1 states
+2026-05-02 14:59:41,158 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_lr_ace/exact_result.json
+2026-05-02 14:59:42,526 INFO Computed compressed-vs-uncompressed execution comparison
+2026-05-02 14:59:42,526 INFO Computed empirical calibration: wall_time=1.994s, measured_cost=None
+2026-05-02 14:59:42,536 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_lr_ace/result.json
+2026-05-02 14:59:42,541 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_lr_ace/report.md
+2026-05-02 14:59:42,544 INFO Run completed

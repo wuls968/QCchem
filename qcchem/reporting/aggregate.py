@@ -58,8 +58,15 @@ def render_study_report(result: Any) -> str:
     """Render a study result as Markdown."""
     data = to_primitive(result)
     validated_runs, exploratory_runs = _split_items_by_scope(data["run_records"], "verification_status")
+    evidence = data.get("evidence_summary") or {}
     lines = [
         f"# Study Report: {data['study_name']}",
+        "",
+        "## Best Evidence",
+        "",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
         "",
         "## Report Cover",
         "",
@@ -103,6 +110,7 @@ def render_benchmark_report(result: Any) -> str:
     """Render a benchmark-suite result as Markdown."""
     data = to_primitive(result)
     validated_cases, exploratory_cases = _split_items_by_scope(data["cases"], "status")
+    evidence = data.get("evidence_summary") or {}
     best_case = _best_benchmark_case(validated_cases or data["cases"])
     best_case_error = None if best_case is None else _benchmark_case_error(best_case)
     best_case_distance = _distance_to_chemical_accuracy(best_case_error)
@@ -110,6 +118,12 @@ def render_benchmark_report(result: Any) -> str:
         f"# Benchmark Suite Report: {data['suite_name']}",
         "",
         "> Validated-like and exploratory cases are separated below to avoid mixing benchmark scopes.",
+        "",
+        "## Best Evidence",
+        "",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
         "",
         "## Report Cover",
         "",
@@ -187,12 +201,19 @@ def render_scan_report(result: Any) -> str:
     """Render a scan result as Markdown."""
     data = to_primitive(result)
     validated_points, exploratory_points = _split_items_by_scope(data["points"], "verification_status")
+    evidence = data.get("evidence_summary") or {}
     best_point = None
     ranked_points = [point for point in data["points"] if point.get("total_energy") is not None]
     if ranked_points:
         best_point = min(ranked_points, key=lambda point: float(point.get("total_energy") or 0.0))
     lines = [
         f"# Scan Report: {data['scan_name']}",
+        "",
+        "## Best Evidence",
+        "",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
         "",
         "## Report Cover",
         "",
@@ -247,6 +268,8 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
     if not isinstance(cases, list):
         cases = []
     best_case = _best_hardware_case(cases)
+    evidence = summary.get("evidence_summary") or {}
+    decision = summary.get("decision_worthiness") or {}
     best_case_distance = None
     if best_case is not None:
         best_case_distance = best_case.get("distance_to_chemical_accuracy")
@@ -254,6 +277,13 @@ def write_hardware_calibration_report(summary: dict[str, object], output_path: P
             best_case_distance = _distance_to_chemical_accuracy(best_case.get("achieved_error"))
     lines = [
         "# Hardware Calibration Dashboard",
+        "",
+        "## Best Evidence",
+        "",
+        f"- primary_scientific_claim: `{evidence.get('primary_scientific_claim')}`",
+        f"- trust_tier: `{evidence.get('trust_tier')}`",
+        f"- recommended_action: `{evidence.get('recommended_action')}`",
+        f"- decision_worthiness: `{decision}`",
         "",
         "## Report Cover",
         "",

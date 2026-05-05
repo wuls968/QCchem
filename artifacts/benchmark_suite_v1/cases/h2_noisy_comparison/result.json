@@ -1,0 +1,21 @@
+{
+  "absolute_error": 0.4189336043828257,
+  "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison",
+  "expected_status": "unstable",
+  "kind": "noise_comparison",
+  "metrics": {
+    "exact_total_energy": -1.1373060357533986,
+    "ideal_absolute_error": 0.006976892180847294,
+    "ideal_status": "unstable",
+    "ideal_total_energy": -1.1303291435725513,
+    "noisy_absolute_error": 0.4189336043828257,
+    "noisy_minus_ideal": 0.4119567122019784,
+    "noisy_status": "unstable",
+    "noisy_total_energy": -0.7183724313705729
+  },
+  "name": "h2_noisy_comparison",
+  "notes": [],
+  "relative_error": 0.36835608992904595,
+  "status": "unstable",
+  "total_energy": -0.7183724313705729
+}

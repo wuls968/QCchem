@@ -12,6 +12,7 @@ def check_chemical_accuracy(
     computed_energy: float,
     reference_energy: float | None,
     *,
+    assessment_target: str = "local_execution",
     threshold_hartree: float = CHEMICAL_ACCURACY_HARTREE,
     statistical_error: float | None = None,
 ) -> ChemicalAccuracySummary:
@@ -19,6 +20,7 @@ def check_chemical_accuracy(
     if reference_energy is None:
         return ChemicalAccuracySummary(
             available=False,
+            assessment_target=assessment_target,
             meets_chemical_accuracy=None,
             absolute_error_hartree=None,
             absolute_error_kcal_mol=None,
@@ -50,6 +52,7 @@ def check_chemical_accuracy(
             notes.append("Observed error exceeds 95% statistical uncertainty.")
     return ChemicalAccuracySummary(
         available=True,
+        assessment_target=assessment_target,
         meets_chemical_accuracy=meets,
         absolute_error_hartree=absolute_error,
         absolute_error_kcal_mol=absolute_error_kcal,

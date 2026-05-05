@@ -1,0 +1,789 @@
+{
+  "artifacts": {
+    "calibration_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/calibration.json",
+    "calibration_report_markdown": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/calibration_report.md",
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/exact_result.json",
+    "hdf5_file": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.h5",
+    "log_file": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/run.log",
+    "qcschema_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/qcschema.json",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2",
+    "runtime_submission_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/runtime_submission.json"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "shot_estimator",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": true,
+    "seed": 111,
+    "shots": 1024
+  },
+  "backend_capability": {
+    "backend_kind": "shot_estimator",
+    "batch_ready": true,
+    "exact_baseline": true,
+    "mitigation_ready": true,
+    "noise_model_ready": true,
+    "runtime_ready": true,
+    "session_ready": true,
+    "shot_based": true,
+    "statevector": false,
+    "supports_confidence_metrics": true,
+    "supports_grouping": true,
+    "supports_repetitions": true
+  },
+  "benchmark": {
+    "absolute_error": 0.002536465251723463,
+    "absolute_error_threshold": 0.2,
+    "comparison_target": "compressed_vs_uncompressed",
+    "compressed_vs_uncompressed": {
+      "absolute_error": 0.002536465251723463,
+      "available": true,
+      "compressed_solve_wall_time_seconds": 0.9938129170004686,
+      "compressed_solver_energy": -1.0594206662674326,
+      "compressed_total_energy": -7.863432964569483,
+      "method": "modified_cholesky",
+      "post_term_count": 12,
+      "pre_term_count": 27,
+      "rank": 2,
+      "relative_error": 0.00032246060378868225,
+      "threshold": 0.001,
+      "uncompressed_solve_wall_time_seconds": 1.370027792003384,
+      "uncompressed_solver_energy": -1.0619571315191563,
+      "uncompressed_total_energy": -7.865969429821207
+    },
+    "exact_available": true,
+    "exact_electronic_energy": -8.855345889472602,
+    "exact_total_energy": -7.863138618997603,
+    "meets_threshold": true,
+    "relative_error": 0.00032246060378868225,
+    "relative_error_threshold": 0.2,
+    "statistical_error": 0.0022556381185725423,
+    "within_uncertainty": true
+  },
+  "calibration": {
+    "achieved_error": 0.002536465251723463,
+    "available": true,
+    "estimated_measurement_cost": 90.0,
+    "estimated_vs_measured_cost": 0.0439453125,
+    "measured_shot_usage": 2048.0,
+    "measured_wall_time_seconds": 0.9938129170004686,
+    "notes": [
+      "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+      "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+    ],
+    "precision_target": 0.15,
+    "reference_target": "compressed_vs_uncompressed"
+  },
+  "capability_tier": "exploratory",
+  "chemical_accuracy": {
+    "absolute_error_hartree": 0.0002943455718806831,
+    "absolute_error_kcal_mol": 0.18470463498507664,
+    "available": true,
+    "computed_energy": -7.863432964569483,
+    "meets_chemical_accuracy": true,
+    "notes": [
+      "Meets chemical accuracy threshold.",
+      "Observed error lies within 95% statistical uncertainty."
+    ],
+    "reference_energy": -7.863138618997603,
+    "relative_error": 3.7433598228770183e-05,
+    "statistical_error": 0.0022556381185725423,
+    "status": "validated",
+    "threshold_hartree": 0.0016,
+    "threshold_kcal_mol": 1.0040151583999999
+  },
+  "compression_result": {
+    "apply_to_solver": false,
+    "compressed_num_qubits": 4,
+    "compressed_term_count_estimate": 12,
+    "enabled": true,
+    "execution_enabled": true,
+    "max_rank": 2,
+    "method": "modified_cholesky",
+    "notes": [
+      "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+    ],
+    "original_fermionic_term_count": 72,
+    "original_num_qubits": 4,
+    "original_qubit_term_count": 27,
+    "post_term_count": 12,
+    "pre_term_count": 27,
+    "primary_rank": 2,
+    "rank": 2,
+    "reconstruction_error": 0.008905643352596537,
+    "reconstruction_error_frobenius": 0.008905643352596537,
+    "secondary_rank": null,
+    "threshold": 0.001,
+    "verification_status": "validated"
+  },
+  "embedding_result": null,
+  "energy": {
+    "constant_energy_correction": -7.796219568777051,
+    "correlation_energy": -0.0015681947608348068,
+    "electronic_energy": -8.855640235044483,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.059126320695552,
+    "hf_reference_energy": -7.861864769808649,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "solver_energy": -1.0594206662674326,
+    "total_energy": -7.863432964569483
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -8.855345889472602,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.059126320695552,
+    "source": "exact_diagonalization",
+    "total_energy": -7.863138618997603
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "exact baseline and uncertainty reporting required",
+    "default_repetitions": 5,
+    "default_shots": 8192,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check required, readout placeholder allowed",
+    "name": "publication",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": true,
+    "session_ready_expected": false
+  },
+  "hardware_evidence_tier": "retrieved_result",
+  "hardware_verified": true,
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/QCchem/configs/lih_active_runtime_hardware_probe_v2.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Constructed compressed mapped Hamiltonian via modified_cholesky",
+      "Computed compression audit: modified_cholesky",
+      "Prepared measurement plan: groups=2, cost=90",
+      "Prepared runtime policy snapshot for service=ibm_quantum_platform",
+      "Preparing backend: shot_estimator",
+      "Running solver: vqe",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/exact_result.json",
+      "Collected repeated shot-based sampling statistics",
+      "Computed compressed-vs-uncompressed execution comparison",
+      "Computed empirical calibration: wall_time=0.994s, measured_cost=2048.0",
+      "Runtime submission attempt recorded: submitted",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 72,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 12
+  },
+  "measurement": {
+    "cost_reduction_ratio": 0.2222222222222222,
+    "estimated_shot_cost": 90.0,
+    "execution_mode": "runtime_estimator",
+    "group_count": 2,
+    "grouping_policy": "commuting_low_rank",
+    "low_rank_aware": true,
+    "notes": [
+      "Measurement groups estimated with strategy 'low_rank_commuting'.",
+      "Per-group shot estimate derived from precision target 0.15.",
+      "Compressed Hamiltonian enabled low-rank-aware grouping and cost estimation."
+    ],
+    "runtime_precision_target": 0.15,
+    "strategy": "low_rank_commuting",
+    "term_count": 12,
+    "uncompressed_estimated_shot_cost": 405.0,
+    "uncompressed_group_count": 9
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "module_origin": "core",
+  "noise_model": null,
+  "perturbative_correction_result": null,
+  "policy_engine": {
+    "overrides_applied": [],
+    "policy_name": "publication",
+    "presets_used": [
+      "publication"
+    ],
+    "provenance": {
+      "allow_exploratory": false,
+      "source": "qcchem.backends.policy_engine"
+    },
+    "resolved_policy": {
+      "backend": {
+        "abelian_grouping": true,
+        "kind": "shot_estimator",
+        "noise": {
+          "basis_gates": [],
+          "depolarizing_probability_1q": 0.0,
+          "depolarizing_probability_2q": 0.0,
+          "enabled": false,
+          "profile": "none",
+          "readout_error_probability": 0.0
+        },
+        "precision": null,
+        "repetitions": 1,
+        "runtime": {
+          "batch_ready": true,
+          "enabled": true,
+          "grouping_policy": "commuting_low_rank",
+          "instance": null,
+          "options": {
+            "backend_name": "ibm_fez",
+            "optimization_level": 1,
+            "submit_real_job": true,
+            "wait_for_result": true
+          },
+          "precision_target": 0.15,
+          "resilience_level": 0,
+          "runtime_ready": true,
+          "service": "ibm_quantum_platform",
+          "session_ready": true
+        },
+        "seed": 111,
+        "shots": 1024
+      },
+      "benchmark": {
+        "absolute_error_threshold": 0.2,
+        "enabled": true,
+        "exact_baseline_qubit_limit": 12,
+        "relative_error_threshold": 0.2
+      },
+      "exploratory": {
+        "enabled": false,
+        "modules": [],
+        "notes": []
+      },
+      "mapping": {
+        "kind": "jordan_wigner"
+      },
+      "mitigation": {
+        "experimental": false,
+        "pec": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "readout": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "symmetry_check": {
+          "enabled": true,
+          "strategy": "parity_placeholder"
+        },
+        "zne": {
+          "enabled": false,
+          "method": "placeholder"
+        }
+      },
+      "molecule": {
+        "basis": "sto3g",
+        "charge": 0,
+        "geometry": [
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "symbol": "Li"
+          },
+          {
+            "coords": [
+              0.0,
+              0.0,
+              1.6
+            ],
+            "symbol": "H"
+          }
+        ],
+        "multiplicity": 1,
+        "name": "LiH-active-runtime-hardware-probe-v2",
+        "unit": "angstrom"
+      },
+      "policy": {
+        "allow_exploratory": false,
+        "name": "publication"
+      },
+      "problem": {
+        "active_space": {
+          "active_orbitals": [
+            1,
+            2
+          ],
+          "auto": {
+            "enabled": false,
+            "num_occupied": 1,
+            "num_virtual": 1,
+            "strategy": "frontier_orbitals"
+          },
+          "num_electrons": 2,
+          "num_spatial_orbitals": 2,
+          "selection_mode": "manual"
+        },
+        "compression": {
+          "apply_to_solver": false,
+          "enabled": true,
+          "execution_enabled": true,
+          "max_rank": 2,
+          "method": "modified_cholesky",
+          "threshold": 0.001
+        },
+        "embedding": {
+          "bath_threshold": 0.05,
+          "enabled": false,
+          "fragments": [],
+          "method": "dmet_skeleton",
+          "solver_plugin": "placeholder_fragment_solver"
+        },
+        "freeze_core": true,
+        "measurement": {
+          "execution_mode": "runtime_estimator",
+          "grouping_policy": "commuting_low_rank",
+          "runtime_precision_target": 0.15,
+          "strategy": "low_rank_commuting"
+        },
+        "remove_orbitals": []
+      },
+      "run": {
+        "exports": {
+          "hdf5": true,
+          "qcschema_json": true
+        },
+        "output_dir": "artifacts/lih_active_runtime_hardware_probe_v2",
+        "overwrite": true,
+        "seed": 111
+      },
+      "solver": {
+        "ansatz": {
+          "entanglement": "full",
+          "entanglement_blocks": "cz",
+          "kind": "uccsd",
+          "reps": 1,
+          "rotation_blocks": [
+            "ry",
+            "rz"
+          ],
+          "skip_final_rotation_layer": false
+        },
+        "experimental": false,
+        "initial_point": "zeros",
+        "kind": "vqe",
+        "optimizer": {
+          "kind": "COBYLA",
+          "maxiter": 40,
+          "tol": null
+        }
+      },
+      "tasks": {
+        "excited_state": {
+          "enabled": false,
+          "method": "exact_spectrum",
+          "num_states": 2,
+          "state_indices": [
+            1
+          ]
+        },
+        "perturbative_correction": {
+          "enabled": false,
+          "method": "nevpt2",
+          "plugin": "pyscf",
+          "root": 0
+        },
+        "properties": []
+      }
+    }
+  },
+  "problem": {
+    "active_space_metadata": {
+      "active_orbitals": [
+        0,
+        1
+      ],
+      "active_orbitals_original": [
+        1,
+        2
+      ],
+      "num_electrons": 2,
+      "num_spatial_orbitals": 2
+    },
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": -7.796219568777051,
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": 0.0,
+      "FreezeCoreTransformer": -7.796219568777051,
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "molecule_name": "LiH-active-runtime-hardware-probe-v2",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": [
+      "FreezeCoreTransformer",
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_branch": "codex/qwen-integration",
+    "git_commit": "ef1a7c5ddffd7726de2fa577b9f947307018afc6",
+    "git_commit_short": "ef1a7c5ddffd",
+    "git_describe": "ef1a7c5-dirty",
+    "git_remote_origin": null,
+    "git_status_summary": {
+      "staged": 0,
+      "unstaged": 3,
+      "untracked": 96
+    },
+    "repo_root": "/Users/a0000/QCchem",
+    "seed": 111,
+    "source_config": "/Users/a0000/QCchem/configs/lih_active_runtime_hardware_probe_v2.yaml",
+    "timestamp": "2026-04-17T04:08:52.940347+00:00",
+    "wall_time_seconds": 86.88391525000043,
+    "workspace_dirty": true,
+    "workspace_fingerprint": "3f139b68e6e4d1576d085f5d4bb10981e709fa4de43eec23ebd6c83b643e576f"
+  },
+  "reduction_audit": {
+    "active_space_metadata": {
+      "active_orbitals": [
+        0,
+        1
+      ],
+      "active_orbitals_original": [
+        1,
+        2
+      ],
+      "num_electrons": 2,
+      "num_spatial_orbitals": 2
+    },
+    "constant_energy_correction": -7.796219568777051,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "frozen_core_orbitals": [
+      0
+    ],
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": 0.0,
+      "FreezeCoreTransformer": -7.796219568777051,
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "nuclear_repulsion_energy": 0.992207270475,
+    "original_num_particles": [
+      2,
+      2
+    ],
+    "original_num_spatial_orbitals": 6,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 2,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [
+      0,
+      1
+    ],
+    "selected_active_orbitals_original": [
+      1,
+      2
+    ],
+    "selection_mode": "manual",
+    "selection_reason": "Manual active-space selection from user-provided orbital list and electron counts.",
+    "total_constant_correction": -6.804012298302051,
+    "transformers_applied": [
+      "FreezeCoreTransformer",
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "reduction_plan": {
+    "enabled": true,
+    "mode": "manual",
+    "notes": [
+      "Freeze-core reduction is enabled.",
+      "Manual active-space reduction is configured."
+    ],
+    "provenance": {
+      "policy_name": "publication",
+      "source": "qcchem.chem.reduction_planner"
+    },
+    "recommended_changes": {
+      "active_space": {
+        "active_orbitals": [
+          1,
+          2
+        ],
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "freeze_core": true
+    },
+    "reduction_audit": {
+      "active_space_metadata": {
+        "active_orbitals": [
+          0,
+          1
+        ],
+        "active_orbitals_original": [
+          1,
+          2
+        ],
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "constant_energy_correction": -7.796219568777051,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [
+        0
+      ],
+      "hamiltonian_constants": {
+        "ActiveSpaceTransformer": 0.0,
+        "FreezeCoreTransformer": -7.796219568777051,
+        "nuclear_repulsion_energy": 0.992207270475
+      },
+      "nuclear_repulsion_energy": 0.992207270475,
+      "original_num_particles": [
+        2,
+        2
+      ],
+      "original_num_spatial_orbitals": 6,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [
+        0,
+        1
+      ],
+      "selected_active_orbitals_original": [
+        1,
+        2
+      ],
+      "selection_mode": "manual",
+      "selection_reason": "Manual active-space selection from user-provided orbital list and electron counts.",
+      "total_constant_correction": -6.804012298302051,
+      "transformers_applied": [
+        "FreezeCoreTransformer",
+        "ActiveSpaceTransformer"
+      ]
+    },
+    "strategy": "manual_active_space"
+  },
+  "run_id": "lih_active_runtime_hardware_probe_v2",
+  "runtime_chemical_accuracy": {
+    "absolute_error_hartree": 0.38879419502160584,
+    "absolute_error_kcal_mol": 243.97204081226127,
+    "assessment_target": "runtime_derived",
+    "available": true,
+    "computed_energy": -7.474344423975997,
+    "meets_chemical_accuracy": false,
+    "notes": [
+      "Does not meet chemical accuracy threshold.",
+      "Observed error exceeds 95% statistical uncertainty."
+    ],
+    "reference_energy": -7.863138618997603,
+    "relative_error": 0.049445166092108084,
+    "statistical_error": 0.04136933838034907,
+    "status": "exploratory",
+    "threshold_hartree": 0.0016,
+    "threshold_kcal_mol": 1.0040151583999999
+  },
+  "runtime_options": {
+    "batch_ready": true,
+    "batch_recommendation": "optional",
+    "enabled": true,
+    "estimated_shot_cost": 90.0,
+    "grouping_policy": "commuting_low_rank",
+    "instance": null,
+    "low_rank_workload": true,
+    "measurement_group_count": 2,
+    "options": {
+      "backend_name": "ibm_fez",
+      "optimization_level": 1,
+      "submit_real_job": true,
+      "wait_for_result": true
+    },
+    "precision_target": 0.15,
+    "provenance": {
+      "adapter": "runtime_ready_placeholder",
+      "batch_mode_requested": true,
+      "compression_method": "modified_cholesky",
+      "low_rank_policy_applied": true,
+      "remote_execution_configured": false,
+      "session_mode_requested": true
+    },
+    "resilience_level": 0,
+    "runtime_ready": true,
+    "service": "ibm_quantum_platform",
+    "session_ready": true,
+    "session_recommendation": "optional"
+  },
+  "runtime_submission": {
+    "attempted": true,
+    "backend_name": "ibm_fez",
+    "batch_id": null,
+    "batch_requested": true,
+    "failure_category": null,
+    "failure_message": null,
+    "job_id": "d7gr4jc93s0c738rtv10",
+    "mode": "backend",
+    "options_snapshot": {
+      "backend_name": "ibm_fez",
+      "grouping_policy": "commuting_low_rank",
+      "optimization_level": 1,
+      "precision_target": 0.15,
+      "resilience_level": 0,
+      "submit_real_job": true,
+      "wait_for_result": true
+    },
+    "provider": "QiskitRuntimeService",
+    "result_provenance": {
+      "attempt_stage": "result_retrieved",
+      "backend_name": "ibm_fez",
+      "circuit_qubits": 4,
+      "operator_qubits": 4,
+      "parameter_count": 3,
+      "runtime_package_version": "0.46.1"
+    },
+    "returned_job_metadata": {
+      "evs": [
+        -0.6703321256739458
+      ],
+      "metadata": {
+        "circuit_metadata": {},
+        "num_randomizations": 1,
+        "shots": 44,
+        "target_precision": 0.15
+      },
+      "stds": [
+        0.04136933838034907
+      ]
+    },
+    "service": "ibm_quantum_platform",
+    "session_id": null,
+    "session_requested": true,
+    "submission_wall_time_seconds": 84.30369187500037,
+    "submitted": true,
+    "succeeded": true,
+    "verification_status": "exploratory"
+  },
+  "sampled_result": {
+    "available": true,
+    "backend_kind": "shot_estimator",
+    "confidence_interval_high": -1.0533321573028693,
+    "confidence_interval_low": -1.062174258727674,
+    "num_repeats": 1,
+    "repeat_metadata": [
+      {
+        "abelian_grouping": true,
+        "circuit_metadata": {},
+        "noise_enabled": false,
+        "noise_profile": "none",
+        "precision": 0.03125,
+        "runtime_service": "ibm_quantum_platform",
+        "shots": 1024,
+        "target_precision": 0.03125
+      }
+    ],
+    "repeat_reported_stds": [
+      0.0022556381185725423
+    ],
+    "repeat_seeds": [
+      100111
+    ],
+    "repeat_solver_energies": [
+      -1.0577532080152716
+    ],
+    "sampled_electronic_energy_mean": -8.853972776792322,
+    "sampled_solver_energy_mean": -1.0577532080152716,
+    "sampled_solver_energy_std": 0.0,
+    "sampled_total_energy_mean": -7.8617655063173215,
+    "seed": 111,
+    "shots": 1024,
+    "standard_error": 0.0022556381185725423
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "scientific_risk_notes": [
+    "Runtime-derived hardware energy does not meet chemical accuracy, even though the local solver path may."
+  ],
+  "variational_result": {
+    "ansatz": {
+      "entanglement": "full",
+      "entanglement_blocks": "cz",
+      "kind": "uccsd",
+      "reps": 1,
+      "rotation_blocks": [
+        "ry",
+        "rz"
+      ]
+    },
+    "available": true,
+    "converged": true,
+    "evaluations": 33,
+    "final_objective_energy": -1.0594206662674326,
+    "initial_point_strategy": "zeros",
+    "iterations": 33,
+    "optimal_parameters": [
+      0.017561439071676094,
+      -0.04067102918021726,
+      -0.017352116486200306
+    ],
+    "optimizer": {
+      "kind": "COBYLA",
+      "maxiter": 40,
+      "tol": null
+    },
+    "optimizer_message": "Return from COBYLA because the trust region radius reaches its lower bound.",
+    "parameter_count": 3,
+    "solver_kind": "vqe"
+  },
+  "verification_notes": [],
+  "verification_status": "exploratory"
+}

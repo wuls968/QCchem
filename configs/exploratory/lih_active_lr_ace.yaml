@@ -1,0 +1,72 @@
+molecule:
+  name: LiH-active-LR-ACE
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lr_ace
+  notes:
+    - "LiH active-space LR-ACE is exploratory and benchmark-local."
+
+problem:
+  freeze_core: true
+  active_space:
+    selection_mode: manual
+    num_electrons: 2
+    num_spatial_orbitals: 2
+    active_orbitals: [1, 2]
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-10
+    max_rank: 6
+    apply_to_solver: true
+    execution_enabled: true
+  measurement:
+    strategy: low_rank_lr_ace_local
+    execution_mode: estimator
+    grouping_policy: low_rank_factor_aware
+
+mapping:
+  kind: parity_two_qubit_reduction
+
+backend:
+  kind: statevector
+  seed: 73
+
+solver:
+  kind: lr_ace
+  experimental: true
+  optimizer:
+    kind: COBYLA
+    maxiter: 320
+  ansatz:
+    kind: lr_ace
+    reps: 5
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.6e-3
+  relative_error_threshold: 1.6e-3
+
+run:
+  seed: 73
+  output_dir: artifacts/lih_active_lr_ace
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true

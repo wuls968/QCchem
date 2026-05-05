@@ -1,0 +1,10 @@
+2026-04-11 15:45:24,517 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_space_auto.yaml
+2026-04-11 15:45:24,519 INFO Building electronic structure problem
+2026-04-11 15:45:24,574 INFO Applying mapping: jordan_wigner
+2026-04-11 15:45:24,592 INFO Skipping backend construction for solver: exact
+2026-04-11 15:45:24,593 INFO Running solver: exact
+2026-04-11 15:45:24,598 INFO Computing exact spectrum for 1 states
+2026-04-11 15:45:24,599 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_space_auto/exact_result.json
+2026-04-11 15:45:24,619 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_space_auto/result.json
+2026-04-11 15:45:24,621 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_space_auto/report.md
+2026-04-11 15:45:24,621 INFO Run completed

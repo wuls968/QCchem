@@ -1,0 +1,9 @@
+agent_task:
+  version: 1
+  name: run_h2_lih_benchmark_suite
+  kind: benchmark_suite
+  description: Run the validated QCchem benchmark suite and emit a compact machine-readable summary for an AI agent.
+  inputs:
+    config: ../../benchmarks/benchmark_suite_v1.yaml
+  outputs:
+    summary_json: ../../artifacts/benchmark_suite_v1/agent_benchmark_summary.json

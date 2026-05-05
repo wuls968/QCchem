@@ -10,6 +10,8 @@ import pytest
 from qcchem.cli.main import main
 from qcchem.workbench.server import main as workbench_main
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 @pytest.mark.integration
 def test_python_module_cli_entrypoint_runs_and_writes_artifacts(tmp_path: Path) -> None:
@@ -20,7 +22,7 @@ def test_python_module_cli_entrypoint_runs_and_writes_artifacts(tmp_path: Path) 
         "qcchem.cli.main",
         "run",
         "-c",
-        str(Path("/Users/a0000/QCchem/configs/h2.yaml")),
+        str(REPO_ROOT / "configs" / "h2.yaml"),
         "-o",
         str(output_dir),
     ]
@@ -35,6 +37,31 @@ def test_python_module_cli_entrypoint_runs_and_writes_artifacts(tmp_path: Path) 
     assert "QCchem run completed: H2" in completed.stdout
     assert (output_dir / "result.json").exists()
     assert (output_dir / "report.md").exists()
+
+
+def test_runtime_collect_cli_reports_polled_status(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    def _fake_collect_runtime_artifact(artifact_root: Path) -> dict[str, object]:
+        assert artifact_root == tmp_path
+        return {
+            "artifact_root": str(artifact_root),
+            "job_id": "job-collect",
+            "status": "QUEUED",
+            "result_updated": False,
+        }
+
+    monkeypatch.setattr("qcchem.cli.main.collect_runtime_artifact", _fake_collect_runtime_artifact)
+
+    exit_code = main(["runtime", "collect", str(tmp_path)])
+
+    assert exit_code == 0
+    stdout = capsys.readouterr().out
+    assert "Runtime collect completed" in stdout
+    assert "job-collect" in stdout
+    assert "QUEUED" in stdout
 
 
 def test_workbench_cli_reports_startup(

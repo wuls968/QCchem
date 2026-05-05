@@ -1,0 +1,446 @@
+{
+  "artifact_root": "/Users/a0000/QCchem/artifacts",
+  "artifacts": [
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_exact_reference",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_exact_reference/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/ideal",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/ideal/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/noisy",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/noisy/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison",
+      "has_report_markdown": false,
+      "has_resolved_config": false,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_noisy_comparison/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/cobyla",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/cobyla/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability",
+      "has_report_markdown": false,
+      "has_resolved_config": false,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/slsqp",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/slsqp/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling",
+      "has_report_markdown": false,
+      "has_resolved_config": false,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_1024",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_1024/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_4096",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_4096/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_8192",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling/shot_8192/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_vqe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_vqe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_statevector_vqe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_statevector_vqe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/jw_bk_consistency_h2",
+      "has_report_markdown": false,
+      "has_resolved_config": false,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/jw_bk_consistency_h2/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_active_space_vqe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_active_space_vqe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_exact_reference",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/lih_exact_reference/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_uncompressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_vqe_uncompressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_excited_mini",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_excited_mini/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_exploratory_vqd",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_exploratory_vqd/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_hardware_ready",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_hardware_ready/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_multitask",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_multitask/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_noisy",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_noisy/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_property_validation",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_property_validation/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": true,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_00_0.500",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_00_0.500/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_01_0.735",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_01_0.735/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_02_1.000",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_short_scan/points/point_02_1.000/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2_shot",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2_shot/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/h2o_active_space",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/h2o_active_space/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_exact_compressed_cholesky",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_exact_compressed_cholesky/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_exact_compressed_double_factorization",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_exact_compressed_double_factorization/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": true,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": true,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_shot_runtime_ready_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": true,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_shot_runtime_ready_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_space_auto",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_space_auto/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_vqe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_vqe/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_active_vqe_statevector_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_active_vqe_statevector_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_compression_cholesky",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_compression_cholesky/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_compression_double_factorization",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_compression_double_factorization/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_embedding",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_embedding/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/lih_nevpt2",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/lih_nevpt2/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_uncompressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_uncompressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_runtime_ready_compressed",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": true,
+      "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_runtime_ready_compressed/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_exact_reference",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_exact_reference/result.json"
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe",
+      "has_report_markdown": true,
+      "has_resolved_config": true,
+      "has_result_json": true,
+      "has_runtime_submission": false,
+      "result_json": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe/result.json"
+    }
+  ],
+  "total_artifacts": 55
+}

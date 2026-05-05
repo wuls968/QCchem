@@ -1,0 +1,206 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 4.775011497315518e-10,
+      "available": true,
+      "estimated_measurement_cost": 22225.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.32439391600200906,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.015,
+      "reference_target": "variational_result"
+    },
+    "chemical_accuracy": {
+      "absolute_error_hartree": 4.775011497315518e-10,
+      "absolute_error_kcal_mol": 2.9963649530244126e-07,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.1372838340110012,
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.1372838344885023,
+      "relative_error": 4.1986101907999926e-10,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "hardware_evidence_tier": "runtime_attempt",
+    "hardware_verified": false,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "jordan_wigner",
+      "num_qubits": 4,
+      "qubit_term_count": 15
+    },
+    "measurement": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 22225.0,
+      "execution_mode": "runtime_estimator",
+      "group_count": 5,
+      "grouping_policy": "hardware_aware_grouping",
+      "low_rank_aware": false,
+      "notes": [
+        "Measurement groups estimated with strategy 'hardware_precision_push'.",
+        "Per-group shot estimate derived from precision target 0.015.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "runtime_precision_target": 0.015,
+      "strategy": "hardware_precision_push",
+      "term_count": 15,
+      "uncompressed_estimated_shot_cost": 22225.0,
+      "uncompressed_group_count": 5
+    },
+    "perturbative_correction_result": null,
+    "qcchem_run_id": "preview",
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7151043390810812
+      },
+      "nuclear_repulsion_energy": 0.7151043390810812,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7151043390810812,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": {
+      "batch_ready": false,
+      "batch_recommendation": "optional",
+      "calibration_strategy": "h2_hardware_precision_push",
+      "enabled": true,
+      "estimated_shot_cost": 22225.0,
+      "grouping_policy": "hardware_aware_grouping",
+      "instance": null,
+      "low_rank_workload": false,
+      "max_budgeted_shots": 8192,
+      "max_execution_seconds": 420.0,
+      "measurement_group_count": 5,
+      "options": {
+        "confirmation_message": "This hardware optimization campaign can submit real IBM Runtime jobs and consume monthly quota.",
+        "layout_method": "sabre",
+        "layout_strategy": "min_weighted_error",
+        "optimization_level": 3,
+        "requires_action_time_confirmation": true,
+        "routing_method": "sabre",
+        "seed_transpiler": 1729,
+        "submit_real_job": false,
+        "wait_for_result": false
+      },
+      "precision_target": 0.015,
+      "provenance": {
+        "adapter": "runtime_ready_placeholder",
+        "batch_mode_requested": false,
+        "compression_method": null,
+        "low_rank_policy_applied": false,
+        "remote_execution_configured": false,
+        "session_mode_requested": true
+      },
+      "resilience_level": 2,
+      "runtime_ready": false,
+      "service": "ibm_quantum_platform",
+      "session_ready": false,
+      "session_recommendation": "recommended"
+    },
+    "runtime_submission": {
+      "attempted": true,
+      "backend_name": null,
+      "batch_id": null,
+      "batch_requested": false,
+      "failure_category": "runtime_submission_disabled",
+      "failure_message": "Runtime submission is configured for preview only; no remote IBM job was requested.",
+      "job_id": null,
+      "job_metrics": {},
+      "layout_score": null,
+      "layout_strategy": null,
+      "mode": "session",
+      "options_snapshot": {
+        "budget_strategy": "h2_hardware_precision_push",
+        "confirmation_message": "This hardware optimization campaign can submit real IBM Runtime jobs and consume monthly quota.",
+        "grouping_policy": "hardware_aware_grouping",
+        "layout_method": "sabre",
+        "layout_strategy": "min_weighted_error",
+        "max_budgeted_shots": 8192,
+        "max_execution_seconds": 420.0,
+        "optimization_level": 3,
+        "precision_target": 0.015,
+        "requires_action_time_confirmation": true,
+        "resilience_level": 2,
+        "routing_method": "sabre",
+        "seed_transpiler": 1729,
+        "submit_real_job": false,
+        "wait_for_result": false
+      },
+      "provider": null,
+      "result_provenance": {
+        "attempt_stage": "submission_disabled_before_service_init",
+        "real_submission_requested": false
+      },
+      "returned_job_metadata": {},
+      "selected_layout": [],
+      "service": "ibm_quantum_platform",
+      "session_id": null,
+      "session_requested": true,
+      "submission_wall_time_seconds": 5.3340045269578695e-06,
+      "submitted": false,
+      "succeeded": false,
+      "transpilation_options": {},
+      "transpiled_depth": null,
+      "transpiled_two_qubit_gate_count": null,
+      "usage_estimation": {},
+      "verification_status": "exploratory"
+    },
+    "verification_status": "exploratory"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-hardware-precision-push"
+  },
+  "properties": {
+    "electronic_energy": -1.8523881730920824,
+    "nuclear_repulsion_energy": 0.7151043390810812,
+    "return_energy": -1.1372838340110012
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "codex/qcchem-visual-workbench",
+    "git_commit": "adb7dad10aed10ad7b2c73d1a778c9bce42840ed",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "2f795e572b27023920ebedcd88f5326f7f667de1c7965093b4385c78a30dd09b"
+  },
+  "return_result": -1.1372838340110012,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

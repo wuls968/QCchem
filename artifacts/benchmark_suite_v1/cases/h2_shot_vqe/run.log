@@ -1,0 +1,11 @@
+2026-04-11 14:58:26,149 INFO Loading config from /Users/a0000/QCchem/configs/h2_shot.yaml
+2026-04-11 14:58:26,151 INFO Building electronic structure problem
+2026-04-11 14:58:26,168 INFO Applying mapping: jordan_wigner
+2026-04-11 14:58:26,177 INFO Preparing backend: shot_estimator
+2026-04-11 14:58:26,177 INFO Running solver: vqe
+2026-04-11 14:58:27,848 INFO Computing exact spectrum for 1 states
+2026-04-11 14:58:27,848 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_vqe/exact_result.json
+2026-04-11 14:58:28,079 INFO Collected repeated shot-based sampling statistics
+2026-04-11 14:58:28,103 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_vqe/result.json
+2026-04-11 14:58:28,104 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_vqe/report.md
+2026-04-11 14:58:28,105 INFO Run completed

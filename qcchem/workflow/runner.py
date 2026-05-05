@@ -10,6 +10,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
+from typing import Any
 
 import numpy as np
 import pyscf
@@ -36,7 +37,6 @@ from qcchem.core import (
     ArtifactPaths,
     BackendSummary,
     BenchmarkSummary,
-    CalibrationSummary,
     CompressedExecutionComparisonSummary,
     EnergyResult,
     ExactBaselineSummary,
@@ -54,7 +54,7 @@ from qcchem.mapping import MappedHamiltonian, map_fermionic_hamiltonian
 from qcchem.mitigation import build_mitigation_summary
 from qcchem.reporting import write_calibration_report, write_markdown_report, write_result_json
 from qcchem.exploratory.solvers.registry import build_exploratory_solver
-from qcchem.solvers import ExactDiagonalizationSolver, build_solver
+from qcchem.solvers import build_solver
 from qcchem.solvers.spectrum import ExactSpectrum, compute_exact_spectrum
 from qcchem.workflow.tasks import (
     build_excited_state_result,
@@ -62,6 +62,7 @@ from qcchem.workflow.tasks import (
     required_exact_states,
 )
 from qcchem.workflow.calibration import build_calibration_summary
+from qcchem.core.evidence import build_run_evidence_summary
 
 SCHEMA_VERSION = "qcchem.result.v0.8-alpha"
 ENERGY_UNITS = "Hartree"
@@ -257,6 +258,37 @@ def _write_optional_artifacts(
         write_result_json(payload, artifacts.runtime_submission_json)
 
 
+def _build_runtime_chemical_accuracy(
+    *,
+    runtime_submission: RuntimeSubmissionSummary | None,
+    exact_total_energy: float | None,
+    constant_energy_correction: float,
+    nuclear_repulsion_energy: float,
+) -> Any:
+    if (
+        runtime_submission is None
+        or not runtime_submission.submitted
+        or not runtime_submission.succeeded
+        or exact_total_energy is None
+    ):
+        return None
+    returned = runtime_submission.returned_job_metadata or {}
+    evs = returned.get("evs")
+    if not isinstance(evs, list) or not evs:
+        return None
+    stds = returned.get("stds")
+    statistical_error = None
+    if isinstance(stds, list) and stds:
+        statistical_error = float(stds[0])
+    runtime_total_energy = float(evs[0]) + constant_energy_correction + nuclear_repulsion_energy
+    return check_chemical_accuracy(
+        runtime_total_energy,
+        exact_total_energy,
+        assessment_target="runtime_derived",
+        statistical_error=statistical_error,
+    )
+
+
 def _solve_with_timing(solver, operator):
     started = perf_counter()
     outcome = solver.solve(operator)
@@ -318,7 +350,7 @@ def _build_sampled_result(
     constant_energy_correction: float,
     nuclear_repulsion_energy: float,
 ) -> SampledResultSummary | None:
-    if backend is None or solver_kind != "vqe":
+    if backend is None or solver_kind not in {"vqe", "lr_ace"}:
         return None
     if getattr(backend, "backend_kind", "") != "shot_estimator":
         return None
@@ -439,11 +471,19 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     chemistry = build_electronic_structure_context(spec)
 
     _record(logger, events, f"Applying mapping: {spec.mapping.kind}")
-    uncompressed_mapping = map_fermionic_hamiltonian(chemistry.fermionic_hamiltonian, spec.mapping.kind)
+    uncompressed_mapping = map_fermionic_hamiltonian(
+        chemistry.fermionic_hamiltonian,
+        spec.mapping.kind,
+        num_particles=chemistry.summary.num_particles,
+    )
     compression_bundle = build_compressed_fermionic_hamiltonian(chemistry.problem, spec.problem.compression)
     compressed_mapping = None
     if compression_bundle is not None:
-        compressed_mapping = map_fermionic_hamiltonian(compression_bundle.fermionic_hamiltonian, spec.mapping.kind)
+        compressed_mapping = map_fermionic_hamiltonian(
+            compression_bundle.fermionic_hamiltonian,
+            spec.mapping.kind,
+            num_particles=chemistry.summary.num_particles,
+        )
         compressed_mapping = _with_truncated_mapping(
             compressed_mapping,
             atol=spec.problem.compression.threshold,
@@ -484,7 +524,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     solver_kind = spec.solver.kind.strip().lower()
     backend = None
     backend_required = solver_kind == "vqe" or (
-        spec.solver.experimental and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum"}
+        spec.solver.experimental and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum", "lr_ace"}
     )
     if backend_required:
         _record(logger, events, f"Preparing backend: {spec.backend.kind}")
@@ -546,7 +586,43 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         correlation_energy = float(total_energy - chemistry.hf_reference_energy)
 
     variational_result = None
-    if solver_kind == "vqe":
+    if solver_kind in {"vqe", "lr_ace"}:
+        ansatz_payload = {
+            "kind": spec.solver.ansatz.kind,
+            "rotation_blocks": spec.solver.ansatz.rotation_blocks,
+            "entanglement_blocks": spec.solver.ansatz.entanglement_blocks,
+            "entanglement": spec.solver.ansatz.entanglement,
+            "reps": spec.solver.ansatz.reps,
+        }
+        lr_ace_payload = solver_outcome.metadata.get("lr_ace")
+        if isinstance(lr_ace_payload, dict):
+            lr_ace_payload = dict(lr_ace_payload)
+            if compression_result is not None:
+                lr_ace_payload.update(
+                    {
+                        "low_rank_method": compression_result.method,
+                        "factor_rank": compression_result.rank,
+                        "compression_threshold": compression_result.threshold,
+                        "compression_reconstruction_error": compression_result.reconstruction_error,
+                        "pre_term_count": compression_result.pre_term_count,
+                        "post_term_count": compression_result.post_term_count,
+                    }
+                )
+            local_gate = {
+                "passed": None,
+                "threshold_hartree": spec.benchmark.absolute_error_threshold,
+                "absolute_error_hartree": None,
+            }
+            if exact_energy is not None:
+                local_error = float(abs(solver_energy - exact_energy))
+                local_gate.update(
+                    {
+                        "passed": bool(local_error <= spec.benchmark.absolute_error_threshold),
+                        "absolute_error_hartree": local_error,
+                    }
+                )
+            lr_ace_payload["local_accuracy_gate"] = local_gate
+            ansatz_payload["lr_ace"] = lr_ace_payload
         variational_result = VariationalResultSummary(
             available=True,
             solver_kind=spec.solver.kind,
@@ -555,13 +631,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 "maxiter": spec.solver.optimizer.maxiter,
                 "tol": spec.solver.optimizer.tol,
             },
-            ansatz={
-                "kind": spec.solver.ansatz.kind,
-                "rotation_blocks": spec.solver.ansatz.rotation_blocks,
-                "entanglement_blocks": spec.solver.ansatz.entanglement_blocks,
-                "entanglement": spec.solver.ansatz.entanglement,
-                "reps": spec.solver.ansatz.reps,
-            },
+            ansatz=ansatz_payload,
             initial_point_strategy=spec.solver.initial_point if isinstance(spec.solver.initial_point, str) else "custom",
             parameter_count=int(solver_outcome.metadata.get("ansatz_num_parameters", 0)),
             converged=solver_outcome.converged,
@@ -574,17 +644,27 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
 
     compressed_comparison = None
     if compression_result is not None and compression_result.execution_enabled:
-        if solver_kind == "vqe":
+        if solver_kind in {"vqe", "lr_ace"}:
             reference_backend = build_backend(spec.backend)
         else:
             reference_backend = None
-        reference_solver = build_solver(
-            spec.solver,
-            backend=reference_backend,
-            seed=spec.run.seed,
-            problem_summary=chemistry.summary,
-            mapper=uncompressed_mapping.mapper,
-        )
+        if spec.solver.experimental:
+            reference_solver = build_exploratory_solver(
+                spec.solver.kind,
+                spec=spec.solver,
+                backend=reference_backend,
+                seed=spec.run.seed,
+                problem_summary=chemistry.summary,
+                mapper=uncompressed_mapping.mapper,
+            )
+        else:
+            reference_solver = build_solver(
+                spec.solver,
+                backend=reference_backend,
+                seed=spec.run.seed,
+                problem_summary=chemistry.summary,
+                mapper=uncompressed_mapping.mapper,
+            )
         uncompressed_outcome, uncompressed_solve_wall_time = _solve_with_timing(
             reference_solver,
             uncompressed_mapping.qubit_hamiltonian,
@@ -620,10 +700,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         statistical_error = sampled_result.standard_error
     elif solver_kind in {"exact", "reference"}:
         comparison_target = "exact_baseline"
-
-    compared_total_energy = total_energy
-    if sampled_result is not None and sampled_result.sampled_total_energy_mean is not None:
-        compared_total_energy = sampled_result.sampled_total_energy_mean
 
     absolute_error = None
     relative_error = None
@@ -687,16 +763,28 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     if (
         runtime_options is not None
         and runtime_options.enabled
-        and solver_kind == "vqe"
+        and solver_kind in {"vqe", "lr_ace"}
         and variational_result is not None
         and solver_outcome.metadata.get("ansatz_circuit") is not None
         and measurement.execution_mode == "runtime_estimator"
     ):
+        def _persist_runtime_submission_sidecar(summary: RuntimeSubmissionSummary) -> None:
+            if artifacts.runtime_submission_json is None:
+                return
+            payload = {"schema_version": SCHEMA_VERSION, **to_primitive(summary)}
+            write_result_json(payload, artifacts.runtime_submission_json)
+            _record(
+                logger,
+                events,
+                f"Persisted runtime submission sidecar after job submit: {summary.job_id}",
+            )
+
         runtime_submission = attempt_runtime_submission(
             spec=spec.backend,
             circuit=solver_outcome.metadata["ansatz_circuit"],
             operator=mapping.qubit_hamiltonian,
             parameter_values=solver_outcome.optimal_parameters,
+            submission_callback=_persist_runtime_submission_sidecar,
         )
         if runtime_submission is not None:
             status_text = "submitted" if runtime_submission.submitted else runtime_submission.failure_category
@@ -728,7 +816,14 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     chemical_accuracy = check_chemical_accuracy(
         total_energy,
         exact_baseline.total_energy if exact_baseline.available else None,
+        assessment_target="local_execution",
         statistical_error=benchmark.statistical_error,
+    )
+    runtime_chemical_accuracy = _build_runtime_chemical_accuracy(
+        runtime_submission=runtime_submission,
+        exact_total_energy=exact_baseline.total_energy if exact_baseline.available else None,
+        constant_energy_correction=float(chemistry.electronic_constant_correction),
+        nuclear_repulsion_energy=float(chemistry.nuclear_repulsion_energy),
     )
 
     verification_status = _classify_verification_status(benchmark, sampled_result)
@@ -763,6 +858,14 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     scientific_risk_notes = [
         str(item) for item in solver_outcome.metadata.get("scientific_risk_notes", [])
     ]
+    if (
+        runtime_chemical_accuracy is not None
+        and runtime_chemical_accuracy.available
+        and runtime_chemical_accuracy.meets_chemical_accuracy is False
+    ):
+        scientific_risk_notes.append(
+            "Runtime-derived hardware energy does not meet chemical accuracy, even though the local solver path may."
+        )
     verification_notes = [
         f"validation_scope={solver_outcome.metadata.get('validation_scope')}"
     ] if solver_outcome.metadata.get("validation_scope") else []
@@ -813,6 +916,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         noise_model=noise_model,
         measurement=measurement,
         chemical_accuracy=chemical_accuracy,
+        runtime_chemical_accuracy=runtime_chemical_accuracy,
         reduction_plan=reduction_plan,
         policy_engine=policy_engine_result,
         calibration=calibration,
@@ -857,6 +961,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_notes=verification_notes,
         scientific_risk_notes=scientific_risk_notes,
     )
+    result.evidence_summary = build_run_evidence_summary(to_primitive(result))
 
     _record(logger, events, f"Writing JSON result to {artifacts.result_json}")
     result.log_summary.events = list(events)
@@ -869,6 +974,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     _record(logger, events, "Run completed")
     result.log_summary.events = list(events)
     result.provenance.wall_time_seconds = float(perf_counter() - started_at)
+    result.evidence_summary = build_run_evidence_summary(to_primitive(result))
     write_result_json(result, artifacts.result_json)
     write_markdown_report(result, artifacts.report_markdown)
     _write_optional_artifacts(

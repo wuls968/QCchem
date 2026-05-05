@@ -8,6 +8,37 @@ from typing import Any
 
 
 @dataclass(slots=True)
+class BaselineDescriptorSummary:
+    """Descriptor for the primary baseline used by an evidence summary."""
+
+    baseline_kind: str
+    baseline_source: str | None
+    baseline_scope: str
+    baseline_strength: str
+
+
+@dataclass(slots=True)
+class EvidenceSummary:
+    """Cross-surface evidence summary consumed by UI, reports, and AI tools."""
+
+    result_identity: dict[str, Any]
+    primary_scientific_claim: str
+    primary_baseline: BaselineDescriptorSummary
+    primary_error_metric: dict[str, Any]
+    chemical_accuracy_status: str
+    runtime_evidence_status: str
+    trust_tier: str
+    recommended_action: str
+    energy_evidence: dict[str, Any] = field(default_factory=dict)
+    comparison_evidence: dict[str, Any] = field(default_factory=dict)
+    execution_evidence: dict[str, Any] = field(default_factory=dict)
+    trust_judgment: dict[str, Any] = field(default_factory=dict)
+    scientific_accuracy: dict[str, Any] = field(default_factory=dict)
+    runtime_derived_accuracy: dict[str, Any] = field(default_factory=dict)
+    decision_worthiness: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class EnergyResult:
     """Energy values exposed to users and persisted to artifacts."""
 
@@ -237,6 +268,7 @@ class ChemicalAccuracySummary:
     """Chemical-accuracy comparison summary."""
 
     available: bool
+    assessment_target: str
     meets_chemical_accuracy: bool | None
     absolute_error_hartree: float | None
     absolute_error_kcal_mol: float | None
@@ -306,6 +338,12 @@ class RuntimeSubmissionSummary:
     batch_id: str | None = None
     backend_name: str | None = None
     provider: str | None = None
+    layout_strategy: str | None = None
+    selected_layout: list[int] = field(default_factory=list)
+    layout_score: float | None = None
+    transpiled_depth: int | None = None
+    transpiled_two_qubit_gate_count: int | None = None
+    transpilation_options: dict[str, Any] = field(default_factory=dict)
     submission_wall_time_seconds: float | None = None
     returned_job_metadata: dict[str, Any] = field(default_factory=dict)
     usage_estimation: dict[str, Any] = field(default_factory=dict)
@@ -531,6 +569,7 @@ class RunResult:
     noise_model: NoiseModelSummary | None
     measurement: MeasurementSummary | None
     chemical_accuracy: ChemicalAccuracySummary | None
+    runtime_chemical_accuracy: ChemicalAccuracySummary | None
     reduction_plan: ReductionPlanResult | None
     policy_engine: PolicyEngineResult | None
     calibration: CalibrationSummary | None
@@ -552,6 +591,7 @@ class RunResult:
     hardware_evidence_tier: str | None = None
     verification_notes: list[str] = field(default_factory=list)
     scientific_risk_notes: list[str] = field(default_factory=list)
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -581,6 +621,7 @@ class RunRecord:
     total_energy: float
     absolute_error: float | None
     tags: list[str] = field(default_factory=list)
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -613,6 +654,7 @@ class StudyResult:
     run_records: list[RunRecord] = field(default_factory=list)
     registry_entries: list[RegistryEntry] = field(default_factory=list)
     artifacts: StudyArtifactPaths | None = None
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -629,6 +671,7 @@ class BenchmarkCaseResult:
     absolute_error: float | None = None
     relative_error: float | None = None
     metrics: dict[str, Any] = field(default_factory=dict)
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -662,6 +705,7 @@ class BenchmarkSuiteResult:
     dashboard_summary: dict[str, Any] = field(default_factory=dict)
     registry_entries: list[RegistryEntry] = field(default_factory=list)
     artifacts: BenchmarkArtifactPaths | None = None
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -674,6 +718,7 @@ class ScanPointResult:
     verification_status: str
     run_artifact_root: Path
     exact_error: float | None = None
+    evidence_summary: EvidenceSummary | None = None
 
 
 @dataclass(slots=True)
@@ -698,3 +743,4 @@ class ScanResult:
     points: list[ScanPointResult] = field(default_factory=list)
     registry_entries: list[RegistryEntry] = field(default_factory=list)
     artifacts: ScanArtifactPaths | None = None
+    evidence_summary: EvidenceSummary | None = None

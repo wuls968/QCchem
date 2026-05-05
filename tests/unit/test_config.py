@@ -86,3 +86,87 @@ run:
     assert spec.backend.runtime.max_budgeted_shots == 2048
     assert spec.backend.runtime.max_execution_seconds == 240
     assert spec.backend.runtime.calibration_strategy == "shot_budget"
+
+
+def test_load_h2_chemical_accuracy_push_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_ca.yaml"))
+
+    assert spec.backend.runtime.service == "ibm_quantum_platform"
+    assert spec.backend.runtime.max_budgeted_shots == 4096
+    assert spec.backend.runtime.max_execution_seconds == 300
+    assert spec.backend.runtime.calibration_strategy == "chemical_accuracy_push"
+    assert spec.backend.runtime.resilience_level == 2
+    assert spec.backend.runtime.options["backend_name"] == "ibm_kingston"
+    assert spec.backend.runtime.options["optimization_level"] == 3
+
+
+def test_load_h2_puccd_hardware_probe_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_puccd.yaml"))
+
+    assert spec.solver.ansatz.kind == "puccd"
+    assert spec.backend.runtime.service == "ibm_quantum_platform"
+    assert spec.backend.runtime.max_budgeted_shots == 4096
+    assert spec.backend.runtime.calibration_strategy == "chemical_accuracy_push"
+    assert spec.backend.runtime.options["backend_name"] == "ibm_kingston"
+
+
+def test_load_h2_puccd_layout_hardware_probe_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_puccd_layout.yaml"))
+
+    assert spec.solver.ansatz.kind == "puccd"
+    assert spec.backend.runtime.options["layout_strategy"] == "min_weighted_error"
+    assert spec.backend.runtime.options["layout_method"] == "sabre"
+    assert spec.backend.runtime.options["routing_method"] == "sabre"
+    assert spec.backend.runtime.options["seed_transpiler"] == 727
+
+
+def test_load_h2_uccsd_layout_hardware_probe_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_ca_layout.yaml"))
+
+    assert spec.solver.ansatz.kind == "uccsd"
+    assert spec.backend.runtime.options["layout_strategy"] == "min_weighted_error"
+    assert spec.backend.runtime.options["layout_method"] == "sabre"
+    assert spec.backend.runtime.options["routing_method"] == "sabre"
+    assert spec.backend.runtime.options["seed_transpiler"] == 737
+
+
+def test_load_h2_puccd_layout_mitigated_hardware_probe_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_puccd_layout_mitigated.yaml"))
+
+    assert spec.solver.ansatz.kind == "puccd"
+    assert spec.backend.runtime.max_budgeted_shots == 8192
+    assert spec.backend.runtime.options["layout_strategy"] == "min_weighted_error"
+    estimator_options = spec.backend.runtime.options["estimator_options"]
+    assert estimator_options["dynamical_decoupling"]["enable"] is True
+    assert estimator_options["twirling"]["num_randomizations"] == 32
+    assert estimator_options["resilience"]["measure_mitigation"] is True
+
+
+def test_load_h2_puccd_layout_highshots_hardware_probe_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_hardware_probe_puccd_layout_highshots.yaml"))
+
+    assert spec.solver.ansatz.kind == "puccd"
+    assert spec.backend.runtime.max_budgeted_shots == 8192
+    assert spec.backend.runtime.precision_target == 0.01
+    assert spec.backend.runtime.resilience_level == 2
+    assert spec.backend.runtime.options["layout_strategy"] == "min_weighted_error"
+    assert "estimator_options" not in spec.backend.runtime.options
+
+
+def test_load_h2_runtime_micro_probe_v2_config() -> None:
+    spec = load_run_spec(Path("configs/h2_runtime_micro_probe_v2.yaml"))
+
+    assert spec.molecule.name == "H2-runtime-micro-probe-v2"
+    assert spec.solver.ansatz.kind == "puccd"
+    assert spec.backend.runtime.enabled is True
+    assert spec.backend.runtime.service == "ibm_quantum_platform"
+    assert spec.backend.runtime.max_budgeted_shots is not None
+    assert spec.backend.runtime.max_budgeted_shots <= 1024
+    assert spec.backend.runtime.precision_target is not None
+    assert spec.backend.runtime.precision_target >= 0.05
+    assert spec.backend.runtime.options["submit_real_job"] is True
+    assert spec.backend.runtime.options["wait_for_result"] is False
+    assert spec.backend.runtime.options["requires_action_time_confirmation"] is True
+    assert spec.run.output_dir == Path("artifacts/h2_runtime_micro_probe_v2")
+    assert spec.exploratory.enabled is True
+    assert "runtime_micro_probe" in spec.exploratory.modules

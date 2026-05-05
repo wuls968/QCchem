@@ -1,5 +1,78 @@
 # QCchem Handoff
 
+## Trust-First Release 状态
+
+当前主线已经切到 `Trust-First Release`。这一阶段的完成标准不是页面数量或算法数量，而是 `证据闭环完成`：
+
+- `run / benchmark / study / scan / hardware / AI` 围绕同一套 `Evidence Summary` 说话
+- workbench、report、CLI、AI Workspace 使用同一套核心术语：
+  - `best evidence`
+  - `trust tier`
+  - `baseline strength`
+  - `chemical accuracy status`
+  - `runtime evidence status`
+  - `recommended action`
+  - `hardware verification boundary`
+- AI 默认姿态是 `保守证据解释器`
+- 真机层继续保持“小而硬”的现实验证角色
+
+## 本轮新增
+
+- `Evidence Summary` 已进入核心 artifact 与 aggregate：
+  - run
+  - benchmark case / suite
+  - study / run record
+  - scan / scan point
+  - hardware campaign summary
+- `Evidence Summary` 当前至少统一表达：
+  - `result_identity`
+  - `primary_scientific_claim`
+  - `primary_baseline`
+  - `primary_error_metric`
+  - `chemical_accuracy_status`
+  - `runtime_evidence_status`
+  - `trust_tier`
+  - `recommended_action`
+- comparison 语义已统一补上 baseline descriptor：
+  - `baseline_kind`
+  - `baseline_source`
+  - `baseline_scope`
+  - `baseline_strength`
+- run report 已升级为固定阅读顺序：
+  - `Evidence Summary`
+  - `Claim`
+  - `Chain`
+  - `Proof`
+- aggregate report 已统一增加 `Best Evidence`
+- CLI `run / study / benchmark / scan` 现在会直接打印：
+  - `Best evidence`
+  - `Trust tier`
+  - `Recommended action`
+- AI summary / delivery 已开始复用 artifact 的 `Evidence Summary`
+- hardware campaign summary 现在同时显式表达：
+  - `evidence_summary`
+  - `decision_worthiness`
+- H2 hardware precision optimization 已新增受控入口：
+  - `configs/h2_hardware_precision_push.yaml`
+  - `qcchem hardware optimize --preview`
+  - `qcchem hardware optimize --submit --confirm-runtime-budget "I understand IBM Runtime budget"`
+  - `qcchem hardware optimize --collect`
+  - 输出 `hardware_optimization_plan.json`、`hardware_optimization_report.md`、候选 run artifacts 与 campaign summary
+
+## 发布级展示路径
+
+当前推荐固定的 release showcase path：
+
+1. `Overview`
+2. `Result Confidence`
+3. `Benchmarks`
+4. `Hardware Campaign`
+5. `AI Workspace`
+
+这条路径对应 QCchem 当前最完整的“最佳证据 -> 边界解释 -> 推荐动作”叙事。
+
+固定展示顺序也已落到 [release_showcase.md](/Users/a0000/QCchem/docs/release_showcase.md)。
+
 ## 本轮已完成
 
 - 建立 qwen integration 的正式 design/spec/implementation plan
@@ -104,6 +177,40 @@
   - strategy: `layout-aware PUCCD + 8192 shots`
   - 已于后续 `runtime collect` 中成功回收
   - runtime-derived error 约 `0.0533 Ha`
+- 当前新增 H2 硬件精度优化 preview artifact：
+  - `artifacts/h2_hardware_precision_push/hardware_optimization_plan.json`
+  - `artifacts/h2_hardware_precision_push/hardware_optimization_report.md`
+  - 当前本地排序首选 `parity_puccd_layout`
+  - H2/STO-3G 从 JW `4 qubits / 15 terms` 压到 parity two-qubit reduction `2 qubits / 5 terms`
+  - preview 不提交真机；真实提交仍必须显式确认并逐个 collect
+- 当前新增 H2 硬件精度优化真实 Runtime 结果：
+  - campaign root: `artifacts/h2_hardware_precision_push`
+  - `job_01_parity_puccd_layout_8192`: IBM job `d7qph0cf3ras73b64dcg`, backend `ibm_kingston`, depth `22`, 2Q gates `4`, runtime error `0.0182535 Ha`
+  - `job_02_jw_puccd_layout_baseline_8192`: IBM job `d7qpl6cf3ras73b64hsg`, backend `ibm_kingston`, depth `149`, 2Q gates `42`, runtime error `0.0477009 Ha`
+  - budget ledger: 2 real jobs, 16384 budgeted shots, `71.2595` estimated quantum seconds
+  - stop reason: `pause_after_diverse_strategy_probe`
+  - recommendation: do not spend the third job immediately; analyze hardware bias and mitigation strategy first
+- 当前新增 QCchem-native exploratory algorithm：LR-ACE
+  - full name: `Low-Rank Adaptive Chemistry Eigensolver`
+  - implementation: `qcchem/exploratory/solvers/lr_ace.py`
+  - local configs:
+    - `configs/exploratory/h2_lr_ace.yaml`
+    - `configs/exploratory/lih_active_lr_ace.yaml`
+  - runtime config:
+    - `configs/exploratory/h2_lr_ace_runtime.yaml`
+  - local artifacts:
+    - `artifacts/h2_lr_ace`
+    - `artifacts/lih_active_lr_ace`
+  - runtime artifacts:
+    - `artifacts/h2_lr_ace_runtime_real`
+    - `artifacts/h2_lr_ace_runtime_highshots`
+    - `artifacts/h2_lr_ace_runtime_ultra`
+  - suite summary:
+    - `artifacts/lr_ace_suite_v1/lr_ace_summary.json`
+    - `artifacts/lr_ace_suite_v1/lr_ace_report.md`
+  - best local result: H2 error `4.78e-10 Ha`; LiH active-space error `6.62e-10 Ha`
+  - best hardware result: H2 LR-ACE highshots error `0.001699 Ha`, just above chemical accuracy
+  - current recommendation: pause Runtime spend and analyze hardware/mitigation bias before more shots
 - 真实 hardware probe artifact：
   - `artifacts/h2_runtime_hardware_probe`
   - `artifacts/h2_runtime_hardware_probe_ca`
@@ -176,6 +283,9 @@
 - agent interface 目前是 CLI-first 协议层，不是 MCP server 或 HTTP service
 - visual workbench 当前仍是 read-only preview layer；默认页面内容以 schema-driven curated view model 为主，深层 live artifact picker 仍在推进
 - AI workspace page 现在会读取 `artifacts/ai_workspace/` 中的 ticket / delivery JSON，但它仍然不是任意 artifact 的通用编辑器
+- floating AI assistant 现在有 `Reset` 位置恢复、标题 grip 双击恢复和 viewport clamp，自救坏的历史 localStorage 位置
+- Evidence Console v2 已把 Overview / Runtime Monitoring / Hardware Campaign / AI Workspace 统一到 `best_evidence / trust_gap / runtime_boundary / open_tasks`
+- `configs/h2_runtime_micro_probe_v2.yaml` 是受控 H2 micro runtime probe；它会提交真实 IBM Runtime job，执行前必须再次确认，且默认 `wait_for_result=false`
 - `hardware_verified` 目前只代表真实 runtime result 已取回，不代表 chemistry 数值已验证到 publication-grade
 - 当前 hardware calibration suite 的 runtime-derived achieved error 仍较大：
   - H2 baseline probe 约 `0.174 Ha`
@@ -200,12 +310,12 @@
 
 ## 建议下一步
 
-1. 把真实 runtime probe 从单 case 扩到小规模 chemistry benchmark
-2. 为 runtime-ready sampled 路径补更稳的 shot allocation / grouping policy / resilience benchmark
-3. 为 NEVPT2 增加更多体系与 active-space benchmark，确认 correction 的稳定边界
-4. 给 embedding 层接入一个真实 fragment solver plugin
-5. 给 excited-state 增加一个真正可跑的 variational path
-6. 把 workbench 从 curated preview 推进到更完整的 artifact-driven browser
+1. 继续强化 `Evidence Core`，让更多 legacy artifact 自动补齐 baseline descriptor 与 recommended action
+2. 把 Overview / Result Confidence / Benchmarks / Hardware Campaign 的 `best evidence` 联动继续收紧成真正的 artifact-driven 主控制台
+3. 把 AI Workspace 的 delivery / history / provider persistence 做成更完整的作业系统，但继续保持 ticket 门控
+4. 把真实 runtime probe 从单 case 扩到小规模 chemistry benchmark，同时继续坚持“小而硬”的 hardware layer
+5. 为 runtime-ready sampled 路径补更稳的 shot allocation / grouping policy / resilience benchmark
+6. 在不破坏当前证据闭环的前提下，再推进 embedding / excited-state / property 的 validated 边界
 
 ## 风险提醒
 

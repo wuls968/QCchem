@@ -1,0 +1,36 @@
+[
+  {
+    "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_exact_reference",
+    "created_at": "2026-04-11T03:35:53.761301+00:00",
+    "kind": "run",
+    "name": "h2_exact_reference",
+    "source": "/Users/a0000/QCchem/configs/h2_exact.yaml",
+    "status": "validated",
+    "tags": [
+      "validated"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study/runs/h2_statevector_vqe",
+    "created_at": "2026-04-11T03:35:54.466091+00:00",
+    "kind": "run",
+    "name": "h2_statevector_vqe",
+    "source": "/Users/a0000/QCchem/configs/h2.yaml",
+    "status": "validated",
+    "tags": [
+      "validated"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/QCchem/artifacts/mini_comparison_study",
+    "created_at": "2026-04-11T03:35:54.466123+00:00",
+    "kind": "study",
+    "name": "mini_comparison_study",
+    "source": "configs/studies/mini_comparison.yaml",
+    "status": "validated",
+    "tags": [
+      "study",
+      "mini"
+    ]
+  }
+]

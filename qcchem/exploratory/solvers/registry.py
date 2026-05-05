@@ -52,6 +52,16 @@ EXPLORATORY_SOLVERS: dict[str, dict[str, Any]] = {
             "Interior-state targeting remains exploratory in QCchem.",
         ],
     },
+    "lr_ace": {
+        "loader": "qcchem.exploratory.solvers.lr_ace:build_solver",
+        "class_name": "LRACESolver",
+        "module_origin": "exploratory",
+        "capability_tier": "exploratory",
+        "scientific_risk_notes": [
+            "LR-ACE is a QCchem-native low-rank-factor-informed solver prototype.",
+            "Current LR-ACE evidence is local benchmark evidence, not a publication-validated algorithm.",
+        ],
+    },
 }
 
 

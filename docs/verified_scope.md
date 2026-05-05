@@ -1,7 +1,39 @@
 # QCchem Verified Scope
 
+## Trust-First Release 语义
+
+当前 QCchem 的对外主语言已经统一到 `Evidence Core`。这意味着：
+
+- 所有核心 artifact 默认先给出 `Evidence Summary`
+- 默认主判断是严格 trust tier，而不是综合分数
+- 当前统一使用的主术语包括：
+  - `best evidence`
+  - `trust tier`
+  - `baseline strength`
+  - `chemical accuracy status`
+  - `runtime evidence status`
+  - `recommended next action`
+  - `hardware verification boundary`
+
+当前 `Evidence Summary` 的 verified surface 已包括：
+
+- `result_identity`
+- `primary_scientific_claim`
+- `primary_baseline`
+- `primary_error_metric`
+- `chemical_accuracy_status`
+- `runtime_evidence_status`
+- `trust_tier`
+- `recommended_action`
+
 ## 已验证
 
+- Evidence Core summary path for:
+  - run artifacts
+  - study aggregates
+  - benchmark case / suite aggregates
+  - scan point / scan aggregates
+  - hardware campaign aggregates
 - exploratory gating schema/config path
 - `qcchem exploratory run` CLI boundary
 - qwen core integration:
@@ -47,6 +79,27 @@
 - reduction audit artifact/report section
 - exact-spectrum excited-state mini baseline
 - dipole moment exact-expectation property path
+- aggregate reports carrying explicit `Best Evidence` sections
+- run reports carrying explicit `Evidence Summary / Claim / Chain / Proof` structure
+- AI delivery and artifact summary path grounded in persisted artifact evidence instead of ad hoc text summarization
+- Evidence Console v2 shared workbench model for best evidence, trust gap, runtime boundary, and open AI work
+- runtime-monitoring decision cockpit that separates submission health from hardware-derived chemistry accuracy
+- H2 runtime micro probe configuration path with explicit budget cap and action-time confirmation metadata
+- H2 hardware precision optimization preview path:
+  - `configs/h2_hardware_precision_push.yaml`
+  - `qcchem hardware optimize --preview`
+  - parity two-qubit reduction mapping for H2
+  - local candidate ranking and runtime budget ledger
+- H2 hardware precision optimization submit/collect mechanics:
+  - two real IBM Runtime jobs were submitted and collected under `artifacts/h2_hardware_precision_push/`
+  - `parity_puccd_layout`: depth `22`, 2Q gates `4`, runtime error `0.0182535 Ha`
+  - `jw_puccd_layout_baseline`: depth `149`, 2Q gates `42`, runtime error `0.0477009 Ha`
+  - this validates the runtime submission / sidecar / collect / budget-ledger loop, not the chemistry claim
+- Runtime backend auto-selection now ranks available backends by layout-aware error score when no backend is pinned
+- LR-ACE local exact-baseline gates:
+  - `configs/exploratory/h2_lr_ace.yaml`: H2, 2 qubits, 1 parameter, local error `4.78e-10 Ha`
+  - `configs/exploratory/lih_active_lr_ace.yaml`: LiH active-space, 2 qubits, 5 parameters, local error `6.62e-10 Ha`
+  - these validate the local artifact/workflow gates, not the algorithm as a publication-grade general method
 
 ## exploratory
 
@@ -67,6 +120,13 @@
 - runtime-ready / session-ready / batch-ready adapter layer
 - low-rank runtime policy metadata layer
 - real runtime submission path beyond placeholder, still limited to hardware probe scope
+- H2 runtime micro probe execution itself until a confirmed real IBM Runtime submission is collected and merged
+- further H2 hardware precision optimization attempts beyond the collected parity/JW probes; current recommendation is `pause_hardware_spend_and_analyze_bias`
+- LR-ACE algorithmic claim beyond H2 and LiH active-space
+- LR-ACE hardware chemistry claim:
+  - retrieved IBM Runtime probes exist under `artifacts/h2_lr_ace_runtime_*`
+  - best runtime error is `0.001699 Ha`, close to but above the `0.0016 Ha` threshold
+  - current recommendation is `pause_runtime_spend_and_analyze_bias`
 - AI-facing task protocol beyond the current CLI-first layer
 - workbench as a full arbitrary-artifact live browser
 - mitigation config and metadata layer beyond symmetry-check hook
@@ -109,6 +169,7 @@
 - hardware calibration suite 以 `runtime_submission` 作为 authoritative runtime-evidence source
 - 对于尚未回收完成的 real hardware job，QCchem 也会在提交成功后立刻写出 `runtime_submission.json` sidecar；这保证了 `job_id`、layout 和 transpilation provenance 不会因为本地等待中断而丢失
 - 现在还可以对这类 in-flight artifact 执行 `qcchem runtime collect <artifact-dir>`，在 provider 可达时把真实结果补回到 `result.json` 与 `report.md`
+- 即使 `hardware_verified=True`，artifact 仍会通过 `runtime_evidence_status` 与 `recommended_next_action` 表达后续判断，而不是默认为 chemistry claim 已 validated
 
 它不表示：
 
@@ -162,6 +223,8 @@
 - `docs/ai_workspace.md`
 - `examples/ai_workspace/provider.openai-compatible.yaml`
 - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
+- AI 默认优先解释 artifact `Evidence Summary` 与 trust tier，再起 analysis/execution ticket
+- AI delivery 可以引用 artifact evidence 与 recommended next action
 
 当前不表示：
 
@@ -174,6 +237,7 @@
 当前已经验证：
 
 - `qcchem workbench serve` 可以构建真实页面注册表并输出 startup summary
+- workbench 首页默认围绕 `best evidence`、`trust map` 和 `recommended next action`
 - workbench summary 会报告：
   - URL
   - pages
@@ -183,9 +247,14 @@
 - 报告视觉语言与 workbench 使用相同的结果叙事关键词：
   - `Report Cover`
   - `Hero`
+  - `Evidence Summary`
+  - `Claim`
+  - `Chain`
+  - `Proof`
   - `Chemical Accuracy Frame`
   - `Runtime Evidence`
   - benchmark / hardware campaign `Best Case`
+  - aggregate-level `Best Evidence`
 
 当前不表示：
 

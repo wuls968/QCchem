@@ -1,0 +1,10 @@
+2026-04-11 14:58:44,081 INFO Loading config from /Users/a0000/QCchem/configs/h2.yaml
+2026-04-11 14:58:44,082 INFO Building electronic structure problem
+2026-04-11 14:58:44,098 INFO Applying mapping: jordan_wigner
+2026-04-11 14:58:44,108 INFO Preparing backend: statevector
+2026-04-11 14:58:44,108 INFO Running solver: vqe
+2026-04-11 14:58:44,184 INFO Computing exact spectrum for 1 states
+2026-04-11 14:58:44,185 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/slsqp/exact_result.json
+2026-04-11 14:58:44,207 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/slsqp/result.json
+2026-04-11 14:58:44,208 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability/slsqp/report.md
+2026-04-11 14:58:44,209 INFO Run completed

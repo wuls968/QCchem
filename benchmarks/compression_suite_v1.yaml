@@ -1,0 +1,22 @@
+benchmark_suite:
+  name: compression_suite_v1
+  description: LiH active-space compression benchmark comparing uncompressed and compression-aware exact/VQE execution.
+  registry_name: compression_suite_v1
+  tags: [benchmark, compression]
+  cases:
+    - name: lih_active_exact_uncompressed
+      kind: run
+      config: configs/lih_active_exact_uncompressed.yaml
+      expected_status: validated
+    - name: lih_active_exact_compressed
+      kind: run
+      config: configs/lih_active_exact_compressed_cholesky.yaml
+      expected_status: validated
+    - name: lih_active_vqe_uncompressed
+      kind: run
+      config: configs/lih_active_vqe_statevector.yaml
+      expected_status: validated
+    - name: lih_active_vqe_compressed
+      kind: run
+      config: configs/lih_active_vqe_statevector_compressed.yaml
+      expected_status: validated

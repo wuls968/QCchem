@@ -9,7 +9,7 @@
 - Module Origin: `core`
 - Capability Tier: `validated`
 - Verification Notes: `[]`
-- Scientific Risk Notes: `[]`
+- Scientific Risk Notes: `['Runtime-derived hardware energy does not meet chemical accuracy, even though the local solver path may.']`
 
 ## Energy Summary
 
@@ -113,9 +113,10 @@
 - batch_ready_expected: `True`
 - noise_ready_expected: `True`
 
-## Chemical Accuracy
+## Chemical Accuracy (Local Execution)
 
 - available: `True`
+- assessment_target: `local_execution`
 - status: `validated`
 - meets_chemical_accuracy: `True`
 - absolute_error_hartree: `0.000000013755` Hartree
@@ -124,6 +125,19 @@
 - threshold_kcal_mol: `1.0040151583999999`
 - statistical_error: `None`
 - notes: `['Meets chemical accuracy threshold.']`
+
+## Chemical Accuracy (Runtime-Derived)
+
+- available: `True`
+- assessment_target: `runtime_derived`
+- status: `exploratory`
+- meets_chemical_accuracy: `False`
+- absolute_error_hartree: `0.174070740431` Hartree
+- absolute_error_kcal_mol: `109.23103876641521`
+- threshold_hartree: `0.0016`
+- threshold_kcal_mol: `1.0040151583999999`
+- statistical_error: `0.009885620273` Hartree
+- notes: `['Does not meet chemical accuracy threshold.', 'Observed error exceeds 95% statistical uncertainty.']`
 
 ## Runtime Options
 
@@ -145,7 +159,7 @@
 - measurement_group_count: `5`
 - estimated_shot_cost: `2000.0`
 - options: `{'backend_name': 'ibm_marrakesh', 'optimization_level': 1, 'submit_real_job': True, 'wait_for_result': True}`
-- provenance: `{'adapter': 'runtime_ready_placeholder', 'remote_execution_configured': False, 'session_mode_requested': True, 'batch_mode_requested': False, 'low_rank_policy_applied': False, 'compression_method': None}`
+- provenance: `{'adapter': 'runtime_ready_placeholder', 'batch_mode_requested': False, 'compression_method': None, 'low_rank_policy_applied': False, 'remote_execution_configured': False, 'session_mode_requested': True}`
 
 ## Reduction Audit
 
@@ -174,7 +188,7 @@
 - strategy: `none`
 - recommended_changes: `{}`
 - notes: `['No reduction planning inputs were requested.']`
-- provenance: `{'source': 'qcchem.chem.reduction_planner', 'policy_name': 'hardware_ready'}`
+- provenance: `{'policy_name': 'hardware_ready', 'source': 'qcchem.chem.reduction_planner'}`
 
 ## Measurement Plan
 
@@ -223,20 +237,20 @@
 - batch_id: `None`
 - submission_wall_time_seconds: `59.237931750001735`
 - usage_estimation: `{'quantum_seconds': 12.51918722}`
-- job_metrics: `{'caller': 'qiskit_ibm_runtime~estimator.py', 'qiskit_version': 'qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*', 'timestamps': {'created': '2026-04-17T06:52:36.928458Z', 'finished': '2026-04-17T06:52:56.01504Z', 'running': '2026-04-17T06:52:38.211748Z'}, 'bss': {'seconds': 12}, 'usage': {'quantum_seconds': 12, 'seconds': 12}}`
+- job_metrics: `{'bss': {'seconds': 12}, 'caller': 'qiskit_ibm_runtime~estimator.py', 'qiskit_version': 'qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*', 'timestamps': {'created': '2026-04-17T06:52:36.928458Z', 'finished': '2026-04-17T06:52:56.01504Z', 'running': '2026-04-17T06:52:38.211748Z'}, 'usage': {'quantum_seconds': 12, 'seconds': 12}}`
 - failure_category: `None`
 - failure_message: `None`
 - verification_status: `exploratory`
-- options_snapshot: `{'precision_target': 0.05, 'max_budgeted_shots': 1024, 'max_execution_seconds': 240.0, 'budget_strategy': 'shot_budget', 'resilience_level': 1, 'grouping_policy': 'default', 'backend_name': 'ibm_marrakesh', 'optimization_level': 1, 'submit_real_job': True, 'wait_for_result': True}`
-- returned_job_metadata: `{'evs': [-1.6783174331389565], 'stds': [0.009885620273274427], 'metadata': {'shots': 1024, 'target_precision': 0.03125, 'circuit_metadata': {}, 'resilience': {}, 'num_randomizations': 16}}`
-- result_provenance: `{'attempt_stage': 'result_retrieved', 'runtime_package_version': '0.46.1', 'backend_name': 'ibm_marrakesh', 'parameter_count': 3, 'operator_qubits': 4, 'circuit_qubits': 4}`
+- options_snapshot: `{'backend_name': 'ibm_marrakesh', 'budget_strategy': 'shot_budget', 'grouping_policy': 'default', 'max_budgeted_shots': 1024, 'max_execution_seconds': 240.0, 'optimization_level': 1, 'precision_target': 0.05, 'resilience_level': 1, 'submit_real_job': True, 'wait_for_result': True}`
+- returned_job_metadata: `{'evs': [-1.6783174331389565], 'metadata': {'circuit_metadata': {}, 'num_randomizations': 16, 'resilience': {}, 'shots': 1024, 'target_precision': 0.03125}, 'stds': [0.009885620273274427]}`
+- result_provenance: `{'attempt_stage': 'result_retrieved', 'backend_name': 'ibm_marrakesh', 'circuit_qubits': 4, 'operator_qubits': 4, 'parameter_count': 3, 'runtime_package_version': '0.46.1'}`
 
 ## Variational Result
 
 - available: `True`
 - solver_kind: `vqe`
 - optimizer: `{'kind': 'COBYLA', 'maxiter': 40, 'tol': None}`
-- ansatz: `{'kind': 'uccsd', 'rotation_blocks': ['ry', 'rz'], 'entanglement_blocks': 'cz', 'entanglement': 'full', 'reps': 1}`
+- ansatz: `{'entanglement': 'full', 'entanglement_blocks': 'cz', 'kind': 'uccsd', 'reps': 1, 'rotation_blocks': ['ry', 'rz']}`
 - initial_point_strategy: `zeros`
 - parameter_count: `3`
 - converged: `False`
@@ -247,10 +261,10 @@
 
 ## Mitigation
 
-- symmetry_check: `{'requested': True, 'performed': False, 'status': 'hook_available_not_implemented', 'strategy': 'parity_placeholder'}`
-- readout_mitigation: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'none'}`
-- zne: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
-- pec: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
+- symmetry_check: `{'performed': False, 'requested': True, 'status': 'hook_available_not_implemented', 'strategy': 'parity_placeholder'}`
+- readout_mitigation: `{'method': 'none', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
+- zne: `{'method': 'placeholder', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
+- pec: `{'method': 'placeholder', 'performed': False, 'requested': False, 'status': 'placeholder_not_implemented'}`
 - applied_methods: `[]`
 
 ## Provenance
@@ -267,7 +281,7 @@
 - Workspace dirty: `True`
 - Git status summary: `{'staged': 0, 'unstaged': 11, 'untracked': 129}`
 - Workspace fingerprint: `f46c9a310e7b64b4553f1b5e9e6171abf52b6a71cb915c595d7f6ccbe437a3de`
-- Dependency versions: `{'python': '3.11.11', 'qiskit': '2.3.0', 'qiskit_nature': '0.7.2', 'numpy': '2.4.1', 'scipy': '1.17.0', 'pyscf': '2.12.1', 'qiskit_aer': '0.17.2'}`
+- Dependency versions: `{'numpy': '2.4.1', 'pyscf': '2.12.1', 'python': '3.11.11', 'qiskit': '2.3.0', 'qiskit_aer': '0.17.2', 'qiskit_nature': '0.7.2', 'scipy': '1.17.0'}`
 - Seed: `303`
 - Source config: `configs/h2_runtime_hardware_probe.yaml`
 

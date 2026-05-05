@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from qcchem.core.chemical_accuracy import CHEMICAL_ACCURACY_HARTREE
 from qcchem.chem import build_electronic_structure_context
 from qcchem.core import (
     BenchmarkArtifactPaths,
@@ -21,10 +22,16 @@ from qcchem.io.benchmark_config import (
     load_benchmark_entry_spec,
 )
 from qcchem.io.config import load_run_spec
+from qcchem.io.serialization import to_primitive
 from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report, write_hardware_calibration_report
 from qcchem.solvers import ExactDiagonalizationSolver
+from qcchem.core.evidence import (
+    build_benchmark_case_evidence_summary,
+    build_benchmark_suite_evidence_summary,
+    build_hardware_campaign_evidence_summary,
+)
 from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
@@ -106,6 +113,13 @@ def _runtime_usage_value(runtime_submission: dict[str, Any] | None, *keys: str) 
     return current
 
 
+def _runtime_submission_list(runtime_submission: dict[str, Any] | None, key: str) -> list[Any] | None:
+    if not runtime_submission:
+        return None
+    value = runtime_submission.get(key)
+    return value if isinstance(value, list) else None
+
+
 def _runtime_returned_expectation_value(runtime_submission: dict[str, Any] | None) -> float | None:
     if not runtime_submission:
         return None
@@ -162,6 +176,12 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
     runtime_evidence_status = _runtime_evidence_status_from_submission(runtime_submission)
     runtime_evidence_tier = None if runtime_evidence_status == "none" else runtime_evidence_status
     achieved_error, achieved_error_status = _runtime_achieved_error_from_payload(payload)
+    meets_chemical_accuracy = (
+        None if achieved_error is None else bool(achieved_error <= CHEMICAL_ACCURACY_HARTREE)
+    )
+    distance_to_chemical_accuracy = (
+        None if achieved_error is None else float(max(achieved_error - CHEMICAL_ACCURACY_HARTREE, 0.0))
+    )
     return {
         "name": str(payload.get("run_id") or result_json_path.parent.name),
         "artifact_root": str(result_json_path.parent),
@@ -174,6 +194,13 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
         "runtime_submission_wall_time_seconds": (
             runtime_submission.get("submission_wall_time_seconds") if runtime_submission else None
         ),
+        "layout_strategy": (runtime_submission.get("layout_strategy") if runtime_submission else None),
+        "selected_layout": _runtime_submission_list(runtime_submission, "selected_layout"),
+        "layout_score": (runtime_submission.get("layout_score") if runtime_submission else None),
+        "transpiled_depth": (runtime_submission.get("transpiled_depth") if runtime_submission else None),
+        "transpiled_two_qubit_gate_count": (
+            runtime_submission.get("transpiled_two_qubit_gate_count") if runtime_submission else None
+        ),
         "runtime_shots": _runtime_returned_shots(runtime_submission),
         "runtime_usage_seconds": _runtime_usage_value(runtime_submission, "job_metrics", "usage", "seconds"),
         "runtime_usage_quantum_seconds": _runtime_usage_value(runtime_submission, "job_metrics", "usage", "quantum_seconds"),
@@ -183,6 +210,9 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
         "requested_budgeted_shots": _runtime_usage_value(runtime_submission, "options_snapshot", "max_budgeted_shots"),
         "achieved_error": achieved_error,
         "achieved_error_status": achieved_error_status,
+        "chemical_accuracy_target_hartree": CHEMICAL_ACCURACY_HARTREE,
+        "meets_chemical_accuracy": meets_chemical_accuracy,
+        "distance_to_chemical_accuracy": distance_to_chemical_accuracy,
         "hardware_verified": bool(runtime_submission and runtime_submission.get("submitted") and runtime_submission.get("succeeded")),
     }
 
@@ -266,6 +296,19 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
             "compressed_vs_uncompressed": result.benchmark.compressed_vs_uncompressed,
             "wall_time_seconds": result.provenance.wall_time_seconds,
         },
+        evidence_summary=build_benchmark_case_evidence_summary(
+            {
+                "name": case.name,
+                "kind": case.kind,
+                "status": result.verification_status,
+                "expected_status": case.expected_status,
+                "absolute_error": result.benchmark.absolute_error,
+                "metrics": {
+                    "comparison_target": result.benchmark.comparison_target,
+                    "runtime_evidence_status": runtime_evidence_status,
+                },
+            }
+        ),
     )
 
 
@@ -296,6 +339,16 @@ def _jw_bk_consistency_case(case, case_root: Path) -> BenchmarkCaseResult:
         artifact_root=case_root,
         absolute_error=diff,
         metrics={"jw_energy": jw_energy, "bk_energy": bk_energy, "absolute_difference": diff},
+        evidence_summary=build_benchmark_case_evidence_summary(
+            {
+                "name": case.name,
+                "kind": case.kind,
+                "status": status,
+                "expected_status": case.expected_status,
+                "absolute_error": diff,
+                "metrics": {"comparison_target": "jw_bk_consistency"},
+            }
+        ),
     )
 
 
@@ -330,6 +383,16 @@ def _shot_scaling_case(case, case_root: Path) -> BenchmarkCaseResult:
         expected_status=case.expected_status,
         artifact_root=case_root,
         metrics={"absolute_errors": errors, "standard_errors": stderrs, "statuses": statuses},
+        evidence_summary=build_benchmark_case_evidence_summary(
+            {
+                "name": case.name,
+                "kind": case.kind,
+                "status": status,
+                "expected_status": case.expected_status,
+                "absolute_error": ordered_errors[-1] if ordered_errors else None,
+                "metrics": {"comparison_target": "shot_scaling"},
+            }
+        ),
     )
     case_root.mkdir(parents=True, exist_ok=True)
     write_result_json(outcome, case_root / "result.json")
@@ -358,6 +421,16 @@ def _optimizer_stability_case(case, case_root: Path) -> BenchmarkCaseResult:
         expected_status=case.expected_status,
         artifact_root=case_root,
         metrics={"energies": energies, "spread": spread, "statuses": statuses},
+        evidence_summary=build_benchmark_case_evidence_summary(
+            {
+                "name": case.name,
+                "kind": case.kind,
+                "status": status,
+                "expected_status": case.expected_status,
+                "absolute_error": spread,
+                "metrics": {"comparison_target": "optimizer_spread"},
+            }
+        ),
     )
     case_root.mkdir(parents=True, exist_ok=True)
     write_result_json(outcome, case_root / "result.json")
@@ -422,6 +495,16 @@ def _noise_comparison_case(case, case_root: Path) -> BenchmarkCaseResult:
             "ideal_status": ideal_result.verification_status,
             "noisy_status": noisy_result.verification_status,
         },
+        evidence_summary=build_benchmark_case_evidence_summary(
+            {
+                "name": case.name,
+                "kind": case.kind,
+                "status": status,
+                "expected_status": case.expected_status,
+                "absolute_error": noisy_abs,
+                "metrics": {"comparison_target": "noise_comparison"},
+            }
+        ),
     )
     case_root.mkdir(parents=True, exist_ok=True)
     write_result_json(outcome, case_root / "result.json")
@@ -565,6 +648,7 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
         registry_entries=registry_entries,
         artifacts=artifacts,
     )
+    result.evidence_summary = build_benchmark_suite_evidence_summary(to_primitive(result))
     write_result_json(result, artifacts.result_json)
     write_result_json(calibration_summary, artifacts.root / "calibration_summary.json")
     (artifacts.root / "calibration_report.md").write_text(
@@ -631,6 +715,9 @@ def build_hardware_calibration_suite(
         },
         "cases": cases,
     }
+    evidence_summary, decision_worthiness = build_hardware_campaign_evidence_summary(summary)
+    summary["evidence_summary"] = to_primitive(evidence_summary)
+    summary["decision_worthiness"] = decision_worthiness
 
     write_result_json(summary, resolved_output_root / "hardware_calibration_summary.json")
     write_hardware_calibration_report(summary, resolved_output_root / "hardware_calibration_report.md")

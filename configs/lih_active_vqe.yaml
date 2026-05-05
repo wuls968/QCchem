@@ -1,0 +1,53 @@
+molecule:
+  name: LiH-active-vqe
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space:
+    num_electrons: 2
+    num_spatial_orbitals: 2
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: shot_estimator
+  shots: 8192
+  seed: 211
+  repetitions: 5
+  abelian_grouping: false
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 120
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 2.5e-2
+  relative_error_threshold: 2.5e-2
+
+mitigation:
+  symmetry_check:
+    enabled: true
+  readout:
+    enabled: false
+    method: none
+
+run:
+  seed: 211
+  output_dir: artifacts/lih_active_vqe
+  overwrite: true

@@ -3,8 +3,10 @@ from __future__ import annotations
 from dash import dcc, html
 import plotly.graph_objects as go
 
-from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
+from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
+from qcchem.workbench.components.charts import add_chart_note, add_threshold_line, apply_chart_theme
 from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.theme import THEME
 
 
 def _confidence_figure(confidence: dict[str, object]) -> go.Figure:
@@ -14,22 +16,30 @@ def _confidence_figure(confidence: dict[str, object]) -> go.Figure:
     threshold = float(chemical_accuracy_threshold or confidence.get("threshold") or 0.02)
     threshold_label = "Chemical accuracy threshold" if chemical_accuracy_threshold is not None else "Benchmark threshold"
     figure = go.Figure()
-    figure.add_bar(x=["Absolute error", threshold_label], y=[value, threshold], marker_color=["#9a6b3f", "#315f4a"])
-    figure.update_layout(
-        title={
-            "text": (
-                "Confidence boundary against the chemical-accuracy threshold"
-                if chemical_accuracy_threshold is not None
-                else "Confidence boundary against the benchmark threshold"
-            ),
-            "x": 0.04,
+    figure.add_hrect(y0=0, y1=threshold, fillcolor="rgba(49, 95, 74, 0.08)", line_width=0)
+    figure.add_bar(
+        x=["Absolute error", threshold_label],
+        y=[value, threshold],
+        marker={
+            "color": [THEME["accent"]["copper"], THEME["status"]["validated"]],
+            "line": {"color": THEME["surface"]["paper"], "width": 1.4},
         },
-        paper_bgcolor="#fffaf3",
-        plot_bgcolor="#fffaf3",
-        margin={"l": 36, "r": 20, "t": 72, "b": 40},
-        yaxis_title="Hartree",
-        font={"color": "#2d2216"},
+        text=[f"{value:.4f}", f"{threshold:.4f}"],
+        textposition="outside",
+        hovertemplate="%{x}: %{y:.4f} Ha<extra></extra>",
     )
+    apply_chart_theme(
+        figure,
+        title=(
+            "Confidence boundary against the chemical-accuracy threshold"
+            if chemical_accuracy_threshold is not None
+            else "Confidence boundary against the benchmark threshold"
+        ),
+        yaxis_title="Hartree",
+        height=400,
+    )
+    add_threshold_line(figure, value=threshold, label=threshold_label)
+    add_chart_note(figure, text=f"Observed gap above threshold: {max(value - threshold, 0.0):.4f} Ha")
     return figure
 
 
@@ -51,57 +61,79 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
         "comparison_target", "exact diagonalization"
     )
+
+    def _tone_for_accuracy(value: object) -> str:
+        if value is True:
+            return "validated"
+        if value is False:
+            return "unstable"
+        return "informational"
+
     return html.Div(
         className="qcchem-page qcchem-page--confidence",
-        style={"display": "grid", "gap": "1rem"},
         children=[
             html.Section(
-                className="qcchem-card",
+                className="qcchem-card qcchem-confidence__hero",
                 children=[
-                    html.P("Decision Surface", className="qcchem-card-eyebrow"),
-                    html.H2("Result Confidence Report", className="qcchem-card-title", style={"fontSize": "2.1rem"}),
+                    html.P("Decision surface", className="qcchem-card-eyebrow"),
+                    html.H1("Result Confidence Report", className="qcchem-card-title qcchem-page__hero-title"),
                     html.P(
-                        "The final page gathers the accuracy boundary, runtime evidence, and verification flags into a concise report-oriented summary.",
-                        className="qcchem-card-note",
+                        "This page should read like the last paragraph of a scientific review note: what threshold matters, what evidence exists, and whether the current claim is genuinely defended.",
+                        className="qcchem-card-note qcchem-page__hero-body",
                     ),
                     html.Div(
-                        style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
+                        className="qcchem-page__summary-grid",
                         children=[
                             metric_card(threshold_label, f"{threshold_value:.4f} Ha", threshold_note),
                             metric_card("Absolute error", f'{float(confidence.get("absolute_error") or 0):.4f} Ha', "Representative measured deviation"),
-                            metric_card("Within uncertainty", str(confidence.get("within_uncertainty", False)), "Benchmark consistency"),
+                            status_card(
+                                "Chemical accuracy",
+                                chemical_accuracy_display,
+                                f"comparison target: {comparison_target}",
+                                tone=_tone_for_accuracy(chemical_accuracy_met),
+                            ),
+                            status_card(
+                                "Runtime chemical accuracy",
+                                runtime_chemical_accuracy_display,
+                                f"runtime evidence available: {runtime_evidence_available}",
+                                tone=_tone_for_accuracy(runtime_chemical_accuracy_met),
+                            ),
                         ],
                     ),
                 ],
             ),
-            html.Section(className="qcchem-card", children=[dcc.Graph(figure=_confidence_figure(confidence), config={"displayModeBar": False})]),
+            html.Section(
+                className="qcchem-card qcchem-confidence__boundary",
+                children=[
+                    html.P("Threshold framing", className="qcchem-card-eyebrow"),
+                    html.H2("Boundary against threshold", className="qcchem-card-title"),
+                    html.P(
+                        "The boundary chart makes the decision legible: how far the current result sits above the accepted line, and whether the runtime-backed path is helping or hurting that position.",
+                        className="qcchem-card-note",
+                    ),
+                    dcc.Graph(figure=_confidence_figure(confidence), config={"displayModeBar": False}),
+                ],
+            ),
             html.Div(
-                style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
+                className="qcchem-page__detail-grid",
                 children=[
                     detail_card(
                         "Evidence checklist",
                         [
                             ("Verification status", str(confidence.get("verification_status", "validated"))),
-                            (
-                                "Chemical accuracy",
-                                chemical_accuracy_display,
-                            ),
+                            ("Chemical accuracy", chemical_accuracy_display),
                             (threshold_label, f"{threshold_value:.4f} Ha"),
-                            (
-                                "Runtime evidence available",
-                                str(runtime_evidence_available),
-                            ),
-                            (
-                                "Runtime chemical accuracy",
-                                runtime_chemical_accuracy_display,
-                            ),
+                            ("Runtime evidence available", str(runtime_evidence_available)),
+                            ("Runtime chemical accuracy", runtime_chemical_accuracy_display),
                             ("Comparison target", str(comparison_target)),
+                            ("Distance to threshold", f"{max(float(confidence.get('absolute_error') or 0.0) - threshold_value, 0.0):.4f} Ha"),
                         ],
                     ),
                     callout_card(
-                        "Report framing",
-                        "This section is written like the end of a scientific notebook page: what evidence exists, whether the threshold is met, and what assumptions still limit the claim.",
+                        "Conclusion rule",
+                        "Do not let runtime retrieval be mistaken for scientific validation. A retrieved job, a benchmark threshold, and a chemical-accuracy threshold are different kinds of evidence and should stay visibly separate here.",
                         accent="copper",
+                        eyebrow="Review protocol",
                     ),
                 ],
             ),

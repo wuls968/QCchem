@@ -1,0 +1,58 @@
+molecule:
+  name: H2-hardware-ready
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+
+mapping:
+  kind: jordan_wigner
+
+policy:
+  name: hardware_ready
+
+backend:
+  kind: shot_estimator
+  seed: 303
+  abelian_grouping: false
+  runtime:
+    enabled: true
+    service: ibm_runtime_placeholder
+    runtime_ready: true
+    session_ready: true
+    batch_ready: true
+    options:
+      optimization_level: 1
+      resilience_level: 0
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 60
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 5.0e-2
+  relative_error_threshold: 5.0e-2
+
+mitigation:
+  symmetry_check:
+    strategy: parity_placeholder
+
+run:
+  seed: 31
+  output_dir: artifacts/h2_hardware_ready
+  overwrite: true

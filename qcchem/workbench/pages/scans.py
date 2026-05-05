@@ -3,7 +3,9 @@ from __future__ import annotations
 from dash import dcc, html
 import plotly.graph_objects as go
 
-from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
+from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
+from qcchem.workbench.components.charts import apply_chart_theme
+from qcchem.workbench.theme import THEME
 
 
 def sample_scan_model() -> dict[str, object]:
@@ -17,29 +19,49 @@ def sample_scan_model() -> dict[str, object]:
         "parameter_name": "bond_length",
         "summary": {"total_runs": len(points), "status_counts": {"validated": 3}, "comparison_axes": ["bond_length"]},
         "points": points,
+        "evidence_summary": {
+            "primary_scientific_claim": "The H2 short scan defines a validated minimum-energy path across the defended bond-length window.",
+            "trust_tier": "validated",
+            "recommended_action": "promote_validated_result",
+        },
     }
 
 
 def _scan_curve_figure(model: dict[str, object]) -> go.Figure:
     points = list(model.get("points") or [])
+    best_point = min(points, key=lambda point: float(point.get("total_energy") or 0.0)) if points else {}
     figure = go.Figure()
     figure.add_scatter(
         x=[point["parameter_value"] for point in points],
         y=[point["total_energy"] for point in points],
         mode="lines+markers",
-        line={"color": "#20334a", "width": 3},
-        marker={"size": 10, "color": "#20334a"},
+        line={"color": THEME["accent"]["deep_blue"], "width": 3},
+        marker={"size": 10, "color": THEME["accent"]["deep_blue"], "line": {"color": THEME["surface"]["paper"], "width": 1.4}},
         customdata=[point["point_label"] for point in points],
         hovertemplate="%{customdata}<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
     )
-    figure.update_layout(
-        title={"text": "Energy sweep across the current scan path", "x": 0.04},
-        paper_bgcolor="#fffaf3",
-        plot_bgcolor="#fffaf3",
-        margin={"l": 36, "r": 20, "t": 72, "b": 40},
+    if best_point:
+        figure.add_scatter(
+            x=[best_point["parameter_value"]],
+            y=[best_point["total_energy"]],
+            mode="markers+text",
+            marker={
+                "size": 15,
+                "color": THEME["surface"]["card"],
+                "line": {"color": THEME["accent"]["copper"], "width": 2.4},
+                "symbol": "diamond",
+            },
+            text=["Minimum"],
+            textposition="top center",
+            hovertemplate="Minimum point<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
+            showlegend=False,
+        )
+    apply_chart_theme(
+        figure,
+        title="Energy sweep across the current scan path",
         xaxis_title=str(model.get("parameter_name", "parameter")),
         yaxis_title="Total energy (Hartree)",
-        font={"color": "#2d2216"},
+        height=430,
     )
     return figure
 
@@ -47,46 +69,60 @@ def _scan_curve_figure(model: dict[str, object]) -> go.Figure:
 def build_scans_page(model: dict[str, object]) -> html.Div:
     points = list(model.get("points") or [])
     summary = model.get("summary") or {}
+    evidence_summary = model.get("evidence_summary") or {}
     best_point = min(points, key=lambda point: float(point.get("total_energy") or 0.0)) if points else {}
-
+    validated_points = sum(1 for point in points if point.get("verification_status") == "validated")
     return html.Div(
         className="qcchem-page qcchem-page--scans",
-        style={"display": "grid", "gap": "1rem"},
         children=[
             html.Section(
-                className="qcchem-card",
+                className="qcchem-card qcchem-scans__hero",
                 children=[
-                    html.P("Aggregate Atlas", className="qcchem-card-eyebrow"),
-                    html.H2("Scans", className="qcchem-card-title", style={"fontSize": "2.1rem"}),
+                    html.P("Aggregate atlas", className="qcchem-card-eyebrow"),
+                    html.H1("Scans", className="qcchem-card-title qcchem-page__hero-title"),
                     html.P(
-                        "A scan control surface for parameter sweeps: the defended curve stays legible, point labels stay visible, and the parameter axis remains a first-class research control.",
-                        className="qcchem-card-note",
+                        "A scan page should feel like an energy-path review, not a CSV preview. The curve, the minimum, and the validated sweep points need to stand out before anyone reads the point table.",
+                        className="qcchem-card-note qcchem-page__hero-body",
                     ),
                     html.Div(
-                        style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))", "gap": "0.9rem", "marginTop": "1rem"},
+                        className="qcchem-page__summary-grid",
                         children=[
                             metric_card("Scan", str(model.get("scan_name", "n/a")), "Aggregate sweep"),
                             metric_card("Parameter", str(model.get("parameter_name", "n/a")), "Named control axis"),
-                            metric_card("Validated points", str(sum(1 for point in points if point.get("verification_status") == "validated")), "On the defended curve"),
+                            status_card("Validated points", str(validated_points), "On the defended curve", tone="validated" if validated_points else "informational"),
                             metric_card("Total points", str(summary.get("total_runs", len(points))), "Registered scan samples"),
+                            status_card(
+                                "Recommended action",
+                                str(evidence_summary.get("recommended_action", "compare_against_best_evidence")),
+                                str(evidence_summary.get("primary_scientific_claim", "Use the defended sweep to decide whether broader scanning is worth it.")),
+                                tone="validated" if evidence_summary.get("trust_tier") == "validated" else "informational",
+                            ),
                         ],
                     ),
                 ],
             ),
-            html.Section(className="qcchem-card", children=[dcc.Graph(figure=_scan_curve_figure(model), config={"displayModeBar": False})]),
+            html.Section(
+                className="qcchem-card qcchem-scans__chart",
+                children=[
+                    html.P("Energy path", className="qcchem-card-eyebrow"),
+                    html.H2("Scan curve", className="qcchem-card-title"),
+                    html.P(
+                        "Use the curve to read the sweep as a shape first: where the minimum lies, how steep the path is, and whether the sampled points form a believable chemistry story.",
+                        className="qcchem-card-note",
+                    ),
+                    dcc.Graph(figure=_scan_curve_figure(model), config={"displayModeBar": False}),
+                ],
+            ),
             html.Div(
-                style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))", "gap": "1rem"},
+                className="qcchem-page__detail-grid",
                 children=[
                     detail_card(
                         "Scan points",
                         [
-                            (
-                                point["point_label"],
-                                f'{point["parameter_value"]} / {point["total_energy"]:.4f} Ha / {point["verification_status"]}',
-                            )
+                            (point["point_label"], f'{point["parameter_value"]} / {point["total_energy"]:.4f} Ha / {point["verification_status"]}')
                             for point in points
                         ],
-                        eyebrow="Defended Sweep",
+                        eyebrow="Defended sweep",
                     ),
                     detail_card(
                         "Sweep posture",
@@ -95,13 +131,15 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
                             ("Total points", str(summary.get("total_runs", 0))),
                             ("Status counts", str(summary.get("status_counts", {}))),
                             ("Leading point", str(best_point.get("point_label", "n/a"))),
+                            ("Leading energy", f'{float(best_point.get("total_energy") or 0.0):.6f} Ha'),
                         ],
-                        eyebrow="Research Scope",
+                        eyebrow="Research scope",
                     ),
                     callout_card(
-                        "Scan framing",
-                        "Scan pages work best when they read like steering surfaces rather than CSV previews, so the chart is centered and the path remains chemically legible.",
+                        "Interpretation rule",
+                        "Read scan pages in two passes: first inspect the shape and minimum of the energy path, then use the point table to verify which sampled points are validated and how the sweep was constructed.",
                         accent="copper",
+                        eyebrow="Review protocol",
                     ),
                 ],
             ),

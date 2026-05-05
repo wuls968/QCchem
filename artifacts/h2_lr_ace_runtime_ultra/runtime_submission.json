@@ -1,0 +1,144 @@
+{
+  "attempted": true,
+  "backend_name": "ibm_marrakesh",
+  "batch_id": null,
+  "batch_requested": false,
+  "failure_category": null,
+  "failure_message": null,
+  "job_id": "d7qq5hfljm6s73b9ig40",
+  "job_metrics": {
+    "bss": {
+      "seconds": 217
+    },
+    "caller": "qiskit_ibm_runtime~estimator.py",
+    "qiskit_version": "qiskit_ibm_runtime-0.46.1,qiskit-2.3.0*,qiskit_aer-0.17.2*,qiskit_nature-0.7.2*",
+    "timestamps": {
+      "created": "2026-05-02T07:07:49.270263Z",
+      "finished": "2026-05-02T07:11:47.262488Z",
+      "running": "2026-05-02T07:07:49.945391Z"
+    },
+    "usage": {
+      "quantum_seconds": 217,
+      "seconds": 217
+    }
+  },
+  "layout_score": 0.004504149246380901,
+  "layout_strategy": "min_weighted_error",
+  "mode": "backend",
+  "options_snapshot": {
+    "budget_strategy": "lr_ace_h2_ultra_refinement",
+    "confirmation_message": "LR-ACE exploratory Runtime probe may consume IBM quota.",
+    "default_shots": 131072,
+    "grouping_policy": "low_rank_factor_aware",
+    "layout_method": "sabre",
+    "layout_strategy": "min_weighted_error",
+    "max_budgeted_shots": 131072,
+    "max_execution_seconds": 300.0,
+    "optimization_level": 3,
+    "precision_target": 0.003,
+    "requires_action_time_confirmation": true,
+    "resilience_level": 2,
+    "routing_method": "sabre",
+    "seed_transpiler": 1729,
+    "submit_real_job": true,
+    "wait_for_result": false
+  },
+  "provider": "QiskitRuntimeService",
+  "result_provenance": {
+    "attempt_stage": "result_retrieved",
+    "backend_name": "ibm_marrakesh",
+    "backend_selection_strategy": "min_weighted_error",
+    "candidates": [
+      {
+        "backend_name": "ibm_marrakesh",
+        "entangling_score": 0.0010251453401309008,
+        "layout_score": 0.004504149246380901,
+        "pending_jobs": 0,
+        "readout_score": 0.0069580078125,
+        "selected_layout": [
+          2,
+          1
+        ]
+      },
+      {
+        "backend_name": "ibm_kingston",
+        "entangling_score": 0.0011204659863697508,
+        "layout_score": 0.005148786298869751,
+        "pending_jobs": 0,
+        "readout_score": 0.008056640625,
+        "selected_layout": [
+          90,
+          89
+        ]
+      },
+      {
+        "backend_name": "ibm_fez",
+        "entangling_score": 0.001510689689632888,
+        "layout_score": 0.006759713127132888,
+        "pending_jobs": 0,
+        "readout_score": 0.010498046875,
+        "selected_layout": [
+          23,
+          22
+        ]
+      }
+    ],
+    "circuit_qubits": 2,
+    "last_polled_at": "2026-05-02T07:14:51.031832+00:00",
+    "last_polled_status": "DONE",
+    "layout_strategy": "min_weighted_error",
+    "operator_qubits": 2,
+    "parameter_count": 1,
+    "runtime_package_version": "0.46.1",
+    "selected_backend": "ibm_marrakesh"
+  },
+  "returned_job_metadata": {
+    "evs": [
+      -1.8498098573900397
+    ],
+    "metadata": {
+      "circuit_metadata": {},
+      "num_randomizations": 32,
+      "resilience": {
+        "zne": {
+          "extrapolator": [
+            "multiple"
+          ]
+        }
+      },
+      "shots": 131072,
+      "target_precision": 0.002762135864009951
+    },
+    "stds": [
+      0.0014218733640510401
+    ]
+  },
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "selected_layout": [
+    2,
+    1
+  ],
+  "service": "ibm_quantum_platform",
+  "session_id": null,
+  "session_requested": true,
+  "submission_wall_time_seconds": 24.17161933297757,
+  "submitted": true,
+  "succeeded": true,
+  "transpilation_options": {
+    "approximation_degree": 1.0,
+    "initial_layout": [
+      2,
+      1
+    ],
+    "layout_method": "sabre",
+    "optimization_level": 3,
+    "routing_method": "sabre",
+    "seed_transpiler": 1729
+  },
+  "transpiled_depth": 12,
+  "transpiled_two_qubit_gate_count": 2,
+  "usage_estimation": {
+    "quantum_seconds": 290.813745573
+  },
+  "verification_status": "exploratory"
+}

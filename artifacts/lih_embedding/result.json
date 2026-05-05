@@ -1,0 +1,249 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/lih_embedding/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/lih_embedding/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/lih_embedding/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/lih_embedding/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/lih_embedding/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/lih_embedding"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": null,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 1.7763568394002505e-15,
+    "absolute_error_threshold": 1e-10,
+    "comparison_target": "exact_baseline",
+    "exact_available": true,
+    "exact_electronic_energy": -8.874531649358488,
+    "exact_total_energy": -7.882324378883488,
+    "meets_threshold": true,
+    "relative_error": 2.0016344631873138e-16,
+    "relative_error_threshold": 1e-10,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "compression_result": null,
+  "embedding_result": {
+    "bath_threshold": 0.05,
+    "enabled": true,
+    "environment_metadata": {
+      "environment_model": "rhf_density_matrix",
+      "mean_field_energy": -7.861864769808649,
+      "num_fragments": 2
+    },
+    "fragments": [
+      {
+        "ao_count": 5,
+        "ao_labels": [
+          "0 Li 1s    ",
+          "0 Li 2s    ",
+          "0 Li 2px   ",
+          "0 Li 2py   ",
+          "0 Li 2pz   "
+        ],
+        "atom_indices": [
+          0
+        ],
+        "name": "Li_fragment",
+        "recommended_active_space": {
+          "num_electrons": 4,
+          "num_spatial_orbitals": 6
+        }
+      },
+      {
+        "ao_count": 1,
+        "ao_labels": [
+          "1 H 1s    "
+        ],
+        "atom_indices": [
+          1
+        ],
+        "name": "H_fragment",
+        "recommended_active_space": {
+          "num_electrons": 2,
+          "num_spatial_orbitals": 2
+        }
+      }
+    ],
+    "method": "dmet_skeleton",
+    "notes": [
+      "Current embedding path is a DMET-style skeleton built from PySCF mean-field density information.",
+      "Fragment solver execution remains a formal plugin interface in QCchem v0.5."
+    ],
+    "solver_plugin": "placeholder_fragment_solver",
+    "verification_status": "exploratory"
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.020459609074841012,
+    "electronic_energy": -8.87453164935849,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -8.874531649358488,
+    "hf_reference_energy": -7.861864769808649,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "solver_energy": -8.87453164935849,
+    "total_energy": -7.88232437888349
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -8.874531649358488,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -8.874531649358488,
+    "source": "exact_diagonalization",
+    "total_energy": -7.882324378883488
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/QCchem/configs/lih_embedding.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_embedding/exact_result.json",
+      "Computed embedding audit: dmet_skeleton",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/lih_embedding/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_embedding/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 1860,
+    "kind": "jordan_wigner",
+    "num_qubits": 12,
+    "qubit_term_count": 631
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "noise_model": null,
+  "perturbative_correction_result": null,
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "molecule_name": "LiH-embedding",
+    "multiplicity": 1,
+    "num_particles": [
+      2,
+      2
+    ],
+    "num_spatial_orbitals": 6,
+    "transformers_applied": []
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 53,
+    "source_config": "/Users/a0000/QCchem/configs/lih_embedding.yaml",
+    "timestamp": "2026-04-11T07:45:36.191468+00:00",
+    "wall_time_seconds": 0.8491074999910779,
+    "workspace_dirty": true
+  },
+  "reduction_audit": {
+    "active_space_metadata": null,
+    "constant_energy_correction": 0.0,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "frozen_core_orbitals": [],
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "nuclear_repulsion_energy": 0.992207270475,
+    "original_num_particles": [
+      2,
+      2
+    ],
+    "original_num_spatial_orbitals": 6,
+    "reduced_num_particles": [
+      2,
+      2
+    ],
+    "reduced_num_spatial_orbitals": 6,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [],
+    "selected_active_orbitals_original": [],
+    "selection_mode": "none",
+    "selection_reason": "No active-space reduction requested.",
+    "total_constant_correction": 0.992207270475,
+    "transformers_applied": []
+  },
+  "run_id": "lih_embedding",
+  "runtime_options": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.5-alpha",
+  "variational_result": null,
+  "verification_status": "validated"
+}

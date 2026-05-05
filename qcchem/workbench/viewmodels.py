@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 
+def _safe_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
 def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
     benchmark = model.get("benchmark") or {}
     runtime = model.get("runtime") or {}
@@ -22,9 +26,10 @@ def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
     backend_name = str(runtime.get("backend_name") or "n/a")
     backend_version = str(runtime.get("backend_version") or "")
     queue_stage = str(runtime.get("result_provenance", {}).get("attempt_stage") or "pending")
-    shots = runtime.get("returned_job_metadata", {}).get("metadata", {}).get("shots")
+    returned_job_metadata = _safe_dict(runtime.get("returned_job_metadata"))
+    shots = _safe_dict(returned_job_metadata.get("metadata")).get("shots")
     if shots is None:
-        shots = runtime.get("options_snapshot", {}).get("shots")
+        shots = _safe_dict(runtime.get("options_snapshot")).get("shots")
 
     meets_hardware_threshold = runtime_chemical_accuracy.get("meets_chemical_accuracy")
     if meets_hardware_threshold is True:
@@ -58,9 +63,10 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     problem = payload["problem"]
     energy = payload["energy"]
     benchmark = payload.get("benchmark") or {}
-    runtime = payload.get("runtime_submission") or {}
+    runtime = _safe_dict(payload.get("runtime_submission"))
     reduction = payload.get("reduction_audit") or {}
     compression = payload.get("compression_result") or {}
+    evidence_summary = payload.get("evidence_summary") or {}
 
     view_model = {
         "hero": {
@@ -68,6 +74,7 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "basis": problem.get("basis"),
             "total_energy": energy.get("total_energy"),
             "absolute_error": benchmark.get("absolute_error"),
+            "primary_claim": evidence_summary.get("primary_scientific_claim"),
         },
         "structure": {
             "molecule_name": problem["molecule_name"],
@@ -106,6 +113,7 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "reduction": reduction,
         "compression": compression,
+        "evidence_summary": evidence_summary,
         "confidence": {
             "verification_status": payload.get("verification_status"),
             "hardware_verified": payload.get("hardware_verified"),
@@ -125,6 +133,8 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
                 "comparison_target": benchmark.get("comparison_target"),
                 "compressed_vs_uncompressed": benchmark.get("compressed_vs_uncompressed"),
             },
+            "recommended_action": evidence_summary.get("recommended_action"),
+            "trust_tier": evidence_summary.get("trust_tier", payload.get("verification_status")),
         },
     }
     view_model["runtime_comparison"] = build_runtime_comparison_model(view_model)

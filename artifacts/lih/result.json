@@ -1,0 +1,99 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/lih/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/lih/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/lih/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/lih/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/lih/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/lih"
+  },
+  "backend": {
+    "kind": "statevector",
+    "precision": null,
+    "shots": null
+  },
+  "benchmark": {
+    "absolute_error": 0.0,
+    "absolute_error_threshold": 1e-10,
+    "exact_available": true,
+    "exact_electronic_energy": -8.874531649358497,
+    "exact_total_energy": -7.882324378883497,
+    "meets_threshold": true,
+    "relative_error": 0.0,
+    "relative_error_threshold": 1e-10
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.020459609074848117,
+    "electronic_energy": -8.874531649358497,
+    "energy_units": "Hartree",
+    "exact_ground_energy": -8.874531649358497,
+    "hf_reference_energy": -7.861864769808649,
+    "nuclear_repulsion_energy": 0.992207270475,
+    "solver_energy": -8.874531649358497,
+    "total_energy": -7.882324378883497
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from configs/lih.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: bravyi_kitaev",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih/exact_result.json",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/lih/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/lih/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 1860,
+    "kind": "bravyi_kitaev",
+    "num_qubits": 12,
+    "qubit_term_count": 631
+  },
+  "problem": {
+    "active_space": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.992207270475
+    },
+    "molecule_name": "LiH",
+    "multiplicity": 1,
+    "num_particles": [
+      2,
+      2
+    ],
+    "num_spatial_orbitals": 6
+  },
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 11,
+    "source_config": "configs/lih.yaml",
+    "timestamp": "2026-04-10T14:22:13.679902+00:00",
+    "wall_time_seconds": 1.261037625001336,
+    "workspace_dirty": true
+  },
+  "run_id": "lih",
+  "schema_version": "qcchem.result.v0.1-alpha",
+  "solver": {
+    "ansatz": {},
+    "converged": true,
+    "evaluations": 1,
+    "initial_point_strategy": "n/a",
+    "iterations": 1,
+    "kind": "exact",
+    "optimal_parameters": [],
+    "optimizer": {}
+  }
+}

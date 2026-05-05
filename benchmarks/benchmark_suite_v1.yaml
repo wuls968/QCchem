@@ -1,0 +1,48 @@
+benchmark_suite:
+  name: benchmark_suite_v1
+  description: QCchem Benchmark Suite v1 covering validated, exploratory, unstable, and noise-aware execution paths.
+  registry_name: benchmark_suite_v1
+  tags: [benchmark, suite_v1]
+  cases:
+    - name: h2_exact_reference
+      kind: run
+      config: configs/h2_exact.yaml
+      expected_status: validated
+    - name: h2_statevector_vqe
+      kind: run
+      config: configs/h2.yaml
+      expected_status: validated
+    - name: h2_shot_vqe
+      kind: run
+      config: configs/h2_shot.yaml
+      expected_status: unstable
+    - name: h2_noisy_comparison
+      kind: noise_comparison
+      config: configs/h2_noisy.yaml
+      expected_status: unstable
+    - name: lih_exact_reference
+      kind: run
+      config: configs/lih.yaml
+      expected_status: validated
+    - name: lih_active_space_vqe
+      kind: run
+      config: configs/lih_active_vqe.yaml
+      expected_status: validated
+    - name: h2o_active_space_exact
+      kind: run
+      config: configs/h2o_active_space.yaml
+      expected_status: validated
+    - name: jw_bk_consistency_h2
+      kind: consistency
+      config: configs/h2_exact.yaml
+      expected_status: validated
+    - name: h2_shot_scaling
+      kind: shot_scaling
+      config: configs/h2_shot.yaml
+      shots: [1024, 4096, 8192]
+      expected_status: exploratory
+    - name: h2_optimizer_stability
+      kind: optimizer_stability
+      config: configs/h2.yaml
+      optimizers: [COBYLA, SLSQP]
+      expected_status: validated

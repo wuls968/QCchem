@@ -45,5 +45,13 @@ def build_molecule_viewer(
                 className="qcchem-card-note",
                 style={"marginTop": "0.85rem"},
             ),
+            html.Div(
+                className="qcchem-molecule-viewer__meta",
+                children=[
+                    html.Span(f"{len(molecule.get('atoms', []))} atoms", className="qcchem-molecule-viewer__meta-chip"),
+                    html.Span(f"{len(molecule.get('labels', []))} labels", className="qcchem-molecule-viewer__meta-chip"),
+                    html.Span("3Dmol scene", className="qcchem-molecule-viewer__meta-chip"),
+                ],
+            ),
         ],
     )

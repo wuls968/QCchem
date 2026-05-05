@@ -1,0 +1,226 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/h2_shot/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/h2_shot/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/h2_shot/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/h2_shot/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/h2_shot/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/h2_shot"
+  },
+  "backend": {
+    "abelian_grouping": false,
+    "kind": "shot_estimator",
+    "precision": null,
+    "repetitions": 5,
+    "seed": 101,
+    "shots": 4096
+  },
+  "benchmark": {
+    "absolute_error": 0.008229104151413313,
+    "absolute_error_threshold": 0.05,
+    "comparison_target": "sampled_result",
+    "exact_available": true,
+    "exact_electronic_energy": -1.8572750302023788,
+    "exact_total_energy": -1.137306035753399,
+    "meets_threshold": true,
+    "relative_error": 0.004430740745228576,
+    "relative_error_threshold": 0.05,
+    "statistical_error": 0.0008960519057910066,
+    "within_uncertainty": false
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.01905465070801249,
+    "electronic_energy": -1.8560226419109966,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.8572750302023788,
+    "hf_reference_energy": -1.1169989967540044,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "solver_energy": -1.8560226419109966,
+    "total_energy": -1.1360536474620169
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -1.8572750302023788,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.8572750302023788,
+    "source": "exact_diagonalization",
+    "total_energy": -1.137306035753399
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from configs/h2_shot.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Preparing backend: shot_estimator",
+      "Running solver: vqe",
+      "Computing exact baseline by diagonalization",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_shot/exact_result.json",
+      "Collected repeated shot-based sampling statistics",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/h2_shot/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_shot/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 36,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 15
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "readout_mitigation": {
+      "method": "none",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "placeholder"
+    }
+  },
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "molecule_name": "H2-shot",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": []
+  },
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 101,
+    "source_config": "configs/h2_shot.yaml",
+    "timestamp": "2026-04-11T02:24:51.544928+00:00",
+    "wall_time_seconds": 2.1826615410027443,
+    "workspace_dirty": true
+  },
+  "run_id": "h2_shot",
+  "sampled_result": {
+    "available": true,
+    "backend_kind": "shot_estimator",
+    "confidence_interval_high": -1.8472896643156151,
+    "confidence_interval_low": -1.8508021877863159,
+    "num_repeats": 5,
+    "repeat_metadata": [
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "precision": 0.015625,
+        "shots": 4096,
+        "target_precision": 0.015625
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "precision": 0.015625,
+        "shots": 4096,
+        "target_precision": 0.015625
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "precision": 0.015625,
+        "shots": 4096,
+        "target_precision": 0.015625
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "precision": 0.015625,
+        "shots": 4096,
+        "target_precision": 0.015625
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "precision": 0.015625,
+        "shots": 4096,
+        "target_precision": 0.015625
+      }
+    ],
+    "repeat_reported_stds": [
+      0.008185887013467058,
+      0.007900113314162741,
+      0.007924928033343808,
+      0.008129327088276385,
+      0.008212230217928385
+    ],
+    "repeat_seeds": [
+      100101,
+      100102,
+      100103,
+      100104,
+      100105
+    ],
+    "repeat_solver_energies": [
+      -1.8514092336714014,
+      -1.8493379394016765,
+      -1.8487971563231567,
+      -1.845915209790684,
+      -1.8497700910679087
+    ],
+    "sampled_electronic_energy_mean": -1.8490459260509655,
+    "sampled_solver_energy_mean": -1.8490459260509655,
+    "sampled_solver_energy_std": 0.0020036329727169283,
+    "sampled_total_energy_mean": -1.1290769316019857,
+    "seed": 101,
+    "shots": 4096,
+    "standard_error": 0.0008960519057910066
+  },
+  "schema_version": "qcchem.result.v0.2-alpha",
+  "variational_result": {
+    "ansatz": {
+      "entanglement": "full",
+      "entanglement_blocks": "cz",
+      "kind": "uccsd",
+      "reps": 1,
+      "rotation_blocks": [
+        "ry",
+        "rz"
+      ]
+    },
+    "available": true,
+    "converged": true,
+    "evaluations": 34,
+    "final_objective_energy": -1.8560226419109966,
+    "initial_point_strategy": "zeros",
+    "iterations": 34,
+    "optimal_parameters": [
+      0.07658052780934327,
+      0.03176466996205331,
+      -0.13639350720488014
+    ],
+    "optimizer": {
+      "kind": "COBYLA",
+      "maxiter": 80,
+      "tol": null
+    },
+    "optimizer_message": "Return from COBYLA because the trust region radius reaches its lower bound.",
+    "parameter_count": 3,
+    "solver_kind": "vqe"
+  }
+}

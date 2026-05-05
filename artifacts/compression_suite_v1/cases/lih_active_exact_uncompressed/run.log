@@ -1,0 +1,10 @@
+2026-04-11 18:21:27,136 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_exact_uncompressed.yaml
+2026-04-11 18:21:27,138 INFO Building electronic structure problem
+2026-04-11 18:21:27,194 INFO Applying mapping: jordan_wigner
+2026-04-11 18:21:27,212 INFO Skipping backend construction for solver: exact
+2026-04-11 18:21:27,212 INFO Running solver: exact
+2026-04-11 18:21:27,218 INFO Computing exact spectrum for 1 states
+2026-04-11 18:21:27,219 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed/exact_result.json
+2026-04-11 18:21:27,276 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed/result.json
+2026-04-11 18:21:27,277 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/compression_suite_v1/cases/lih_active_exact_uncompressed/report.md
+2026-04-11 18:21:27,277 INFO Run completed

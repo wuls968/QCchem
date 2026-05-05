@@ -196,7 +196,13 @@ def test_page_modules_expose_model_driven_builders() -> None:
     assert "Simulator reference" in runtime_text
     assert "Hardware backend" in runtime_text
     assert "Hardware verdict" in runtime_text
-    assert telemetry_graph.figure.data[0].y[-1] == 987
+    telemetry_values = [
+        value
+        for trace in telemetry_graph.figure.data
+        for value in (tuple(trace.y) if getattr(trace, "y", None) is not None else ())
+    ]
+    assert 8192 in telemetry_values
+    assert 987 in telemetry_values
     assert comparison_graph.figure.data[0].x == ("Simulator", "Hardware")
     assert comparison_values == pytest.approx((0.0118, 0.0142))
 
@@ -693,13 +699,13 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
     assert payload["failedText"] == "3Dmol viewer unavailable"
 
 
-def test_theme_tokens_include_scientific_atelier_palette_and_css_parity() -> None:
+def test_theme_tokens_include_evidence_console_palette_and_css_parity() -> None:
     theme_css = (REPO_ROOT / "qcchem" / "workbench" / "assets" / "theme.css").read_text(encoding="utf-8")
 
-    assert THEME["surface"]["paper"] == "#f7f1e8"
-    assert THEME["surface"]["card"] == "#fffaf3"
-    assert THEME["accent"]["copper"] == "#9a6b3f"
-    assert THEME["accent"]["deep_blue"] == "#20334a"
+    assert THEME["surface"]["paper"] == "#f2f4f8"
+    assert THEME["surface"]["card"] == "#ffffff"
+    assert THEME["accent"]["copper"] == "#0f62fe"
+    assert THEME["accent"]["deep_blue"] == "#002d9c"
     for css_name, css_value in css_var_map(families=SHARED_THEME_FAMILIES).items():
         assert f"{css_name}: {css_value};" in theme_css
     assert "font-family: var(--qcchem-type-body);" in theme_css
@@ -732,6 +738,30 @@ def test_shell_layout_exposes_core_regions() -> None:
     assert "qcchem-research-navigator" in main_grid_classes
     assert "qcchem-interpretation-rail" in main_grid_classes
     assert any(isinstance(child, dcc.Location) for child in validation_layout.children)
+
+
+@pytest.mark.integration
+def test_shell_copy_uses_evidence_workbench_language() -> None:
+    from qcchem.workbench.app import create_app
+
+    shell = _resolve_layout(create_app().layout)
+    shell_text = _collect_text(shell)
+
+    assert "Evidence Workbench" in shell_text
+    assert "Defended chemistry evidence" in shell_text
+    assert "Scientific Atelier" not in shell_text
+
+
+@pytest.mark.integration
+def test_overview_page_leads_with_defended_claim_summary() -> None:
+    from qcchem.workbench.pages.overview import build_overview_page, build_sample_view_model
+
+    page = build_overview_page(build_sample_view_model())
+    page_text = _collect_text(page)
+
+    assert "Current defended claim" in page_text
+    assert "Chemical accuracy target" in page_text
+    assert "Runtime evidence status" in page_text
 
 
 @pytest.mark.integration
@@ -802,6 +832,28 @@ def test_shell_layout_uses_current_page_registry_for_navigation() -> None:
 
 
 @pytest.mark.integration
+def test_prepare_workbench_reports_real_page_inventory_and_artifact_summary() -> None:
+    from qcchem.workbench.server import prepare_workbench
+
+    app, summary = prepare_workbench(host="127.0.0.1", port=8051, debug=False)
+
+    assert app is not None
+    assert summary["url"] == "http://127.0.0.1:8051"
+    assert summary["default_route"] == "/overview"
+    assert summary["page_count"] == len(summary["pages"])
+    assert len(summary["pages"]) >= 10
+    assert summary["pages"][0]["path"] == "/"
+    assert summary["pages"][1]["path"] == "/overview"
+    assert any(page["path"] == "/hardware-campaign" for page in summary["pages"])
+    assert summary["artifact_root"].endswith("/artifacts")
+    assert summary["artifact_inventory"]["run_result_roots"] >= 1
+    assert summary["artifact_inventory"]["benchmark_suites"] >= 1
+    assert summary["artifact_inventory"]["hardware_campaigns"] >= 1
+    assert summary["artifact_inventory"]["featured_run"]
+    assert summary["artifact_inventory"]["featured_hardware_campaign"]
+
+
+@pytest.mark.integration
 def test_serve_workbench_launches_app(monkeypatch: pytest.MonkeyPatch) -> None:
     from qcchem.workbench import server
 
@@ -825,6 +877,26 @@ def test_serve_workbench_launches_app(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.integration
+def test_serve_workbench_reports_real_page_inventory(monkeypatch: pytest.MonkeyPatch) -> None:
+    from qcchem.workbench import server
+
+    monkeypatch.setattr(server, "launch_app", lambda app, *, host, port, debug: None)
+
+    summary = server.serve_workbench(host="127.0.0.1", port=8051, debug=False)
+
+    assert summary["page_count"] >= 10
+    assert len(summary["pages"]) == summary["page_count"]
+    assert summary["pages"][0]["path"] == "/"
+    assert summary["pages"][1]["path"] == "/overview"
+    assert summary["default_route"] == "/overview"
+    assert Path(summary["artifact_root"]).name == "artifacts"
+    assert summary["artifact_inventory"]["artifact_root_exists"] is True
+    assert summary["artifact_inventory"]["run_result_roots"] >= 1
+    assert summary["artifact_inventory"]["report_markdown_roots"] >= 1
+    assert summary["artifact_inventory"]["runtime_submission_sidecars"] >= 1
+
+
+@pytest.mark.integration
 def test_workbench_server_main_prepares_prints_and_launches(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     from qcchem.workbench import server
 
@@ -833,7 +905,20 @@ def test_workbench_server_main_prepares_prints_and_launches(monkeypatch: pytest.
 
     def _fake_prepare(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
         events.append(("prepare", (host, port, debug)))
-        return fake_app, {"url": "http://0.0.0.0:9011", "pages": 2, "debug": True}
+        return fake_app, {
+            "url": "http://0.0.0.0:9011",
+            "pages": 2,
+            "default_route": "/overview",
+            "artifact_root": "/tmp/qcchem-artifacts",
+            "artifact_inventory": {
+                "run_result_roots": 1,
+                "benchmark_suites": 1,
+                "study_results": 1,
+                "scan_results": 1,
+                "hardware_campaigns": 1,
+            },
+            "debug": True,
+        }
 
     def _fake_launch(app: object, *, host: str, port: int, debug: bool) -> None:
         events.append(("launch", (app, host, port, debug)))
@@ -851,3 +936,4 @@ def test_workbench_server_main_prepares_prints_and_launches(monkeypatch: pytest.
     stdout = capsys.readouterr().out
     assert "QCchem workbench ready" in stdout
     assert "http://0.0.0.0:9011" in stdout
+    assert "/overview" in stdout

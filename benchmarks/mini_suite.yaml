@@ -1,0 +1,18 @@
+benchmark_suite:
+  name: mini_suite
+  description: Small regression suite for QCchem platform workflows.
+  registry_name: mini_suite
+  tags: [benchmark, mini]
+  cases:
+    - name: h2_exact_reference
+      kind: run
+      config: configs/h2_exact.yaml
+      expected_status: validated
+    - name: h2_shot_vqe
+      kind: run
+      config: configs/h2_shot.yaml
+      expected_status: unstable
+    - name: jw_bk_consistency_h2
+      kind: consistency
+      config: configs/h2_exact.yaml
+      expected_status: validated

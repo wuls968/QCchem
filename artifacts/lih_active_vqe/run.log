@@ -1,0 +1,13 @@
+2026-05-06 00:52:34,324 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_vqe.yaml
+2026-05-06 00:52:34,326 INFO Building electronic structure problem
+2026-05-06 00:52:34,353 INFO Applying mapping: jordan_wigner
+2026-05-06 00:52:34,369 INFO Prepared measurement plan: groups=9, cost=73737
+2026-05-06 00:52:34,369 INFO Preparing backend: shot_estimator
+2026-05-06 00:52:34,369 INFO Running solver: vqe
+2026-05-06 00:52:37,709 INFO Computing exact spectrum for 1 states
+2026-05-06 00:52:37,711 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_vqe/exact_result.json
+2026-05-06 00:52:38,203 INFO Collected repeated shot-based sampling statistics
+2026-05-06 00:52:38,203 INFO Computed empirical calibration: wall_time=3.340s, measured_cost=368685.0
+2026-05-06 00:52:38,207 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_vqe/result.json
+2026-05-06 00:52:38,208 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_vqe/report.md
+2026-05-06 00:52:38,209 INFO Run completed

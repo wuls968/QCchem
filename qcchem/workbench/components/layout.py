@@ -163,15 +163,15 @@ def page_focus(pathname: str | None) -> dict[str, object]:
         },
         "/ai-workspace": {
             "route_label": "AI Workspace",
-            "summary": "Plan-first assistant surface for drafting tickets, reviewing work lanes, and staging provider context without executing yet.",
+            "summary": "Evidence-first copilot surface for drafting tickets, reviewing work lanes, and carrying delivery history without breaking artifact authority.",
             "rail_title": "Keep agent work bounded",
-            "rail_note": "This workspace should frame requests as tickets first, then separate inbox, active work, and returned items before automation is trusted.",
-            "callout_title": "Draft before you dispatch",
-            "callout_body": "Use the floating copilot to shape requests into bounded tasks, then review them in the dedicated workspace before connecting persistence.",
+            "rail_note": "This workspace should read persisted evidence before it drafts conclusions, and it should keep inbox, running, returned, and delivery states visibly separate.",
+            "callout_title": "Interpret first, dispatch second",
+            "callout_body": "Use the floating copilot to pull claim, trust tier, and recommended action into the ticket review flow before you let execution or delivery advance.",
             "checklist": [
                 ("Draft", "A bounded task request"),
                 ("Review", "Inbox, running, and returned lanes"),
-                ("Delay", "Persistence and execution wiring until Task 6"),
+                ("Inspect", "Delivery history and review state"),
             ],
         },
     }
@@ -187,16 +187,16 @@ def build_context_bar() -> html.Header:
             html.Div(
                 className="qcchem-context-bar__identity",
                 children=[
-                    html.P("QCchem Visual Workbench", className="qcchem-context-bar__eyebrow"),
-                    html.H1("Scientific Atelier", className="qcchem-context-bar__title"),
+                    html.P("QCchem Evidence Console", className="qcchem-context-bar__eyebrow"),
+                    html.H1("Evidence Workbench", className="qcchem-context-bar__title"),
                     html.P(
-                        "A chemistry-first interpretation shell for runs, studies, scans, benchmark evidence, and hardware-backed claims.",
+                        "Defended chemistry evidence, runtime provenance, and reduction decisions stay legible as you move from single-run review to campaign-scale comparison.",
                         className="qcchem-context-bar__subtitle",
                     ),
                     html.Div(
                         className="qcchem-context-bar__route",
                         children=[
-                            html.P("Current Focus", className="qcchem-context-bar__route-eyebrow"),
+                            html.P("Active route", className="qcchem-context-bar__route-eyebrow"),
                             html.H3(default_focus["route_label"], id="qcchem-context-current-route", className="qcchem-context-bar__route-title"),
                             html.P(default_focus["summary"], id="qcchem-context-current-summary", className="qcchem-context-bar__route-summary"),
                         ],
@@ -204,9 +204,9 @@ def build_context_bar() -> html.Header:
                     html.Div(
                         className="qcchem-context-bar__chips",
                         children=[
-                            html.Span("Validated / exploratory boundaries stay explicit", className="qcchem-context-bar__chip"),
-                            html.Span("Runtime evidence and provenance remain first-class", className="qcchem-context-bar__chip"),
-                            html.Span("Reports and workbench share one visual language", className="qcchem-context-bar__chip"),
+                            html.Span("Thresholds stay explicit", className="qcchem-context-bar__chip"),
+                            html.Span("Provenance precedes claims", className="qcchem-context-bar__chip"),
+                            html.Span("Campaign pages inherit report-grade language", className="qcchem-context-bar__chip"),
                         ],
                     ),
                 ],
@@ -214,10 +214,10 @@ def build_context_bar() -> html.Header:
             html.Div(
                 className="qcchem-context-bar__metrics",
                 children=[
-                    metric_card("Mode", "Workbench", "Visual research surface", tone="compact"),
-                    metric_card("Routes", str(route_count), "Scientific and aggregate pages", tone="compact"),
-                    metric_card("Focus", "Evidence-first UI", "Runtime, benchmark, and chemistry framing", tone="compact"),
-                    metric_card("Style", "Atelier + Atlas", "Soft scientific polish with strict structure", tone="compact"),
+                    metric_card("Mode", "Scientific software", "Workbench shell for chemistry review", tone="compact"),
+                    metric_card("Routes", str(route_count), "Single-run and aggregate evidence pages", tone="compact"),
+                    metric_card("Focus", "Defended evidence", "Chemistry, runtime, and confidence stay linked", tone="compact"),
+                    metric_card("Style", "Mission control", "Carbon discipline adapted to chemistry", tone="compact"),
                 ],
             ),
         ],
@@ -247,10 +247,10 @@ def build_research_navigator() -> html.Aside:
             html.Div(
                 className="qcchem-panel",
                 children=[
-                    html.P("Research Navigator", className="qcchem-panel__eyebrow"),
-                    html.H2("Atlas routes", className="qcchem-panel__title"),
+                    html.P("Navigation", className="qcchem-panel__eyebrow"),
+                    html.H2("Mission index", className="qcchem-panel__title"),
                     html.P(
-                        "Move between single-run interpretation, aggregate campaign views, and confidence surfaces without dropping the scientific thread.",
+                        "Move between single-run interpretation, aggregate campaign views, and confidence surfaces without losing the chemistry story.",
                         className="qcchem-panel__note",
                     ),
                     html.Nav(children=nav_links, className="qcchem-research-navigator__links"),
@@ -268,7 +268,7 @@ def build_interpretation_rail() -> html.Aside:
             html.Div(
                 className="qcchem-panel",
                 children=[
-                    html.P("Interpretation Rail", className="qcchem-panel__eyebrow"),
+                    html.P("Review protocol", className="qcchem-panel__eyebrow"),
                     html.H2("Reading guide", id="qcchem-rail-page-title", className="qcchem-panel__title"),
                     html.P(
                         default_focus["rail_note"],

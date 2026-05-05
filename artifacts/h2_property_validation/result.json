@@ -1,0 +1,291 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/h2_property_validation/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/h2_property_validation/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/h2_property_validation/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/h2_property_validation/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/h2_property_validation/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/h2_property_validation"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": null,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 6.661338147750939e-16,
+    "absolute_error_threshold": 1e-10,
+    "comparison_target": "exact_baseline",
+    "exact_available": true,
+    "exact_electronic_energy": -1.8572750302023784,
+    "exact_total_energy": -1.1373060357533986,
+    "meets_threshold": true,
+    "relative_error": 3.58661912717638e-16,
+    "relative_error_threshold": 1e-10,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.02030703899939379,
+    "electronic_energy": -1.8572750302023777,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.8572750302023784,
+    "hf_reference_energy": -1.1169989967540044,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "solver_energy": -1.8572750302023777,
+    "total_energy": -1.1373060357533982
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -1.8572750302023784,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.8572750302023784,
+    "source": "exact_diagonalization",
+    "total_energy": -1.1373060357533986
+  },
+  "excited_state_result": {
+    "enabled": true,
+    "method": "exact_spectrum",
+    "notes": [],
+    "states": [
+      {
+        "baseline": {
+          "source": "exact_spectrum"
+        },
+        "excitation_energy": 0.6009359571991276,
+        "reference_state_index": 0,
+        "solver_energy": -1.2563390730032507,
+        "solver_metadata": {
+          "requested_method": "exact_spectrum"
+        },
+        "state_index": 1,
+        "total_energy": -0.536370078554271,
+        "verification_status": "validated"
+      }
+    ],
+    "verification_status": "validated"
+  },
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from configs/h2_property_validation.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Computing exact spectrum for 2 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_property_validation/exact_result.json",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/h2_property_validation/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_property_validation/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 36,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 15
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "noise_model": null,
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "molecule_name": "H2-property-validation",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": []
+  },
+  "property_result": {
+    "enabled": true,
+    "properties": [
+      {
+        "components": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -1.5553216492492083e-09
+        },
+        "implementation_status": "validated",
+        "method": "exact_expectation",
+        "notes": [
+          "Computed from exact eigenstate expectation values and nuclear dipole correction."
+        ],
+        "property_name": "dipole_moment",
+        "provenance": {
+          "source": "exact_expectation",
+          "statevector_source": "exact_spectrum",
+          "validated_scope": "ground_state_dipole_path"
+        },
+        "state_indices": [
+          0
+        ],
+        "units": "a.u.",
+        "value": 1.5553216492492083e-09
+      },
+      {
+        "components": {
+          "x": -0.0,
+          "y": -0.0,
+          "z": 3.4695619606342283e-16
+        },
+        "implementation_status": "exploratory",
+        "method": "exact_transition",
+        "notes": [
+          "Computed from exact transition matrix elements.",
+          "QCchem currently treats transition dipole reporting as exploratory."
+        ],
+        "property_name": "transition_dipole",
+        "provenance": {
+          "source": "exact_transition_expectation",
+          "statevector_source": "exact_spectrum",
+          "validated_scope": "exploratory_transition_property"
+        },
+        "state_indices": [
+          0,
+          1
+        ],
+        "units": "a.u.",
+        "value": 3.489855521915478e-16
+      },
+      {
+        "components": {
+          "excitation_energy": 0.6009359571991277,
+          "transition_dipole_magnitude": 3.489855521915478e-16
+        },
+        "implementation_status": "exploratory",
+        "method": "exact_transition",
+        "notes": [
+          "Derived from exact-spectrum excitation energy and transition-dipole magnitude.",
+          "QCchem currently treats oscillator strength reporting as exploratory."
+        ],
+        "property_name": "oscillator_strength",
+        "provenance": {
+          "depends_on": [
+            "transition_dipole",
+            "excitation_energy"
+          ],
+          "source": "exact_transition_derived",
+          "validated_scope": "exploratory_transition_property"
+        },
+        "state_indices": [
+          0,
+          1
+        ],
+        "units": "a.u.",
+        "value": 4.879236031156257e-32
+      }
+    ],
+    "verification_status": "exploratory"
+  },
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 59,
+    "source_config": "configs/h2_property_validation.yaml",
+    "timestamp": "2026-04-11T06:55:11.272240+00:00",
+    "wall_time_seconds": 0.16796791600063443,
+    "workspace_dirty": true
+  },
+  "reduction_audit": {
+    "active_space_metadata": null,
+    "constant_energy_correction": 0.0,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "original_num_particles": [
+      1,
+      1
+    ],
+    "original_num_spatial_orbitals": 2,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 2,
+    "total_constant_correction": 0.7199689944489797,
+    "transformers_applied": []
+  },
+  "run_id": "h2_property_validation",
+  "runtime_options": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.4-alpha",
+  "variational_result": null,
+  "verification_status": "validated"
+}

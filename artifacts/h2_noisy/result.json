@@ -1,0 +1,354 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/h2_noisy/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/h2_noisy/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/h2_noisy/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/h2_noisy/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/h2_noisy/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/h2_noisy"
+  },
+  "backend": {
+    "abelian_grouping": false,
+    "kind": "shot_estimator",
+    "noise_enabled": true,
+    "precision": null,
+    "repetitions": 5,
+    "runtime_enabled": true,
+    "seed": 515,
+    "shots": 2048
+  },
+  "backend_capability": {
+    "backend_kind": "shot_estimator",
+    "batch_ready": true,
+    "exact_baseline": true,
+    "mitigation_ready": true,
+    "noise_model_ready": true,
+    "runtime_ready": true,
+    "session_ready": true,
+    "shot_based": true,
+    "statevector": false,
+    "supports_confidence_metrics": true,
+    "supports_grouping": false,
+    "supports_repetitions": true
+  },
+  "benchmark": {
+    "absolute_error": 0.418933604382828,
+    "absolute_error_threshold": 0.5,
+    "comparison_target": "sampled_result",
+    "exact_available": true,
+    "exact_electronic_energy": -1.8572750302023806,
+    "exact_total_energy": -1.1373060357534008,
+    "meets_threshold": true,
+    "relative_error": 0.22556357974466404,
+    "relative_error_threshold": 0.5,
+    "statistical_error": 0.006729326843845989,
+    "within_uncertainty": false
+  },
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": 0.3748171397390391,
+    "electronic_energy": -1.462150851463945,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.8572750302023806,
+    "hf_reference_energy": -1.1169989967540044,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "solver_energy": -1.462150851463945,
+    "total_energy": -0.7421818570149653
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -1.8572750302023806,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.8572750302023806,
+    "source": "exact_diagonalization",
+    "total_energy": -1.1373060357534008
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": true,
+    "confidence_rule": "exact baseline preferred and repeated sampling mandatory",
+    "default_repetitions": 7,
+    "default_shots": 16384,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check and readout-mitigation placeholders enabled",
+    "name": "hardware_ready",
+    "noise_ready_expected": true,
+    "runtime_ready_expected": true,
+    "session_ready_expected": true
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from configs/h2_noisy.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Preparing backend: shot_estimator",
+      "Running solver: vqe",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_noisy/exact_result.json",
+      "Collected repeated shot-based sampling statistics",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/h2_noisy/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_noisy/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 36,
+    "kind": "jordan_wigner",
+    "num_qubits": 4,
+    "qubit_term_count": 15
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": true,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "noise_model": {
+    "basis_gates": [
+      "cx",
+      "cz",
+      "ecr",
+      "id",
+      "rx",
+      "ry",
+      "rz",
+      "sx",
+      "u",
+      "u1",
+      "u2",
+      "u3",
+      "x"
+    ],
+    "enabled": true,
+    "local_simulation": true,
+    "model_kind": "aer_noise_model",
+    "parameters": {
+      "depolarizing_probability_1q": 0.001,
+      "depolarizing_probability_2q": 0.01,
+      "readout_error_probability": 0.02
+    },
+    "profile": "depolarizing_readout",
+    "provenance": {
+      "applied": true,
+      "source": "qcchem.local_noise_model_suite",
+      "validated_scope": "exploratory_noisy_local_execution"
+    }
+  },
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "molecule_name": "H2-noisy",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": []
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 515,
+    "source_config": "configs/h2_noisy.yaml",
+    "timestamp": "2026-04-11T06:58:28.227581+00:00",
+    "wall_time_seconds": 2.738744582995423,
+    "workspace_dirty": true
+  },
+  "reduction_audit": {
+    "active_space_metadata": null,
+    "constant_energy_correction": 0.0,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7199689944489797
+    },
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "original_num_particles": [
+      1,
+      1
+    ],
+    "original_num_spatial_orbitals": 2,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 2,
+    "total_constant_correction": 0.7199689944489797,
+    "transformers_applied": []
+  },
+  "run_id": "h2_noisy",
+  "runtime_options": {
+    "batch_ready": true,
+    "enabled": true,
+    "instance": null,
+    "options": {
+      "optimization_level": 1,
+      "resilience_level": 0
+    },
+    "provenance": {
+      "adapter": "runtime_ready_placeholder",
+      "batch_mode_requested": true,
+      "remote_execution_configured": false,
+      "session_mode_requested": true
+    },
+    "runtime_ready": true,
+    "service": "local_aer",
+    "session_ready": true
+  },
+  "sampled_result": {
+    "available": true,
+    "backend_kind": "shot_estimator",
+    "confidence_interval_high": -1.4251519452056145,
+    "confidence_interval_low": -1.4515309064334907,
+    "num_repeats": 5,
+    "repeat_metadata": [
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "noise_enabled": true,
+        "noise_profile": "depolarizing_readout",
+        "precision": 0.022097086912079608,
+        "runtime_service": "local_aer",
+        "shots": 2049,
+        "target_precision": 0.022097086912079608
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "noise_enabled": true,
+        "noise_profile": "depolarizing_readout",
+        "precision": 0.022097086912079608,
+        "runtime_service": "local_aer",
+        "shots": 2049,
+        "target_precision": 0.022097086912079608
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "noise_enabled": true,
+        "noise_profile": "depolarizing_readout",
+        "precision": 0.022097086912079608,
+        "runtime_service": "local_aer",
+        "shots": 2049,
+        "target_precision": 0.022097086912079608
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "noise_enabled": true,
+        "noise_profile": "depolarizing_readout",
+        "precision": 0.022097086912079608,
+        "runtime_service": "local_aer",
+        "shots": 2049,
+        "target_precision": 0.022097086912079608
+      },
+      {
+        "abelian_grouping": false,
+        "circuit_metadata": {},
+        "noise_enabled": true,
+        "noise_profile": "depolarizing_readout",
+        "precision": 0.022097086912079608,
+        "runtime_service": "local_aer",
+        "shots": 2049,
+        "target_precision": 0.022097086912079608
+      }
+    ],
+    "repeat_reported_stds": [
+      0.035315472627438005,
+      0.035213530486383246,
+      0.03528190808726627,
+      0.03527177880444076,
+      0.035375916796886106
+    ],
+    "repeat_seeds": [
+      100515,
+      100516,
+      100517,
+      100518,
+      100519
+    ],
+    "repeat_solver_energies": [
+      -1.4254065536016778,
+      -1.4554611729094895,
+      -1.447784785269794,
+      -1.4200547607149034,
+      -1.4429998566018991
+    ],
+    "sampled_electronic_energy_mean": -1.4383414258195526,
+    "sampled_solver_energy_mean": -1.4383414258195526,
+    "sampled_solver_energy_std": 0.015047232265653743,
+    "sampled_total_energy_mean": -0.7183724313705729,
+    "seed": 515,
+    "shots": 2049,
+    "standard_error": 0.006729326843845989
+  },
+  "schema_version": "qcchem.result.v0.4-alpha",
+  "variational_result": {
+    "ansatz": {
+      "entanglement": "full",
+      "entanglement_blocks": "cz",
+      "kind": "uccsd",
+      "reps": 1,
+      "rotation_blocks": [
+        "ry",
+        "rz"
+      ]
+    },
+    "available": true,
+    "converged": true,
+    "evaluations": 30,
+    "final_objective_energy": -1.462150851463945,
+    "initial_point_strategy": "zeros",
+    "iterations": 30,
+    "optimal_parameters": [
+      -0.08960829720330511,
+      -0.071945175569005,
+      -0.2220230726403659
+    ],
+    "optimizer": {
+      "kind": "COBYLA",
+      "maxiter": 40,
+      "tol": null
+    },
+    "optimizer_message": "Return from COBYLA because the trust region radius reaches its lower bound.",
+    "parameter_count": 3,
+    "solver_kind": "vqe"
+  },
+  "verification_status": "unstable"
+}

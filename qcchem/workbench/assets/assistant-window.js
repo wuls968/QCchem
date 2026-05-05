@@ -1,31 +1,31 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const root = document.getElementById("qcchem-ai-assistant-window");
-  const dragHandle = document.getElementById("qcchem-ai-assistant-drag-handle");
-  const resizeHandle = document.getElementById("qcchem-ai-assistant-resize-handle");
-  const body = document.getElementById("qcchem-ai-assistant-body");
-  const providerDrawer = document.getElementById("qcchem-ai-provider-drawer");
-
-  if (!root || !dragHandle || !resizeHandle || !body || !providerDrawer) {
-    return;
-  }
-
+(() => {
   const STORAGE_KEY = "qcchem.ai.assistantWindow.v1";
   const EDGE_MARGIN = 12;
   const MIN_WIDTH = 320;
   const MIN_HEIGHT = 280;
+  const COMPACT_MIN_HEIGHT = 72;
   const MAX_WIDTH_PADDING = 24;
-  const MAX_HEIGHT_PADDING = 24;
+  const SAFE_TOP = 84;
+
+  let initialized = false;
+  let shellState = null;
+  let expandedHeight = null;
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+  const safeViewportTop = () => Math.max(SAFE_TOP, (window.visualViewport?.offsetTop || 0) + 56);
+
+  const minWindowWidth = () => Math.min(MIN_WIDTH, Math.max(260, window.innerWidth - EDGE_MARGIN * 2));
+
   const measureDefaultState = () => {
     const width = Math.min(440, window.innerWidth - 48);
-    const height = Math.min(620, window.innerHeight - 64);
+    const top = safeViewportTop();
+    const height = Math.min(620, Math.max(MIN_HEIGHT, window.innerHeight - top - 24));
     return {
       width,
       height,
       left: Math.max(EDGE_MARGIN, window.innerWidth - width - 28),
-      top: Math.max(24, window.innerHeight - height - 28),
+      top: Math.max(top, window.innerHeight - height - 28),
     };
   };
 
@@ -54,112 +54,175 @@ document.addEventListener("DOMContentLoaded", () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   };
 
-  const applyState = (state) => {
-    const maxWidth = Math.max(MIN_WIDTH, window.innerWidth - MAX_WIDTH_PADDING);
-    const maxHeight = Math.max(MIN_HEIGHT, window.innerHeight - MAX_HEIGHT_PADDING);
-    const width = clamp(state.width, MIN_WIDTH, maxWidth);
-    const height = clamp(state.height, MIN_HEIGHT, maxHeight);
-    const left = clamp(state.left, EDGE_MARGIN, window.innerWidth - width - EDGE_MARGIN);
-    const top = clamp(state.top, EDGE_MARGIN, window.innerHeight - height - EDGE_MARGIN);
+  const boot = () => {
+    if (initialized) {
+      return true;
+    }
 
-    const nextState = { left, top, width, height };
+    const root = document.getElementById("qcchem-ai-assistant-window");
+    const dragHandle = document.getElementById("qcchem-ai-assistant-drag-handle");
+    const resizeHandle = document.getElementById("qcchem-ai-assistant-resize-handle");
+    const resetButton = document.getElementById("qcchem-ai-assistant-reset-position");
+    const body = document.getElementById("qcchem-ai-assistant-body");
+    const providerDrawer = document.getElementById("qcchem-ai-provider-drawer");
 
-    root.style.left = `${left}px`;
-    root.style.top = `${top}px`;
-    root.style.width = `${width}px`;
-    root.style.height = `${height}px`;
-    root.style.right = "auto";
-    root.style.bottom = "auto";
+    if (!root || !dragHandle || !resizeHandle || !body || !providerDrawer) {
+      return false;
+    }
 
-    persistState(nextState);
-    return nextState;
-  };
+    const applyState = (state, options = {}) => {
+      const minHeight = options.allowCompactHeight ? COMPACT_MIN_HEIGHT : MIN_HEIGHT;
+      const minTop = safeViewportTop();
+      const minWidth = minWindowWidth();
+      const maxWidth = Math.max(minWidth, window.innerWidth - MAX_WIDTH_PADDING);
+      const maxHeight = Math.max(minHeight, window.innerHeight - minTop - EDGE_MARGIN);
+      const width = clamp(state.width, minWidth, maxWidth);
+      const height = clamp(state.height, minHeight, maxHeight);
+      const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - width - EDGE_MARGIN);
+      const maxTop = Math.max(minTop, window.innerHeight - height - EDGE_MARGIN);
+      const left = clamp(state.left, EDGE_MARGIN, maxLeft);
+      const top = clamp(state.top, minTop, maxTop);
 
-  let shellState = applyState(readPersistedState() || measureDefaultState());
-  let expandedHeight = shellState.height;
-
-  const beginPointerInteraction = ({
-    event,
-    cursor,
-    onMove,
-  }) => {
-    event.preventDefault();
-    const startX = event.clientX;
-    const startY = event.clientY;
-    document.body.style.cursor = cursor;
-    root.style.transition = "none";
-
-    const move = (moveEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-      shellState = applyState(onMove(shellState, deltaX, deltaY));
+      const nextState = { left, top, width, height };
+      root.style.left = `${left}px`;
+      root.style.top = `${top}px`;
+      root.style.width = `${width}px`;
+      root.style.height = `${height}px`;
+      root.style.right = "auto";
+      root.style.bottom = "auto";
+      persistState(nextState);
+      return nextState;
     };
 
-    const end = () => {
-      document.body.style.cursor = "";
-      root.style.transition = "";
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", end);
-    };
+    shellState = applyState(readPersistedState() || measureDefaultState());
+    expandedHeight = shellState.height;
 
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", end);
-  };
+    const compactWindowHeight = () =>
+      dragHandle.offsetHeight + resizeHandle.offsetHeight + (providerDrawer.hasAttribute("hidden") ? 18 : providerDrawer.offsetHeight + 24);
 
-  dragHandle.addEventListener("pointerdown", (event) => {
-    beginPointerInteraction({
-      event,
-      cursor: "grabbing",
-      onMove: (state, deltaX, deltaY) => ({
-        ...state,
-        left: state.left + deltaX,
-        top: state.top + deltaY,
-      }),
-    });
-  });
-
-  resizeHandle.addEventListener("pointerdown", (event) => {
-    beginPointerInteraction({
-      event,
-      cursor: "nwse-resize",
-      onMove: (state, deltaX, deltaY) => ({
-        ...state,
-        width: state.width + deltaX,
-        height: state.height + deltaY,
-      }),
-    });
-  });
-
-  window.addEventListener("resize", () => {
-    shellState = applyState(shellState);
-  });
-
-  const syncMinimizedState = () => {
-    const bodyHidden = body.hasAttribute("hidden");
-    const drawerHidden = providerDrawer.hasAttribute("hidden");
-    if (bodyHidden) {
+    const resetToDefaultState = () => {
+      shellState = applyState(measureDefaultState());
       expandedHeight = shellState.height;
-      const compactHeight = dragHandle.offsetHeight + resizeHandle.offsetHeight + (drawerHidden ? 18 : providerDrawer.offsetHeight + 24);
-      shellState = applyState({
-        ...shellState,
-        height: compactHeight,
+      if (body.hasAttribute("hidden")) {
+        shellState = applyState(
+          {
+            ...shellState,
+            height: compactWindowHeight(),
+          },
+          { allowCompactHeight: true },
+        );
+        root.dataset.minimized = "true";
+        return;
+      }
+      root.dataset.minimized = "false";
+    };
+
+    const beginPointerInteraction = ({ event, cursor, onMove }) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const origin = { ...shellState };
+      document.body.style.cursor = cursor;
+      root.style.transition = "none";
+
+      const move = (moveEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const deltaY = moveEvent.clientY - startY;
+        shellState = applyState(onMove(origin, deltaX, deltaY));
+      };
+
+      const end = () => {
+        document.body.style.cursor = "";
+        root.style.transition = "";
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", end);
+      };
+
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", end);
+    };
+
+    dragHandle.addEventListener("pointerdown", (event) => {
+      beginPointerInteraction({
+        event,
+        cursor: "grabbing",
+        onMove: (origin, deltaX, deltaY) => ({
+          ...origin,
+          left: origin.left + deltaX,
+          top: origin.top + deltaY,
+        }),
       });
-      root.dataset.minimized = "true";
-      return;
-    }
-    root.dataset.minimized = "false";
-    if (shellState.height < expandedHeight) {
-      shellState = applyState({
-        ...shellState,
-        height: expandedHeight,
+    });
+
+    dragHandle.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      resetToDefaultState();
+    });
+
+    if (resetButton) {
+      resetButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        resetToDefaultState();
       });
     }
+
+    resizeHandle.addEventListener("pointerdown", (event) => {
+      beginPointerInteraction({
+        event,
+        cursor: "nwse-resize",
+        onMove: (origin, deltaX, deltaY) => ({
+          ...origin,
+          width: origin.width + deltaX,
+          height: origin.height + deltaY,
+        }),
+      });
+    });
+
+    const syncMinimizedState = () => {
+      const bodyHidden = body.hasAttribute("hidden");
+      if (bodyHidden) {
+        expandedHeight = Math.max(expandedHeight || 0, shellState.height);
+        shellState = applyState({
+          ...shellState,
+          height: compactWindowHeight(),
+        }, { allowCompactHeight: true });
+        root.dataset.minimized = "true";
+        return;
+      }
+      root.dataset.minimized = "false";
+      if (shellState.height < expandedHeight) {
+        shellState = applyState({
+          ...shellState,
+          height: expandedHeight,
+        });
+      }
+    };
+
+    const stateObserver = new MutationObserver(() => {
+      syncMinimizedState();
+    });
+    stateObserver.observe(body, { attributes: true, attributeFilter: ["hidden"] });
+    stateObserver.observe(providerDrawer, { attributes: true, attributeFilter: ["hidden"] });
+
+    window.addEventListener("resize", () => {
+      shellState = applyState(shellState);
+    });
+
+    syncMinimizedState();
+    initialized = true;
+    return true;
   };
 
-  const observer = new MutationObserver(() => {
-    syncMinimizedState();
+  const mountObserver = new MutationObserver(() => {
+    if (boot()) {
+      mountObserver.disconnect();
+    }
   });
-  observer.observe(body, { attributes: true, attributeFilter: ["hidden"] });
-  observer.observe(providerDrawer, { attributes: true, attributeFilter: ["hidden"] });
-  syncMinimizedState();
-});
+
+  if (!boot()) {
+    mountObserver.observe(document.body, { childList: true, subtree: true });
+    window.requestAnimationFrame(() => {
+      boot();
+    });
+  }
+})();

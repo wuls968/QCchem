@@ -1,0 +1,22 @@
+{
+  "absolute_error": null,
+  "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_optimizer_stability",
+  "expected_status": "validated",
+  "kind": "optimizer_stability",
+  "metrics": {
+    "energies": {
+      "COBYLA": -1.1373060346310058,
+      "SLSQP": -1.13730603569591
+    },
+    "spread": 1.0649041648491675e-09,
+    "statuses": {
+      "COBYLA": "validated",
+      "SLSQP": "validated"
+    }
+  },
+  "name": "h2_optimizer_stability",
+  "notes": [],
+  "relative_error": null,
+  "status": "validated",
+  "total_energy": null
+}

@@ -1,0 +1,136 @@
+molecule:
+  name: LiH-active-shot-runtime-ready-compressed
+  geometry:
+  - symbol: Li
+    coords:
+    - 0.0
+    - 0.0
+    - 0.0
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 1.6
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+problem:
+  active_space:
+    num_electrons: 2
+    num_spatial_orbitals: 2
+    active_orbitals:
+    - 1
+    - 2
+    selection_mode: manual
+    auto:
+      enabled: false
+      strategy: frontier_orbitals
+      num_occupied: 1
+      num_virtual: 1
+  freeze_core: true
+  remove_orbitals: []
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 0.001
+    max_rank: 2
+    apply_to_solver: false
+    execution_enabled: true
+  measurement:
+    strategy: low_rank_commuting
+    runtime_precision_target: 0.005
+    execution_mode: runtime_estimator
+    grouping_policy: commuting_low_rank
+  embedding:
+    enabled: false
+    method: dmet_skeleton
+    bath_threshold: 0.05
+    solver_plugin: placeholder_fragment_solver
+    fragments: []
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: shot_estimator
+  shots: 4096
+  precision: null
+  seed: 109
+  repetitions: 3
+  abelian_grouping: true
+  noise:
+    enabled: false
+    profile: none
+    depolarizing_probability_1q: 0.0
+    depolarizing_probability_2q: 0.0
+    readout_error_probability: 0.0
+    basis_gates: []
+  runtime:
+    enabled: true
+    service: ibm_quantum_platform
+    instance: null
+    runtime_ready: true
+    session_ready: true
+    batch_ready: true
+    precision_target: 0.005
+    resilience_level: 1
+    grouping_policy: commuting_low_rank
+    options:
+      optimizer_mode: precision
+      low_rank_workload: true
+      session_mode: recommended
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 80
+    tol: null
+  ansatz:
+    kind: uccsd
+    rotation_blocks:
+    - ry
+    - rz
+    entanglement_blocks: cz
+    entanglement: full
+    reps: 1
+    skip_final_rotation_layer: false
+  initial_point: zeros
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 0.02
+  relative_error_threshold: 0.02
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: placeholder
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+policy:
+  name: publication
+tasks:
+  excited_state:
+    enabled: false
+    method: exact_spectrum
+    num_states: 2
+    state_indices:
+    - 1
+  properties: []
+  perturbative_correction:
+    enabled: false
+    method: nevpt2
+    plugin: pyscf
+    root: 0
+run:
+  seed: 109
+  output_dir: artifacts/lih_active_shot_runtime_ready_compressed
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true

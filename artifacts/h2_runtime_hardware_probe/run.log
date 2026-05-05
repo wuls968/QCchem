@@ -1,0 +1,14 @@
+2026-04-17 14:51:57,949 INFO Loading config from configs/h2_runtime_hardware_probe.yaml
+2026-04-17 14:51:57,953 INFO Building electronic structure problem
+2026-04-17 14:51:57,975 INFO Applying mapping: jordan_wigner
+2026-04-17 14:51:57,988 INFO Prepared measurement plan: groups=5, cost=2000
+2026-04-17 14:51:57,988 INFO Prepared runtime policy snapshot for service=ibm_quantum_platform
+2026-04-17 14:51:57,988 INFO Preparing backend: statevector
+2026-04-17 14:51:57,988 INFO Running solver: vqe
+2026-04-17 14:51:58,487 INFO Computing exact spectrum for 1 states
+2026-04-17 14:51:58,488 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/exact_result.json
+2026-04-17 14:51:58,489 INFO Computed empirical calibration: wall_time=0.499s, measured_cost=None
+2026-04-17 14:52:57,727 INFO Runtime submission attempt recorded: submitted
+2026-04-17 14:52:57,729 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/result.json
+2026-04-17 14:52:57,731 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_runtime_hardware_probe/report.md
+2026-04-17 14:52:57,732 INFO Run completed

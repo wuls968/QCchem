@@ -174,6 +174,18 @@ def test_run_report_includes_cover_hero_and_runtime_accuracy_frames(tmp_path: Pa
 
 
 @pytest.mark.integration
+def test_run_report_only_lists_explicitly_available_assessments(tmp_path: Path) -> None:
+    payload = _sample_run_payload(tmp_path)
+    payload["chemical_accuracy"]["available"] = False
+    payload["runtime_chemical_accuracy"]["available"] = True
+
+    report = render_markdown_report(payload)
+
+    assert "available_assessments: `['runtime_derived']`" in report
+    assert "best_available_assessment: `runtime_derived`" in report
+
+
+@pytest.mark.integration
 def test_benchmark_report_highlights_best_case_and_distance_to_chemical_accuracy() -> None:
     report = render_benchmark_report(_sample_benchmark_payload())
 

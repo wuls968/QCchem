@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from dash import dcc, html
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from qcchem.workbench.components.cards import callout_card, detail_card, metric_card
+from qcchem.core.ai_workspace import AI_WORKSPACE_TICKET_LANE_INBOX, AI_WORKSPACE_TICKET_LANE_RETURNED
+from qcchem.workflow.ai_store import list_ticket_records, workspace_root
+from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
+from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.components.molecule import build_molecule_viewer
+from qcchem.workbench.evidence_console import build_evidence_console_model, format_action_label
+from qcchem.workbench.theme import THEME
 from qcchem.workbench.viewmodels import build_run_view_model
 
 SAMPLE_MOLECULE_PAYLOAD: dict[str, Any] = {
@@ -104,6 +110,12 @@ SAMPLE_RUN_PAYLOAD: dict[str, Any] = {
         "absolute_error_hartree": 0.0142,
         "threshold_hartree": 0.0016,
     },
+    "evidence_summary": {
+        "primary_scientific_claim": "LiH compressed active-space workflow remains the leading defended local claim in the current campaign.",
+        "trust_tier": "validated",
+        "recommended_action": "review_runtime_gap",
+        "decision_worthiness": {"why": ["runtime-derived path still sits above the chemical-accuracy line."]},
+    },
 }
 
 
@@ -139,37 +151,103 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
     figure.add_bar(
         x=["Compressed VQE"],
         y=[total_energy],
-        marker_color=["#9a6b3f"],
+        marker={
+            "color": [THEME["accent"]["copper"]],
+            "line": {"color": THEME["surface"]["paper"], "width": 1.4},
+        },
+        text=[f"{total_energy:.4f}"],
+        textposition="outside",
+        hovertemplate="Total energy: %{y:.4f} Ha<extra></extra>",
         row=1,
         col=1,
     )
     figure.add_bar(
         x=["Benchmark absolute error", "Runtime absolute error"],
         y=[absolute_error, runtime_absolute_error],
-        marker_color=["#20334a", "#93a18a"],
+        marker={
+            "color": [THEME["accent"]["deep_blue"], THEME["accent"]["sage"]],
+            "line": {"color": THEME["surface"]["paper"], "width": 1.4},
+        },
+        text=[f"{absolute_error:.4f}", f"{runtime_absolute_error:.4f}"],
+        textposition="outside",
+        hovertemplate="%{x}: %{y:.4f} Ha<extra></extra>",
+        row=2,
+        col=1,
+    )
+    figure.add_hrect(
+        y0=0,
+        y1=threshold,
+        fillcolor="rgba(49, 95, 74, 0.08)",
+        line_width=0,
         row=2,
         col=1,
     )
     figure.add_hline(
         y=threshold,
         line_dash="dash",
-        line_color="#46607a",
+        line_color=THEME["status"]["informational"],
         annotation_text="Threshold",
         annotation_position="top right",
         row=2,
         col=1,
     )
-    figure.update_layout(
-        title={"text": "Energy and absolute-error evidence across the current evidence stack", "x": 0.04},
-        paper_bgcolor="#fffaf3",
-        plot_bgcolor="#fffaf3",
-        margin={"l": 36, "r": 20, "t": 84, "b": 40},
-        font={"color": "#2d2216"},
-        showlegend=False,
+    apply_chart_theme(
+        figure,
+        title="Energy and absolute-error evidence across the current evidence stack",
+        height=460,
     )
     figure.update_yaxes(title_text="Total energy (Hartree)", row=1, col=1)
     figure.update_yaxes(title_text="Absolute error (Hartree)", row=2, col=1)
+    figure.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0.99,
+        y=1.16,
+        xanchor="right",
+        yanchor="top",
+        showarrow=False,
+        align="right",
+        bgcolor="rgba(255, 250, 243, 0.88)",
+        bordercolor=THEME["surface"]["line"],
+        borderwidth=1,
+        font={"size": 11, "color": THEME["text"]["secondary"]},
+        text=f"Runtime gap to target: {max(runtime_absolute_error - threshold, 0.0):.4f} Ha",
+    )
     return figure
+
+
+def _status_tone(value: object) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in {"validated", "passed", "retrieved_result", "result_retrieved", "success", "succeeded"}:
+        return "validated"
+    if normalized in {"submitted", "queued", "running", "exploratory", "review"}:
+        return "exploratory"
+    if normalized in {"failed", "unstable", "not met", "error"}:
+        return "unstable"
+    return "informational"
+
+
+def _overview_threshold(view: dict[str, Any], benchmark: dict[str, Any]) -> float:
+    return float(
+        (
+            view.get("confidence", {}).get("chemical_accuracy") or {}
+        ).get("threshold_hartree")
+        or view.get("confidence", {}).get("threshold")
+        or benchmark.get("threshold")
+        or 0.02
+    )
+
+
+def _workspace_snapshot() -> dict[str, int]:
+    root = workspace_root(Path.cwd(), create=False)
+    inbox = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_INBOX)
+    returned = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)
+    pending_analysis = [ticket for ticket in inbox if str(ticket.get("task_type", "")).lower() == "analysis"]
+    return {
+        "pending_analysis": len(pending_analysis),
+        "returned": len(returned),
+        "inbox": len(inbox),
+    }
 
 
 def build_overview_page(model: dict[str, Any]) -> html.Div:
@@ -179,47 +257,173 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     compression = view.get("compression") or {}
     mapping = view.get("mapping") or {}
     benchmark = view.get("benchmark") or {}
+    confidence = view.get("confidence") or {}
+    evidence_summary = view.get("evidence_summary") or {}
+    evidence_console = build_evidence_console_model(view)
+    workspace_snapshot = _workspace_snapshot()
+    chemical_accuracy = confidence.get("chemical_accuracy") or {}
+    runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
+    threshold = _overview_threshold(view, benchmark)
+    chemical_available = bool(chemical_accuracy.get("available"))
+    chemical_met = chemical_accuracy.get("meets_chemical_accuracy")
+    chemical_value = "Met" if chemical_met else "Not met" if chemical_available else "Unavailable"
+    chemical_observed_error = float(chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
+    runtime_status_raw = (
+        view.get("runtime", {}).get("verification_status")
+        or confidence.get("verification_status")
+        or view.get("runtime", {}).get("result_provenance", {}).get("attempt_stage")
+        or "unknown"
+    )
+    runtime_status_label = str(runtime_status_raw).replace("_", " ").title()
+    runtime_gap = float(runtime_chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
     return html.Div(
         className="qcchem-page qcchem-page--overview",
-        style={"display": "grid", "gap": "1.25rem"},
         children=[
             html.Section(
-                className="qcchem-card",
-                style={"padding": "1.75rem", "background": "linear-gradient(135deg, rgba(255,250,243,0.96), rgba(217,236,244,0.62))"},
+                className="qcchem-card qcchem-overview__hero",
                 children=[
-                    html.P("Run Atlas", className="qcchem-card-eyebrow"),
-                    html.H2("Campaign Overview", className="qcchem-card-title", style={"fontSize": "2.3rem", "marginBottom": "0.6rem"}),
+                    html.P("Evidence Console v2", className="qcchem-card-eyebrow"),
+                    html.H1("Campaign Overview", className="qcchem-card-title qcchem-overview__hero-title"),
                     html.P(
-                        "A scientific landing page for the current LiH active-space campaign: structure context, compression posture, hardware execution readiness, and the error envelope we can currently defend.",
-                        className="qcchem-card-note",
-                        style={"maxWidth": "48rem", "lineHeight": "1.7"},
+                        "Lead with the claim you can defend now, then keep the chemistry window, reduction posture, and runtime provenance close enough to audit without opening another page.",
+                        className="qcchem-card-note qcchem-overview__hero-body",
                     ),
                     html.Div(
-                        style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(170px, 1fr))", "gap": "0.9rem", "marginTop": "1.25rem"},
+                        className="qcchem-overview__summary-grid",
                         children=[
-                            metric_card("Molecule", view["hero"]["molecule_name"], view["hero"]["basis"]),
-                            metric_card("Total energy", f'{view["hero"]["total_energy"]:.4f} Ha', "Compressed VQE estimate"),
-                            metric_card("Absolute error", f'{view["hero"]["absolute_error"]:.4f} Ha', "Against exact diagonalization"),
-                            metric_card("Hardware backend", view["runtime"]["backend_name"], view["runtime"]["job_id"]),
+                            metric_card(
+                                "Current defended claim",
+                                f'{view["hero"]["total_energy"]:.4f} Ha',
+                                (
+                                    f"{view['hero']['molecule_name']} | {view['hero'].get('primary_claim')}"
+                                    if view["hero"].get("primary_claim")
+                                    else f'{view["hero"]["molecule_name"]} in {view["hero"]["basis"]}'
+                                ),
+                            ),
+                            metric_card(
+                                "Benchmark gap",
+                                f'{view["hero"]["absolute_error"]:.4f} Ha',
+                                f'Against {benchmark.get("comparison_target", "exact diagonalization")}',
+                            ),
+                            status_card(
+                                "Chemical accuracy target",
+                                chemical_value,
+                                (
+                                    f"{chemical_observed_error:.4f} Ha observed versus {threshold:.4f} Ha target"
+                                    if chemical_available
+                                    else "The current artifact bundle does not publish a chemical-accuracy threshold."
+                                ),
+                                tone=_status_tone("validated" if chemical_met else "not met" if chemical_available else None),
+                            ),
+                            status_card(
+                                "Runtime evidence status",
+                                runtime_status_label,
+                                f'{view["runtime"]["backend_name"]} | {view["runtime"]["job_id"] or "job id unavailable"}',
+                                tone=_status_tone(runtime_status_raw),
+                            ),
+                            status_card(
+                                "Recommended action",
+                                str(evidence_summary.get("recommended_action", "review_evidence_boundary")),
+                                str((evidence_summary.get("decision_worthiness") or {}).get("why", "Evidence-guided next step.")),
+                                tone=_status_tone(confidence.get("trust_tier") or confidence.get("verification_status")),
+                            ),
                         ],
                     ),
                 ],
             ),
             html.Div(
-                style={"display": "grid", "gridTemplateColumns": "minmax(0, 1.2fr) minmax(280px, 0.8fr)", "gap": "1rem"},
+                className="qcchem-overview__summary-grid",
                 children=[
-                    html.Section(className="qcchem-card", children=[dcc.Graph(figure=_overview_figure(view), config={"displayModeBar": False})]),
-                    build_molecule_viewer(
-                        molecule_model,
-                        viewer_id="overview-molecule",
+                    status_card(
+                        "Evidence Console",
+                        str(evidence_console["best_evidence"]["trust_tier"]),
+                        str(evidence_console["best_evidence"]["claim"]),
+                        tone=_status_tone(evidence_console["best_evidence"]["trust_tier"]),
+                    ),
+                    metric_card(
+                        "Chemical accuracy gap",
+                        f'{float(evidence_console["trust_gap"]["chemical_accuracy_gap_hartree"]):.4f} Ha',
+                        f'Threshold {float(evidence_console["trust_gap"]["threshold_hartree"]):.4f} Ha',
+                    ),
+                    status_card(
+                        "Runtime boundary",
+                        str(evidence_console["runtime_boundary"]["submission_health"]).replace("_", " "),
+                        str(evidence_console["runtime_boundary"]["budget_note"]),
+                        tone=_status_tone(evidence_console["runtime_boundary"]["submission_health"]),
+                    ),
+                    metric_card(
+                        "Open AI work",
+                        str(evidence_console["open_tasks"]["total_open"]),
+                        f'{evidence_console["open_tasks"]["pending_analysis"]} pending analysis / {evidence_console["open_tasks"]["returned"]} returned',
+                    ),
+                    status_card(
+                        "Next action",
+                        format_action_label(evidence_console["best_evidence"]["recommended_action"]),
+                        "Use AI Workspace to turn this into a persistent analysis or execution ticket.",
+                        tone=_status_tone(evidence_console["best_evidence"]["trust_tier"]),
                     ),
                 ],
             ),
             html.Div(
-                style={"display": "grid", "gridTemplateColumns": "repeat(auto-fit, minmax(240px, 1fr))", "gap": "1rem"},
+                className="qcchem-overview__summary-grid",
+                children=[
+                    status_card(
+                        "Best Evidence Desk",
+                        str(evidence_summary.get("trust_tier", "validated")),
+                        str(
+                            evidence_summary.get(
+                                "primary_scientific_claim",
+                                "No primary scientific claim has been surfaced for this artifact.",
+                            )
+                        ),
+                        tone=_status_tone(evidence_summary.get("trust_tier")),
+                    ),
+                    metric_card(
+                        "Trust gap to close",
+                        f"{max(runtime_gap - threshold, 0.0):.4f} Ha",
+                        "Runtime-derived path still above the declared chemical-accuracy line.",
+                    ),
+                    metric_card(
+                        "Pending analysis",
+                        str(workspace_snapshot["pending_analysis"]),
+                        "Inbox analysis tickets still waiting for a defended interpretation pass.",
+                    ),
+                    status_card(
+                        "Recommended next action",
+                        str(evidence_summary.get("recommended_action", "review_evidence_boundary")),
+                        "Use this as the default next move unless a stronger artifact shifts the evidence stack.",
+                        tone=_status_tone(evidence_summary.get("trust_tier") or confidence.get("verification_status")),
+                    ),
+                ],
+            ),
+            html.Div(
+                className="qcchem-overview__analysis-grid",
+                children=[
+                    html.Section(
+                        className="qcchem-card qcchem-overview__chart-card",
+                        children=[
+                            html.P("Evidence trace", className="qcchem-card-eyebrow"),
+                            html.H2("How the claim compares to thresholds", className="qcchem-card-title"),
+                            html.P(
+                                "Keep the reported energy and the benchmark-versus-runtime gap in one frame so the opening judgment stays constrained by the evidence stack.",
+                                className="qcchem-card-note",
+                            ),
+                            dcc.Graph(figure=_overview_figure(view), config={"displayModeBar": False, "responsive": True}),
+                        ],
+                    ),
+                    build_molecule_viewer(
+                        molecule_model,
+                        viewer_id="overview-molecule",
+                        title="Structure context",
+                        caption="Structural anchor for the active-space decision and the downstream resource posture.",
+                    ),
+                ],
+            ),
+            html.Div(
+                className="qcchem-overview__detail-grid",
                 children=[
                     detail_card(
-                        "Scientific framing",
+                        "Decision summary",
                         [
                             (
                                 "Active space",
@@ -233,13 +437,40 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                                 "Mapping",
                                 f'{str(mapping.get("kind", "n/a")).replace("_", "-")} with {mapping.get("symmetry_tapered_qubits", 0)} tapered qubits',
                             ),
+                            (
+                                "Qubit operator",
+                                f'{mapping.get("num_qubits", "?")} qubits / {mapping.get("qubit_term_count", "?")} terms',
+                            ),
                             ("Confidence state", "Validated against threshold" if benchmark.get("meets_threshold") else "Threshold not yet met"),
                         ],
                     ),
+                    detail_card(
+                        "Execution posture",
+                        [
+                            ("Benchmark target", str(benchmark.get("comparison_target", "exact diagonalization"))),
+                            ("Threshold", f"{threshold:.4f} Ha"),
+                            ("Compressed vs uncompressed", str(benchmark.get("compressed_vs_uncompressed", "n/a"))),
+                            ("Runtime backing", f'{view["runtime"]["backend_name"]} / {runtime_status_label}'),
+                            ("Runtime gap", f"{runtime_gap:.4f} Ha"),
+                        ],
+                        eyebrow="Operational Posture",
+                    ),
                     callout_card(
-                        "Interpretation cue",
-                        "This overview is intentionally opinionated: the next pages explain why the orbital window was chosen, how compression changed the Hamiltonian footprint, and whether runtime evidence strengthens the claim.",
+                        "Next review path",
+                        "Use the structure page to defend the orbital window, the compression page to audit operator reduction, and the runtime page to decide whether backend evidence strengthens or constrains the claim.",
                         accent="copper",
+                        eyebrow="Interpretation",
+                    ),
+                    detail_card(
+                        "Operations queue",
+                        [
+                            ("Inbox tickets", str(workspace_snapshot["inbox"])),
+                            ("Pending analysis", str(workspace_snapshot["pending_analysis"])),
+                            ("Returned items", str(workspace_snapshot["returned"])),
+                            ("Hardware decision", str(evidence_summary.get("recommended_action", "review_evidence_boundary"))),
+                            ("Best evidence anchor", str(evidence_summary.get("trust_tier", "validated"))),
+                        ],
+                        eyebrow="Task Pressure",
                     ),
                 ],
             ),

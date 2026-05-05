@@ -1,0 +1,204 @@
+{
+  "artifacts": {
+    "exact_result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/exact_result.json",
+    "log_file": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/run.log",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/report.md",
+    "resolved_config": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/resolved_config.yaml",
+    "result_json": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/result.json",
+    "root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": null,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 2.842170943040401e-14,
+    "absolute_error_threshold": 1e-10,
+    "comparison_target": "exact_baseline",
+    "exact_available": true,
+    "exact_electronic_energy": -84.15876148448444,
+    "exact_total_energy": -74.97050306673833,
+    "meets_threshold": true,
+    "relative_error": 4.612181745985869e-15,
+    "relative_error_threshold": 1e-10,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "energy": {
+    "constant_energy_correction": -77.99644807280237,
+    "correlation_energy": -0.007439937010602193,
+    "electronic_energy": -84.15876148448442,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -6.162313411682083,
+    "hf_reference_energy": -74.9630631297277,
+    "nuclear_repulsion_energy": 9.188258417746113,
+    "solver_energy": -6.162313411682055,
+    "total_energy": -74.9705030667383
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -84.15876148448444,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -6.162313411682083,
+    "source": "exact_diagonalization",
+    "total_energy": -74.97050306673833
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/QCchem/configs/h2o_active_space.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/exact_result.json",
+      "Writing JSON result to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/result.json",
+      "Writing Markdown report to /Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2o_active_space_exact/report.md",
+      "Run completed"
+    ]
+  },
+  "mapping": {
+    "fermionic_term_count": 300,
+    "kind": "jordan_wigner",
+    "num_qubits": 8,
+    "qubit_term_count": 105
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "noise_model": null,
+  "problem": {
+    "active_space_metadata": {
+      "active_orbitals": null,
+      "num_electrons": 4,
+      "num_spatial_orbitals": 4
+    },
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": -77.99644807280237,
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": -77.99644807280237,
+      "nuclear_repulsion_energy": 9.188258417746113
+    },
+    "molecule_name": "H2O",
+    "multiplicity": 1,
+    "num_particles": [
+      2,
+      2
+    ],
+    "num_spatial_orbitals": 4,
+    "transformers_applied": [
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "2.4.1",
+      "pyscf": "2.12.1",
+      "python": "3.11.11",
+      "qiskit": "2.3.0",
+      "qiskit_aer": "0.17.2",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.17.0"
+    },
+    "git_commit": null,
+    "seed": 21,
+    "source_config": "/Users/a0000/QCchem/configs/h2o_active_space.yaml",
+    "timestamp": "2026-04-11T06:58:37.639514+00:00",
+    "wall_time_seconds": 0.15225520899548428,
+    "workspace_dirty": true
+  },
+  "reduction_audit": {
+    "active_space_metadata": {
+      "active_orbitals": null,
+      "num_electrons": 4,
+      "num_spatial_orbitals": 4
+    },
+    "constant_energy_correction": -77.99644807280237,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": -77.99644807280237,
+      "nuclear_repulsion_energy": 9.188258417746113
+    },
+    "nuclear_repulsion_energy": 9.188258417746113,
+    "original_num_particles": [
+      5,
+      5
+    ],
+    "original_num_spatial_orbitals": 7,
+    "reduced_num_particles": [
+      2,
+      2
+    ],
+    "reduced_num_spatial_orbitals": 4,
+    "total_constant_correction": -68.80818965505625,
+    "transformers_applied": [
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "run_id": "h2o_active_space_exact",
+  "runtime_options": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.4-alpha",
+  "variational_result": null,
+  "verification_status": "validated"
+}

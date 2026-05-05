@@ -1,0 +1,119 @@
+molecule:
+  name: H2-hardware-precision-push
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: hardware_ready
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - hardware_precision_optimization
+  notes:
+    - "H2-only hardware precision push; hardware_verified does not imply chemistry validated."
+    - "Real submission requires the hardware optimize confirmation flag."
+
+hardware_optimization:
+  enabled: true
+  profile: h2_precision_push
+  max_real_jobs: 3
+  max_total_budgeted_shots: 40960
+  max_total_estimated_quantum_seconds: 600.0
+  stop_if_error_below: 1.6e-3
+  candidate_strategies:
+    - jw_puccd_layout_baseline
+    - parity_puccd_layout
+    - parity_succd_layout
+    - parity_uccsd_layout
+  selection_metric: accuracy_then_cost
+  requires_confirmation: true
+
+problem:
+  active_space: null
+  measurement:
+    strategy: hardware_precision_push
+    runtime_precision_target: 0.015
+    execution_mode: runtime_estimator
+    grouping_policy: hardware_aware_grouping
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 1729
+  repetitions: 1
+  abelian_grouping: false
+  runtime:
+    enabled: true
+    service: ibm_quantum_platform
+    runtime_ready: true
+    session_ready: true
+    batch_ready: false
+    precision_target: 0.015
+    max_budgeted_shots: 8192
+    max_execution_seconds: 420
+    calibration_strategy: h2_hardware_precision_push
+    resilience_level: 2
+    grouping_policy: hardware_aware_grouping
+    options:
+      optimization_level: 3
+      layout_strategy: min_weighted_error
+      layout_method: sabre
+      routing_method: sabre
+      seed_transpiler: 1729
+      submit_real_job: false
+      wait_for_result: false
+      requires_action_time_confirmation: true
+      confirmation_message: "This hardware optimization campaign can submit real IBM Runtime jobs and consume monthly quota."
+
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 40
+  ansatz:
+    kind: puccd
+    reps: 1
+  initial_point: zeros
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.6e-3
+  relative_error_threshold: 1.6e-3
+
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: none
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+
+tasks:
+  excited_state: {}
+  properties: []
+  perturbative_correction: {}
+
+run:
+  seed: 1729
+  output_dir: artifacts/h2_hardware_precision_push
+  overwrite: false
+  exports:
+    qcschema_json: true
+    hdf5: true

@@ -1,0 +1,375 @@
+{
+  "artifacts": {
+    "registry_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/registry.json",
+    "report_markdown": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/benchmark_report.md",
+    "result_json": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/benchmark_result.json",
+    "root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1"
+  },
+  "calibration_summary": {
+    "cases_with_estimated_cost": 5,
+    "cases_with_measured_cost": 1,
+    "mean_achieved_error": 0.00045919525961819475,
+    "mean_estimated_cost": 60000.0,
+    "mean_measured_cost": 24576.0
+  },
+  "cases": [
+    {
+      "absolute_error": 4.440892098500626e-16,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed",
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 4.440892098500626e-16,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "estimated_measurement_cost": 90000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.015277250000508502,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 9,
+        "measurement_strategy": "default",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.22236562499983847,
+        "within_uncertainty": null
+      },
+      "name": "lih_active_exact_uncompressed",
+      "notes": [],
+      "relative_error": 4.1969782637671083e-16,
+      "status": "validated",
+      "total_energy": -7.862128833438591
+    },
+    {
+      "absolute_error": 0.001009785559008769,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_compressed",
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 0.001009785559008769,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 0.001009785559008769,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 0.0007770419997541467,
+          "compressed_solver_energy": -1.0591263206955521,
+          "compressed_total_energy": -7.863138618997603,
+          "method": "modified_cholesky",
+          "post_term_count": 12,
+          "pre_term_count": 27,
+          "rank": 2,
+          "relative_error": 0.000128436658874633,
+          "threshold": 0.001,
+          "uncompressed_solve_wall_time_seconds": 0.00045366700032900553,
+          "uncompressed_solver_energy": -1.058116535136543,
+          "uncompressed_total_energy": -7.862128833438594
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 12,
+        "compression_pre_term_count": 27,
+        "compression_rank": 2,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 20000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": true,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0007770419997541467,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 2,
+        "measurement_strategy": "default",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.1496407079994242,
+        "within_uncertainty": null
+      },
+      "name": "lih_active_exact_compressed",
+      "notes": [],
+      "relative_error": 0.000128436658874633,
+      "status": "validated",
+      "total_energy": -7.863138618997603
+    },
+    {
+      "absolute_error": 1.1416471323855149e-08,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_uncompressed",
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.1416471323855149e-08,
+        "comparison_target": "variational_result",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "estimated_measurement_cost": 90000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.3767470829998274,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 9,
+        "measurement_strategy": "default",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.5103214169994317,
+        "within_uncertainty": null
+      },
+      "name": "lih_active_vqe_ideal_uncompressed",
+      "notes": [],
+      "relative_error": 1.0789427198944505e-08,
+      "status": "validated",
+      "total_energy": -7.8621288220221235
+    },
+    {
+      "absolute_error": 0.0010097910917998831,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_compressed",
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 0.0010097910917998831,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 0.0010097910917998831,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 0.4813544999997248,
+          "compressed_solver_energy": -1.059126314811873,
+          "compressed_total_energy": -7.863138613113923,
+          "method": "modified_cholesky",
+          "post_term_count": 12,
+          "pre_term_count": 27,
+          "rank": 2,
+          "relative_error": 0.00012843736278797923,
+          "threshold": 0.001,
+          "uncompressed_solve_wall_time_seconds": 0.34816262500044104,
+          "uncompressed_solver_energy": -1.058116523720073,
+          "uncompressed_total_energy": -7.8621288220221235
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 12,
+        "compression_pre_term_count": 27,
+        "compression_rank": 2,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 20000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": true,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.4813544999997248,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 2,
+        "measurement_strategy": "default",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.9885190420000072,
+        "within_uncertainty": null
+      },
+      "name": "lih_active_vqe_ideal_compressed",
+      "notes": [],
+      "relative_error": 0.00012843736278797923,
+      "status": "validated",
+      "total_energy": -7.863138613113923
+    },
+    {
+      "absolute_error": 0.00027638823081055364,
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_runtime_ready_compressed",
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 0.00027638823081055364,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 0.00027638823081055364,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 1.0354859170001873,
+          "compressed_solver_energy": -1.0587284682218336,
+          "compressed_total_energy": -7.862740766523885,
+          "method": "modified_cholesky",
+          "post_term_count": 12,
+          "pre_term_count": 27,
+          "rank": 2,
+          "relative_error": 3.515040414777986e-05,
+          "threshold": 0.001,
+          "uncompressed_solve_wall_time_seconds": 1.1158275000007052,
+          "uncompressed_solver_energy": -1.0590048564526446,
+          "uncompressed_total_energy": -7.863017154754695
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 12,
+        "compression_pre_term_count": 27,
+        "compression_rank": 2,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 80000.0,
+        "estimated_vs_measured_cost": 3.2552083333333335,
+        "execution_enabled": true,
+        "measured_shot_usage": 24576.0,
+        "measured_wall_time_seconds": 1.0354859170001873,
+        "measurement_execution_mode": "runtime_estimator",
+        "measurement_group_count": 2,
+        "measurement_strategy": "low_rank_commuting",
+        "policy": "publication",
+        "precision_target": 0.005,
+        "runtime_grouping_policy": "commuting_low_rank",
+        "runtime_low_rank_workload": true,
+        "runtime_resilience_level": 1,
+        "runtime_service": "ibm_quantum_platform",
+        "runtime_submission_status": "account_not_found",
+        "wall_time_seconds": 2.3530660829992485,
+        "within_uncertainty": false
+      },
+      "name": "lih_active_vqe_runtime_ready_compressed",
+      "notes": [],
+      "relative_error": 3.515040414777986e-05,
+      "status": "unstable",
+      "total_energy": -7.862740766523885
+    }
+  ],
+  "dashboard_summary": {
+    "achieved_errors": {
+      "lih_active_exact_compressed": 0.001009785559008769,
+      "lih_active_exact_uncompressed": 4.440892098500626e-16,
+      "lih_active_vqe_ideal_compressed": 0.0010097910917998831,
+      "lih_active_vqe_ideal_uncompressed": 1.1416471323855149e-08,
+      "lih_active_vqe_runtime_ready_compressed": 0.00027638823081055364
+    },
+    "compressed_cases": [
+      "lih_active_exact_compressed",
+      "lih_active_vqe_ideal_compressed",
+      "lih_active_vqe_runtime_ready_compressed"
+    ],
+    "estimated_vs_measured_cost_ratios": {
+      "lih_active_vqe_runtime_ready_compressed": 3.2552083333333335
+    },
+    "grouping_policies": {
+      "lih_active_vqe_runtime_ready_compressed": "commuting_low_rank"
+    },
+    "precision_targets": {
+      "lih_active_exact_compressed": 0.01,
+      "lih_active_exact_uncompressed": 0.01,
+      "lih_active_vqe_ideal_compressed": 0.01,
+      "lih_active_vqe_ideal_uncompressed": 0.01,
+      "lih_active_vqe_runtime_ready_compressed": 0.005
+    },
+    "resilience_levels": {
+      "lih_active_vqe_runtime_ready_compressed": 1
+    },
+    "runtime_cases": [
+      "lih_active_vqe_runtime_ready_compressed"
+    ]
+  },
+  "description": "LiH active-space low-rank measurement and runtime suite comparing uncompressed, compressed, ideal, sampled, and runtime-ready execution paths.\n",
+  "registry_entries": [
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_uncompressed",
+      "created_at": "2026-04-12T00:38:39.654536+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_exact_uncompressed",
+      "source": "/Users/a0000/QCchem/configs/lih_active_exact_uncompressed.yaml",
+      "status": "validated",
+      "tags": [
+        "exact",
+        "uncompressed"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_exact_compressed",
+      "created_at": "2026-04-12T00:38:39.815187+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_exact_compressed",
+      "source": "/Users/a0000/QCchem/configs/lih_active_exact_compressed_cholesky.yaml",
+      "status": "validated",
+      "tags": [
+        "exact",
+        "compressed",
+        "low-rank"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_uncompressed",
+      "created_at": "2026-04-12T00:38:40.328703+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_vqe_ideal_uncompressed",
+      "source": "/Users/a0000/QCchem/configs/lih_active_vqe_statevector.yaml",
+      "status": "validated",
+      "tags": [
+        "ideal",
+        "variational",
+        "uncompressed"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_ideal_compressed",
+      "created_at": "2026-04-12T00:38:41.321413+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_vqe_ideal_compressed",
+      "source": "/Users/a0000/QCchem/configs/lih_active_vqe_statevector_compressed.yaml",
+      "status": "validated",
+      "tags": [
+        "ideal",
+        "variational",
+        "compressed"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1/cases/lih_active_vqe_runtime_ready_compressed",
+      "created_at": "2026-04-12T00:38:43.689144+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_vqe_runtime_ready_compressed",
+      "source": "/Users/a0000/QCchem/configs/lih_active_shot_runtime_ready_compressed.yaml",
+      "status": "unstable",
+      "tags": [
+        "sampled",
+        "runtime-ready",
+        "compressed"
+      ]
+    },
+    {
+      "artifact_root": "/Users/a0000/QCchem/artifacts/low_rank_suite_v1",
+      "created_at": "2026-04-12T00:38:43.689178+00:00",
+      "kind": "benchmark_suite",
+      "name": "low_rank_suite_v1",
+      "source": "benchmarks/low_rank_suite_v1.yaml",
+      "status": "exploratory",
+      "tags": [
+        "low-rank",
+        "compression",
+        "measurement",
+        "runtime"
+      ]
+    }
+  ],
+  "schema_version": "qcchem.benchmark.v0.4-alpha",
+  "suite_name": "low_rank_suite_v1",
+  "summary": {
+    "status_counts": {
+      "unstable": 1,
+      "validated": 4
+    },
+    "total_cases": 5
+  }
+}

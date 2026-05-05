@@ -1,0 +1,28 @@
+{
+  "absolute_error": null,
+  "artifact_root": "/Users/a0000/QCchem/artifacts/benchmark_suite_v1/cases/h2_shot_scaling",
+  "expected_status": "exploratory",
+  "kind": "shot_scaling",
+  "metrics": {
+    "absolute_errors": {
+      "1024": 0.007512043588747019,
+      "4096": 0.008267435610457952,
+      "8192": 0.002947799396453954
+    },
+    "standard_errors": {
+      "1024": 0.0014921060669878035,
+      "4096": 0.0009432976591951909,
+      "8192": 0.0006513030208334735
+    },
+    "statuses": {
+      "1024": "unstable",
+      "4096": "unstable",
+      "8192": "unstable"
+    }
+  },
+  "name": "h2_shot_scaling",
+  "notes": [],
+  "relative_error": null,
+  "status": "unstable",
+  "total_energy": null
+}

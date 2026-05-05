@@ -1,0 +1,10 @@
+2026-04-11 14:55:50,147 INFO Loading config from configs/h2_excited_mini.yaml
+2026-04-11 14:55:50,149 INFO Building electronic structure problem
+2026-04-11 14:55:50,220 INFO Applying mapping: jordan_wigner
+2026-04-11 14:55:50,230 INFO Skipping backend construction for solver: exact
+2026-04-11 14:55:50,230 INFO Running solver: exact
+2026-04-11 14:55:50,235 INFO Computing exact spectrum for 2 states
+2026-04-11 14:55:50,236 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_excited_mini/exact_result.json
+2026-04-11 14:55:50,264 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2_excited_mini/result.json
+2026-04-11 14:55:50,265 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_excited_mini/report.md
+2026-04-11 14:55:50,265 INFO Run completed

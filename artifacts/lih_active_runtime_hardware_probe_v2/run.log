@@ -1,0 +1,18 @@
+2026-04-17 12:07:26,154 INFO Loading config from /Users/a0000/QCchem/configs/lih_active_runtime_hardware_probe_v2.yaml
+2026-04-17 12:07:26,158 INFO Building electronic structure problem
+2026-04-17 12:07:26,208 INFO Applying mapping: jordan_wigner
+2026-04-17 12:07:26,249 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-04-17 12:07:26,249 INFO Computed compression audit: modified_cholesky
+2026-04-17 12:07:26,252 INFO Prepared measurement plan: groups=2, cost=90
+2026-04-17 12:07:26,253 INFO Prepared runtime policy snapshot for service=ibm_quantum_platform
+2026-04-17 12:07:26,253 INFO Preparing backend: shot_estimator
+2026-04-17 12:07:26,253 INFO Running solver: vqe
+2026-04-17 12:07:27,247 INFO Computing exact spectrum for 1 states
+2026-04-17 12:07:27,252 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/exact_result.json
+2026-04-17 12:07:27,265 INFO Collected repeated shot-based sampling statistics
+2026-04-17 12:07:28,635 INFO Computed compressed-vs-uncompressed execution comparison
+2026-04-17 12:07:28,635 INFO Computed empirical calibration: wall_time=0.994s, measured_cost=2048.0
+2026-04-17 12:08:52,939 INFO Runtime submission attempt recorded: submitted
+2026-04-17 12:08:52,945 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/result.json
+2026-04-17 12:08:52,949 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_active_runtime_hardware_probe_v2/report.md
+2026-04-17 12:08:52,951 INFO Run completed

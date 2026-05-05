@@ -1,0 +1,10 @@
+2026-04-11 15:03:40,625 INFO Loading config from configs/h2o_active_space.yaml
+2026-04-11 15:03:40,626 INFO Building electronic structure problem
+2026-04-11 15:03:40,756 INFO Applying mapping: jordan_wigner
+2026-04-11 15:03:40,827 INFO Skipping backend construction for solver: exact
+2026-04-11 15:03:40,827 INFO Running solver: exact
+2026-04-11 15:03:40,841 INFO Computing exact spectrum for 1 states
+2026-04-11 15:03:40,847 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2o_active_space/exact_result.json
+2026-04-11 15:03:40,869 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2o_active_space/result.json
+2026-04-11 15:03:40,870 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2o_active_space/report.md
+2026-04-11 15:03:40,870 INFO Run completed

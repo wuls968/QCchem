@@ -5,5 +5,17 @@ hardware_calibration_suite:
   cases:
     - name: h2_runtime_hardware_probe
       result_json: artifacts/h2_runtime_hardware_probe/result.json
+    - name: h2_runtime_hardware_probe_ca
+      result_json: artifacts/h2_runtime_hardware_probe_ca/result.json
+    - name: h2_runtime_hardware_probe_puccd
+      result_json: artifacts/h2_runtime_hardware_probe_puccd/result.json
+    - name: h2_runtime_hardware_probe_ca_layout
+      result_json: artifacts/h2_runtime_hardware_probe_ca_layout/result.json
+    - name: h2_runtime_hardware_probe_puccd_layout
+      result_json: artifacts/h2_runtime_hardware_probe_puccd_layout/result.json
+    - name: h2_runtime_hardware_probe_puccd_layout_mitigated
+      result_json: artifacts/h2_runtime_hardware_probe_puccd_layout_mitigated/result.json
+    - name: h2_runtime_hardware_probe_puccd_layout_highshots
+      result_json: artifacts/h2_runtime_hardware_probe_puccd_layout_highshots/result.json
     - name: lih_active_runtime_hardware_probe_v2
       result_json: artifacts/lih_active_runtime_hardware_probe_v2/result.json

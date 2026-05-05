@@ -1,0 +1,10 @@
+2026-04-11 14:55:11,128 INFO Loading config from configs/h2_property_validation.yaml
+2026-04-11 14:55:11,130 INFO Building electronic structure problem
+2026-04-11 14:55:11,250 INFO Applying mapping: jordan_wigner
+2026-04-11 14:55:11,260 INFO Skipping backend construction for solver: exact
+2026-04-11 14:55:11,260 INFO Running solver: exact
+2026-04-11 14:55:11,266 INFO Computing exact spectrum for 2 states
+2026-04-11 14:55:11,266 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/h2_property_validation/exact_result.json
+2026-04-11 14:55:11,294 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/h2_property_validation/result.json
+2026-04-11 14:55:11,295 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/h2_property_validation/report.md
+2026-04-11 14:55:11,295 INFO Run completed

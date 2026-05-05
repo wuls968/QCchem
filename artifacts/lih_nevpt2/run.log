@@ -1,0 +1,11 @@
+2026-04-11 15:45:35,365 INFO Loading config from /Users/a0000/QCchem/configs/lih_nevpt2.yaml
+2026-04-11 15:45:35,368 INFO Building electronic structure problem
+2026-04-11 15:45:35,422 INFO Applying mapping: jordan_wigner
+2026-04-11 15:45:35,447 INFO Skipping backend construction for solver: exact
+2026-04-11 15:45:35,447 INFO Running solver: exact
+2026-04-11 15:45:35,448 INFO Computing exact spectrum for 1 states
+2026-04-11 15:45:35,448 INFO Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_nevpt2/exact_result.json
+2026-04-11 15:45:35,632 INFO Computed perturbative correction: nevpt2
+2026-04-11 15:45:35,652 INFO Writing JSON result to /Users/a0000/QCchem/artifacts/lih_nevpt2/result.json
+2026-04-11 15:45:35,653 INFO Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_nevpt2/report.md
+2026-04-11 15:45:35,653 INFO Run completed

@@ -3,12 +3,99 @@
 from __future__ import annotations
 
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
+from qcchem.backends.layout import recommend_initial_layout
 from qcchem.core import BackendSpec, RuntimeSubmissionSummary
+
+
+def _deep_merge_options(base: dict[str, Any], updates: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(base)
+    for key, value in updates.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_options(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _runtime_backend_name(backend: Any) -> str | None:
+    name = getattr(backend, "name", None)
+    if callable(name):
+        name = name()
+    return str(name) if name is not None else None
+
+
+def _backend_pending_jobs(backend: Any) -> int:
+    try:
+        status = backend.status()
+    except Exception:
+        return 0
+    pending = getattr(status, "pending_jobs", 0)
+    try:
+        return int(pending)
+    except Exception:
+        return 0
+
+
+def _select_runtime_backend_name(
+    service: Any,
+    *,
+    num_qubits: int,
+    layout_strategy: str | None,
+) -> tuple[str | None, dict[str, Any]]:
+    """Select the best available backend for a small chemistry workload."""
+    backends = service.backends(operational=True, simulator=False)
+    candidates: list[tuple[float, int, str, dict[str, Any]]] = []
+    for backend in backends:
+        backend_name = _runtime_backend_name(backend)
+        if backend_name is None:
+            continue
+        score = 1.0e9
+        layout_payload: dict[str, Any] = {}
+        if layout_strategy:
+            try:
+                layout_plan = recommend_initial_layout(
+                    backend,
+                    int(num_qubits),
+                    strategy=str(layout_strategy),
+                )
+            except Exception:
+                layout_plan = None
+            if layout_plan is not None:
+                score = float(layout_plan.score)
+                layout_payload = {
+                    "selected_layout": list(layout_plan.selected_layout),
+                    "layout_score": float(layout_plan.score),
+                    "readout_score": float(layout_plan.readout_score),
+                    "entangling_score": float(layout_plan.entangling_score),
+                }
+        pending_jobs = _backend_pending_jobs(backend)
+        candidates.append(
+            (
+                score,
+                pending_jobs,
+                backend_name,
+                {
+                    "backend_name": backend_name,
+                    "layout_score": score,
+                    "pending_jobs": pending_jobs,
+                    **layout_payload,
+                },
+            )
+        )
+    if not candidates:
+        return None, {"backend_selection_strategy": layout_strategy or "first_available", "candidates": []}
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+    selected = candidates[0]
+    return selected[2], {
+        "backend_selection_strategy": layout_strategy or "first_available",
+        "selected_backend": selected[2],
+        "candidates": [item[3] for item in candidates],
+    }
 
 
 def attempt_runtime_submission(
@@ -17,6 +104,7 @@ def attempt_runtime_submission(
     circuit,
     operator,
     parameter_values: list[float] | np.ndarray,
+    submission_callback: Callable[[RuntimeSubmissionSummary], None] | None = None,
 ) -> RuntimeSubmissionSummary | None:
     """Attempt a real IBM Runtime submission when the runtime path is requested."""
     if not spec.runtime.enabled:
@@ -84,15 +172,18 @@ def attempt_runtime_submission(
 
     summary.provider = type(service).__name__
     backend_name = spec.runtime.options.get("backend_name")
+    layout_strategy = spec.runtime.options.get("layout_strategy")
+    backend_selection_metadata: dict[str, Any] = {
+        "backend_selection_strategy": "pinned_backend" if backend_name is not None else (layout_strategy or "first_available"),
+    }
     if backend_name is None:
         try:
-            backends = service.backends(operational=True, simulator=False)
-            if backends:
-                first_backend = backends[0]
-                backend_name = getattr(first_backend, "name", None)
-                if callable(backend_name):
-                    backend_name = backend_name()
-            else:
+            backend_name, backend_selection_metadata = _select_runtime_backend_name(
+                service,
+                num_qubits=int(getattr(circuit, "num_qubits", 0)),
+                layout_strategy=(str(layout_strategy) if layout_strategy is not None else None),
+            )
+            if backend_name is None:
                 summary.failure_category = "no_runtime_backend_available"
                 summary.failure_message = "Runtime service returned no operational non-simulator backends."
                 summary.submission_wall_time_seconds = float(perf_counter() - started)
@@ -113,6 +204,7 @@ def attempt_runtime_submission(
         "parameter_count": int(len(parameter_values)),
         "operator_qubits": int(getattr(operator, "num_qubits", 0)),
         "circuit_qubits": int(getattr(circuit, "num_qubits", 0)),
+        **backend_selection_metadata,
     }
 
     try:
@@ -134,6 +226,39 @@ def attempt_runtime_submission(
         return summary
 
     optimization_level = int(spec.runtime.options.get("optimization_level", 1))
+    layout_method = spec.runtime.options.get("layout_method")
+    routing_method = spec.runtime.options.get("routing_method")
+    approximation_degree = float(spec.runtime.options.get("approximation_degree", 1.0))
+    seed_transpiler = spec.runtime.options.get("seed_transpiler", spec.seed)
+    seed_transpiler = int(seed_transpiler) if seed_transpiler is not None else None
+    explicit_initial_layout = spec.runtime.options.get("initial_layout")
+    selected_layout: list[int] | None = None
+    if isinstance(explicit_initial_layout, (list, tuple)):
+        selected_layout = [int(item) for item in explicit_initial_layout]
+    elif layout_strategy:
+        layout_plan = recommend_initial_layout(
+            backend,
+            int(getattr(circuit, "num_qubits", 0)),
+            strategy=str(layout_strategy),
+        )
+        if layout_plan is not None:
+            summary.layout_strategy = layout_plan.strategy
+            summary.selected_layout = list(layout_plan.selected_layout)
+            summary.layout_score = float(layout_plan.score)
+            selected_layout = list(layout_plan.selected_layout)
+    summary.transpilation_options = {
+        "optimization_level": optimization_level,
+        "layout_method": (str(layout_method) if layout_method is not None else None),
+        "routing_method": (str(routing_method) if routing_method is not None else None),
+        "approximation_degree": approximation_degree,
+        "seed_transpiler": seed_transpiler,
+    }
+    if layout_strategy and summary.layout_strategy is None:
+        summary.layout_strategy = str(layout_strategy)
+    if selected_layout is not None:
+        summary.selected_layout = list(selected_layout)
+        summary.transpilation_options["initial_layout"] = list(selected_layout)
+    summary.result_provenance["layout_strategy"] = summary.layout_strategy
     precision_target = spec.runtime.precision_target
     if precision_target is None:
         precision_option = spec.runtime.options.get("precision_target")
@@ -150,13 +275,26 @@ def attempt_runtime_submission(
         estimator_options["default_precision"] = float(precision_target)
     if spec.seed is not None:
         estimator_options["seed_estimator"] = int(spec.seed)
+    custom_estimator_options = spec.runtime.options.get("estimator_options")
+    if isinstance(custom_estimator_options, dict):
+        estimator_options = _deep_merge_options(estimator_options, custom_estimator_options)
     try:
         pass_manager = generate_preset_pass_manager(
             backend=backend,
             optimization_level=optimization_level,
+            initial_layout=selected_layout,
+            layout_method=(str(layout_method) if layout_method is not None else None),
+            routing_method=(str(routing_method) if routing_method is not None else None),
+            approximation_degree=approximation_degree,
+            seed_transpiler=seed_transpiler,
         )
         isa_circuit = pass_manager.run(circuit)
         isa_operator = operator.apply_layout(isa_circuit.layout)
+        counts = isa_circuit.count_ops()
+        summary.transpiled_depth = int(isa_circuit.depth()) if isa_circuit.depth() is not None else None
+        summary.transpiled_two_qubit_gate_count = int(
+            sum(int(counts.get(name, 0)) for name in ("cz", "ecr", "cx"))
+        )
         pubs = []
         if getattr(isa_circuit, "num_parameters", 0):
             pubs.append((isa_circuit, isa_operator, [np.asarray(parameter_values, dtype=float)]))
@@ -199,6 +337,12 @@ def attempt_runtime_submission(
                 summary.session_id = summary.session_id()
         if actual_mode == "batch":
             summary.batch_id = summary.session_id
+        summary.result_provenance["attempt_stage"] = "submitted"
+        if submission_callback is not None:
+            try:
+                submission_callback(summary)
+            except Exception as exc:
+                summary.result_provenance["submission_callback_error"] = f"{type(exc).__name__}: {exc}"
         wait_for_result = bool(spec.runtime.options.get("wait_for_result", False))
         if wait_for_result:
             runtime_result = job.result()
@@ -222,8 +366,6 @@ def attempt_runtime_submission(
             except Exception:
                 pass
             summary.result_provenance["attempt_stage"] = "result_retrieved"
-        else:
-            summary.result_provenance["attempt_stage"] = "submitted"
         summary.submission_wall_time_seconds = float(perf_counter() - started)
         return summary
     except Exception as exc:

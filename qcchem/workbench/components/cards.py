@@ -9,15 +9,38 @@ def metric_card(title: str, value: str, note: str | None = None, *, tone: str = 
         html.H3(value, className="qcchem-card-value"),
     ]
     if note:
-        children.append(html.P(note, className="qcchem-card-note"))
-    return html.Section(children=children, className=f"qcchem-card qcchem-card--{tone}")
+        children.append(html.P(note, className="qcchem-card-note qcchem-card-note--compact"))
+    return html.Section(children=children, className=f"qcchem-card qcchem-card--metric qcchem-card--{tone}")
 
 
-def callout_card(title: str, body: str, *, accent: str = "copper") -> html.Section:
+def status_card(title: str, value: str, body: str, *, tone: str = "informational") -> html.Section:
+    badge_text = {
+        "validated": "Defended",
+        "exploratory": "Watch",
+        "unstable": "Risk",
+        "informational": "Info",
+    }.get(tone, tone.replace("_", " ").title())
+    return html.Section(
+        className=f"qcchem-card qcchem-card--status qcchem-card--status-{tone}",
+        children=[
+            html.Div(
+                className="qcchem-card__header",
+                children=[
+                    html.P(title, className="qcchem-card-eyebrow"),
+                    html.Span(badge_text, className=f"qcchem-badge qcchem-badge--{tone}"),
+                ],
+            ),
+            html.H3(value, className="qcchem-card-title qcchem-card-title--dense"),
+            html.P(body, className="qcchem-card-note"),
+        ],
+    )
+
+
+def callout_card(title: str, body: str, *, accent: str = "copper", eyebrow: str = "Review note") -> html.Section:
     return html.Section(
         className=f"qcchem-card qcchem-card--callout qcchem-card--accent-{accent}",
         children=[
-            html.P("Workbench", className="qcchem-card-eyebrow"),
+            html.P(eyebrow, className="qcchem-card-eyebrow"),
             html.H3(title, className="qcchem-card-title"),
             html.P(body, className="qcchem-card-note"),
         ],
@@ -28,16 +51,9 @@ def detail_card(title: str, details: list[tuple[str, str]], *, eyebrow: str = "S
     rows = [
         html.Div(
             className="qcchem-detail-card__row",
-            style={
-                "display": "grid",
-                "gridTemplateColumns": "minmax(0, 1fr) auto",
-                "gap": "0.75rem",
-                "padding": "0.5rem 0",
-                "borderBottom": "1px solid rgba(32, 51, 74, 0.08)",
-            },
             children=[
-                html.Span(label, style={"color": "var(--qcchem-text-secondary)"}),
-                html.Strong(value, style={"color": "var(--qcchem-accent-deep-blue)"}),
+                html.Span(label, className="qcchem-detail-card__label"),
+                html.Strong(value, className="qcchem-detail-card__value"),
             ],
         )
         for label, value in details
@@ -47,6 +63,6 @@ def detail_card(title: str, details: list[tuple[str, str]], *, eyebrow: str = "S
         children=[
             html.P(eyebrow, className="qcchem-card-eyebrow"),
             html.H3(title, className="qcchem-card-title"),
-            html.Div(rows),
+            html.Div(rows, className="qcchem-detail-card__grid"),
         ],
     )

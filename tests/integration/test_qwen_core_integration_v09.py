@@ -2,9 +2,11 @@ from pathlib import Path
 
 from qcchem.workflow.runner import run_from_config
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def test_run_result_contains_policy_and_reduction_plan() -> None:
-    result = run_from_config(Path("/Users/a0000/QCchem/configs/lih_active_vqe.yaml"))
+    result = run_from_config(REPO_ROOT / "configs" / "lih_active_vqe.yaml")
 
     assert result.policy_engine is not None
     assert result.reduction_plan is not None
@@ -14,7 +16,7 @@ def test_run_result_contains_policy_and_reduction_plan() -> None:
 
 def test_report_mentions_validation_boundary_and_chemical_accuracy(tmp_path: Path) -> None:
     result = run_from_config(
-        Path("/Users/a0000/QCchem/configs/h2.yaml"),
+        REPO_ROOT / "configs" / "h2.yaml",
         output_dir=tmp_path / "h2_core",
     )
     report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")

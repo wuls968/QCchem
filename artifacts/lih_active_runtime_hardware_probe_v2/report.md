@@ -11,7 +11,7 @@
 - Module Origin: `core`
 - Capability Tier: `exploratory`
 - Verification Notes: `[]`
-- Scientific Risk Notes: `[]`
+- Scientific Risk Notes: `['Runtime-derived hardware energy does not meet chemical accuracy, even though the local solver path may.']`
 
 ## Energy Summary
 
@@ -115,9 +115,10 @@
 - batch_ready_expected: `False`
 - noise_ready_expected: `False`
 
-## Chemical Accuracy
+## Chemical Accuracy (Local Execution)
 
 - available: `True`
+- assessment_target: `local_execution`
 - status: `validated`
 - meets_chemical_accuracy: `True`
 - absolute_error_hartree: `0.000294345572` Hartree
@@ -126,6 +127,19 @@
 - threshold_kcal_mol: `1.0040151583999999`
 - statistical_error: `0.002255638119` Hartree
 - notes: `['Meets chemical accuracy threshold.', 'Observed error lies within 95% statistical uncertainty.']`
+
+## Chemical Accuracy (Runtime-Derived)
+
+- available: `True`
+- assessment_target: `runtime_derived`
+- status: `exploratory`
+- meets_chemical_accuracy: `False`
+- absolute_error_hartree: `0.388794195022` Hartree
+- absolute_error_kcal_mol: `243.97204081226127`
+- threshold_hartree: `0.0016`
+- threshold_kcal_mol: `1.0040151583999999`
+- statistical_error: `0.041369338380` Hartree
+- notes: `['Does not meet chemical accuracy threshold.', 'Observed error exceeds 95% statistical uncertainty.']`
 
 ## Compressed vs Uncompressed
 
@@ -153,6 +167,9 @@
 - session_ready: `True`
 - batch_ready: `True`
 - precision_target: `0.15`
+- max_budgeted_shots: `None`
+- max_execution_seconds: `None`
+- calibration_strategy: `None`
 - resilience_level: `0`
 - grouping_policy: `commuting_low_rank`
 - session_recommendation: `optional`
@@ -261,6 +278,8 @@
 - session_id: `None`
 - batch_id: `None`
 - submission_wall_time_seconds: `84.30369187500037`
+- usage_estimation: `{}`
+- job_metrics: `{}`
 - failure_category: `None`
 - failure_message: `None`
 - verification_status: `exploratory`

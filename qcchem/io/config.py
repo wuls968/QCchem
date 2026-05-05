@@ -21,6 +21,7 @@ from qcchem.core import (
     ExploratorySpec,
     ExcitedStateTaskSpec,
     FragmentSpec,
+    HardwareOptimizationSpec,
     MappingSpec,
     MeasurementSpec,
     MitigationSpec,
@@ -272,6 +273,32 @@ def _parse_artifact_exports(run_raw: dict[str, Any]) -> ArtifactExportSpec:
     )
 
 
+def _parse_hardware_optimization(raw: dict[str, Any]) -> HardwareOptimizationSpec:
+    hardware_raw = raw.get("hardware_optimization")
+    if not isinstance(hardware_raw, dict):
+        return HardwareOptimizationSpec()
+    defaults = HardwareOptimizationSpec()
+    return HardwareOptimizationSpec(
+        enabled=bool(hardware_raw.get("enabled", False)),
+        profile=str(hardware_raw.get("profile", defaults.profile)),
+        max_real_jobs=int(hardware_raw.get("max_real_jobs", defaults.max_real_jobs)),
+        max_total_budgeted_shots=int(
+            hardware_raw.get("max_total_budgeted_shots", defaults.max_total_budgeted_shots)
+        ),
+        max_total_estimated_quantum_seconds=(
+            float(hardware_raw["max_total_estimated_quantum_seconds"])
+            if hardware_raw.get("max_total_estimated_quantum_seconds") is not None
+            else defaults.max_total_estimated_quantum_seconds
+        ),
+        stop_if_error_below=float(hardware_raw.get("stop_if_error_below", defaults.stop_if_error_below)),
+        candidate_strategies=[
+            str(item) for item in hardware_raw.get("candidate_strategies", defaults.candidate_strategies)
+        ],
+        selection_metric=str(hardware_raw.get("selection_metric", defaults.selection_metric)),
+        requires_confirmation=bool(hardware_raw.get("requires_confirmation", defaults.requires_confirmation)),
+    )
+
+
 def load_run_spec(path: Path) -> RunSpec:
     """Load a QCchem run specification from YAML."""
     resolved_path = path if path.is_absolute() else _resolve_path(Path.cwd(), str(path))
@@ -279,7 +306,6 @@ def load_run_spec(path: Path) -> RunSpec:
     if not isinstance(raw, dict):
         raise ValueError("Run configuration must deserialize to a mapping.")
 
-    base_dir = resolved_path.parent
     molecule_raw = _require_mapping(raw, "molecule")
     geometry_raw = molecule_raw.get("geometry", [])
     if not isinstance(geometry_raw, list) or not geometry_raw:
@@ -401,6 +427,7 @@ def load_run_spec(path: Path) -> RunSpec:
             properties=_parse_property_tasks(tasks_raw),
             perturbative_correction=_parse_perturbative_correction(tasks_raw),
         ),
+        hardware_optimization=_parse_hardware_optimization(raw),
         run=RunConfig(
             seed=int(run_raw.get("seed", 7)),
             output_dir=Path(run_raw.get("output_dir", "artifacts")),

@@ -1,0 +1,7 @@
+{
+  "cases_with_estimated_cost": 5,
+  "cases_with_measured_cost": 1,
+  "mean_achieved_error": 0.00045919525961819475,
+  "mean_estimated_cost": 60000.0,
+  "mean_measured_cost": 24576.0
+}

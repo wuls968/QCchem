@@ -1,0 +1,230 @@
+# QCchem Report: LiH-auto-compressed-nevpt2
+
+## Verification
+
+- verification_status: `validated`
+
+## Energy Summary
+
+- electronic_energy: `-8.855345889473` Hartree
+- nuclear_repulsion_energy: `0.992207270475` Hartree
+- total_energy: `-7.863138618998` Hartree
+- hf_reference_energy: `-7.861864769809` Hartree
+- solver_energy: `-1.059126320696` Hartree (raw solver-Hamiltonian energy, before QCchem constant-shift correction)
+- exact_ground_energy: `-1.059126320696` Hartree (raw exact baseline in the same solver-Hamiltonian convention)
+- correlation_energy: `-0.001273849189` Hartree
+- energy_units: `Hartree`
+- constant_energy_correction: `-7.796219568777` Hartree
+- energy_formula: `total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction`
+
+## Field Definitions
+
+- `solver_energy` is the raw energy returned by the configured solver on the mapped qubit Hamiltonian.
+- `exact_ground_energy` is the raw exact-diagonalization energy of that same mapped Hamiltonian.
+- `electronic_energy` is QCchem's corrected electronic energy after adding any non-nuclear Hamiltonian constants, such as active-space offsets.
+- `total_energy` is reconstructed from the explicit `energy_formula`, so active-space and transformed problems remain auditable.
+- `hf_reference_energy` is the Hartree-Fock total reference energy exposed by Qiskit Nature.
+- `correlation_energy` is `total_energy - hf_reference_energy` and therefore measures post-HF improvement in the total-energy convention.
+
+## Exact Baseline
+
+- available: `True`
+- source: `exact_diagonalization`
+- solver_hamiltonian_energy: `-1.059126320696` Hartree
+- electronic_energy: `-8.855345889473` Hartree
+- total_energy: `-7.863138618998` Hartree
+
+## Benchmark
+
+- exact_available: `True`
+- comparison_target: `compressed_vs_uncompressed`
+- exact_electronic_energy: `-8.855345889473` Hartree
+- exact_total_energy: `-7.863138618998` Hartree
+- absolute_error: `0.001009785559` Hartree
+- relative_error: `0.00012843665887553681`
+- statistical_error: `None`
+- absolute_error_threshold: `0.005`
+- relative_error_threshold: `0.005`
+- within_uncertainty: `None`
+- meets_threshold: `True`
+
+## Problem Summary
+
+- Basis: `sto3g`
+- Charge: `0`
+- Multiplicity: `1`
+- Num particles: `(1, 1)`
+- Num spatial orbitals: `2`
+- Active space metadata: `{'num_electrons': [1, 1], 'num_spatial_orbitals': 2, 'active_orbitals': [0, 1], 'active_orbitals_original': [1, 2]}`
+- Transformers applied: `['FreezeCoreTransformer', 'ActiveSpaceTransformer']`
+- Hamiltonian constants: `{'nuclear_repulsion_energy': 0.992207270475, 'FreezeCoreTransformer': -7.796219568777051, 'ActiveSpaceTransformer': 0.0}`
+- Electronic constant correction: `-7.796219568777` Hartree
+
+## Mapping
+
+- Mapping kind: `jordan_wigner`
+- Qubit count: `4`
+- Fermionic Hamiltonian terms: `72`
+- Qubit Hamiltonian terms: `12`
+
+## Backend
+
+- Backend kind: `statevector`
+- Precision: `None`
+- Shots: `None`
+- Seed: `None`
+- Repetitions: `1`
+- Abelian grouping: `True`
+- Noise enabled: `False`
+- Runtime enabled: `False`
+
+## Backend Capability
+
+- backend_kind: `statevector`
+- statevector: `True`
+- shot_based: `False`
+- exact_baseline: `True`
+- runtime_ready: `False`
+- session_ready: `False`
+- batch_ready: `False`
+- mitigation_ready: `False`
+- noise_model_ready: `False`
+- supports_grouping: `False`
+- supports_repetitions: `False`
+- supports_confidence_metrics: `False`
+
+## Execution Policy
+
+- name: `benchmark`
+- default_shots: `None`
+- default_repetitions: `5`
+- exact_baseline_required: `True`
+- confidence_rule: `require exact baseline when available; use repeated sampling for shot backends`
+- mitigation_posture: `symmetry-check preferred`
+- runtime_ready_expected: `False`
+- session_ready_expected: `False`
+- batch_ready_expected: `False`
+- noise_ready_expected: `False`
+
+## Compressed vs Uncompressed
+
+- available: `True`
+- method: `modified_cholesky`
+- rank: `2`
+- threshold: `0.001`
+- pre_term_count: `27`
+- post_term_count: `12`
+- compressed_solver_energy: `-1.059126320696` Hartree
+- uncompressed_solver_energy: `-1.058116535137` Hartree
+- compressed_total_energy: `-7.863138618998` Hartree
+- uncompressed_total_energy: `-7.862128833439` Hartree
+- absolute_error: `0.001009785559` Hartree
+- relative_error: `0.00012843665887553681`
+- compressed_solve_wall_time_seconds: `0.0010431250120745972`
+- uncompressed_solve_wall_time_seconds: `0.0007428340031765401`
+
+## Reduction Audit
+
+- original_num_particles: `(2, 2)`
+- original_num_spatial_orbitals: `6`
+- reduced_num_particles: `(1, 1)`
+- reduced_num_spatial_orbitals: `2`
+- transformers_applied: `['FreezeCoreTransformer', 'ActiveSpaceTransformer']`
+- active_space_metadata: `{'num_electrons': [1, 1], 'num_spatial_orbitals': 2, 'active_orbitals': [0, 1], 'active_orbitals_original': [1, 2]}`
+- selection_mode: `auto`
+- selection_reason: `Frontier-orbitals heuristic selected a contiguous active window around the occupied/virtual boundary with 2 orbitals.`
+- selected_active_orbitals: `[0, 1]`
+- selected_active_orbitals_original: `[1, 2]`
+- frozen_core_orbitals: `[0]`
+- removed_orbitals: `[]`
+- hamiltonian_constants: `{'nuclear_repulsion_energy': 0.992207270475, 'FreezeCoreTransformer': -7.796219568777051, 'ActiveSpaceTransformer': 0.0}`
+- constant_energy_correction: `-7.796219568777` Hartree
+- nuclear_repulsion_energy: `0.992207270475` Hartree
+- total_constant_correction: `-6.804012298302` Hartree
+- energy_formula: `total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction`
+
+## Compression Audit
+
+- enabled: `True`
+- method: `modified_cholesky`
+- rank: `2`
+- threshold: `0.001`
+- max_rank: `2`
+- apply_to_solver: `False`
+- execution_enabled: `True`
+- original_num_qubits: `4`
+- compressed_num_qubits: `4`
+- original_fermionic_term_count: `72`
+- original_qubit_term_count: `27`
+- compressed_term_count_estimate: `12`
+- pre_term_count: `27`
+- post_term_count: `12`
+- primary_rank: `2`
+- secondary_rank: `None`
+- reconstruction_error_frobenius: `0.008905643352596537`
+- reconstruction_error: `0.008905643352596537`
+- verification_status: `validated`
+- notes: `['Modified-Cholesky compression reconstructed the two-electron pair matrix for execution.']`
+
+## Perturbative Correction
+
+- enabled: `True`
+- method: `nevpt2`
+- plugin: `pyscf`
+- active_space_energy: `-7.863138618998` Hartree
+- reduced_active_space_energy: `-7.862128833439` Hartree
+- compressed_active_space_energy: `-7.863138618998` Hartree
+- perturbative_correction: `-0.010256337277` Hartree
+- corrected_total_energy: `-7.873394956275` Hartree
+- verification_status: `validated`
+- provenance: `{'source': 'pyscf.mrpt.nevpt2', 'root': 0, 'selected_active_orbitals_original': [1, 2], 'reduced_active_space_energy': -7.8621288334385895, 'compressed_active_space_energy': -7.863138618997605}`
+- notes: `['PySCF NEVPT2 plugin path; validated as a classical-reference correction within QCchem v0.6 scope.', 'When compression-aware execution is enabled, the perturbative correction is sourced from the classical reduced active space and applied to the compressed active-space energy for reporting.']`
+
+## Mitigation
+
+- symmetry_check: `{'requested': True, 'performed': False, 'status': 'hook_available_not_implemented', 'strategy': 'parity_placeholder'}`
+- readout_mitigation: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
+- zne: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
+- pec: `{'requested': False, 'performed': False, 'status': 'placeholder_not_implemented', 'method': 'placeholder'}`
+- applied_methods: `[]`
+
+## Provenance
+
+- Schema version: `qcchem.result.v0.6-alpha`
+- Timestamp: `2026-04-11T10:18:43.806865+00:00`
+- Wall time (s): `0.320453209002153`
+- Git commit: `None`
+- Git commit short: `None`
+- Git branch: `None`
+- Workspace dirty: `True`
+- Workspace fingerprint: `226a593790b63b751a482fdb7a579a393d85c6b208872739aee8307425fd7d5e`
+- Dependency versions: `{'python': '3.11.11', 'qiskit': '2.3.0', 'qiskit_nature': '0.7.2', 'numpy': '2.4.1', 'scipy': '1.17.0', 'pyscf': '2.12.1', 'qiskit_aer': '0.17.2'}`
+- Seed: `83`
+- Source config: `/Users/a0000/QCchem/configs/lih_auto_compressed_nevpt2.yaml`
+
+## Artifacts
+
+- result.json: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json`
+- exact_result.json: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/exact_result.json`
+- report.md: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/report.md`
+- resolved_config.yaml: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/resolved_config.yaml`
+- run.log: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/run.log`
+- qcschema.json: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/qcschema.json`
+- result.h5: `/Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.h5`
+
+## Log Summary
+
+- Loading config from /Users/a0000/QCchem/configs/lih_auto_compressed_nevpt2.yaml
+- Building electronic structure problem
+- Applying mapping: jordan_wigner
+- Constructed compressed mapped Hamiltonian via modified_cholesky
+- Computed compression audit: modified_cholesky
+- Skipping backend construction for solver: exact
+- Running solver: exact
+- Computing exact spectrum for 1 states
+- Writing exact baseline artifact to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/exact_result.json
+- Computed compressed-vs-uncompressed execution comparison
+- Computed perturbative correction: nevpt2
+- Writing JSON result to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/result.json
+- Writing Markdown report to /Users/a0000/QCchem/artifacts/lih_auto_compressed_nevpt2/report.md
+- Run completed

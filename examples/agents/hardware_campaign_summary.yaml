@@ -1,0 +1,10 @@
+agent_task:
+  version: 1
+  name: summarize_hardware_runtime_campaign
+  kind: hardware_campaign_summary
+  description: Build an AI-friendly summary and markdown report for the current QCchem hardware runtime campaign.
+  inputs:
+    target: ../../artifacts/hardware_calibration_suite_v1
+  outputs:
+    summary_json: ../../artifacts/hardware_calibration_suite_v1/hardware_runtime_campaign_summary.json
+    report_markdown: ../../artifacts/hardware_calibration_suite_v1/hardware_runtime_campaign_report.md

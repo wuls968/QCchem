@@ -245,6 +245,7 @@ def _write_delivery(
     delivery_kind: str,
     summary: str,
     outputs: list[str],
+    evidence_summary: dict[str, Any] | None = None,
 ) -> dict[str, object]:
     delivery = AIDeliveryRecord(
         delivery_id=f"delivery-{uuid.uuid4().hex[:10]}",
@@ -252,6 +253,7 @@ def _write_delivery(
         delivery_kind=delivery_kind,
         summary=summary,
         linked_outputs=outputs,
+        evidence_summary=evidence_summary,
     )
     path = write_delivery_record(root, delivery.to_record())
     return {
@@ -437,7 +439,6 @@ def handle_ticket_editor_action(
     )
     risk = classify_execution_risk(ticket_record)
     guard_visible = bool((guard_state or {}).get("visible", False))
-    did_change_workspace = False
 
     if action == "draft":
         result_record = dict(ticket_record)
@@ -570,6 +571,9 @@ def run_ticket(path: Path) -> dict[str, object]:
             delivery_kind=delivery_kind,
             summary=delivery_summary,
             outputs=_delivery_outputs_from_result(result),
+            evidence_summary=(result.get("summary") or {}).get("evidence_summary")
+            if isinstance(result.get("summary"), dict)
+            else None,
         )
         result["delivery_kind"] = delivery_kind
         _write_ticket_status(path, payload, AI_WORKSPACE_TICKET_STATUS_COMPLETED)
@@ -581,6 +585,7 @@ def run_ticket(path: Path) -> dict[str, object]:
             delivery_kind="artifact_bundle",
             summary="Delivery ticket submitted.",
             outputs=_resolved_linked_artifacts(path, payload),
+            evidence_summary=None,
         )
         _write_ticket_status(path, payload, AI_WORKSPACE_TICKET_STATUS_SUBMITTED)
         return {
