@@ -1,0 +1,120 @@
+molecule:
+  name: H2-lattice-QED-dynamics-runtime-preview
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: real_space_lattice
+
+policy:
+  name: hardware_ready
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lattice_qed
+    - qft_dynamics
+    - runtime_batch_preview
+  notes:
+    - "Guarded Runtime batch preview for aggregate lattice-QED dynamics observables."
+    - "Remote submission remains disabled unless backend.runtime.options.submit_real_job is true."
+
+problem:
+  qft:
+    enabled: true
+    model: lattice_qed_minimal_coupling
+    dimensions: 1
+    grid:
+      shape: [2]
+      spacing: [0.75]
+      origin: molecule_center
+      axes: principal
+      boundary: open
+      softening: 0.35
+    matter:
+      spin_components: 2
+      target_electrons: auto
+      include_soft_coulomb_density: false
+    gauge:
+      group: u1
+      electric_cutoff: 1
+      coupling: 1.0
+      include_magnetic_plaquettes: true
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      enforce_physical_sector: true
+      target_charge_sector: neutral
+      gauss_law_tolerance: 1.0e-8
+      max_sector_enumeration_qubits: 8
+    ansatz:
+      generator_policy: gauge_invariant_hopping
+    dynamics:
+      enabled: true
+      method: real_time_quench
+      initial_state:
+        kind: local_hopping_pulse
+        base: physical_reference
+        link_index: 0
+        pulse_time: 0.05
+        pulse_strength: 1.0
+      time_grid:
+        start: 0.0
+        stop: 2.0
+        num_points: 41
+      evolution:
+        exact_enabled: true
+        exact_qubit_limit: 12
+        trotter_enabled: true
+        trotter_step: 0.05
+        trotter_order: 1
+      runtime:
+        enabled: true
+        runtime_observables: aggregate_gauge
+  measurement:
+    strategy: lattice_qed_dynamics_runtime_preview
+    execution_mode: estimator
+    grouping_policy: finite_cutoff_field_terms
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 2032
+  runtime:
+    enabled: true
+    service: ibm_quantum_platform
+    runtime_ready: true
+    session_ready: true
+    batch_ready: true
+    precision_target: 0.02
+    max_budgeted_shots: 4096
+    max_execution_seconds: 300
+    calibration_strategy: qft_dynamics_h2_batch_preview
+    resilience_level: 1
+    grouping_policy: aggregate_gauge
+    options:
+      optimization_level: 1
+      submit_real_job: false
+      wait_for_result: false
+      use_batch: true
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 8
+  absolute_error_threshold: 1.0e-9
+  relative_error_threshold: 1.0e-9
+
+run:
+  seed: 2032
+  output_dir: artifacts/h2_lattice_qed_dynamics_runtime
+  overwrite: true

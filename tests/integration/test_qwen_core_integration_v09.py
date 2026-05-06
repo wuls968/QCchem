@@ -5,8 +5,11 @@ from qcchem.workflow.runner import run_from_config
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_run_result_contains_policy_and_reduction_plan() -> None:
-    result = run_from_config(REPO_ROOT / "configs" / "lih_active_vqe.yaml")
+def test_run_result_contains_policy_and_reduction_plan(tmp_path: Path) -> None:
+    result = run_from_config(
+        REPO_ROOT / "configs" / "lih_active_vqe.yaml",
+        output_dir=tmp_path / "lih_active_vqe",
+    )
 
     assert result.policy_engine is not None
     assert result.reduction_plan is not None

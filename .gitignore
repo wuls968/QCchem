@@ -3,5 +3,8 @@ __pycache__/
 *.pyc
 *.egg-info/
 .DS_Store
+.superpowers/
 configs/.tmp_*.yaml
 artifacts/**/preview_local/
+artifacts/lr_ace_local_molecule_sweep_*/
+artifacts/release_audit/

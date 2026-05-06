@@ -1,0 +1,15 @@
+{
+  "schema_version": "qcchem.example.tc_qsci.v1",
+  "config": "configs/exploratory/h2_tc_qsci.yaml",
+  "capability_tier": "exploratory",
+  "expected_sections": [
+    "tc_qsci_result",
+    "determinant_selection",
+    "symmetry_sector",
+    "cast_hamiltonian",
+    "low_rank_resource_estimate",
+    "qpe_resource_estimate",
+    "error_budget"
+  ],
+  "boundary": "TC-kicked QSCI is an exploratory determinant-selection workflow; final diagonalization uses the physical active-space Hamiltonian, and QPE numbers are coarse resource estimates."
+}

@@ -506,6 +506,43 @@ class PropertyTaskResult:
 
 
 @dataclass(slots=True)
+class QFTModelSummary:
+    """Exploratory finite-cutoff lattice-QED model metadata."""
+
+    enabled: bool
+    model: str
+    dimensions: int
+    grid_shape: list[int]
+    grid_spacing: list[float]
+    grid_origin: str
+    grid_axes: str
+    boundary: str
+    softening: float
+    site_count: int
+    link_count: int
+    plaquette_count: int
+    matter_mode_count: int
+    matter_qubits: int
+    gauge_qubits: int
+    total_qubits: int
+    gauge_group: str
+    gauge_electric_cutoff: int
+    gauge_coupling: float
+    target_electrons: int
+    term_counts_by_sector: dict[str, int] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    constraint_residuals: dict[str, Any] = field(default_factory=dict)
+    nuclear_charge_by_site: list[float] = field(default_factory=list)
+    gauss_law_generators: list[dict[str, Any]] = field(default_factory=list)
+    hamiltonian_gauge_commutator_norms: list[dict[str, Any]] = field(default_factory=list)
+    physical_sector: dict[str, Any] = field(default_factory=dict)
+    gauge_invariant_ansatz: dict[str, Any] = field(default_factory=dict)
+    constraint_expectations: dict[str, Any] = field(default_factory=dict)
+    engine: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class ProvenanceSummary:
     """Versions and provenance needed for reproducibility."""
 
@@ -592,6 +629,15 @@ class RunResult:
     verification_notes: list[str] = field(default_factory=list)
     scientific_risk_notes: list[str] = field(default_factory=list)
     evidence_summary: EvidenceSummary | None = None
+    tc_qsci_result: dict[str, Any] | None = None
+    determinant_selection: dict[str, Any] | None = None
+    symmetry_sector: dict[str, Any] | None = None
+    cast_hamiltonian: dict[str, Any] | None = None
+    low_rank_resource_estimate: dict[str, Any] | None = None
+    qpe_resource_estimate: dict[str, Any] | None = None
+    error_budget: dict[str, Any] | None = None
+    qft_model: QFTModelSummary | None = None
+    qft_dynamics: dict[str, Any] | None = None
 
 
 @dataclass(slots=True)

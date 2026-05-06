@@ -68,6 +68,10 @@ class CompressionSpec:
     method: str = "modified_cholesky"
     threshold: float = 1.0e-8
     max_rank: int | None = None
+    rank_schedule: list[int] | None = None
+    term_budget_policy: str = "precision_first"
+    compression_error_budget_hartree: float = 8.0e-4
+    allow_pauli_truncation: bool = False
     apply_to_solver: bool = False
     execution_enabled: bool = False
 
@@ -102,6 +106,143 @@ class EmbeddingSpec:
 
 
 @dataclass(slots=True)
+class LatticeQEDGridSpec:
+    """Real-space grid settings for exploratory lattice-QED models."""
+
+    shape: list[int] = field(default_factory=lambda: [2])
+    spacing: list[float] = field(default_factory=lambda: [1.0])
+    origin: str = "molecule_center"
+    axes: str = "principal"
+    boundary: str = "open"
+    softening: float = 0.35
+
+
+@dataclass(slots=True)
+class LatticeQEDMatterSpec:
+    """Matter-field settings for exploratory lattice-QED models."""
+
+    spin_components: int = 2
+    target_electrons: str | int = "auto"
+    include_soft_coulomb_density: bool = False
+
+
+@dataclass(slots=True)
+class LatticeQEDGaugeSpec:
+    """Gauge-field settings for exploratory compact U(1) lattice QED."""
+
+    group: str = "u1"
+    electric_cutoff: int = 1
+    coupling: float = 1.0
+    include_magnetic_plaquettes: bool = True
+
+
+@dataclass(slots=True)
+class LatticeQEDConstraintSpec:
+    """Penalty terms used to keep finite lattice-QED calculations auditable."""
+
+    gauss_law_penalty: float = 10.0
+    particle_number_penalty: float = 10.0
+    padding_penalty: float = 50.0
+    enforce_physical_sector: bool = False
+    target_charge_sector: str = "neutral"
+    gauss_law_tolerance: float = 1.0e-8
+    max_sector_enumeration_qubits: int = 10
+
+
+@dataclass(slots=True)
+class LatticeQEDAnsatzSpec:
+    """Gauge-aware ansatz settings for exploratory lattice-QED solvers."""
+
+    generator_policy: str = "gauge_invariant_hopping"
+
+
+@dataclass(slots=True)
+class LatticeQEDEngineSpec:
+    """Operator-representation settings for exploratory lattice-QED engines."""
+
+    representation: str = "auto"
+    auto_project_physical_sector: bool = True
+    max_projected_dimension: int = 4096
+    max_full_qubits_for_dense: int = 10
+    materialize_pauli: str = "auto"
+    store_basis_indices: str = "preview"
+    projector_tolerance: float = 1.0e-8
+
+
+@dataclass(slots=True)
+class LatticeQEDDynamicsInitialStateSpec:
+    """Initial-state preparation for QFT real-time dynamics."""
+
+    kind: str = "local_hopping_pulse"
+    base: str = "physical_reference"
+    link_index: int = 0
+    pulse_time: float = 0.05
+    pulse_strength: float = 1.0
+
+
+@dataclass(slots=True)
+class LatticeQEDDynamicsTimeGridSpec:
+    """Time grid for QFT real-time dynamics."""
+
+    start: float = 0.0
+    stop: float = 2.0
+    num_points: int = 41
+
+
+@dataclass(slots=True)
+class LatticeQEDDynamicsEvolutionSpec:
+    """Exact and Trotter evolution settings for QFT dynamics."""
+
+    exact_enabled: bool = True
+    exact_qubit_limit: int = 12
+    trotter_enabled: bool = True
+    trotter_step: float = 0.05
+    trotter_order: int = 1
+
+
+@dataclass(slots=True)
+class LatticeQEDDynamicsRuntimeSpec:
+    """Guarded runtime batch settings for QFT dynamics."""
+
+    enabled: bool = False
+    runtime_observables: str = "aggregate_gauge"
+
+
+@dataclass(slots=True)
+class LatticeQEDDynamicsSpec:
+    """Exploratory real-time lattice-QED dynamics task configuration."""
+
+    enabled: bool = False
+    method: str = "real_time_quench"
+    initial_state: LatticeQEDDynamicsInitialStateSpec = field(
+        default_factory=LatticeQEDDynamicsInitialStateSpec
+    )
+    time_grid: LatticeQEDDynamicsTimeGridSpec = field(
+        default_factory=LatticeQEDDynamicsTimeGridSpec
+    )
+    evolution: LatticeQEDDynamicsEvolutionSpec = field(
+        default_factory=LatticeQEDDynamicsEvolutionSpec
+    )
+    runtime: LatticeQEDDynamicsRuntimeSpec = field(default_factory=LatticeQEDDynamicsRuntimeSpec)
+
+
+@dataclass(slots=True)
+class LatticeQEDSpec:
+    """Exploratory real-space lattice-QED field model configuration."""
+
+    enabled: bool = False
+    model: str = "lattice_qed_minimal_coupling"
+    dimensions: int = 1
+    grid: LatticeQEDGridSpec = field(default_factory=LatticeQEDGridSpec)
+    matter: LatticeQEDMatterSpec = field(default_factory=LatticeQEDMatterSpec)
+    gauge: LatticeQEDGaugeSpec = field(default_factory=LatticeQEDGaugeSpec)
+    constraints: LatticeQEDConstraintSpec = field(default_factory=LatticeQEDConstraintSpec)
+    ansatz: LatticeQEDAnsatzSpec = field(default_factory=LatticeQEDAnsatzSpec)
+    engine: LatticeQEDEngineSpec = field(default_factory=LatticeQEDEngineSpec)
+    dynamics: LatticeQEDDynamicsSpec = field(default_factory=LatticeQEDDynamicsSpec)
+
+
+@dataclass(slots=True)
 class ProblemSpec:
     """Electronic-structure problem configuration."""
 
@@ -111,6 +252,7 @@ class ProblemSpec:
     compression: CompressionSpec = field(default_factory=CompressionSpec)
     measurement: MeasurementSpec = field(default_factory=MeasurementSpec)
     embedding: EmbeddingSpec = field(default_factory=EmbeddingSpec)
+    qft: LatticeQEDSpec = field(default_factory=LatticeQEDSpec)
 
 
 @dataclass(slots=True)
@@ -187,6 +329,26 @@ class AnsatzSpec:
 
 
 @dataclass(slots=True)
+class LRACEAdaptiveSpec:
+    """Adaptive budget and trust-gate settings for exploratory LR-ACE."""
+
+    enabled: bool = False
+    generator_schedule: list[int] = field(default_factory=lambda: [8, 16, 24, 32])
+    optimizer_maxiter_schedule: list[int] = field(default_factory=lambda: [1000, 2000, 5000])
+    initial_point_strategies: list[str] = field(default_factory=lambda: ["zeros", "random"])
+    random_restarts: int = 3
+    target_error_hartree: float = 1.6e-3
+    max_wall_time_seconds: float = 1200.0
+    uncompressed_check_qubit_limit: int = 12
+    candidate_pool_policy: str = "residual_guided"
+    candidate_scan_limit: int = 64
+    residual_batch_size: int = 8
+    residual_scan_angles: list[float] = field(default_factory=lambda: [-0.15, -0.05, 0.05, 0.15])
+    min_energy_improvement_hartree: float = 2.0e-4
+    max_adaptive_expansions: int = 3
+
+
+@dataclass(slots=True)
 class SolverSpec:
     """Solver configuration."""
 
@@ -195,6 +357,7 @@ class SolverSpec:
     ansatz: AnsatzSpec = field(default_factory=AnsatzSpec)
     initial_point: str | list[float] = "zeros"
     experimental: bool = False
+    lr_ace_adaptive: LRACEAdaptiveSpec = field(default_factory=LRACEAdaptiveSpec)
 
 
 @dataclass(slots=True)
@@ -309,6 +472,63 @@ class TaskSpec:
 
 
 @dataclass(slots=True)
+class TCQSCICastModelSpec:
+    """CAST-QC Hamiltonian plugin configuration for TC-kicked QSCI."""
+
+    kind: str = "identity"
+    npz_path: str | None = None
+
+
+@dataclass(slots=True)
+class TCQSCIInitialStateSpec:
+    """Initial determinant-state configuration for TC-kicked QSCI."""
+
+    kind: str = "hf"
+    max_determinants: int | None = None
+    determinants: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class TCQSCIKickSpec:
+    """Short-time kicking and sampling configuration for TC-kicked QSCI."""
+
+    time: float = 0.05
+    num_kicks: int = 1
+    pauli_term_budget: int | None = None
+    shots: int = 1024
+
+
+@dataclass(slots=True)
+class TCQSCISelectionSpec:
+    """Selected determinant subspace policy for TC-kicked QSCI."""
+
+    max_determinants: int = 64
+    min_count: int = 1
+    symmetry_postselect: bool = True
+
+
+@dataclass(slots=True)
+class TCQSCIResourceEstimationSpec:
+    """Coarse resource-estimation options for TC-kicked QSCI."""
+
+    enabled: bool = True
+    target_precision: float = 1.0e-3
+
+
+@dataclass(slots=True)
+class TCQSCISpec:
+    """Exploratory TC-kicked QSCI workflow configuration."""
+
+    enabled: bool = False
+    resource_estimation_only: bool = False
+    cast_model: TCQSCICastModelSpec = field(default_factory=TCQSCICastModelSpec)
+    initial_state: TCQSCIInitialStateSpec = field(default_factory=TCQSCIInitialStateSpec)
+    kick: TCQSCIKickSpec = field(default_factory=TCQSCIKickSpec)
+    selection: TCQSCISelectionSpec = field(default_factory=TCQSCISelectionSpec)
+    resource_estimation: TCQSCIResourceEstimationSpec = field(default_factory=TCQSCIResourceEstimationSpec)
+
+
+@dataclass(slots=True)
 class HardwareOptimizationSpec:
     """Budget-guarded hardware precision optimization settings."""
 
@@ -362,6 +582,7 @@ class RunSpec:
     policy: PolicySpec = field(default_factory=PolicySpec)
     exploratory: ExploratorySpec = field(default_factory=ExploratorySpec)
     tasks: TaskSpec = field(default_factory=TaskSpec)
+    tc_qsci: TCQSCISpec = field(default_factory=TCQSCISpec)
     hardware_optimization: HardwareOptimizationSpec = field(default_factory=HardwareOptimizationSpec)
     run: RunConfig = field(default_factory=RunConfig)
 

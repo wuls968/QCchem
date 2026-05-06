@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "QCchem"
-version = "0.1.0a0"
+version = "0.1.0a1"
 description = "Research-grade quantum chemistry workflow scaffold built on Qiskit and Qiskit Nature."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -54,4 +54,9 @@ markers = [
 ]
 filterwarnings = [
   "ignore:The class ``qiskit\\..*`` is deprecated.*:DeprecationWarning",
+  "ignore:The property ``qiskit\\.dagcircuit\\.dagcircuit\\.DAGCircuit\\.duration`` is deprecated.*:DeprecationWarning",
+  "ignore:The property ``qiskit\\.dagcircuit\\.dagcircuit\\.DAGCircuit\\.unit`` is deprecated.*:DeprecationWarning",
+  "ignore:The property ``qiskit\\.circuit\\.instruction\\.Instruction\\.condition`` is deprecated.*:DeprecationWarning",
+  "ignore:qiskit\\.providers\\.models is deprecated.*:DeprecationWarning",
+  "ignore:The class ``qiskit\\.circuit\\.library\\.n_local\\.n_local\\.NLocal`` is pending deprecation.*:PendingDeprecationWarning",
 ]

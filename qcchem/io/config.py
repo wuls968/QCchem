@@ -22,6 +22,19 @@ from qcchem.core import (
     ExcitedStateTaskSpec,
     FragmentSpec,
     HardwareOptimizationSpec,
+    LatticeQEDAnsatzSpec,
+    LatticeQEDConstraintSpec,
+    LatticeQEDDynamicsEvolutionSpec,
+    LatticeQEDDynamicsInitialStateSpec,
+    LatticeQEDDynamicsRuntimeSpec,
+    LatticeQEDDynamicsSpec,
+    LatticeQEDDynamicsTimeGridSpec,
+    LatticeQEDEngineSpec,
+    LatticeQEDGaugeSpec,
+    LatticeQEDGridSpec,
+    LatticeQEDMatterSpec,
+    LatticeQEDSpec,
+    LRACEAdaptiveSpec,
     MappingSpec,
     MeasurementSpec,
     MitigationSpec,
@@ -39,6 +52,12 @@ from qcchem.core import (
     RuntimeOptionsSpec,
     SolverSpec,
     SymmetryCheckSpec,
+    TCQSCICastModelSpec,
+    TCQSCIInitialStateSpec,
+    TCQSCIKickSpec,
+    TCQSCIResourceEstimationSpec,
+    TCQSCISelectionSpec,
+    TCQSCISpec,
     TaskSpec,
     ZNESpec,
 )
@@ -120,6 +139,10 @@ def _parse_compression(problem_raw: dict[str, Any]) -> CompressionSpec:
     compression_raw = problem_raw.get("compression")
     if not isinstance(compression_raw, dict):
         return CompressionSpec()
+    rank_schedule_raw = compression_raw.get("rank_schedule")
+    rank_schedule = None
+    if isinstance(rank_schedule_raw, list):
+        rank_schedule = [int(value) for value in rank_schedule_raw]
     return CompressionSpec(
         enabled=bool(compression_raw.get("enabled", False)),
         method=str(compression_raw.get("method", "modified_cholesky")),
@@ -129,12 +152,83 @@ def _parse_compression(problem_raw: dict[str, Any]) -> CompressionSpec:
             if compression_raw.get("max_rank") is not None
             else None
         ),
+        rank_schedule=rank_schedule,
+        term_budget_policy=str(compression_raw.get("term_budget_policy", "precision_first")),
+        compression_error_budget_hartree=float(
+            compression_raw.get("compression_error_budget_hartree", 8.0e-4)
+        ),
+        allow_pauli_truncation=bool(compression_raw.get("allow_pauli_truncation", False)),
         apply_to_solver=bool(compression_raw.get("apply_to_solver", False)),
         execution_enabled=bool(
             compression_raw.get(
                 "execution_enabled",
                 compression_raw.get("apply_to_solver", False),
             )
+        ),
+    )
+
+
+def _parse_lr_ace_adaptive(solver_raw: dict[str, Any]) -> LRACEAdaptiveSpec:
+    adaptive_raw = solver_raw.get("lr_ace_adaptive")
+    if not isinstance(adaptive_raw, dict):
+        return LRACEAdaptiveSpec()
+    defaults = LRACEAdaptiveSpec()
+    return LRACEAdaptiveSpec(
+        enabled=bool(adaptive_raw.get("enabled", False)),
+        generator_schedule=[
+            int(value) for value in adaptive_raw.get("generator_schedule", defaults.generator_schedule)
+        ],
+        optimizer_maxiter_schedule=[
+            int(value)
+            for value in adaptive_raw.get(
+                "optimizer_maxiter_schedule",
+                defaults.optimizer_maxiter_schedule,
+            )
+        ],
+        initial_point_strategies=[
+            str(value)
+            for value in adaptive_raw.get(
+                "initial_point_strategies",
+                defaults.initial_point_strategies,
+            )
+        ],
+        random_restarts=int(adaptive_raw.get("random_restarts", defaults.random_restarts)),
+        target_error_hartree=float(
+            adaptive_raw.get("target_error_hartree", defaults.target_error_hartree)
+        ),
+        max_wall_time_seconds=float(
+            adaptive_raw.get("max_wall_time_seconds", defaults.max_wall_time_seconds)
+        ),
+        uncompressed_check_qubit_limit=int(
+            adaptive_raw.get(
+                "uncompressed_check_qubit_limit",
+                defaults.uncompressed_check_qubit_limit,
+            )
+        ),
+        candidate_pool_policy=str(
+            adaptive_raw.get("candidate_pool_policy", defaults.candidate_pool_policy)
+        ),
+        candidate_scan_limit=int(
+            adaptive_raw.get("candidate_scan_limit", defaults.candidate_scan_limit)
+        ),
+        residual_batch_size=int(
+            adaptive_raw.get("residual_batch_size", defaults.residual_batch_size)
+        ),
+        residual_scan_angles=[
+            float(value)
+            for value in adaptive_raw.get(
+                "residual_scan_angles",
+                defaults.residual_scan_angles,
+            )
+        ],
+        min_energy_improvement_hartree=float(
+            adaptive_raw.get(
+                "min_energy_improvement_hartree",
+                defaults.min_energy_improvement_hartree,
+            )
+        ),
+        max_adaptive_expansions=int(
+            adaptive_raw.get("max_adaptive_expansions", defaults.max_adaptive_expansions)
         ),
     )
 
@@ -181,6 +275,192 @@ def _parse_embedding(problem_raw: dict[str, Any]) -> EmbeddingSpec:
     )
 
 
+def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
+    qft_raw = problem_raw.get("qft")
+    if not isinstance(qft_raw, dict):
+        return LatticeQEDSpec()
+    grid_raw = qft_raw.get("grid", {})
+    matter_raw = qft_raw.get("matter", {})
+    gauge_raw = qft_raw.get("gauge", {})
+    constraints_raw = qft_raw.get("constraints", {})
+    ansatz_raw = qft_raw.get("ansatz", {})
+    engine_raw = qft_raw.get("engine", {})
+    dynamics_raw = qft_raw.get("dynamics", {})
+    if not isinstance(grid_raw, dict):
+        raise ValueError("problem.qft.grid must be a mapping.")
+    if not isinstance(matter_raw, dict):
+        raise ValueError("problem.qft.matter must be a mapping.")
+    if not isinstance(gauge_raw, dict):
+        raise ValueError("problem.qft.gauge must be a mapping.")
+    if not isinstance(constraints_raw, dict):
+        raise ValueError("problem.qft.constraints must be a mapping.")
+    if not isinstance(ansatz_raw, dict):
+        raise ValueError("problem.qft.ansatz must be a mapping.")
+    if not isinstance(engine_raw, dict):
+        raise ValueError("problem.qft.engine must be a mapping.")
+    if not isinstance(dynamics_raw, dict):
+        raise ValueError("problem.qft.dynamics must be a mapping.")
+
+    dimensions = int(qft_raw.get("dimensions", 1))
+    if dimensions < 1:
+        raise ValueError("problem.qft.dimensions must be at least 1.")
+    shape = [int(value) for value in grid_raw.get("shape", [2] * dimensions)]
+    spacing = [float(value) for value in grid_raw.get("spacing", [1.0] * dimensions)]
+    if len(shape) != dimensions:
+        raise ValueError("problem.qft.grid.shape length must match problem.qft.dimensions.")
+    if len(spacing) != dimensions:
+        raise ValueError("problem.qft.grid.spacing length must match problem.qft.dimensions.")
+    if any(value < 2 for value in shape):
+        raise ValueError("problem.qft.grid.shape entries must be at least 2.")
+    if any(value <= 0.0 for value in spacing):
+        raise ValueError("problem.qft.grid.spacing entries must be positive.")
+
+    target_electrons = matter_raw.get("target_electrons", "auto")
+    if target_electrons != "auto":
+        target_electrons = int(target_electrons)
+        if target_electrons < 0:
+            raise ValueError("problem.qft.matter.target_electrons must be non-negative.")
+
+    electric_cutoff = int(gauge_raw.get("electric_cutoff", 1))
+    if electric_cutoff < 0:
+        raise ValueError("problem.qft.gauge.electric_cutoff must be non-negative.")
+    gauss_law_tolerance = float(constraints_raw.get("gauss_law_tolerance", 1.0e-8))
+    if gauss_law_tolerance <= 0.0:
+        raise ValueError("problem.qft.constraints.gauss_law_tolerance must be positive.")
+    max_sector_enumeration_qubits = int(
+        constraints_raw.get("max_sector_enumeration_qubits", 10)
+    )
+    if max_sector_enumeration_qubits < 0:
+        raise ValueError(
+            "problem.qft.constraints.max_sector_enumeration_qubits must be non-negative."
+        )
+    dynamics_initial_raw = dynamics_raw.get("initial_state", {})
+    dynamics_time_raw = dynamics_raw.get("time_grid", {})
+    dynamics_evolution_raw = dynamics_raw.get("evolution", {})
+    dynamics_runtime_raw = dynamics_raw.get("runtime", {})
+    if not isinstance(dynamics_initial_raw, dict):
+        raise ValueError("problem.qft.dynamics.initial_state must be a mapping.")
+    if not isinstance(dynamics_time_raw, dict):
+        raise ValueError("problem.qft.dynamics.time_grid must be a mapping.")
+    if not isinstance(dynamics_evolution_raw, dict):
+        raise ValueError("problem.qft.dynamics.evolution must be a mapping.")
+    if not isinstance(dynamics_runtime_raw, dict):
+        raise ValueError("problem.qft.dynamics.runtime must be a mapping.")
+    dynamics_num_points = int(dynamics_time_raw.get("num_points", 41))
+    if dynamics_num_points < 2:
+        raise ValueError("problem.qft.dynamics.time_grid.num_points must be at least 2.")
+    dynamics_trotter_step = float(dynamics_evolution_raw.get("trotter_step", 0.05))
+    if dynamics_trotter_step <= 0.0:
+        raise ValueError("problem.qft.dynamics.evolution.trotter_step must be positive.")
+    dynamics_exact_qubit_limit = int(dynamics_evolution_raw.get("exact_qubit_limit", 12))
+    if dynamics_exact_qubit_limit < 0:
+        raise ValueError("problem.qft.dynamics.evolution.exact_qubit_limit must be non-negative.")
+    dynamics_trotter_order = int(dynamics_evolution_raw.get("trotter_order", 1))
+    if dynamics_trotter_order != 1:
+        raise ValueError("problem.qft.dynamics.evolution.trotter_order currently supports only 1.")
+    engine_representation = str(engine_raw.get("representation", "auto")).strip().lower()
+    if engine_representation not in {"auto", "sparse_projected", "sparse_full", "dense_full"}:
+        raise ValueError(
+            "problem.qft.engine.representation must be one of auto, sparse_projected, sparse_full, or dense_full."
+        )
+    engine_materialize_pauli = str(engine_raw.get("materialize_pauli", "auto")).strip().lower()
+    if engine_materialize_pauli not in {"auto", "always", "never"}:
+        raise ValueError("problem.qft.engine.materialize_pauli must be one of auto, always, or never.")
+    engine_store_basis_indices = str(engine_raw.get("store_basis_indices", "preview")).strip().lower()
+    if engine_store_basis_indices not in {"preview", "full", "hash_only"}:
+        raise ValueError("problem.qft.engine.store_basis_indices must be one of preview, full, or hash_only.")
+    engine_max_projected_dimension = int(engine_raw.get("max_projected_dimension", 4096))
+    if engine_max_projected_dimension < 1:
+        raise ValueError("problem.qft.engine.max_projected_dimension must be positive.")
+    engine_max_full_qubits_for_dense = int(engine_raw.get("max_full_qubits_for_dense", 10))
+    if engine_max_full_qubits_for_dense < 0:
+        raise ValueError("problem.qft.engine.max_full_qubits_for_dense must be non-negative.")
+    engine_projector_tolerance = float(engine_raw.get("projector_tolerance", 1.0e-8))
+    if engine_projector_tolerance <= 0.0:
+        raise ValueError("problem.qft.engine.projector_tolerance must be positive.")
+
+    return LatticeQEDSpec(
+        enabled=bool(qft_raw.get("enabled", False)),
+        model=str(qft_raw.get("model", "lattice_qed_minimal_coupling")),
+        dimensions=dimensions,
+        grid=LatticeQEDGridSpec(
+            shape=shape,
+            spacing=spacing,
+            origin=str(grid_raw.get("origin", "molecule_center")),
+            axes=str(grid_raw.get("axes", "principal")),
+            boundary=str(grid_raw.get("boundary", "open")),
+            softening=float(grid_raw.get("softening", 0.35)),
+        ),
+        matter=LatticeQEDMatterSpec(
+            spin_components=int(matter_raw.get("spin_components", 2)),
+            target_electrons=target_electrons,
+            include_soft_coulomb_density=bool(
+                matter_raw.get("include_soft_coulomb_density", False)
+            ),
+        ),
+        gauge=LatticeQEDGaugeSpec(
+            group=str(gauge_raw.get("group", "u1")),
+            electric_cutoff=electric_cutoff,
+            coupling=float(gauge_raw.get("coupling", 1.0)),
+            include_magnetic_plaquettes=bool(gauge_raw.get("include_magnetic_plaquettes", True)),
+        ),
+        constraints=LatticeQEDConstraintSpec(
+            gauss_law_penalty=float(constraints_raw.get("gauss_law_penalty", 10.0)),
+            particle_number_penalty=float(constraints_raw.get("particle_number_penalty", 10.0)),
+            padding_penalty=float(constraints_raw.get("padding_penalty", 50.0)),
+            enforce_physical_sector=bool(
+                constraints_raw.get("enforce_physical_sector", False)
+            ),
+            target_charge_sector=str(constraints_raw.get("target_charge_sector", "neutral")),
+            gauss_law_tolerance=gauss_law_tolerance,
+            max_sector_enumeration_qubits=max_sector_enumeration_qubits,
+        ),
+        ansatz=LatticeQEDAnsatzSpec(
+            generator_policy=str(ansatz_raw.get("generator_policy", "gauge_invariant_hopping"))
+        ),
+        engine=LatticeQEDEngineSpec(
+            representation=engine_representation,
+            auto_project_physical_sector=bool(
+                engine_raw.get("auto_project_physical_sector", True)
+            ),
+            max_projected_dimension=engine_max_projected_dimension,
+            max_full_qubits_for_dense=engine_max_full_qubits_for_dense,
+            materialize_pauli=engine_materialize_pauli,
+            store_basis_indices=engine_store_basis_indices,
+            projector_tolerance=engine_projector_tolerance,
+        ),
+        dynamics=LatticeQEDDynamicsSpec(
+            enabled=bool(dynamics_raw.get("enabled", False)),
+            method=str(dynamics_raw.get("method", "real_time_quench")),
+            initial_state=LatticeQEDDynamicsInitialStateSpec(
+                kind=str(dynamics_initial_raw.get("kind", "local_hopping_pulse")),
+                base=str(dynamics_initial_raw.get("base", "physical_reference")),
+                link_index=int(dynamics_initial_raw.get("link_index", 0)),
+                pulse_time=float(dynamics_initial_raw.get("pulse_time", 0.05)),
+                pulse_strength=float(dynamics_initial_raw.get("pulse_strength", 1.0)),
+            ),
+            time_grid=LatticeQEDDynamicsTimeGridSpec(
+                start=float(dynamics_time_raw.get("start", 0.0)),
+                stop=float(dynamics_time_raw.get("stop", 2.0)),
+                num_points=dynamics_num_points,
+            ),
+            evolution=LatticeQEDDynamicsEvolutionSpec(
+                exact_enabled=bool(dynamics_evolution_raw.get("exact_enabled", True)),
+                exact_qubit_limit=dynamics_exact_qubit_limit,
+                trotter_enabled=bool(dynamics_evolution_raw.get("trotter_enabled", True)),
+                trotter_step=dynamics_trotter_step,
+                trotter_order=dynamics_trotter_order,
+            ),
+            runtime=LatticeQEDDynamicsRuntimeSpec(
+                enabled=bool(dynamics_runtime_raw.get("enabled", False)),
+                runtime_observables=str(
+                    dynamics_runtime_raw.get("runtime_observables", "aggregate_gauge")
+                ),
+            ),
+        ),
+    )
+
+
 def _parse_property_tasks(tasks_raw: dict[str, Any]) -> list[PropertyTaskSpec]:
     properties_raw = tasks_raw.get("properties", [])
     if not isinstance(properties_raw, list):
@@ -209,6 +489,70 @@ def _parse_perturbative_correction(tasks_raw: dict[str, Any]) -> PerturbativeCor
         method=str(raw.get("method", "nevpt2")),
         plugin=str(raw.get("plugin", "pyscf")),
         root=int(raw.get("root", 0)),
+    )
+
+
+def _parse_tc_qsci(raw: dict[str, Any], *, base_dir: Path) -> TCQSCISpec:
+    tc_raw = raw.get("tc_qsci")
+    if not isinstance(tc_raw, dict):
+        return TCQSCISpec()
+    cast_raw = tc_raw.get("cast_model", {})
+    if not isinstance(cast_raw, dict):
+        raise ValueError("tc_qsci.cast_model must be a mapping.")
+    initial_raw = tc_raw.get("initial_state", {})
+    if not isinstance(initial_raw, dict):
+        raise ValueError("tc_qsci.initial_state must be a mapping.")
+    kick_raw = tc_raw.get("kick", {})
+    if not isinstance(kick_raw, dict):
+        raise ValueError("tc_qsci.kick must be a mapping.")
+    selection_raw = tc_raw.get("selection", {})
+    if not isinstance(selection_raw, dict):
+        raise ValueError("tc_qsci.selection must be a mapping.")
+    resource_raw = tc_raw.get("resource_estimation", {})
+    if not isinstance(resource_raw, dict):
+        raise ValueError("tc_qsci.resource_estimation must be a mapping.")
+    determinants_raw = initial_raw.get("determinants", [])
+    if not isinstance(determinants_raw, list):
+        raise ValueError("tc_qsci.initial_state.determinants must be a list.")
+    return TCQSCISpec(
+        enabled=bool(tc_raw.get("enabled", False)),
+        resource_estimation_only=bool(tc_raw.get("resource_estimation_only", False)),
+        cast_model=TCQSCICastModelSpec(
+            kind=str(cast_raw.get("kind", "identity")),
+            npz_path=(
+                str(resolve_user_path(base_dir, str(cast_raw["npz_path"])))
+                if cast_raw.get("npz_path") is not None
+                else None
+            ),
+        ),
+        initial_state=TCQSCIInitialStateSpec(
+            kind=str(initial_raw.get("kind", "hf")),
+            max_determinants=(
+                int(initial_raw["max_determinants"])
+                if initial_raw.get("max_determinants") is not None
+                else None
+            ),
+            determinants=[dict(item) for item in determinants_raw],
+        ),
+        kick=TCQSCIKickSpec(
+            time=float(kick_raw.get("time", 0.05)),
+            num_kicks=int(kick_raw.get("num_kicks", 1)),
+            pauli_term_budget=(
+                int(kick_raw["pauli_term_budget"])
+                if kick_raw.get("pauli_term_budget") is not None
+                else None
+            ),
+            shots=int(kick_raw.get("shots", 1024)),
+        ),
+        selection=TCQSCISelectionSpec(
+            max_determinants=int(selection_raw.get("max_determinants", 64)),
+            min_count=int(selection_raw.get("min_count", 1)),
+            symmetry_postselect=bool(selection_raw.get("symmetry_postselect", True)),
+        ),
+        resource_estimation=TCQSCIResourceEstimationSpec(
+            enabled=bool(resource_raw.get("enabled", True)),
+            target_precision=float(resource_raw.get("target_precision", 1.0e-3)),
+        ),
     )
 
 
@@ -353,6 +697,7 @@ def load_run_spec(path: Path) -> RunSpec:
             compression=_parse_compression(problem_raw),
             measurement=_parse_measurement(problem_raw),
             embedding=_parse_embedding(problem_raw),
+            qft=_parse_lattice_qed(problem_raw),
         ),
         mapping=MappingSpec(kind=str(_require_mapping(raw, "mapping").get("kind", "jordan_wigner"))),
         backend=BackendSpec(
@@ -382,6 +727,7 @@ def load_run_spec(path: Path) -> RunSpec:
             ),
             initial_point=solver_raw.get("initial_point", "zeros"),
             experimental=bool(solver_raw.get("experimental", False)),
+            lr_ace_adaptive=_parse_lr_ace_adaptive(solver_raw),
         ),
         benchmark=BenchmarkSpec(
             enabled=bool(benchmark_raw.get("enabled", True)),
@@ -427,6 +773,7 @@ def load_run_spec(path: Path) -> RunSpec:
             properties=_parse_property_tasks(tasks_raw),
             perturbative_correction=_parse_perturbative_correction(tasks_raw),
         ),
+        tc_qsci=_parse_tc_qsci(raw, base_dir=resolved_path.parent),
         hardware_optimization=_parse_hardware_optimization(raw),
         run=RunConfig(
             seed=int(run_raw.get("seed", 7)),

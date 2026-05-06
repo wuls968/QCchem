@@ -4,6 +4,8 @@ from pathlib import Path
 
 import yaml
 
+from qcchem.chem.compression import _effective_max_rank
+from qcchem.core import CompressionSpec
 from qcchem.io.config import load_run_spec
 
 
@@ -56,3 +58,9 @@ def test_load_run_spec_parses_compression_execution_and_exports(tmp_path: Path) 
     assert spec.problem.compression.method == "modified_cholesky"
     assert spec.run.exports.qcschema_json is True
     assert spec.run.exports.hdf5 is True
+
+
+def test_rank_schedule_raises_effective_compression_rank_for_adaptive_runs() -> None:
+    spec = CompressionSpec(max_rank=4, rank_schedule=[4, 8, 12])
+
+    assert _effective_max_rank(spec) == 12

@@ -1,0 +1,104 @@
+molecule:
+  name: H2-2D-lattice-QED-plaquette-dynamics
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: real_space_lattice
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lattice_qed
+    - qft_dynamics
+    - plaquette_wilson_smoke
+  notes:
+    - "Small 2D finite-cutoff compact-U(1) lattice-QED plaquette dynamics smoke test."
+    - "Wilson/plaquette observables are reported for the finite lattice only."
+
+problem:
+  qft:
+    enabled: true
+    model: lattice_qed_minimal_coupling
+    dimensions: 2
+    grid:
+      shape: [2, 2]
+      spacing: [0.75, 0.75]
+      origin: molecule_center
+      axes: cartesian
+      boundary: open
+      softening: 0.35
+    matter:
+      spin_components: 1
+      target_electrons: auto
+      include_soft_coulomb_density: false
+    gauge:
+      group: u1
+      electric_cutoff: 1
+      coupling: 1.0
+      include_magnetic_plaquettes: true
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      enforce_physical_sector: true
+      target_charge_sector: neutral
+      gauss_law_tolerance: 1.0e-8
+      max_sector_enumeration_qubits: 12
+    ansatz:
+      generator_policy: electric_magnetic
+    dynamics:
+      enabled: true
+      method: real_time_quench
+      initial_state:
+        kind: local_hopping_pulse
+        base: physical_reference
+        link_index: 0
+        pulse_time: 0.05
+        pulse_strength: 1.0
+      time_grid:
+        start: 0.0
+        stop: 0.2
+        num_points: 5
+      evolution:
+        exact_enabled: true
+        exact_qubit_limit: 12
+        trotter_enabled: false
+        trotter_step: 0.05
+        trotter_order: 1
+      runtime:
+        enabled: false
+        runtime_observables: aggregate_gauge
+  measurement:
+    strategy: lattice_qed_plaquette_dynamics
+    execution_mode: estimator
+    grouping_policy: finite_cutoff_field_terms
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 2033
+
+solver:
+  kind: qft_dynamics_audit
+  experimental: true
+
+benchmark:
+  enabled: false
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-9
+  relative_error_threshold: 1.0e-9
+
+run:
+  seed: 2033
+  output_dir: artifacts/h2_2d_lattice_qed_plaquette_dynamics
+  overwrite: true

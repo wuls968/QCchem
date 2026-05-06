@@ -1,0 +1,89 @@
+molecule:
+  name: H2-2D-lattice-QED-projected-exact
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: real_space_lattice
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lattice_qed
+    - sparse_projected_engine
+    - plaquette_wilson_smoke
+  notes:
+    - "2D 2x2 sparse physical-sector exact smoke with plaquette/Wilson observability."
+
+problem:
+  qft:
+    enabled: true
+    model: lattice_qed_minimal_coupling
+    dimensions: 2
+    grid:
+      shape: [2, 2]
+      spacing: [0.75, 0.75]
+      origin: molecule_center
+      axes: cartesian
+      boundary: open
+      softening: 0.35
+    matter:
+      spin_components: 1
+      target_electrons: auto
+      include_soft_coulomb_density: false
+    gauge:
+      group: u1
+      electric_cutoff: 1
+      coupling: 1.0
+      include_magnetic_plaquettes: true
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      enforce_physical_sector: true
+      target_charge_sector: neutral
+      gauss_law_tolerance: 1.0e-8
+      max_sector_enumeration_qubits: 12
+    ansatz:
+      generator_policy: electric_magnetic
+    engine:
+      representation: sparse_projected
+      auto_project_physical_sector: true
+      max_projected_dimension: 4096
+      max_full_qubits_for_dense: 10
+      materialize_pauli: never
+      store_basis_indices: full
+      projector_tolerance: 1.0e-8
+  measurement:
+    strategy: lattice_qed_2d_projected_exact
+    execution_mode: estimator
+    grouping_policy: finite_cutoff_sparse_projected
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 2043
+
+solver:
+  kind: lattice_qed_sparse_exact
+  experimental: true
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 0
+  absolute_error_threshold: 1.0e-9
+  relative_error_threshold: 1.0e-9
+
+run:
+  seed: 2043
+  output_dir: artifacts/h2_2d_lattice_qed_projected_exact
+  overwrite: true

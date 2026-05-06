@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from importlib import import_module
 from typing import Any
 
@@ -62,6 +63,26 @@ EXPLORATORY_SOLVERS: dict[str, dict[str, Any]] = {
             "Current LR-ACE evidence is local benchmark evidence, not a publication-validated algorithm.",
         ],
     },
+    "lattice_qed_givqe": {
+        "loader": "qcchem.exploratory.solvers.lattice_qed_givqe:build_solver",
+        "class_name": "LatticeQEDGIVQESolver",
+        "module_origin": "exploratory",
+        "capability_tier": "exploratory",
+        "scientific_risk_notes": [
+            "Gauge-invariant VQE is validated only against finite-cutoff lattice-QED audit checks.",
+            "Continuum chemistry accuracy is outside the current lattice_qed_givqe validation scope.",
+        ],
+    },
+    "lattice_qed_sparse_exact": {
+        "loader": "qcchem.exploratory.solvers.lattice_qed_sparse_exact:build_solver",
+        "class_name": "LatticeQEDSparseExactSolver",
+        "module_origin": "exploratory",
+        "capability_tier": "exploratory",
+        "scientific_risk_notes": [
+            "Sparse exact diagonalization is exact only for the configured finite lattice-QED Hamiltonian.",
+            "Projected physical-sector results are finite-cutoff Gauss-law audits, not continuum chemistry claims.",
+        ],
+    },
 }
 
 
@@ -74,17 +95,33 @@ def get_exploratory_solver(kind: str):
     return getattr(module, metadata["class_name"]), dict(metadata)
 
 
-def build_exploratory_solver(kind: str, spec, backend, seed, problem_summary=None, mapper=None):
+def build_exploratory_solver(
+    kind: str,
+    spec,
+    backend,
+    seed,
+    problem_summary=None,
+    mapper=None,
+    qft_context=None,
+):
     """Build the requested exploratory solver skeleton."""
     normalized = kind.strip().lower()
     metadata = EXPLORATORY_SOLVERS[normalized]
     module_path, attr_name = metadata["loader"].split(":")
     module = import_module(module_path)
     builder = getattr(module, attr_name)
-    return builder(
-        spec=spec,
-        backend=backend,
-        seed=seed,
-        problem_summary=problem_summary,
-        mapper=mapper,
+    kwargs = {
+        "spec": spec,
+        "backend": backend,
+        "seed": seed,
+        "problem_summary": problem_summary,
+        "mapper": mapper,
+    }
+    parameters = inspect.signature(builder).parameters
+    accepts_kwargs = any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in parameters.values()
     )
+    if accepts_kwargs or "qft_context" in parameters:
+        kwargs["qft_context"] = qft_context
+    return builder(**kwargs)

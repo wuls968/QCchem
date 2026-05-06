@@ -307,7 +307,7 @@ def build_shell() -> html.Div:
     return html.Div(
         className="qcchem-shell",
         children=[
-            dcc.Location(id="qcchem-shell-location"),
+            dcc.Location(id="qcchem-shell-location", refresh=False),
             build_context_bar(),
             html.Div(
                 className="qcchem-main-grid",

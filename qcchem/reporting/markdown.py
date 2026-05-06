@@ -235,6 +235,105 @@ def _runtime_evidence_frame_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _qft_model_lines(data: dict[str, Any]) -> list[str]:
+    qft = data.get("qft_model") or {}
+    engine = qft.get("engine", {}) if isinstance(qft.get("engine"), dict) else {}
+    lines = [
+        "## Lattice QED Field Model",
+        "",
+        "> This section describes an exploratory finite-cutoff field Hamiltonian; exact baselines are for this discretized model.",
+        "",
+        f"- model: `{qft.get('model')}`",
+        f"- dimensions: `{qft.get('dimensions')}`",
+        f"- grid_shape: `{qft.get('grid_shape')}`",
+        f"- grid_spacing: `{qft.get('grid_spacing')}`",
+        f"- boundary: `{qft.get('boundary')}`",
+        f"- site_count: `{qft.get('site_count')}`",
+        f"- link_count: `{qft.get('link_count')}`",
+        f"- plaquette_count: `{qft.get('plaquette_count')}`",
+        f"- matter_mode_count: `{qft.get('matter_mode_count')}`",
+        f"- gauge_group: `{qft.get('gauge_group')}`",
+        f"- gauge_electric_cutoff: `{qft.get('gauge_electric_cutoff')}`",
+        f"- gauge_coupling: `{qft.get('gauge_coupling')}`",
+        f"- total_qubits: `{qft.get('total_qubits')}`",
+        f"- target_electrons: `{qft.get('target_electrons')}`",
+        f"- term_counts_by_sector: `{qft.get('term_counts_by_sector', {})}`",
+        f"- constraints: `{qft.get('constraints', {})}`",
+        f"- engine: `{engine}`",
+        f"- nuclear_charge_by_site: `{qft.get('nuclear_charge_by_site', [])}`",
+        f"- notes: `{qft.get('notes', [])}`",
+        "",
+    ]
+    lines.extend(
+        [
+            "## Gauge Constraint Audit",
+            "",
+            "> finite-cutoff QFT correctness means the configured lattice/cutoff Hamiltonian is internally audited; gauge-constraint consistency means Gauss-law generators and physical-sector checks are tracked; continuum chemistry accuracy is not claimed here.",
+            "",
+            f"- gauss_law_generators: `{qft.get('gauss_law_generators', [])}`",
+            f"- hamiltonian_gauge_commutator_norms: `{qft.get('hamiltonian_gauge_commutator_norms', [])}`",
+            f"- physical_sector: `{qft.get('physical_sector', {})}`",
+            f"- gauge_invariant_ansatz: `{qft.get('gauge_invariant_ansatz', {})}`",
+            f"- constraint_expectations: `{qft.get('constraint_expectations', {})}`",
+            f"- finite_cutoff_qft_correctness: `audited against the persisted finite Hamiltonian`",
+            f"- gauge_constraint_consistency: `Gauss-law residuals and commutators are finite-cutoff checks`",
+            f"- continuum_chemistry_accuracy: `not asserted by this exploratory artifact`",
+            "",
+        ]
+    )
+    if engine:
+        lines.extend(
+            [
+                "## QFT Physical-Sector Engine Audit",
+                "",
+                "> This section separates sparse/projection correctness from hardware full-register circuits and from continuum chemistry accuracy.",
+                "",
+                f"- requested_representation: `{engine.get('requested_representation')}`",
+                f"- actual_representation: `{engine.get('actual_representation')}`",
+                f"- projected_dimension: `{engine.get('projected_dimension')}`",
+                f"- full_dimension: `{engine.get('full_dimension')}`",
+                f"- pauli_materialization: `{engine.get('pauli_materialization')}`",
+                f"- dense_full_matrix_materialized: `{engine.get('dense_full_matrix_materialized')}`",
+                f"- basis_hash: `{qft.get('physical_sector', {}).get('basis_hash')}`",
+                f"- basis_index_count: `{qft.get('physical_sector', {}).get('basis_index_count')}`",
+                f"- sparse_projection_correctness: `projected operators are finite-cutoff indexed submatrices when projection is active`",
+                f"- runtime_circuit_boundary: `Runtime previews still target the full qubit register unless separately transformed`",
+                f"- continuum_chemistry_accuracy: `not asserted by this exploratory engine audit`",
+                "",
+            ]
+        )
+    return lines
+
+
+def _qft_dynamics_lines(data: dict[str, Any]) -> list[str]:
+    dynamics = data.get("qft_dynamics") or {}
+    exact = dynamics.get("exact") or {}
+    trotter = dynamics.get("trotter") or {}
+    runtime_batch = dynamics.get("runtime_batch") or {}
+    return [
+        "## QFT Real-Time Dynamics",
+        "",
+        "> This section reports exploratory finite-cutoff real-time lattice-QED dynamics; Trotter and runtime evidence are approximation/execution evidence, not continuum chemistry accuracy.",
+        "",
+        f"- enabled: `{dynamics.get('enabled')}`",
+        f"- method: `{dynamics.get('method')}`",
+        f"- quench: `{dynamics.get('quench', {})}`",
+        f"- time_grid: `{dynamics.get('time_grid', {})}`",
+        f"- observable_summary: `{dynamics.get('observables', {})}`",
+        f"- exact_available: `{exact.get('available')}`",
+        f"- exact_time_point_count: `{len(exact.get('time_points', []) or [])}`",
+        f"- exact_skipped_reason: `{exact.get('skipped_reason')}`",
+        f"- trotter_available: `{trotter.get('available')}`",
+        f"- trotter_circuit_resources: `{trotter.get('circuit_resources', {})}`",
+        f"- trotter_error_summary: `{dynamics.get('trotter_error_summary', {})}`",
+        f"- runtime_batch: `{runtime_batch}`",
+        f"- finite_cutoff_dynamics: `exact/statevector curves are for the persisted finite Hamiltonian`",
+        f"- trotter_approximation: `reported against finite-cutoff exact dynamics when available`",
+        f"- continuum_chemistry_accuracy: `not asserted by this exploratory dynamics artifact`",
+        "",
+    ]
+
+
 def _evidence_summary_lines(data: dict[str, Any]) -> list[str]:
     evidence = data.get("evidence_summary") or {}
     baseline = evidence.get("primary_baseline") or {}
@@ -309,10 +408,19 @@ def render_markdown_report(result: Any) -> str:
     variational = data.get("variational_result")
     excited = data.get("excited_state_result")
     properties = data.get("property_result")
+    qft_model = data.get("qft_model")
+    qft_dynamics = data.get("qft_dynamics")
     reduction = data.get("reduction_audit")
     compression = data.get("compression_result")
     perturbative = data.get("perturbative_correction_result")
     embedding = data.get("embedding_result")
+    tc_qsci = data.get("tc_qsci_result")
+    determinant_selection = data.get("determinant_selection")
+    symmetry_sector = data.get("symmetry_sector")
+    cast_hamiltonian = data.get("cast_hamiltonian")
+    low_rank_resource = data.get("low_rank_resource_estimate")
+    qpe_resource = data.get("qpe_resource_estimate")
+    error_budget = data.get("error_budget")
     noise_model = data.get("noise_model")
     measurement = data.get("measurement")
     runtime_options = data.get("runtime_options")
@@ -468,6 +576,11 @@ def render_markdown_report(result: Any) -> str:
         "",
         ]
     )
+
+    if qft_model is not None:
+        lines.extend(_qft_model_lines(data))
+    if qft_dynamics is not None:
+        lines.extend(_qft_dynamics_lines(data))
 
     if chemical_accuracy is not None:
         lines.extend(_chemical_accuracy_lines(chemical_accuracy, units))
@@ -677,6 +790,44 @@ def render_markdown_report(result: Any) -> str:
                 f"ao_count=`{fragment.get('ao_count')}` recommended_active_space=`{fragment.get('recommended_active_space')}`"
             )
         lines.append("")
+
+    if tc_qsci is not None:
+        lines.extend(
+            [
+                "## TC-Kicked QSCI",
+                "",
+                f"- algorithm_name: `{tc_qsci.get('algorithm_name')}`",
+                f"- verification_status: `{tc_qsci.get('verification_status')}`",
+                f"- resource_estimation_only: `{tc_qsci.get('resource_estimation_only')}`",
+                f"- solver_energy: {_fmt_energy(tc_qsci.get('solver_energy'), units)}",
+                f"- electronic_energy: {_fmt_energy(tc_qsci.get('electronic_energy'), units)}",
+                f"- total_energy: {_fmt_energy(tc_qsci.get('total_energy'), units)}",
+                f"- subspace_dimension: `{tc_qsci.get('subspace_dimension')}`",
+                f"- selected_probability_mass: `{tc_qsci.get('selected_probability_mass')}`",
+                f"- initial_state: `{tc_qsci.get('initial_state')}`",
+                f"- kick: `{tc_qsci.get('kick')}`",
+                f"- notes: `{tc_qsci.get('notes', [])}`",
+                "",
+                "## Determinant Selection",
+                "",
+                f"- determinant_selection: `{determinant_selection}`",
+                f"- symmetry_sector: `{symmetry_sector}`",
+                "",
+                "## CAST-QC Hamiltonian",
+                "",
+                f"- cast_hamiltonian: `{cast_hamiltonian}`",
+                "",
+                "## TC-QSCI Resource Estimates",
+                "",
+                f"- low_rank_resource_estimate: `{low_rank_resource}`",
+                f"- qpe_resource_estimate: `{qpe_resource}`",
+                "",
+                "## TC-QSCI Error Budget",
+                "",
+                f"- error_budget: `{error_budget}`",
+                "",
+            ]
+        )
 
     if variational is not None:
         lr_ace = (variational.get("ansatz") or {}).get("lr_ace") if isinstance(variational.get("ansatz"), dict) else None

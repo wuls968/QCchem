@@ -1,0 +1,133 @@
+# QCchem Developer Guide
+
+This guide captures the release-hardening practices for QCchem contributors.
+
+## Working Tree Hygiene
+
+Generated local outputs should not be committed unless they are curated release
+fixtures. The following are intentionally ignored:
+
+- `.superpowers/`
+- `artifacts/lr_ace_local_molecule_sweep_*/`
+- `artifacts/release_audit/`
+- `artifacts/**/preview_local/`
+
+When running tests, make sure tracked curated artifacts are not rewritten:
+
+```bash
+git diff --name-only -- artifacts/lih_active_vqe
+```
+
+The command should print nothing.
+
+## Test Layers
+
+Targeted release checks:
+
+```bash
+python -m pytest tests/integration/test_qwen_core_integration_v09.py -q
+python -m pytest tests/unit/test_release_audit_v23.py -q
+python -m pytest tests/integration/test_release_audit_workflow_v23.py -q
+python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
+python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py -q
+```
+
+Full suite:
+
+```bash
+python -m pytest -q
+```
+
+Static/hygiene checks:
+
+```bash
+python -m compileall -q qcchem
+git diff --check
+git status --short
+```
+
+## Warning Policy
+
+Known dependency deprecations from Qiskit and Qiskit Aer are filtered in
+`pyproject.toml` so the test summary stays readable. Do not blanket-ignore all
+warnings. Add filters only when the warning is external, understood, and noisy
+enough to hide project failures.
+
+Current filtered warnings cover:
+
+- `DAGCircuit.duration`
+- `DAGCircuit.unit`
+- `Instruction.condition`
+- `qiskit.providers.models`
+- `NLocal`
+
+## Artifact Isolation In Tests
+
+Tests that call `run_from_config` or `run_spec` should pass a `tmp_path` output
+directory unless the test is intentionally reading a curated fixture.
+
+Preferred:
+
+```python
+result = run_from_config(
+    REPO_ROOT / "configs" / "h2.yaml",
+    output_dir=tmp_path / "h2",
+)
+```
+
+Avoid:
+
+```python
+result = run_from_config(REPO_ROOT / "configs" / "h2.yaml")
+```
+
+The second form writes to the config's default artifact directory and can dirty
+the repository.
+
+## Public Compatibility Rules
+
+Keep these entrypoints stable unless a migration is explicitly planned:
+
+- `qcchem run`
+- `qcchem exploratory run`
+- `qcchem release audit`
+- `run_from_config`
+- `run_spec`
+- existing `result.json` field names
+
+New result sections should be additive and nullable where practical.
+
+## Exploratory Boundary Rules
+
+QFT, LR-ACE, and TC-QSCI may produce normal artifacts, reports, and workbench
+views. They must remain behind the exploratory boundary unless a dedicated
+validation plan adds stronger acceptance criteria.
+
+Do not promote an exploratory algorithm by changing docs alone. Promotion
+requires tests, release audit changes, benchmark evidence, and a clear public
+scope statement.
+
+## Release Checklist
+
+Before declaring a release candidate:
+
+```bash
+python -m compileall -q qcchem
+python -m pytest -q
+qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit
+git diff --check
+git diff --name-only -- artifacts/lih_active_vqe
+```
+
+Then inspect:
+
+- `artifacts/release_audit/release_readiness.md`
+- `docs/verified_scope.md`
+- `docs/release_showcase.md`
+- `README.md`
+
+For the visual release gate, also run the Workbench browser smoke checklist in
+`docs/workbench.md`. The required direct routes are `/overview`,
+`/result-confidence`, `/benchmarks`, `/hardware-campaign`, and
+`/ai-workspace`; each route must show its own shell `Active route` label and a
+clean browser console.

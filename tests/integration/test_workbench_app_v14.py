@@ -741,6 +741,27 @@ def test_shell_layout_exposes_core_regions() -> None:
 
 
 @pytest.mark.integration
+def test_shell_location_uses_spa_route_updates_for_direct_route_focus() -> None:
+    from dash import dcc
+
+    from qcchem.workbench.app import create_app
+    from qcchem.workbench.components.layout import page_focus
+
+    shell = _resolve_layout(create_app().layout)
+    shell_location = next(
+        component
+        for component in _walk_components(shell)
+        if isinstance(component, dcc.Location) and component.id == "qcchem-shell-location"
+    )
+
+    assert shell_location.refresh is False
+    assert page_focus("/hardware-campaign")["route_label"] == "Hardware Campaign"
+    assert page_focus("/ai-workspace")["route_label"] == "AI Workspace"
+    assert page_focus("/hardware-campaign")["route_label"] != page_focus("/overview")["route_label"]
+    assert page_focus("/ai-workspace")["route_label"] != page_focus("/overview")["route_label"]
+
+
+@pytest.mark.integration
 def test_shell_copy_uses_evidence_workbench_language() -> None:
     from qcchem.workbench.app import create_app
 

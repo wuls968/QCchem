@@ -68,7 +68,7 @@ def test_ai_workspace_docs_and_examples_exist() -> None:
 
     readme_body = readme_path.read_text(encoding="utf-8")
     assert "## AI Workspace" in readme_body
-    assert "AI Workspace 页与 floating copilot 壳层" in readme_body
+    assert "floating research copilot shell" in readme_body
 
     architecture_body = architecture_path.read_text(encoding="utf-8")
     assert "## Agent Interface 层" in architecture_body

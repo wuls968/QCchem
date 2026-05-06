@@ -14,6 +14,7 @@ from qcchem.reporting import write_aggregate_report, write_markdown_report
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
+from qcchem.workflow.release_audit import run_release_audit_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.scan import run_scan_from_config
@@ -82,6 +83,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Poll a submitted runtime job and merge returned data back into an artifact directory.",
     )
     runtime_collect.add_argument("artifact_root", type=Path, help="Artifact directory containing runtime_submission.json.")
+
+    release_parser = subparsers.add_parser("release", help="Release-readiness commands.")
+    release_subparsers = release_parser.add_subparsers(dest="release_command", required=True)
+    release_audit = release_subparsers.add_parser("audit", help="Run the Trust-First release readiness audit.")
+    release_audit.add_argument("-c", "--config", type=Path, required=True)
+    release_audit.add_argument("-o", "--output-dir", type=Path)
+    release_audit.add_argument("--repo-root", type=Path, help="Repository root to audit; defaults to current directory.")
 
     hardware_parser = subparsers.add_parser("hardware", help="Hardware optimization workflow commands.")
     hardware_subparsers = hardware_parser.add_subparsers(dest="hardware_command", required=True)
@@ -236,6 +244,12 @@ def main(argv: list[str] | None = None) -> int:
                 f"method={result.embedding_result.method}, "
                 f"status={result.embedding_result.verification_status}"
             )
+        if result.tc_qsci_result is not None:
+            print(
+                "TC-QSCI: "
+                f"subspace_dimension={result.tc_qsci_result.get('subspace_dimension')}, "
+                f"status={result.tc_qsci_result.get('verification_status')}"
+            )
         if result.runtime_submission is not None:
             print(
                 "Runtime submission: "
@@ -335,6 +349,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Verification status: {result.verification_status}")
             print(f"Module origin: {result.module_origin}")
             print(f"Capability tier: {result.capability_tier}")
+            if result.evidence_summary is not None:
+                print(f"Trust tier: {result.evidence_summary.trust_tier}")
+                print(f"Recommended action: {result.evidence_summary.recommended_action}")
+            if getattr(result, "qft_model", None) is not None:
+                engine = result.qft_model.engine or {}
+                print(
+                    "QFT engine: "
+                    f"representation={engine.get('actual_representation')}, "
+                    f"projected_dimension={engine.get('projected_dimension')}"
+                )
+            if result.tc_qsci_result is not None:
+                print(
+                    "TC-QSCI: "
+                    f"subspace_dimension={result.tc_qsci_result.get('subspace_dimension')}, "
+                    f"status={result.tc_qsci_result.get('verification_status')}"
+                )
             print(f"Artifacts: {result.artifacts.root}")
             return 0
 
@@ -351,6 +381,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Status: {summary['status']}")
             print(f"Result updated: {summary['result_updated']}")
             return 0
+
+    if args.command == "release":
+        if args.release_command == "audit":
+            summary = run_release_audit_from_config(
+                args.config,
+                output_dir=args.output_dir,
+                repo_root=args.repo_root,
+            )
+            print(f"Release audit completed: {summary['status']}")
+            print(f"Required checks: {summary['required_pass_count']} passed, {summary['required_fail_count']} failed")
+            output_dir = args.output_dir or Path("artifacts") / "release_audit"
+            print(f"Report: {output_dir / 'release_readiness.md'}")
+            return 0 if summary["status"] == "passed" else 2
 
     if args.command == "hardware":
         if args.hardware_command == "optimize":

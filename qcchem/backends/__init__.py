@@ -8,6 +8,7 @@ from .noise import build_noise_model_summary
 from .policy import apply_policy_defaults, resolve_execution_policy
 from .policy_engine import resolve_policy
 from .runtime_submission import attempt_runtime_submission
+from .runtime_batch import attempt_runtime_batch_submission
 from .runtime import build_runtime_options_summary
 from .shot_estimator import ShotEstimatorBackend
 from .statevector import StatevectorBackend
@@ -36,6 +37,7 @@ __all__ = [
     "build_measurement_plan",
     "build_noise_model_summary",
     "attempt_runtime_submission",
+    "attempt_runtime_batch_submission",
     "build_runtime_options_summary",
     "build_backend",
     "describe_backend_capabilities",

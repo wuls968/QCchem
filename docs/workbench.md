@@ -69,6 +69,32 @@ This path is designed to answer, in order:
 - What is the current hardware verification boundary?
 - What analysis or execution task should happen next?
 
+## Browser Smoke Checklist
+
+Before a release candidate, run the local server and open the five showcase
+routes in a real browser:
+
+```bash
+qcchem workbench serve --host 127.0.0.1 --port 8065
+```
+
+Check each route directly, not only through in-app navigation:
+
+| Route | Active route label | Route-specific text to confirm |
+| --- | --- | --- |
+| `/overview` | Overview | Current defended claim |
+| `/result-confidence` | Result Confidence | Result Confidence Report |
+| `/benchmarks` | Benchmarks | Benchmark credibility bands |
+| `/hardware-campaign` | Hardware Campaign | Hardware Campaign |
+| `/ai-workspace` | AI Workspace | AI Workspace |
+
+For every route, confirm:
+
+- the page loads without a blank shell
+- the shell `Active route` label matches the route above
+- route-specific content appears in the main page area
+- the browser console has no errors after the page settles
+
 ### Evidence Summary first
 
 The first reading block on the showcase path should always be the artifact's `Evidence Summary`. In practice that means Overview, Result Confidence, and the major aggregate pages should surface:

@@ -1,0 +1,90 @@
+molecule:
+  name: H2O-active-LR-ACE-adaptive
+  geometry:
+    - symbol: O
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.757, 0.587]
+    - symbol: H
+      coords: [0.0, -0.757, 0.587]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules:
+    - lr_ace
+  notes:
+    - "Adaptive LR-ACE local active-space stress test; runtime disabled."
+
+problem:
+  active_space:
+    selection_mode: manual
+    num_electrons: 4
+    num_spatial_orbitals: 4
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-10
+    max_rank: 10
+    rank_schedule: [10, 14]
+    apply_to_solver: true
+    execution_enabled: true
+    term_budget_policy: precision_first
+    compression_error_budget_hartree: 8.0e-4
+    allow_pauli_truncation: false
+  measurement:
+    strategy: low_rank_lr_ace_adaptive_local
+    execution_mode: estimator
+    grouping_policy: low_rank_factor_aware
+
+mapping:
+  kind: parity_two_qubit_reduction
+
+backend:
+  kind: statevector
+  seed: 2053
+  runtime:
+    enabled: false
+
+solver:
+  kind: lr_ace
+  experimental: true
+  optimizer:
+    kind: COBYLA
+    maxiter: 5000
+  ansatz:
+    kind: lr_ace
+    reps: 24
+  initial_point: random
+  lr_ace_adaptive:
+    enabled: true
+    generator_schedule: [16, 24]
+    optimizer_maxiter_schedule: [1400, 5000]
+    initial_point_strategies: [zeros, random]
+    random_restarts: 1
+    target_error_hartree: 1.6e-3
+    max_wall_time_seconds: 1200
+    uncompressed_check_qubit_limit: 12
+    candidate_pool_policy: residual_guided
+    candidate_scan_limit: 64
+    residual_batch_size: 8
+    residual_scan_angles: [-0.15, -0.05, 0.05, 0.15]
+    min_energy_improvement_hartree: 2.0e-4
+    max_adaptive_expansions: 3
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.6e-3
+  relative_error_threshold: 1.6e-3
+
+run:
+  seed: 2053
+  output_dir: artifacts/h2o_active_lr_ace_adaptive
+  overwrite: true

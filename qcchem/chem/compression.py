@@ -67,6 +67,16 @@ def _matrix_to_tensor(matrix: np.ndarray, num_orbitals: int, threshold: float) -
     return tensor
 
 
+def _effective_max_rank(spec: CompressionSpec) -> int | None:
+    """Return the execution rank cap after applying an adaptive rank schedule."""
+    candidates: list[int] = []
+    if spec.max_rank is not None:
+        candidates.append(int(spec.max_rank))
+    if spec.rank_schedule:
+        candidates.extend(int(value) for value in spec.rank_schedule)
+    return max(candidates) if candidates else None
+
+
 def _modified_cholesky(matrix: np.ndarray, threshold: float, max_rank: int | None) -> _FactorizationAudit:
     diag = np.clip(np.diag(matrix).astype(float), a_min=0.0, a_max=None)
     vectors: list[np.ndarray] = []
@@ -156,11 +166,12 @@ def build_compressed_fermionic_hamiltonian(problem, spec: CompressionSpec) -> Co
     if h2_ba is not None and h2_ba.ndim != 4:
         h2_ba = np.asarray(unfold(h2_ba, validate=False), dtype=float)
     pair_matrix = _pair_matrix(h2_aa)
+    effective_max_rank = _effective_max_rank(spec)
     method = spec.method.strip().lower()
     if method == "modified_cholesky":
-        audit = _modified_cholesky(pair_matrix, spec.threshold, spec.max_rank)
+        audit = _modified_cholesky(pair_matrix, spec.threshold, effective_max_rank)
     elif method == "double_factorization":
-        audit = _double_factorization(pair_matrix, spec.threshold, spec.max_rank)
+        audit = _double_factorization(pair_matrix, spec.threshold, effective_max_rank)
     else:
         raise ValueError(f"Unsupported compression method: {spec.method}")
 
@@ -220,7 +231,7 @@ def build_compression_result(
         method=method,
         threshold=spec.threshold,
         rank=rank,
-        max_rank=spec.max_rank,
+        max_rank=_effective_max_rank(spec),
         apply_to_solver=spec.apply_to_solver,
         execution_enabled=spec.execution_enabled,
         original_num_qubits=pre_mapping_summary.num_qubits,
