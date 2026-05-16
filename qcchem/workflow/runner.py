@@ -365,6 +365,10 @@ def _electronic_mapping_symmetry_policy(spec) -> tuple[MappingSymmetryReductionS
             raise ValueError(reason)
         z2 = "disabled"
         notes.append(reason)
+    elif spec.problem.environment_embedding.enabled and z2 == "auto":
+        reason = "Z2 tapering skipped for environment embedding in auto mode to preserve stable QM/MM-like qubit accounting."
+        z2 = "disabled"
+        notes.append(reason)
     elif any(item.enabled for item in spec.tasks.properties) and z2 == "auto":
         reason = "Z2 tapering skipped for property tasks in auto mode because mapped property operators may not commute with the Hamiltonian Z2 sector."
         z2 = "disabled"

@@ -37,11 +37,16 @@ class VQESolver(BaseSolver):
         self.field_model_context = field_model_context or {}
 
     def _hardware_efficient_layer(self, num_qubits: int):
+        entanglement_blocks = self.spec.ansatz.entanglement_blocks
+        entanglement = self.spec.ansatz.entanglement
+        if num_qubits < 2:
+            entanglement_blocks = []
+            entanglement = []
         return n_local(
             num_qubits,
             rotation_blocks=self.spec.ansatz.rotation_blocks,
-            entanglement_blocks=self.spec.ansatz.entanglement_blocks,
-            entanglement=self.spec.ansatz.entanglement,
+            entanglement_blocks=entanglement_blocks,
+            entanglement=entanglement,
             reps=self.spec.ansatz.reps,
             skip_final_rotation_layer=self.spec.ansatz.skip_final_rotation_layer,
         )
