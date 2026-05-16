@@ -36,6 +36,76 @@ def test_h2_cavity_pf_exact_writes_field_model_artifact(tmp_path: Path) -> None:
 
 
 @pytest.mark.integration
+def test_cavity_qed_inherits_static_point_charge_embedding(tmp_path: Path) -> None:
+    config_path = tmp_path / "h2_cavity_external.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-cavity-external
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+policy:
+  allow_exploratory: true
+exploratory:
+  enabled: true
+  modules: [cavity_qed]
+problem:
+  external_point_charges:
+    enabled: true
+    charges:
+      - label: mm_probe
+        coords: [0.0, 0.0, 2.0]
+        charge: -0.5
+  cavity_qed:
+    enabled: true
+    modes:
+      - frequency: 0.4
+        coupling_strength: 0.02
+        polarization: [0.0, 0.0, 1.0]
+        max_occupation: 1
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+run:
+  output_dir: artifacts/h2_cavity_external
+  overwrite: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(
+        config_path,
+        output_dir=tmp_path / "h2-cavity-external",
+        exploratory_command=True,
+    )
+
+    assert result.external_point_charges is not None
+    assert "pauli_fierz" in result.external_point_charges.adapter_strategy
+    assert result.environment_embedding is not None
+    assert result.environment_embedding.active_space_projection["environment_qubit_growth"] == 0
+    assert result.cavity_qed_model is not None
+    assert result.verification_status == "exploratory"
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert payload["external_point_charges"]["charge_count"] == 1
+    assert payload["environment_embedding"]["one_body_environment"]["available"] is True
+    assert payload["field_model"]["model_kind"] == "pauli_fierz_cavity_qed"
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "External Point Charges" in report
+    assert "Environment Effective Hamiltonian" in report
+    assert "Pauli-Fierz Cavity-QED Model" in report
+
+
+@pytest.mark.integration
 def test_h2_cavity_pf_vqe_compares_against_exact_baseline(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h2_cavity_pf_vqe.yaml",

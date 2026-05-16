@@ -16,12 +16,18 @@ from qcchem.core import (
     AtomSpec,
     BackendSpec,
     BenchmarkSpec,
+    BoundaryCutBondSpec,
+    BoundaryEmbeddingSpec,
     CavityQEDModeSpec,
     CavityQEDSpec,
     CompressionSpec,
     EmbeddingSpec,
     EmbeddingExecutionSpec,
+    EffectiveHamiltonianCacheSpec,
+    EnvironmentEmbeddingSpec,
+    EnvironmentPointChargeSpec,
     ExploratorySpec,
+    ExternalPointChargeSpec,
     ExcitedStateTaskSpec,
     FragmentSpec,
     GeometryOptimizationTaskSpec,
@@ -49,6 +55,8 @@ from qcchem.core import (
     PECSpec,
     PerturbativeCorrectionTaskSpec,
     PolicySpec,
+    PointChargeDampingSpec,
+    PointChargeSpec,
     ProblemSpec,
     PropertyTaskSpec,
     ResponsePropertyTaskSpec,
@@ -293,6 +301,271 @@ def _parse_embedding(problem_raw: dict[str, Any]) -> EmbeddingSpec:
             plugin=str(execution_raw.get("plugin", "pyscf_rhf_fragment")),
             validate_against_full_system=bool(execution_raw.get("validate_against_full_system", True)),
         ),
+    )
+
+
+def _parse_point_charge(
+    item: dict[str, Any],
+    *,
+    index: int,
+    prefix: str = "problem.external_point_charges.charges",
+) -> PointChargeSpec:
+    if not isinstance(item, dict):
+        raise ValueError(f"{prefix}.{index} must be a mapping.")
+    coords = item.get("coords")
+    if not isinstance(coords, list) or len(coords) != 3:
+        raise ValueError(f"{prefix}.{index}.coords must have three values.")
+    if "charge" not in item:
+        raise ValueError(f"{prefix}.{index}.charge is required.")
+    label = item.get("label")
+    return PointChargeSpec(
+        label=(str(label) if label is not None else None),
+        coords=(float(coords[0]), float(coords[1]), float(coords[2])),
+        charge=float(item["charge"]),
+    )
+
+
+def _parse_external_point_charges(
+    problem_raw: dict[str, Any],
+    *,
+    base_dir: Path,
+) -> ExternalPointChargeSpec:
+    raw = problem_raw.get("external_point_charges")
+    if raw is None:
+        return ExternalPointChargeSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.external_point_charges must be a mapping.")
+    unit_raw = raw.get("unit")
+    unit = str(unit_raw) if unit_raw is not None else None
+    if unit is not None and unit.strip().lower() not in {"angstrom", "ang", "a", "bohr", "au"}:
+        raise ValueError("problem.external_point_charges.unit must be angstrom or bohr.")
+    source_file = None
+    if raw.get("source_file") is not None:
+        source_file = resolve_user_path(base_dir, str(raw["source_file"]))
+        if bool(raw.get("enabled", False)) and not source_file.exists():
+            raise FileNotFoundError(f"External point-charge source_file not found: {source_file}")
+    charges_raw = raw.get("charges", [])
+    if charges_raw is None:
+        charges_raw = []
+    if not isinstance(charges_raw, list):
+        raise ValueError("problem.external_point_charges.charges must be a list.")
+    threshold = float(raw.get("min_distance_to_qm_atoms", 1.0e-6))
+    if threshold <= 0.0:
+        raise ValueError("problem.external_point_charges.min_distance_to_qm_atoms must be positive.")
+    return ExternalPointChargeSpec(
+        enabled=bool(raw.get("enabled", False)),
+        unit=unit,
+        source_file=source_file,
+        charges=[
+            _parse_point_charge(item, index=index)
+            for index, item in enumerate(charges_raw)
+        ],
+        min_distance_to_qm_atoms=threshold,
+    )
+
+
+def _validate_distance_unit(unit: str, *, field_name: str) -> str:
+    normalized = unit.strip().lower()
+    if normalized not in {"angstrom", "ang", "a", "bohr", "au"}:
+        raise ValueError(f"{field_name} must be angstrom or bohr.")
+    if normalized in {"ang", "a"}:
+        return "angstrom"
+    if normalized == "au":
+        return "bohr"
+    return normalized
+
+
+def _parse_point_charge_damping(raw: Any) -> PointChargeDampingSpec:
+    if raw is None:
+        return PointChargeDampingSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding.point_charges.damping must be a mapping.")
+    kind = str(raw.get("kind", "gaussian")).strip().lower()
+    if kind not in {"gaussian", "none"}:
+        raise ValueError("problem.environment_embedding.point_charges.damping.kind must be gaussian or none.")
+    default_radius_raw = raw.get("default_radius", 0.40)
+    default_radius = (
+        float(default_radius_raw)
+        if default_radius_raw is not None
+        else None
+    )
+    radius_unit = _validate_distance_unit(
+        str(raw.get("radius_unit", "angstrom")),
+        field_name="problem.environment_embedding.point_charges.damping.radius_unit",
+    )
+    min_radius = float(raw.get("min_radius", 0.15))
+    if min_radius <= 0.0:
+        raise ValueError("problem.environment_embedding.point_charges.damping.min_radius must be positive.")
+    if kind == "gaussian":
+        if default_radius is None or default_radius <= 0.0:
+            raise ValueError(
+                "problem.environment_embedding.point_charges.damping.default_radius must be positive for gaussian damping."
+            )
+        if default_radius < min_radius:
+            raise ValueError(
+                "problem.environment_embedding.point_charges.damping.default_radius must be >= min_radius."
+            )
+    warning = float(raw.get("overpolarization_warning_potential_au", 2.0))
+    if warning <= 0.0:
+        raise ValueError(
+            "problem.environment_embedding.point_charges.damping.overpolarization_warning_potential_au must be positive."
+        )
+    return PointChargeDampingSpec(
+        kind=kind,
+        default_radius=default_radius,
+        radius_unit=radius_unit,
+        min_radius=min_radius,
+        overpolarization_warning_potential_au=warning,
+    )
+
+
+def _parse_environment_point_charges(
+    raw: Any,
+    *,
+    base_dir: Path,
+) -> EnvironmentPointChargeSpec:
+    if raw is None:
+        return EnvironmentPointChargeSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding.point_charges must be a mapping.")
+    unit_raw = raw.get("unit")
+    unit = (
+        _validate_distance_unit(
+            str(unit_raw),
+            field_name="problem.environment_embedding.point_charges.unit",
+        )
+        if unit_raw is not None
+        else None
+    )
+    source_file = None
+    if raw.get("source_file") is not None:
+        source_file = resolve_user_path(base_dir, str(raw["source_file"]))
+        if bool(raw.get("enabled", False)) and not source_file.exists():
+            raise FileNotFoundError(f"Environment point-charge source_file not found: {source_file}")
+    charges_raw = raw.get("charges", [])
+    if charges_raw is None:
+        charges_raw = []
+    if not isinstance(charges_raw, list):
+        raise ValueError("problem.environment_embedding.point_charges.charges must be a list.")
+    threshold = float(raw.get("min_distance_to_qm_atoms", 1.0e-6))
+    if threshold <= 0.0:
+        raise ValueError(
+            "problem.environment_embedding.point_charges.min_distance_to_qm_atoms must be positive."
+        )
+    return EnvironmentPointChargeSpec(
+        enabled=bool(raw.get("enabled", False)),
+        unit=unit,
+        source_file=source_file,
+        charges=[
+            _parse_point_charge(
+                item,
+                index=index,
+                prefix="problem.environment_embedding.point_charges.charges",
+            )
+            for index, item in enumerate(charges_raw)
+        ],
+        min_distance_to_qm_atoms=threshold,
+        damping=_parse_point_charge_damping(raw.get("damping")),
+    )
+
+
+def _parse_boundary_embedding(raw: Any) -> BoundaryEmbeddingSpec:
+    if raw is None:
+        return BoundaryEmbeddingSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding.boundary must be a mapping.")
+    method = str(
+        raw.get("method", "localized_orbital_freeze_project_downfold")
+    ).strip().lower()
+    if method != "localized_orbital_freeze_project_downfold":
+        raise ValueError(
+            "problem.environment_embedding.boundary.method must be localized_orbital_freeze_project_downfold."
+        )
+    localization = str(raw.get("localization", "iao_lowdin")).strip().lower()
+    if localization not in {"iao_lowdin", "boys", "lowdin"}:
+        raise ValueError(
+            "problem.environment_embedding.boundary.localization must be iao_lowdin, boys, or lowdin."
+        )
+    cut_bonds_raw = raw.get("cut_bonds", [])
+    if cut_bonds_raw is None:
+        cut_bonds_raw = []
+    if not isinstance(cut_bonds_raw, list):
+        raise ValueError("problem.environment_embedding.boundary.cut_bonds must be a list.")
+    cut_bonds: list[BoundaryCutBondSpec] = []
+    for index, item in enumerate(cut_bonds_raw):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"problem.environment_embedding.boundary.cut_bonds.{index} must be a mapping."
+            )
+        if "qm_atom" not in item or "mm_atom" not in item:
+            raise ValueError(
+                f"problem.environment_embedding.boundary.cut_bonds.{index} requires qm_atom and mm_atom."
+            )
+        label = item.get("label")
+        cut_bonds.append(
+            BoundaryCutBondSpec(
+                label=(str(label) if label is not None else None),
+                qm_atom=int(item["qm_atom"]),
+                mm_atom=int(item["mm_atom"]),
+            )
+        )
+    leakage_threshold = float(raw.get("leakage_threshold", 0.05))
+    if leakage_threshold < 0.0:
+        raise ValueError(
+            "problem.environment_embedding.boundary.leakage_threshold must be non-negative."
+        )
+    return BoundaryEmbeddingSpec(
+        enabled=bool(raw.get("enabled", False)),
+        method=method,
+        localization=localization,
+        cut_bonds=cut_bonds,
+        leakage_threshold=leakage_threshold,
+        strict=bool(raw.get("strict", True)),
+    )
+
+
+def _parse_environment_cache(raw: Any, *, base_dir: Path) -> EffectiveHamiltonianCacheSpec:
+    if raw is None:
+        return EffectiveHamiltonianCacheSpec(
+            directory=(base_dir / "artifacts/effective_hamiltonians").resolve()
+        )
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding.cache must be a mapping.")
+    directory_raw = Path(str(raw.get("directory", "artifacts/effective_hamiltonians"))).expanduser()
+    directory = (
+        directory_raw
+        if directory_raw.is_absolute()
+        else (base_dir / directory_raw).resolve()
+    )
+    return EffectiveHamiltonianCacheSpec(
+        enabled=bool(raw.get("enabled", True)),
+        directory=directory,
+        refresh=bool(raw.get("refresh", False)),
+    )
+
+
+def _parse_environment_embedding(
+    problem_raw: dict[str, Any],
+    *,
+    base_dir: Path,
+) -> EnvironmentEmbeddingSpec:
+    raw = problem_raw.get("environment_embedding")
+    if raw is None:
+        return EnvironmentEmbeddingSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding must be a mapping.")
+    mode = str(raw.get("mode", "effective_hamiltonian")).strip().lower()
+    if mode != "effective_hamiltonian":
+        raise ValueError("problem.environment_embedding.mode must be effective_hamiltonian.")
+    return EnvironmentEmbeddingSpec(
+        enabled=bool(raw.get("enabled", False)),
+        mode=mode,
+        point_charges=_parse_environment_point_charges(
+            raw.get("point_charges"),
+            base_dir=base_dir,
+        ),
+        boundary=_parse_boundary_embedding(raw.get("boundary")),
+        cache=_parse_environment_cache(raw.get("cache"), base_dir=base_dir),
     )
 
 
@@ -824,6 +1097,14 @@ def load_run_spec(path: Path) -> RunSpec:
             compression=_parse_compression(problem_raw),
             measurement=_parse_measurement(problem_raw),
             embedding=_parse_embedding(problem_raw),
+            external_point_charges=_parse_external_point_charges(
+                problem_raw,
+                base_dir=resolved_path.parent,
+            ),
+            environment_embedding=_parse_environment_embedding(
+                problem_raw,
+                base_dir=resolved_path.parent,
+            ),
             qft=_parse_lattice_qed(problem_raw),
             cavity_qed=_parse_cavity_qed(problem_raw),
         ),

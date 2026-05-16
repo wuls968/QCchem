@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from qiskit_nature.second_q.drivers import MethodType, PySCFDriver
+from qiskit_nature.second_q.drivers import MethodType
 from qiskit_nature.second_q.operators import FermionicOp
 from qiskit_nature.second_q.problems import ElectronicStructureProblem
 from qiskit_nature.second_q.transformers import ActiveSpaceTransformer, FreezeCoreTransformer
@@ -15,10 +15,20 @@ from qcchem.chem.active_space import (
     infer_frozen_core_orbitals,
     resolve_active_space,
 )
+from qcchem.chem.external_charges import (
+    build_pyscf_driver,
+)
+from qcchem.chem.effective_hamiltonian import (
+    build_boundary_embedding_summary,
+    build_effective_hamiltonian_summary,
+    resolve_environment_inputs,
+)
 from qcchem.core import ProblemSummary, ReductionAuditSummary, RunSpec
+from qcchem.core.results import EffectiveHamiltonianSummary, ExternalPointChargeSummary
 
 REDUCTION_ENERGY_FORMULA = (
-    "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; "
+    "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy "
+    "+ external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; "
     "electronic_energy = solver_energy + constant_energy_correction"
 )
 
@@ -35,6 +45,8 @@ class ElectronicStructureContext:
     total_constant_correction: float
     hf_reference_energy: float | None
     reduction_audit: ReductionAuditSummary
+    external_point_charges: ExternalPointChargeSummary | None
+    environment_embedding: EffectiveHamiltonianSummary | None
 
 
 def _distance_unit(unit: str) -> DistanceUnit:
@@ -50,15 +62,36 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
     """Construct an electronic-structure problem from a QCchem spec."""
     method = MethodType.RHF if spec.molecule.spin == 0 else MethodType.UHF
     transformers_applied: list[str] = []
-    driver = PySCFDriver(
+    environment_inputs = resolve_environment_inputs(spec)
+    external_point_charges = environment_inputs.point_charges
+    external_summary = external_point_charges.to_summary(
+        adapter_strategy=(
+            "pyscf.qmmm.mm_charge(radii=gaussian)"
+            if external_point_charges.radii is not None
+            else "pyscf.qmmm.mm_charge"
+        )
+    )
+    driver = build_pyscf_driver(
         atom=spec.molecule.geometry_string(),
         unit=_distance_unit(spec.molecule.unit),
         charge=spec.molecule.charge,
         spin=spec.molecule.spin,
         basis=spec.molecule.basis,
         method=method,
+        point_charges=external_point_charges,
     )
     original_problem = driver.run()
+    if external_point_charges.enabled and hasattr(
+        driver,
+        "external_point_charge_nuclear_interaction_energy",
+    ):
+        external_point_charges.qm_nuclear_interaction_energy = float(
+            driver.external_point_charge_nuclear_interaction_energy
+        )
+        if external_summary is not None:
+            external_summary.qm_nuclear_interaction_energy = float(
+                driver.external_point_charge_nuclear_interaction_energy
+            )
     problem = original_problem
     original_num_spatial_orbitals = int(original_problem.num_spatial_orbitals)
     removed_orbitals = [int(value) for value in spec.problem.remove_orbitals]
@@ -118,14 +151,51 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             "active_orbitals": resolved_active_space.active_orbitals_current,
             "active_orbitals_original": resolved_active_space.active_orbitals_original,
         }
+    boundary_summary, v_boundary_ao = build_boundary_embedding_summary(
+        boundary_spec=spec.problem.environment_embedding.boundary,
+        molecule=spec.molecule,
+        pyscf_driver=driver,
+        active_space_metadata=active_space_summary,
+    )
 
     constants = {
         str(key): float(value)
         for key, value in getattr(problem.hamiltonian, "constants", {}).items()
     }
     nuclear_repulsion_energy = float(constants.get("nuclear_repulsion_energy", 0.0))
-    total_constant_correction = float(sum(constants.values()))
-    electronic_constant_correction = total_constant_correction - nuclear_repulsion_energy
+    driver_constant_sum = float(sum(constants.values()))
+    external_nuclear_energy = float(
+        external_point_charges.qm_nuclear_interaction_energy
+        if external_point_charges.enabled
+        else 0.0
+    )
+    if external_point_charges.enabled:
+        constants["external_point_charge_nuclear_interaction_energy"] = external_nuclear_energy
+    boundary_constant_energy = float(boundary_summary.constant_energy)
+    if boundary_summary.enabled:
+        constants["boundary_embedding_constant_energy"] = boundary_constant_energy
+    electronic_constant_correction = driver_constant_sum - nuclear_repulsion_energy
+    total_constant_correction = (
+        electronic_constant_correction
+        + nuclear_repulsion_energy
+        + external_nuclear_energy
+        + boundary_constant_energy
+    )
+    effective_hamiltonian_summary = build_effective_hamiltonian_summary(
+        spec=spec,
+        env_inputs=environment_inputs,
+        pyscf_driver=driver,
+        active_space_projection={
+            "original_num_spatial_orbitals": original_num_spatial_orbitals,
+            "reduced_num_spatial_orbitals": int(problem.num_spatial_orbitals),
+            "num_particles": tuple(int(value) for value in problem.num_particles),
+            "transformers_applied": list(transformers_applied),
+            "active_space_metadata": active_space_summary,
+            "environment_qubit_growth": 0,
+        },
+        boundary_summary=boundary_summary,
+        v_boundary_ao=v_boundary_ao,
+    )
 
     return ElectronicStructureContext(
         problem=problem,
@@ -162,7 +232,11 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             hamiltonian_constants=constants,
             constant_energy_correction=electronic_constant_correction,
             nuclear_repulsion_energy=nuclear_repulsion_energy,
+            external_point_charge_nuclear_interaction_energy=external_nuclear_energy,
+            boundary_embedding_constant_energy=boundary_constant_energy,
             total_constant_correction=total_constant_correction,
             energy_formula=REDUCTION_ENERGY_FORMULA,
         ),
+        external_point_charges=external_summary,
+        environment_embedding=effective_hamiltonian_summary,
     )

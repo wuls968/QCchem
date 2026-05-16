@@ -59,6 +59,12 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "return_energy": energy.get("total_energy"),
             "electronic_energy": energy.get("electronic_energy"),
             "nuclear_repulsion_energy": energy.get("nuclear_repulsion_energy"),
+            "external_point_charge_nuclear_interaction_energy": energy.get(
+                "external_point_charge_nuclear_interaction_energy"
+            ),
+            "boundary_embedding_constant_energy": energy.get(
+                "boundary_embedding_constant_energy"
+            ),
         },
         "provenance": {
             "creator": "QCchem",
@@ -83,6 +89,8 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "runtime_submission": data.get("runtime_submission"),
             "compression_result": data.get("compression_result"),
             "perturbative_correction_result": data.get("perturbative_correction_result"),
+            "external_point_charges": data.get("external_point_charges"),
+            "environment_embedding": data.get("environment_embedding"),
             "tc_qsci_result": data.get("tc_qsci_result"),
             "determinant_selection": data.get("determinant_selection"),
             "symmetry_sector": data.get("symmetry_sector"),

@@ -1,0 +1,45 @@
+molecule:
+  name: H2-external-point-charges
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+
+problem:
+  active_space: null
+  external_point_charges:
+    enabled: true
+    unit: angstrom
+    source_file: configs/data/h2_environment.xyzq
+    min_distance_to_qm_atoms: 1.0e-6
+    charges:
+      - label: inline_probe
+        coords: [0.0, 0.0, -2.0]
+        charge: 0.25
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+run:
+  seed: 7
+  output_dir: artifacts/h2_external_point_charges
+  overwrite: true
+  exports:
+    qcschema_json: true

@@ -46,6 +46,8 @@ class EnergyResult:
     constant_energy_correction: float
     electronic_energy: float
     nuclear_repulsion_energy: float
+    external_point_charge_nuclear_interaction_energy: float
+    boundary_embedding_constant_energy: float
     total_energy: float
     hf_reference_energy: float | None
     exact_ground_energy: float | None
@@ -189,6 +191,8 @@ class ReductionAuditSummary:
     hamiltonian_constants: dict[str, float] = field(default_factory=dict)
     constant_energy_correction: float = 0.0
     nuclear_repulsion_energy: float = 0.0
+    external_point_charge_nuclear_interaction_energy: float = 0.0
+    boundary_embedding_constant_energy: float = 0.0
     total_constant_correction: float = 0.0
     energy_formula: str = ""
 
@@ -412,6 +416,63 @@ class EmbeddingResultSummary:
 
 
 @dataclass(slots=True)
+class ExternalPointChargeSummary:
+    """Audit summary for static external point-charge embedding."""
+
+    enabled: bool
+    charge_count: int
+    total_charge: float
+    unit: str
+    sources: list[str] = field(default_factory=list)
+    min_distance_to_qm_atoms: float | None = None
+    min_distance_threshold: float = 1.0e-6
+    qm_nuclear_interaction_energy: float = 0.0
+    includes_mm_self_energy: bool = False
+    adapter_strategy: str = "disabled"
+    charges_preview: list[dict[str, Any]] = field(default_factory=list)
+    provenance: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class BoundaryEmbeddingSummary:
+    """Audit summary for localized boundary-orbital embedding corrections."""
+
+    enabled: bool
+    method: str
+    localization: str
+    cut_bonds: list[dict[str, Any]] = field(default_factory=list)
+    leakage_threshold: float = 0.05
+    max_boundary_leakage: float | None = None
+    selected_boundary_orbitals: list[int] = field(default_factory=list)
+    correction_frobenius_norm: float = 0.0
+    constant_energy: float = 0.0
+    adapter_strategy: str = "disabled"
+    verification_status: str = "not_requested"
+    provenance: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class EffectiveHamiltonianSummary:
+    """Audit summary for cached active-space effective Hamiltonians."""
+
+    enabled: bool
+    mode: str
+    solver_surface: str
+    cache_enabled: bool
+    cache_hit: bool
+    cache_fingerprint: str | None
+    cache_paths: dict[str, str] = field(default_factory=dict)
+    cache_validation: dict[str, Any] = field(default_factory=dict)
+    one_body_environment: dict[str, Any] = field(default_factory=dict)
+    boundary: BoundaryEmbeddingSummary | None = None
+    active_space_projection: dict[str, Any] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class BackendCapabilitySummary:
     """Backend capability snapshot persisted with artifacts."""
 
@@ -539,6 +600,7 @@ class QFTModelSummary:
     gauge_invariant_ansatz: dict[str, Any] = field(default_factory=dict)
     constraint_expectations: dict[str, Any] = field(default_factory=dict)
     engine: dict[str, Any] = field(default_factory=dict)
+    external_point_charges: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
 
@@ -657,6 +719,8 @@ class RunResult:
     response_property_result: dict[str, Any] | None
     perturbative_correction_result: PerturbativeCorrectionResultSummary | None
     embedding_result: EmbeddingResultSummary | None
+    external_point_charges: ExternalPointChargeSummary | None
+    environment_embedding: EffectiveHamiltonianSummary | None
     hardware_error_diagnostic: dict[str, Any] | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
