@@ -24,6 +24,7 @@ dependencies = [
   "scipy>=1.10",
   "PyYAML>=6.0",
   "qiskit>=2.3.0",
+  "qiskit-aer>=0.16",
   "qiskit-nature>=0.7.0",
   "pyscf>=2.5.0",
 ]
