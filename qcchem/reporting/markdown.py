@@ -448,6 +448,28 @@ def _proof_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _input_provenance_lines(data: dict[str, Any]) -> list[str]:
+    provenance = data.get("provenance") or {}
+    sources = provenance.get("input_sources", [])
+    lines = [
+        "## Input Provenance",
+        "",
+    ]
+    if not sources:
+        return lines + ["- input_sources: `[]`", ""]
+    for index, source in enumerate(sources, start=1):
+        if not isinstance(source, dict):
+            continue
+        lines.append(
+            f"- source_{index}: kind=`{source.get('kind')}` format=`{source.get('format')}` "
+            f"atom_count=`{source.get('atom_count')}` source_path=`{source.get('source_path')}` "
+            f"resolved_path=`{source.get('resolved_path')}` file_sha256=`{source.get('file_sha256')}` "
+            f"normalized_geometry_sha256=`{source.get('normalized_geometry_sha256')}`"
+        )
+    lines.append("")
+    return lines
+
+
 def render_markdown_report(result: Any) -> str:
     """Render a QCchem result as a Markdown report."""
     data = to_primitive(result)
@@ -988,6 +1010,7 @@ def render_markdown_report(result: Any) -> str:
             f"- pec: `{mitigation.get('pec')}`",
             f"- applied_methods: `{mitigation.get('applied_methods', [])}`",
             "",
+            *_input_provenance_lines(data),
             "## Provenance",
             "",
             f"- Schema version: `{data['schema_version']}`",

@@ -57,6 +57,20 @@ Inspect a config without running it:
 qcchem inspect -c configs/lih_active_vqe.yaml
 ```
 
+Run from a mainstream molecular structure file:
+
+```bash
+qcchem run -c examples/h2_from_xyz.yaml -o artifacts/h2_from_xyz_local
+```
+
+Structure-file configs use `molecule.structure_file` plus optional
+`molecule.structure_format`. QCchem currently supports XYZ, PDB, MOL/SDF
+V2000, and MOL2 without adding RDKit/ASE as required dependencies. The parser
+records raw file SHA-256, normalized-geometry SHA-256, resolved path, selected
+record/model, and atom count in run provenance; inline `molecule.geometry`
+remains supported, but it cannot be mixed with `structure_file` in the same
+config.
+
 Run the local Trust-First release gate:
 
 ```bash

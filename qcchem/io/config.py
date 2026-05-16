@@ -67,6 +67,7 @@ from qcchem.core import (
     TaskSpec,
     ZNESpec,
 )
+from qcchem.io.structure import build_inline_geometry_provenance, load_structure_file
 
 
 def _project_root() -> Path:
@@ -113,6 +114,46 @@ def _parse_atoms(items: list[dict[str, Any]]) -> list[AtomSpec]:
             )
         )
     return atoms
+
+
+def _parse_molecule(molecule_raw: dict[str, Any], *, base_dir: Path) -> MoleculeSpec:
+    structure_file_raw = molecule_raw.get("structure_file")
+    unit = str(molecule_raw.get("unit", "angstrom"))
+    if structure_file_raw is not None:
+        if "geometry" in molecule_raw and molecule_raw.get("geometry") is not None:
+            raise ValueError("molecule.geometry and molecule.structure_file cannot both be set.")
+        if unit.strip().lower() not in {"angstrom", "ang", "a"}:
+            raise ValueError("molecule.structure_file inputs are interpreted as angstrom coordinates.")
+        structure_path = resolve_user_path(base_dir, str(structure_file_raw))
+        parsed = load_structure_file(
+            structure_path,
+            structure_format=(
+                str(molecule_raw["structure_format"])
+                if molecule_raw.get("structure_format") is not None
+                else None
+            ),
+            source_path=str(structure_file_raw),
+        )
+        geometry = parsed.atoms
+        input_provenance = parsed.provenance
+    else:
+        if molecule_raw.get("structure_format") is not None:
+            raise ValueError("molecule.structure_format requires molecule.structure_file.")
+        geometry_raw = molecule_raw.get("geometry", [])
+        if not isinstance(geometry_raw, list) or not geometry_raw:
+            raise ValueError("Molecule geometry must be a non-empty list or molecule.structure_file must be set.")
+        geometry = _parse_atoms(geometry_raw)
+        input_provenance = build_inline_geometry_provenance(geometry, unit=unit)
+
+    return MoleculeSpec(
+        name=str(molecule_raw["name"]),
+        geometry=geometry,
+        charge=int(molecule_raw.get("charge", 0)),
+        multiplicity=int(molecule_raw.get("multiplicity", 1)),
+        basis=str(molecule_raw.get("basis", "sto3g")),
+        unit=unit,
+        input_provenance=input_provenance,
+    )
 
 
 def _parse_active_space(problem_raw: dict[str, Any]) -> ActiveSpaceSpec | None:
@@ -778,9 +819,6 @@ def load_run_spec(path: Path) -> RunSpec:
         raise ValueError("Run configuration must deserialize to a mapping.")
 
     molecule_raw = _require_mapping(raw, "molecule")
-    geometry_raw = molecule_raw.get("geometry", [])
-    if not isinstance(geometry_raw, list) or not geometry_raw:
-        raise ValueError("Molecule geometry must be a non-empty list.")
 
     policy_raw = _require_mapping(raw, "policy")
     policy_name = str(policy_raw.get("name", "benchmark"))
@@ -809,14 +847,7 @@ def load_run_spec(path: Path) -> RunSpec:
     run_raw = _require_mapping(raw, "run")
 
     return RunSpec(
-        molecule=MoleculeSpec(
-            name=str(molecule_raw["name"]),
-            geometry=_parse_atoms(geometry_raw),
-            charge=int(molecule_raw.get("charge", 0)),
-            multiplicity=int(molecule_raw.get("multiplicity", 1)),
-            basis=str(molecule_raw.get("basis", "sto3g")),
-            unit=str(molecule_raw.get("unit", "angstrom")),
-        ),
+        molecule=_parse_molecule(molecule_raw, base_dir=resolved_path.parent),
         problem=ProblemSpec(
             active_space=_parse_active_space(problem_raw),
             freeze_core=bool(problem_raw.get("freeze_core", False)),

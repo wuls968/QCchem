@@ -1,0 +1,32 @@
+molecule:
+  name: H2-from-xyz
+  structure_file: examples/structures/h2.xyz
+  structure_format: xyz
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-6
+  relative_error_threshold: 1.0e-6
+
+run:
+  seed: 7
+  output_dir: artifacts/h2_from_xyz
+  overwrite: true
+  exports:
+    qcschema_json: true

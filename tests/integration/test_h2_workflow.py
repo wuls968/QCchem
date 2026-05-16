@@ -42,3 +42,59 @@ def test_h2_workflow_generates_benchmarkable_artifacts(tmp_path: Path) -> None:
     assert "Field Definitions" in regenerated_report
     assert "exact_ground_energy" in regenerated_report
     assert "Exact Baseline" in regenerated_report
+
+
+@pytest.mark.integration
+def test_h2_structure_file_provenance_reaches_artifacts_and_exports(tmp_path: Path) -> None:
+    structure_dir = tmp_path / "structures"
+    structure_dir.mkdir()
+    structure_path = structure_dir / "h2.xyz"
+    structure_path.write_text(
+        "2\nh2 structure file\nH 0.0 0.0 0.0\nH 0.0 0.0 0.735\n",
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "h2_from_xyz.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-from-xyz
+  structure_file: structures/h2.xyz
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+run:
+  seed: 7
+  overwrite: true
+  exports:
+    qcschema_json: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(config_path, output_dir=tmp_path / "h2-from-xyz-run")
+
+    input_source = result.provenance.input_sources[0]
+    assert input_source["kind"] == "structure_file"
+    assert input_source["format"] == "xyz"
+    assert input_source["file_sha256"]
+    assert input_source["normalized_geometry_sha256"]
+
+    result_payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    result_source = result_payload["provenance"]["input_sources"][0]
+    assert result_source["file_sha256"] == input_source["file_sha256"]
+    assert result_source["normalized_geometry_sha256"] == input_source["normalized_geometry_sha256"]
+
+    report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Input Provenance" in report_text
+    assert input_source["file_sha256"] in report_text
+
+    assert result.artifacts.qcschema_json is not None
+    qcschema = json.loads(result.artifacts.qcschema_json.read_text(encoding="utf-8"))
+    qcschema_source = qcschema["extras"]["input_provenance"][0]
+    assert qcschema_source["file_sha256"] == input_source["file_sha256"]
+    assert qcschema_source["normalized_geometry_sha256"] == input_source["normalized_geometry_sha256"]
