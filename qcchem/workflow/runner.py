@@ -260,6 +260,13 @@ def _dependency_versions() -> dict[str, str]:
     return versions
 
 
+def _input_sources_from_spec(spec) -> list[dict[str, Any]]:
+    provenance = getattr(spec.molecule, "input_provenance", None)
+    if not isinstance(provenance, dict) or not provenance:
+        return []
+    return [dict(provenance)]
+
+
 def _write_exact_artifact(artifacts: ArtifactPaths, exact_baseline: ExactBaselineSummary) -> None:
     payload = {"schema_version": SCHEMA_VERSION, **to_primitive(exact_baseline)}
     write_result_json(payload, artifacts.exact_result_json)
@@ -702,7 +709,19 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     workspace_status = _workspace_status_porcelain(repo_root)
     git_status_summary = _git_status_summary(repo_root)
     dependency_versions = _dependency_versions()
+    input_sources = _input_sources_from_spec(spec)
     _record(logger, events, f"Loading config from {source_config}")
+    for source in input_sources:
+        digest = str(source.get("file_sha256") or source.get("normalized_geometry_sha256") or "")
+        _record(
+            logger,
+            events,
+            (
+                "Resolved molecular input: "
+                f"kind={source.get('kind')}, format={source.get('format')}, "
+                f"atoms={source.get('atom_count')}, sha256={digest[:12]}"
+            ),
+        )
     artifacts.resolved_config.write_text(
         yaml.safe_dump(to_primitive(spec), sort_keys=False),
         encoding="utf-8",
@@ -1595,10 +1614,12 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 [
                     str(source_config),
                     yaml.safe_dump(to_primitive(spec), sort_keys=True),
+                    json.dumps(input_sources, sort_keys=True),
                     json.dumps(dependency_versions, sort_keys=True),
                     workspace_status,
                 ]
             ),
+            input_sources=input_sources,
             git_status_summary=git_status_summary,
             dependency_versions=dependency_versions,
         ),

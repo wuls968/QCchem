@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -392,3 +393,85 @@ solver:
     assert embedding.boundary.cut_bonds[0].qm_atom == 0
     assert embedding.boundary.strict is False
     assert embedding.cache.directory == (tmp_path / "env_cache").resolve()
+
+
+def test_load_run_spec_reads_molecule_structure_file_and_hashes_input(tmp_path: Path) -> None:
+    structures = tmp_path / "structures"
+    structures.mkdir()
+    xyz_text = "2\nh2 from xyz\nH 0.0 0.0 0.0\nH 0.0 0.0 0.735\n"
+    xyz_path = structures / "h2.xyz"
+    xyz_path.write_text(xyz_text, encoding="utf-8")
+    config_path = tmp_path / "from_xyz.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-from-xyz
+  structure_file: structures/h2.xyz
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+solver:
+  kind: exact
+run:
+  output_dir: artifacts/from_xyz
+  overwrite: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.molecule.name == "H2-from-xyz"
+    assert [atom.symbol for atom in spec.molecule.geometry] == ["H", "H"]
+    assert spec.molecule.geometry[1].coords[2] == pytest.approx(0.735)
+    provenance = spec.molecule.input_provenance
+    assert provenance["kind"] == "structure_file"
+    assert provenance["format"] == "xyz"
+    assert provenance["source_path"] == "structures/h2.xyz"
+    assert provenance["resolved_path"] == str(xyz_path.resolve())
+    assert provenance["file_sha256"] == hashlib.sha256(xyz_text.encode("utf-8")).hexdigest()
+    assert provenance["normalized_geometry_sha256"]
+
+
+def test_load_run_spec_supports_explicit_structure_format(tmp_path: Path) -> None:
+    structure_path = tmp_path / "h2.structure"
+    structure_path.write_text("2\nh2\nH 0 0 0\nH 0 0 0.735\n", encoding="utf-8")
+    config_path = tmp_path / "explicit_format.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-explicit-format
+  structure_file: h2.structure
+  structure_format: xyz
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.molecule.input_provenance["format"] == "xyz"
+    assert spec.molecule.input_provenance["atom_count"] == 2
+
+
+def test_load_run_spec_rejects_geometry_and_structure_file_together(tmp_path: Path) -> None:
+    xyz_path = tmp_path / "h2.xyz"
+    xyz_path.write_text("2\nh2\nH 0 0 0\nH 0 0 0.735\n", encoding="utf-8")
+    config_path = tmp_path / "conflict.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-conflict
+  structure_file: h2.xyz
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="cannot both be set"):
+        load_run_spec(config_path)

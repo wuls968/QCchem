@@ -667,6 +667,7 @@ class ProvenanceSummary:
     workspace_dirty: bool | None
     workspace_fingerprint: str
     dependency_versions: dict[str, str]
+    input_sources: list[dict[str, Any]] = field(default_factory=list)
     git_status_summary: dict[str, int] = field(default_factory=dict)
 
 

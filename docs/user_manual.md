@@ -34,6 +34,29 @@ Inspect before running:
 qcchem inspect -c configs/lih_active_vqe.yaml
 ```
 
+Use an XYZ/PDB/MOL/SDF/MOL2 structure file instead of inline YAML geometry:
+
+```yaml
+molecule:
+  name: H2-from-xyz
+  structure_file: examples/structures/h2.xyz
+  structure_format: xyz
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+```
+
+```bash
+qcchem run -c examples/h2_from_xyz.yaml -o artifacts/h2_from_xyz_local
+```
+
+File coordinates are interpreted as angstrom. `charge`, `multiplicity`, and
+`basis` stay in the YAML config. QCchem records the structure file path, parser,
+atom count, selected first record/model, raw file SHA-256, and normalized
+geometry SHA-256 in `result.json`, `report.md`, and QCSchema extras when that
+export is enabled. Do not set both `molecule.geometry` and
+`molecule.structure_file` in the same config.
+
 Regenerate a report from an existing result:
 
 ```bash

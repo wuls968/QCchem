@@ -476,6 +476,14 @@ artifact 会记录：
 - `qcschema.json`
 - `result.h5`
 
+结构输入 provenance 现在作为运行 provenance 的一部分落盘：
+
+- inline YAML geometry 记录 normalized geometry hash
+- `molecule.structure_file` 支持 XYZ、PDB、MOL/SDF V2000、MOL2
+- 文件输入记录 source/resolved path、parser、format、atom count、first record/model policy、file SHA-256、normalized geometry SHA-256
+- 结构文件 hash 纳入 `workspace_fingerprint`
+- QCSchema extras 暴露 `input_provenance`
+
 这两条导出当前定位是：
 
 - interoperability / reproducibility helper

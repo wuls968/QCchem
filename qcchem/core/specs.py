@@ -25,6 +25,7 @@ class MoleculeSpec:
     multiplicity: int = 1
     basis: str = "sto3g"
     unit: str = "angstrom"
+    input_provenance: dict[str, Any] = field(default_factory=dict)
 
     @property
     def spin(self) -> int:

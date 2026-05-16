@@ -36,6 +36,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
     problem = data.get("problem") or {}
     energy = data.get("energy") or {}
     provenance = data.get("provenance") or {}
+    input_sources = provenance.get("input_sources", [])
     _require_present_value(problem, "problem", "molecule_name")
     _require_present_value(energy, "energy", "total_energy")
     verification_status = data.get("verification_status")
@@ -87,6 +88,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "runtime_chemical_accuracy": data.get("runtime_chemical_accuracy"),
             "runtime_options": data.get("runtime_options"),
             "runtime_submission": data.get("runtime_submission"),
+            "input_provenance": input_sources,
             "compression_result": data.get("compression_result"),
             "perturbative_correction_result": data.get("perturbative_correction_result"),
             "external_point_charges": data.get("external_point_charges"),
