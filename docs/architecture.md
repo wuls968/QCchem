@@ -17,10 +17,10 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 : QCchem 自有 schema，覆盖 run、task、study、benchmark、scan、noise、runtime、policy、capability、registry、aggregate result 与统一 `Evidence Summary`。
 
 `qcchem/chem`
-: 分子输入到 Qiskit Nature problem 的经典前处理，负责 active-space resolution、FreezeCore/remove-virtual reduction、Hamiltonian compression audit、classical plugin workflow，以及 reduction audit 所需信息。
+: 分子输入到 Qiskit Nature problem 的经典前处理，负责 active-space resolution、FreezeCore/remove-virtual reduction、point-group symmetry audit/explicit irrep filtering、Hamiltonian compression audit、classical plugin workflow，以及 reduction audit 所需信息。
 
 `qcchem/mapping`
-: fermion-to-qubit 映射、JW/BK 兼容层、H2 hardware precision push 使用的 parity two-qubit reduction，以及 Hamiltonian term counting。
+: fermion-to-qubit 映射、JW/BK 兼容层、H2 hardware precision push 使用的 parity two-qubit reduction、Z2 symmetry tapering，以及 raw/tapered Hamiltonian resource counting。
 
 `qcchem/solvers`
 : ground-state solver 抽象与 exact spectrum utility。

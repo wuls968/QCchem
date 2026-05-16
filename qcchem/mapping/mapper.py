@@ -9,7 +9,8 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.second_q.mappers import BravyiKitaevMapper, JordanWignerMapper, ParityMapper
 from qiskit_nature.second_q.operators import FermionicOp
 
-from qcchem.core import MappingSummary
+from qcchem.core import MappingSummary, MappingSymmetryReductionSpec
+from qcchem.mapping.symmetry import apply_z2_tapering
 
 
 @dataclass(slots=True)
@@ -20,6 +21,8 @@ class MappedHamiltonian:
     qubit_hamiltonian: SparsePauliOp
     mapper: object
     summary: MappingSummary
+    raw_qubit_hamiltonian: SparsePauliOp | None = None
+    base_mapper: object | None = None
 
 
 def _ensure_numpy_compat() -> None:
@@ -47,18 +50,40 @@ def map_fermionic_hamiltonian(
     mapping_kind: str,
     *,
     num_particles: tuple[int, int] | None = None,
+    problem: object | None = None,
+    symmetry_reduction: MappingSymmetryReductionSpec | dict[str, object] | None = None,
 ) -> MappedHamiltonian:
     """Map a fermionic Hamiltonian into a qubit Hamiltonian."""
-    mapper = _build_mapper(mapping_kind, num_particles=num_particles)
-    qubit_hamiltonian = mapper.map(fermionic_hamiltonian)
+    base_mapper = _build_mapper(mapping_kind, num_particles=num_particles)
+    raw_qubit_hamiltonian = base_mapper.map(fermionic_hamiltonian)
+    tapering = apply_z2_tapering(
+        fermionic_hamiltonian=fermionic_hamiltonian,
+        base_mapper=base_mapper,
+        raw_qubit_hamiltonian=raw_qubit_hamiltonian,
+        problem=problem,
+        symmetry_reduction=symmetry_reduction,
+    )
+    qubit_hamiltonian = tapering.qubit_hamiltonian
+    raw_num_qubits = int(raw_qubit_hamiltonian.num_qubits)
+    num_qubits = int(qubit_hamiltonian.num_qubits)
     return MappedHamiltonian(
         fermionic_hamiltonian=fermionic_hamiltonian,
         qubit_hamiltonian=qubit_hamiltonian,
-        mapper=mapper,
+        mapper=tapering.mapper,
+        raw_qubit_hamiltonian=raw_qubit_hamiltonian,
+        base_mapper=base_mapper,
         summary=MappingSummary(
             kind=mapping_kind,
-            num_qubits=int(qubit_hamiltonian.num_qubits),
+            num_qubits=num_qubits,
             fermionic_term_count=len(fermionic_hamiltonian),
             qubit_term_count=len(qubit_hamiltonian),
+            raw_num_qubits=raw_num_qubits,
+            raw_qubit_term_count=len(raw_qubit_hamiltonian),
+            symmetry_tapered_qubits=max(raw_num_qubits - num_qubits, 0),
+            z2_symmetry_count=tapering.z2_symmetry_count,
+            z2_tapering_values=tapering.z2_tapering_values,
+            symmetry_reduction_status=tapering.status,
+            symmetry_reduction_notes=tapering.notes,
+            symmetry_reduction_validation=tapering.validation,
         ),
     )

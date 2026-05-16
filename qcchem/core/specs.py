@@ -364,6 +364,16 @@ class CavityQEDSpec:
 
 
 @dataclass(slots=True)
+class PointGroupSpec:
+    """Point-group symmetry audit and explicit irrep filtering settings."""
+
+    subgroup: str = "auto"
+    reduction_mode: str = "audit"
+    active_irreps: list[str] = field(default_factory=list)
+    remove_irreps: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class ProblemSpec:
     """Electronic-structure problem configuration."""
 
@@ -381,6 +391,16 @@ class ProblemSpec:
     )
     qft: LatticeQEDSpec = field(default_factory=LatticeQEDSpec)
     cavity_qed: CavityQEDSpec = field(default_factory=CavityQEDSpec)
+    point_group: PointGroupSpec = field(default_factory=PointGroupSpec)
+
+
+@dataclass(slots=True)
+class MappingSymmetryReductionSpec:
+    """Fermion-to-qubit symmetry-reduction policy."""
+
+    z2: str = "auto"
+    point_group: str = "auto"
+    strict: bool = False
 
 
 @dataclass(slots=True)
@@ -388,6 +408,7 @@ class MappingSpec:
     """Fermion-to-qubit mapping configuration."""
 
     kind: str = "jordan_wigner"
+    symmetry_reduction: MappingSymmetryReductionSpec = field(default_factory=MappingSymmetryReductionSpec)
 
 
 @dataclass(slots=True)

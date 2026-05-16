@@ -154,6 +154,20 @@ For Trust-First review, the most important fields are:
 - `evidence_summary.trust_tier`
 - `evidence_summary.recommended_action`
 
+Mapping resources now separate the executed Hamiltonian from its untapered
+baseline:
+
+- `mapping.num_qubits` and `mapping.qubit_term_count` describe the executed
+  qubit Hamiltonian.
+- `mapping.raw_num_qubits` and `mapping.raw_qubit_term_count` describe the
+  pre-Z2-tapering Hamiltonian.
+- `mapping.symmetry_tapered_qubits`, `mapping.z2_symmetry_count`, and
+  `mapping.z2_tapering_values` record the Z2 tapering sector and savings.
+- `problem.point_group_metadata` and
+  `reduction_audit.point_group_metadata` record PySCF point-group irreps.
+  Point-group `audit` mode records symmetry only; `irrep_filter` is the
+  explicit model-reduction mode.
+
 For exploratory assets, also inspect:
 
 - `qft_model`

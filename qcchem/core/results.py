@@ -154,6 +154,14 @@ class MappingSummary:
     num_qubits: int
     fermionic_term_count: int
     qubit_term_count: int
+    raw_num_qubits: int | None = None
+    raw_qubit_term_count: int | None = None
+    symmetry_tapered_qubits: int = 0
+    z2_symmetry_count: int = 0
+    z2_tapering_values: list[int] | None = None
+    symmetry_reduction_status: str = "disabled"
+    symmetry_reduction_notes: list[str] = field(default_factory=list)
+    symmetry_reduction_validation: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -170,6 +178,7 @@ class ProblemSummary:
     transformers_applied: list[str] = field(default_factory=list)
     hamiltonian_constants: dict[str, float] = field(default_factory=dict)
     electronic_constant_correction: float = 0.0
+    point_group_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -195,6 +204,7 @@ class ReductionAuditSummary:
     boundary_embedding_constant_energy: float = 0.0
     total_constant_correction: float = 0.0
     energy_formula: str = ""
+    point_group_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

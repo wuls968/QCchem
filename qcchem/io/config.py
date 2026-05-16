@@ -47,12 +47,14 @@ from qcchem.core import (
     LatticeQEDSpec,
     LRACEAdaptiveSpec,
     MappingSpec,
+    MappingSymmetryReductionSpec,
     MeasurementSpec,
     MitigationSpec,
     MoleculeSpec,
     NoiseModelSpec,
     OptimizerSpec,
     PECSpec,
+    PointGroupSpec,
     PerturbativeCorrectionTaskSpec,
     PolicySpec,
     PointChargeDampingSpec,
@@ -146,6 +148,56 @@ def _parse_active_space(problem_raw: dict[str, Any]) -> ActiveSpaceSpec | None:
         active_orbitals=active_space_raw.get("active_orbitals"),
         selection_mode=str(active_space_raw.get("selection_mode", "manual")),
         auto=auto,
+    )
+
+
+def _choice(value: Any, *, field_name: str, allowed: set[str]) -> str:
+    normalized = str(value).strip().lower()
+    if normalized not in allowed:
+        allowed_text = ", ".join(sorted(allowed))
+        raise ValueError(f"{field_name} must be one of: {allowed_text}.")
+    return normalized
+
+
+def _parse_point_group(problem_raw: dict[str, Any]) -> PointGroupSpec:
+    point_group_raw = problem_raw.get("point_group")
+    if not isinstance(point_group_raw, dict):
+        return PointGroupSpec()
+    return PointGroupSpec(
+        subgroup=str(point_group_raw.get("subgroup", "auto")),
+        reduction_mode=_choice(
+            point_group_raw.get("reduction_mode", "audit"),
+            field_name="problem.point_group.reduction_mode",
+            allowed={"audit", "irrep_filter"},
+        ),
+        active_irreps=[str(value) for value in point_group_raw.get("active_irreps", [])],
+        remove_irreps=[str(value) for value in point_group_raw.get("remove_irreps", [])],
+    )
+
+
+def _parse_mapping(raw: dict[str, Any]) -> MappingSpec:
+    mapping_raw = _require_mapping(raw, "mapping")
+    symmetry_raw = mapping_raw.get("symmetry_reduction", {})
+    if symmetry_raw is None:
+        symmetry_raw = {}
+    if not isinstance(symmetry_raw, dict):
+        raise ValueError("mapping.symmetry_reduction must be a mapping.")
+    symmetry_reduction = MappingSymmetryReductionSpec(
+        z2=_choice(
+            symmetry_raw.get("z2", "auto"),
+            field_name="mapping.symmetry_reduction.z2",
+            allowed={"auto", "enabled", "disabled"},
+        ),
+        point_group=_choice(
+            symmetry_raw.get("point_group", "auto"),
+            field_name="mapping.symmetry_reduction.point_group",
+            allowed={"auto", "enabled", "disabled"},
+        ),
+        strict=bool(symmetry_raw.get("strict", False)),
+    )
+    return MappingSpec(
+        kind=str(mapping_raw.get("kind", "jordan_wigner")),
+        symmetry_reduction=symmetry_reduction,
     )
 
 
@@ -1107,8 +1159,9 @@ def load_run_spec(path: Path) -> RunSpec:
             ),
             qft=_parse_lattice_qed(problem_raw),
             cavity_qed=_parse_cavity_qed(problem_raw),
+            point_group=_parse_point_group(problem_raw),
         ),
-        mapping=MappingSpec(kind=str(_require_mapping(raw, "mapping").get("kind", "jordan_wigner"))),
+        mapping=_parse_mapping(raw),
         backend=BackendSpec(
             kind=str(backend_raw.get("kind", "statevector")),
             shots=int(backend_raw["shots"]) if backend_raw.get("shots") is not None else None,
