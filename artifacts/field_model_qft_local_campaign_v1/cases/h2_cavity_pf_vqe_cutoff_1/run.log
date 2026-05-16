@@ -1,0 +1,14 @@
+2026-05-15 21:03:21,129 INFO Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_vqe.yaml
+2026-05-15 21:03:21,133 INFO Building electronic structure problem
+2026-05-15 21:03:21,145 INFO Applying mapping: jordan_wigner
+2026-05-15 21:03:21,151 INFO Building exploratory Pauli-Fierz cavity-QED Hamiltonian
+2026-05-15 21:03:21,155 INFO Constructed cavity-QED Hamiltonian: modes=1, electronic_qubits=4, photon_qubits=2
+2026-05-15 21:03:21,156 INFO Prepared measurement plan: groups=9, cost=90000
+2026-05-15 21:03:21,156 INFO Preparing backend: statevector
+2026-05-15 21:03:21,156 INFO Running solver: vqe
+2026-05-15 21:03:21,243 INFO Computing exact spectrum for 1 states
+2026-05-15 21:03:21,244 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_vqe_cutoff_1/exact_result.json
+2026-05-15 21:03:21,246 INFO Computed empirical calibration: wall_time=0.087s, measured_cost=None
+2026-05-15 21:03:21,249 INFO Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_vqe_cutoff_1/result.json
+2026-05-15 21:03:21,250 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_vqe_cutoff_1/report.md
+2026-05-15 21:03:21,251 INFO Run completed

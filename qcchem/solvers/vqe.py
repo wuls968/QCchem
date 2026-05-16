@@ -5,6 +5,7 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import n_local
 from qiskit_nature.second_q.circuit.library import HartreeFock, PUCCD, PUCCSD, SUCCD, UCCSD
 from scipy.sparse import SparseEfficiencyWarning
@@ -26,12 +27,55 @@ class VQESolver(BaseSolver):
         seed: int,
         problem_summary: ProblemSummary | None = None,
         mapper: object | None = None,
+        field_model_context: dict[str, object] | None = None,
     ) -> None:
         self.spec = spec
         self.backend = backend
         self.rng = np.random.default_rng(seed)
         self.problem_summary = problem_summary
         self.mapper = mapper
+        self.field_model_context = field_model_context or {}
+
+    def _hardware_efficient_layer(self, num_qubits: int):
+        return n_local(
+            num_qubits,
+            rotation_blocks=self.spec.ansatz.rotation_blocks,
+            entanglement_blocks=self.spec.ansatz.entanglement_blocks,
+            entanglement=self.spec.ansatz.entanglement,
+            reps=self.spec.ansatz.reps,
+            skip_final_rotation_layer=self.spec.ansatz.skip_final_rotation_layer,
+        )
+
+    def _build_cavity_twolocal(self, num_qubits: int):
+        cavity = self.field_model_context.get("cavity_qed")
+        if not isinstance(cavity, dict):
+            raise ValueError("cavity_twolocal ansatz requires cavity-QED field-model context.")
+        photon_mode_qubits = [int(value) for value in cavity.get("photon_mode_qubits", [])]
+        electronic_qubits = int(cavity.get("electronic_qubits", 0))
+        photon_qubits = int(sum(photon_mode_qubits))
+        if photon_qubits <= 0 or electronic_qubits <= 0 or photon_qubits + electronic_qubits != num_qubits:
+            raise ValueError("cavity_twolocal ansatz received inconsistent electron/photon qubit metadata.")
+        initial = QuantumCircuit(num_qubits, name="cavity_hf_photon_vacuum")
+        mode_offset = 0
+        for mode_qubit_count in photon_mode_qubits:
+            initial.x(mode_offset)
+            mode_offset += int(mode_qubit_count)
+        if self.problem_summary is not None and self.mapper is not None:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SparseEfficiencyWarning)
+                hf = HartreeFock(
+                    self.problem_summary.num_spatial_orbitals,
+                    self.problem_summary.num_particles,
+                    self.mapper,
+                )
+            initial.compose(
+                hf,
+                qubits=list(range(photon_qubits, photon_qubits + electronic_qubits)),
+                inplace=True,
+            )
+        ansatz = initial.compose(self._hardware_efficient_layer(num_qubits))
+        ansatz.name = "cavity_twolocal"
+        return ansatz
 
     def _build_ansatz(self, num_qubits: int):
         kind = self.spec.ansatz.kind.strip().lower()
@@ -58,14 +102,9 @@ class VQESolver(BaseSolver):
                     reps=self.spec.ansatz.reps,
                     initial_state=initial_state,
                 )
-        return n_local(
-            num_qubits,
-            rotation_blocks=self.spec.ansatz.rotation_blocks,
-            entanglement_blocks=self.spec.ansatz.entanglement_blocks,
-            entanglement=self.spec.ansatz.entanglement,
-            reps=self.spec.ansatz.reps,
-            skip_final_rotation_layer=self.spec.ansatz.skip_final_rotation_layer,
-        )
+        if kind in {"cavity_twolocal", "electron_photon_twolocal"}:
+            return self._build_cavity_twolocal(num_qubits)
+        return self._hardware_efficient_layer(num_qubits)
 
     def _initial_point(self, num_parameters: int) -> np.ndarray:
         if isinstance(self.spec.initial_point, list):
@@ -116,13 +155,21 @@ def build_solver(
     seed: int,
     problem_summary: ProblemSummary | None = None,
     mapper: object | None = None,
+    field_model_context: dict[str, object] | None = None,
 ) -> BaseSolver:
     """Build the solver declared by the config."""
     normalized = spec.kind.strip().lower()
     if normalized == "vqe":
         if backend is None:
             raise ValueError("VQE requires an execution backend.")
-        return VQESolver(spec, backend, seed, problem_summary=problem_summary, mapper=mapper)
+        return VQESolver(
+            spec,
+            backend,
+            seed,
+            problem_summary=problem_summary,
+            mapper=mapper,
+            field_model_context=field_model_context,
+        )
     if normalized in {"exact", "reference"}:
         return ExactDiagonalizationSolver()
     raise ValueError(f"Unsupported solver kind: {spec.kind}")

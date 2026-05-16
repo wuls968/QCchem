@@ -243,6 +243,28 @@ class LatticeQEDSpec:
 
 
 @dataclass(slots=True)
+class CavityQEDModeSpec:
+    """Single photon-mode settings for Pauli-Fierz cavity-QED models."""
+
+    frequency: float = 0.4
+    coupling_strength: float = 0.05
+    polarization: list[float] = field(default_factory=lambda: [0.0, 0.0, 1.0])
+    max_occupation: int = 1
+
+
+@dataclass(slots=True)
+class CavityQEDSpec:
+    """Molecular Pauli-Fierz cavity-QED model configuration."""
+
+    enabled: bool = False
+    model: str = "pauli_fierz_cavity_qed"
+    photon_encoding: str = "linear"
+    include_dipole_self_energy: bool = True
+    photon_physical_subspace_penalty: float = 25.0
+    modes: list[CavityQEDModeSpec] = field(default_factory=lambda: [CavityQEDModeSpec()])
+
+
+@dataclass(slots=True)
 class ProblemSpec:
     """Electronic-structure problem configuration."""
 
@@ -253,6 +275,7 @@ class ProblemSpec:
     measurement: MeasurementSpec = field(default_factory=MeasurementSpec)
     embedding: EmbeddingSpec = field(default_factory=EmbeddingSpec)
     qft: LatticeQEDSpec = field(default_factory=LatticeQEDSpec)
+    cavity_qed: CavityQEDSpec = field(default_factory=CavityQEDSpec)
 
 
 @dataclass(slots=True)
@@ -649,9 +672,10 @@ class ScanParameterSpec:
 
     name: str
     kind: str
-    atom_indices: tuple[int, int]
     values: list[float]
+    atom_indices: tuple[int, int] = (0, 1)
     axis: tuple[float, float, float] = (0.0, 0.0, 1.0)
+    target: str | None = None
 
 
 @dataclass(slots=True)

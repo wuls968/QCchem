@@ -17,6 +17,11 @@ from qcchem.core import (
     BenchmarkSuiteSummary,
     NoiseModelSpec,
 )
+from qcchem.field_models import (
+    apply_field_model_cross_case_decisions,
+    build_field_model_campaign_summary,
+    extract_field_model_case_metrics,
+)
 from qcchem.io.benchmark_config import (
     HardwareCalibrationSuiteSpec,
     load_benchmark_entry_spec,
@@ -223,6 +228,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
         spec = clone_spec_with_overrides(spec, case.overrides)
     result = run_spec(spec, source_config=str(case.config), output_dir=case_root)
     runtime_evidence_status = _runtime_evidence_status_from_submission(result.runtime_submission)
+    field_model_metrics = extract_field_model_case_metrics(result)
     return BenchmarkCaseResult(
         name=case.name,
         kind=case.kind,
@@ -295,6 +301,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
             "runtime_submission_status": _runtime_submission_status_from_submission(result.runtime_submission),
             "compressed_vs_uncompressed": result.benchmark.compressed_vs_uncompressed,
             "wall_time_seconds": result.provenance.wall_time_seconds,
+            **field_model_metrics,
         },
         evidence_summary=build_benchmark_case_evidence_summary(
             {
@@ -546,6 +553,9 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
             )
         )
 
+    apply_field_model_cross_case_decisions(case_results)
+    field_model_campaign_summary = build_field_model_campaign_summary(case_results)
+
     status_counts: dict[str, int] = {}
     for item in case_results:
         status_counts[item.status] = status_counts.get(item.status, 0) + 1
@@ -571,6 +581,7 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
         "mean_estimated_cost": (sum(estimated_costs) / len(estimated_costs) if estimated_costs else None),
         "mean_measured_cost": (sum(measured_costs) / len(measured_costs) if measured_costs else None),
         "mean_achieved_error": (sum(achieved_errors) / len(achieved_errors) if achieved_errors else None),
+        "field_model_campaign": field_model_campaign_summary,
     }
     dashboard_summary = {
         "compressed_cases": [
@@ -623,6 +634,7 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
             or case.metrics.get("measured_shot_usage") is not None
             or case.metrics.get("achieved_error") is not None
         ],
+        "field_model_campaign": field_model_campaign_summary,
     }
 
     suite_status = "validated" if all(item.status == "validated" for item in case_results) else "exploratory"
@@ -671,6 +683,7 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
                 f"- resilience_levels: `{dashboard_summary['resilience_levels']}`",
                 f"- achieved_errors: `{dashboard_summary['achieved_errors']}`",
                 f"- estimated_vs_measured_cost_ratios: `{dashboard_summary['estimated_vs_measured_cost_ratios']}`",
+                f"- field_model_campaign: `{field_model_campaign_summary}`",
                 "",
             ]
         ),

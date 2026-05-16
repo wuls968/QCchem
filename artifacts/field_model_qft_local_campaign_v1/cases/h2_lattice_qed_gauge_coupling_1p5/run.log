@@ -1,0 +1,12 @@
+2026-05-15 21:03:17,676 INFO Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_exact.yaml
+2026-05-15 21:03:17,680 INFO Building exploratory lattice-QED field Hamiltonian
+2026-05-15 21:03:17,683 INFO Constructed lattice-QED Hamiltonian: sites=2, links=1, qubits=6
+2026-05-15 21:03:17,684 INFO Prepared measurement plan: groups=25, cost=250000
+2026-05-15 21:03:17,684 INFO Skipping backend construction for solver: exact
+2026-05-15 21:03:17,684 INFO Running solver: exact
+2026-05-15 21:03:17,689 INFO Computing exact spectrum for 1 states
+2026-05-15 21:03:17,692 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_1p5/exact_result.json
+2026-05-15 21:03:17,692 INFO Computed empirical calibration: wall_time=0.004s, measured_cost=None
+2026-05-15 21:03:17,702 INFO Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_1p5/result.json
+2026-05-15 21:03:17,705 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_1p5/report.md
+2026-05-15 21:03:17,706 INFO Run completed

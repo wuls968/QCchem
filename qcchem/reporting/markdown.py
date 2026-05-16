@@ -334,6 +334,56 @@ def _qft_dynamics_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _field_model_lines(data: dict[str, Any]) -> list[str]:
+    field_model = data.get("field_model") or {}
+    return [
+        "## Field Model Registry",
+        "",
+        f"- model_kind: `{field_model.get('model_kind')}`",
+        f"- registry_name: `{field_model.get('registry_name')}`",
+        f"- capability_tier: `{field_model.get('capability_tier')}`",
+        f"- observables: `{field_model.get('observables', [])}`",
+        f"- resource_estimate: `{field_model.get('resource_estimate', {})}`",
+        f"- error_budget: `{field_model.get('error_budget', {})}`",
+        f"- risk_notes: `{field_model.get('risk_notes', [])}`",
+        "",
+    ]
+
+
+def _cavity_qed_model_lines(data: dict[str, Any]) -> list[str]:
+    cavity = data.get("cavity_qed_model") or {}
+    observables = cavity.get("observables", {}) if isinstance(cavity.get("observables"), dict) else {}
+    return [
+        "## Pauli-Fierz Cavity-QED Model",
+        "",
+        "> This section reports exploratory molecular cavity-QED evidence for the configured finite photon cutoff; exact baselines are exact for this electron-photon Hamiltonian only.",
+        "",
+        f"- model: `{cavity.get('model')}`",
+        f"- mode_count: `{cavity.get('mode_count')}`",
+        f"- modes: `{cavity.get('modes', [])}`",
+        f"- photon_encoding: `{cavity.get('photon_encoding')}`",
+        f"- include_dipole_self_energy: `{cavity.get('include_dipole_self_energy')}`",
+        f"- photon_physical_subspace_penalty: `{cavity.get('photon_physical_subspace_penalty')}`",
+        f"- electronic_qubits: `{cavity.get('electronic_qubits')}`",
+        f"- photon_qubits: `{cavity.get('photon_qubits')}`",
+        f"- total_qubits: `{cavity.get('total_qubits')}`",
+        f"- hamiltonian_formula: `{cavity.get('hamiltonian_formula')}`",
+        f"- term_counts_by_sector: `{cavity.get('term_counts_by_sector', {})}`",
+        f"- photon occupation: `{observables.get('photon_occupation', [])}`",
+        f"- dipole_expectation: `{observables.get('dipole_expectation', [])}`",
+        f"- electron_photon_coupling_energy: `{observables.get('electron_photon_coupling_energy', [])}`",
+        f"- dipole_self_energy: `{observables.get('dipole_self_energy', [])}`",
+        f"- polaritonic_state_composition: `{observables.get('polaritonic_state_composition', [])}`",
+        f"- photon_physical_subspace_leakage: `{observables.get('photon_physical_subspace_leakage')}`",
+        f"- exact_residual_norm: `{observables.get('exact_residual_norm')}`",
+        f"- vqe_vs_exact_error: `{observables.get('vqe_vs_exact_error')}`",
+        f"- resource_estimate: `{cavity.get('resource_estimate', {})}`",
+        f"- error_budget: `{cavity.get('error_budget', {})}`",
+        f"- notes: `{cavity.get('notes', [])}`",
+        "",
+    ]
+
+
 def _evidence_summary_lines(data: dict[str, Any]) -> list[str]:
     evidence = data.get("evidence_summary") or {}
     baseline = evidence.get("primary_baseline") or {}
@@ -408,8 +458,10 @@ def render_markdown_report(result: Any) -> str:
     variational = data.get("variational_result")
     excited = data.get("excited_state_result")
     properties = data.get("property_result")
+    field_model = data.get("field_model")
     qft_model = data.get("qft_model")
     qft_dynamics = data.get("qft_dynamics")
+    cavity_qed_model = data.get("cavity_qed_model")
     reduction = data.get("reduction_audit")
     compression = data.get("compression_result")
     perturbative = data.get("perturbative_correction_result")
@@ -577,10 +629,14 @@ def render_markdown_report(result: Any) -> str:
         ]
     )
 
+    if field_model is not None:
+        lines.extend(_field_model_lines(data))
     if qft_model is not None:
         lines.extend(_qft_model_lines(data))
     if qft_dynamics is not None:
         lines.extend(_qft_dynamics_lines(data))
+    if cavity_qed_model is not None:
+        lines.extend(_cavity_qed_model_lines(data))
 
     if chemical_accuracy is not None:
         lines.extend(_chemical_accuracy_lines(chemical_accuracy, units))

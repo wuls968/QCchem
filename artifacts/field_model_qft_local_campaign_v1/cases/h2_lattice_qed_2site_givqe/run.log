@@ -1,0 +1,12 @@
+2026-05-15 21:03:01,516 INFO Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_givqe.yaml
+2026-05-15 21:03:01,520 INFO Building exploratory lattice-QED field Hamiltonian
+2026-05-15 21:03:01,525 INFO Constructed lattice-QED Hamiltonian: sites=2, links=1, qubits=6
+2026-05-15 21:03:01,526 INFO Prepared measurement plan: groups=25, cost=250000
+2026-05-15 21:03:01,526 INFO Preparing backend: statevector
+2026-05-15 21:03:01,526 INFO Running solver: lattice_qed_givqe
+2026-05-15 21:03:13,450 INFO Computing exact spectrum for 1 states
+2026-05-15 21:03:13,451 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_givqe/exact_result.json
+2026-05-15 21:03:13,452 INFO Computed empirical calibration: wall_time=11.923s, measured_cost=None
+2026-05-15 21:03:13,456 INFO Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_givqe/result.json
+2026-05-15 21:03:13,458 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_givqe/report.md
+2026-05-15 21:03:13,459 INFO Run completed

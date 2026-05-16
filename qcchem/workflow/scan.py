@@ -15,7 +15,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.io.scan_config import load_scan_spec
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report
-from qcchem.workflow.common import resolve_artifact_root
+from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
 
@@ -61,9 +61,14 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
         point_spec = load_run_spec(spec.base_config)
         if spec.policy_name:
             point_spec.policy.name = spec.policy_name
-        if spec.parameter.kind != "bond_distance":
+        if spec.parameter.kind == "bond_distance":
+            _apply_bond_distance(point_spec, spec.parameter.atom_indices, value, spec.parameter.axis)
+        elif spec.parameter.kind == "config_override":
+            if not spec.parameter.target:
+                raise ValueError("config_override scan parameters require a target dotted path.")
+            point_spec = clone_spec_with_overrides(point_spec, {spec.parameter.target: value})
+        else:
             raise ValueError(f"Unsupported scan parameter kind: {spec.parameter.kind}")
-        _apply_bond_distance(point_spec, spec.parameter.atom_indices, value, spec.parameter.axis)
         point_label = f"point_{index:02d}_{value:.3f}"
         result = run_spec(
             point_spec,

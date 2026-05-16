@@ -1,0 +1,298 @@
+[
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_exact",
+    "created_at": "2026-05-15T13:03:01.348350+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_exact",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "exact",
+      "two_site"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_sector_audit",
+    "created_at": "2026-05-15T13:03:01.463296+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_sector_audit",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_sector_audit.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "gauss_law",
+      "sector_audit"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_givqe",
+    "created_at": "2026-05-15T13:03:13.485474+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_givqe",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_givqe.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "givqe",
+      "variational"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_dynamics",
+    "created_at": "2026-05-15T13:03:14.948170+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_dynamics",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "dynamics",
+      "trotter"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2site_runtime_preview",
+    "created_at": "2026-05-15T13:03:16.635307+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_runtime_preview",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics_runtime.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "runtime_preview",
+      "hardware_gate"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_exact",
+    "created_at": "2026-05-15T13:03:16.741321+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_4site_sparse_exact",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "sparse_projected",
+      "exact"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics",
+    "created_at": "2026-05-15T13:03:17.187691+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_4site_sparse_dynamics",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_4site_lattice_qed_sparse_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "sparse_projected",
+      "dynamics"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2d_projected_exact",
+    "created_at": "2026-05-15T13:03:17.290403+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2d_projected_exact",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_2d_lattice_qed_projected_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "sparse_projected",
+      "plaquette",
+      "exact"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_2d_plaquette_dynamics",
+    "created_at": "2026-05-15T13:03:17.408799+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2d_plaquette_dynamics",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_2d_lattice_qed_plaquette_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "plaquette",
+      "dynamics"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_0p5",
+    "created_at": "2026-05-15T13:03:17.508708+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_gauge_coupling_0p5",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "gauge_coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_1p0",
+    "created_at": "2026-05-15T13:03:17.613522+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_gauge_coupling_1p0",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "gauge_coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_gauge_coupling_1p5",
+    "created_at": "2026-05-15T13:03:17.712391+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_gauge_coupling_1p5",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "gauge_coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p20",
+    "created_at": "2026-05-15T13:03:18.392597+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_trotter_step_0p20",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "trotter_step_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p10",
+    "created_at": "2026-05-15T13:03:19.348115+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_trotter_step_0p10",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "trotter_step_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p05",
+    "created_at": "2026-05-15T13:03:20.886628+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_trotter_step_0p05",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "trotter_step_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_1",
+    "created_at": "2026-05-15T13:03:20.984371+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_exact_cutoff_1",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "pauli_fierz",
+      "exact",
+      "cutoff_1"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2",
+    "created_at": "2026-05-15T13:03:21.078666+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_exact_cutoff_2",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_cutoff_convergence.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "pauli_fierz",
+      "exact",
+      "cutoff_2"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_vqe_cutoff_1",
+    "created_at": "2026-05-15T13:03:21.253884+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_vqe_cutoff_1",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_vqe.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "pauli_fierz",
+      "vqe",
+      "cutoff_1"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_coupling_0p00",
+    "created_at": "2026-05-15T13:03:21.341997+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_coupling_0p00",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_coupling_0p02",
+    "created_at": "2026-05-15T13:03:21.429845+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_coupling_0p02",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_coupling_0p05",
+    "created_at": "2026-05-15T13:03:21.534877+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_coupling_0p05",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_coupling_0p10",
+    "created_at": "2026-05-15T13:03:21.637910+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_cavity_pf_coupling_0p10",
+    "source": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "cavity_qed",
+      "coupling_scan"
+    ]
+  },
+  {
+    "artifact_root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1",
+    "created_at": "2026-05-15T13:03:21.638033+00:00",
+    "kind": "benchmark_suite",
+    "name": "field_model_qft_local_campaign_v1",
+    "source": "benchmarks/field_model_qft_local_campaign_v1.yaml",
+    "status": "exploratory",
+    "tags": [
+      "benchmark",
+      "exploratory",
+      "field_model",
+      "lattice_qed",
+      "cavity_qed",
+      "local_campaign"
+    ]
+  }
+]

@@ -23,16 +23,19 @@ def load_scan_spec(path: Path) -> ScanSpec:
     if not base_config.is_absolute():
         base_config = (_project_root() / base_config).resolve()
 
+    kind = str(parameter_raw["kind"])
+    atom_indices_raw = parameter_raw.get("atom_indices", [0, 1])
     return ScanSpec(
         name=str(scan_raw["name"]),
         description=str(scan_raw.get("description", "")),
         base_config=base_config,
         parameter=ScanParameterSpec(
             name=str(parameter_raw["name"]),
-            kind=str(parameter_raw["kind"]),
-            atom_indices=(int(parameter_raw["atom_indices"][0]), int(parameter_raw["atom_indices"][1])),
+            kind=kind,
             values=[float(value) for value in parameter_raw.get("values", [])],
+            atom_indices=(int(atom_indices_raw[0]), int(atom_indices_raw[1])),
             axis=tuple(float(value) for value in parameter_raw.get("axis", [0.0, 0.0, 1.0])),
+            target=(str(parameter_raw["target"]) if parameter_raw.get("target") is not None else None),
         ),
         policy_name=scan_raw.get("policy_name"),
         tags=[str(value) for value in scan_raw.get("tags", [])],

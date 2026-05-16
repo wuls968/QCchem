@@ -1,0 +1,18 @@
+benchmark_suite:
+  name: cavity_qed_suite_v1
+  description: Exploratory Pauli-Fierz H2 cavity-QED exact/VQE and photon-cutoff checks.
+  registry_name: cavity_qed_suite_v1
+  tags: [benchmark, exploratory, cavity_qed]
+  cases:
+    - name: h2_cavity_pf_exact_cutoff_1
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+    - name: h2_cavity_pf_exact_cutoff_2
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_cutoff_convergence.yaml
+      expected_status: exploratory
+    - name: h2_cavity_pf_vqe
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_vqe.yaml
+      expected_status: exploratory

@@ -1,0 +1,56 @@
+molecule:
+  name: H2-cavity-PF-cutoff-2
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+policy:
+  name: benchmark
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [cavity_qed, photon_cutoff_convergence]
+
+problem:
+  cavity_qed:
+    enabled: true
+    model: pauli_fierz_cavity_qed
+    photon_encoding: linear
+    include_dipole_self_energy: true
+    photon_physical_subspace_penalty: 25.0
+    modes:
+      - frequency: 0.4
+        coupling_strength: 0.04
+        polarization: [0.0, 0.0, 1.0]
+        max_occupation: 2
+  measurement:
+    strategy: cavity_qed_exact_cutoff_2
+    execution_mode: estimator
+    grouping_policy: electron_photon_pauli
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+  seed: 2143
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 9
+  absolute_error_threshold: 1.0e-9
+  relative_error_threshold: 1.0e-9
+
+run:
+  seed: 2143
+  output_dir: artifacts/h2_cavity_pf_cutoff_convergence
+  overwrite: true

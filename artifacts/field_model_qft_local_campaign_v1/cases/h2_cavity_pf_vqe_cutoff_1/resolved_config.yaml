@@ -1,0 +1,279 @@
+molecule:
+  name: H2-cavity-PF-VQE
+  geometry:
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.0
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.74
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+problem:
+  active_space: null
+  freeze_core: false
+  remove_orbitals: []
+  compression:
+    enabled: false
+    method: modified_cholesky
+    threshold: 1.0e-08
+    max_rank: null
+    rank_schedule: null
+    term_budget_policy: precision_first
+    compression_error_budget_hartree: 0.0008
+    allow_pauli_truncation: false
+    apply_to_solver: false
+    execution_enabled: false
+  measurement:
+    strategy: cavity_qed_vqe
+    runtime_precision_target: null
+    execution_mode: estimator
+    grouping_policy: electron_photon_pauli
+  embedding:
+    enabled: false
+    method: dmet_skeleton
+    bath_threshold: 0.05
+    solver_plugin: placeholder_fragment_solver
+    fragments: []
+  qft:
+    enabled: false
+    model: lattice_qed_minimal_coupling
+    dimensions: 1
+    grid:
+      shape:
+      - 2
+      spacing:
+      - 1.0
+      origin: molecule_center
+      axes: principal
+      boundary: open
+      softening: 0.35
+    matter:
+      spin_components: 2
+      target_electrons: auto
+      include_soft_coulomb_density: false
+    gauge:
+      group: u1
+      electric_cutoff: 1
+      coupling: 1.0
+      include_magnetic_plaquettes: true
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      enforce_physical_sector: false
+      target_charge_sector: neutral
+      gauss_law_tolerance: 1.0e-08
+      max_sector_enumeration_qubits: 10
+    ansatz:
+      generator_policy: gauge_invariant_hopping
+    engine:
+      representation: auto
+      auto_project_physical_sector: true
+      max_projected_dimension: 4096
+      max_full_qubits_for_dense: 10
+      materialize_pauli: auto
+      store_basis_indices: preview
+      projector_tolerance: 1.0e-08
+    dynamics:
+      enabled: false
+      method: real_time_quench
+      initial_state:
+        kind: local_hopping_pulse
+        base: physical_reference
+        link_index: 0
+        pulse_time: 0.05
+        pulse_strength: 1.0
+      time_grid:
+        start: 0.0
+        stop: 2.0
+        num_points: 41
+      evolution:
+        exact_enabled: true
+        exact_qubit_limit: 12
+        trotter_enabled: true
+        trotter_step: 0.05
+        trotter_order: 1
+      runtime:
+        enabled: false
+        runtime_observables: aggregate_gauge
+  cavity_qed:
+    enabled: true
+    model: pauli_fierz_cavity_qed
+    photon_encoding: linear
+    include_dipole_self_energy: true
+    photon_physical_subspace_penalty: 25.0
+    modes:
+    - frequency: 0.4
+      coupling_strength: 0.04
+      polarization:
+      - 0.0
+      - 0.0
+      - 1.0
+      max_occupation: 1
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+  shots: null
+  precision: null
+  seed: 2142
+  repetitions: 1
+  abelian_grouping: true
+  noise:
+    enabled: false
+    profile: none
+    depolarizing_probability_1q: 0.0
+    depolarizing_probability_2q: 0.0
+    readout_error_probability: 0.0
+    basis_gates: []
+  runtime:
+    enabled: false
+    service: local
+    instance: null
+    runtime_ready: false
+    session_ready: false
+    batch_ready: false
+    precision_target: null
+    max_budgeted_shots: null
+    max_execution_seconds: null
+    calibration_strategy: default
+    resilience_level: 0
+    grouping_policy: default
+    options: {}
+solver:
+  kind: vqe
+  optimizer:
+    kind: COBYLA
+    maxiter: 60
+    tol: null
+  ansatz:
+    kind: cavity_twolocal
+    rotation_blocks:
+    - ry
+    - rz
+    entanglement_blocks: cz
+    entanglement: linear
+    reps: 1
+    skip_final_rotation_layer: false
+  initial_point: zeros
+  experimental: false
+  lr_ace_adaptive:
+    enabled: false
+    generator_schedule:
+    - 8
+    - 16
+    - 24
+    - 32
+    optimizer_maxiter_schedule:
+    - 1000
+    - 2000
+    - 5000
+    initial_point_strategies:
+    - zeros
+    - random
+    random_restarts: 3
+    target_error_hartree: 0.0016
+    max_wall_time_seconds: 1200.0
+    uncompressed_check_qubit_limit: 12
+    candidate_pool_policy: residual_guided
+    candidate_scan_limit: 64
+    residual_batch_size: 8
+    residual_scan_angles:
+    - -0.15
+    - -0.05
+    - 0.05
+    - 0.15
+    min_energy_improvement_hartree: 0.0002
+    max_adaptive_expansions: 3
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 8
+  absolute_error_threshold: 1.0
+  relative_error_threshold: 1.0
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: placeholder
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+  experimental: false
+policy:
+  name: benchmark
+  allow_exploratory: true
+exploratory:
+  enabled: true
+  modules:
+  - cavity_qed
+  - pauli_fierz
+  notes:
+  - Exploratory VQE on the finite photon-cutoff Pauli-Fierz H2 cavity Hamiltonian.
+tasks:
+  excited_state:
+    enabled: false
+    method: exact_spectrum
+    num_states: 2
+    state_indices:
+    - 1
+  properties: []
+  perturbative_correction:
+    enabled: false
+    method: nevpt2
+    plugin: pyscf
+    root: 0
+tc_qsci:
+  enabled: false
+  resource_estimation_only: false
+  cast_model:
+    kind: identity
+    npz_path: null
+  initial_state:
+    kind: hf
+    max_determinants: null
+    determinants: []
+  kick:
+    time: 0.05
+    num_kicks: 1
+    pauli_term_budget: null
+    shots: 1024
+  selection:
+    max_determinants: 64
+    min_count: 1
+    symmetry_postselect: true
+  resource_estimation:
+    enabled: true
+    target_precision: 0.001
+hardware_optimization:
+  enabled: false
+  profile: h2_precision_push
+  max_real_jobs: 3
+  max_total_budgeted_shots: 40960
+  max_total_estimated_quantum_seconds: 600.0
+  stop_if_error_below: 0.0016
+  candidate_strategies:
+  - jw_puccd_layout_baseline
+  - parity_puccd_layout
+  - parity_succd_layout
+  - parity_uccsd_layout
+  selection_metric: accuracy_then_cost
+  requires_confirmation: true
+run:
+  seed: 2142
+  output_dir: /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_vqe_cutoff_1
+  overwrite: true
+  exports:
+    qcschema_json: false
+    hdf5: false
