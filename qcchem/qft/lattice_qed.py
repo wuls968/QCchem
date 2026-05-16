@@ -11,6 +11,10 @@ import numpy as np
 import scipy.sparse as sp
 from qiskit.quantum_info import SparsePauliOp
 
+from qcchem.chem.external_charges import (
+    ResolvedExternalPointCharges,
+    convert_point_charges_unit,
+)
 from qcchem.core import LatticeQEDSpec, MoleculeSpec, QFTModelSummary
 from qcchem.qft.grid import ATOMIC_NUMBERS, LatticeGrid, build_lattice_grid
 from qcchem.qft.links import U1LinkOperators, build_u1_link_operators, matrix_to_sparse_pauli
@@ -25,6 +29,8 @@ class LatticeQEDContext:
     grid: LatticeGrid
     link_operator: U1LinkOperators
     nuclear_repulsion_energy: float
+    external_point_charge_nuclear_interaction_energy: float
+    external_point_charges: Any | None
     target_electrons: int
     hamiltonian_matrix: np.ndarray
     sector_matrices: dict[str, np.ndarray]
@@ -118,6 +124,28 @@ def _site_nuclear_potential(molecule: MoleculeSpec, position: np.ndarray, soften
         atom_position = np.asarray(atom.coords, dtype=float)
         distance = float(np.linalg.norm(position - atom_position))
         potential -= charge / np.sqrt(distance**2 + softening**2)
+    return float(potential)
+
+
+def _site_external_point_charge_potential(
+    external_point_charges: ResolvedExternalPointCharges | None,
+    position: np.ndarray,
+    *,
+    position_unit: str,
+    softening: float,
+) -> float:
+    if external_point_charges is None or not external_point_charges.enabled:
+        return 0.0
+    potential = 0.0
+    charges = convert_point_charges_unit(
+        external_point_charges.charges,
+        source_unit=external_point_charges.unit,
+        target_unit=position_unit,
+    )
+    for charge in charges:
+        charge_position = np.asarray(charge.coords, dtype=float)
+        distance = float(np.linalg.norm(position - charge_position))
+        potential -= float(charge.charge) / np.sqrt(distance**2 + softening**2)
     return float(potential)
 
 
@@ -577,6 +605,7 @@ def _build_sector_matrices(
     grid: LatticeGrid,
     link_ops: U1LinkOperators,
     target_electrons: int,
+    external_point_charges: ResolvedExternalPointCharges | None,
 ) -> tuple[dict[str, np.ndarray], list[np.ndarray], int, int, int]:
     spin_components = int(spec.matter.spin_components)
     if spin_components < 1:
@@ -595,6 +624,7 @@ def _build_sector_matrices(
 
     sectors = {
         "onsite": np.zeros((total_dimension, total_dimension), dtype=complex),
+        "external_point_charge": np.zeros((total_dimension, total_dimension), dtype=complex),
         "hopping": np.zeros((total_dimension, total_dimension), dtype=complex),
         "density_coulomb": np.zeros((total_dimension, total_dimension), dtype=complex),
         "electric": np.zeros((total_dimension, total_dimension), dtype=complex),
@@ -613,6 +643,19 @@ def _build_sector_matrices(
         for spin in range(spin_components):
             mode = _mode_index(site.linear_index, spin, spin_components)
             sectors["onsite"] += potential * _embed_matter(number_ops[mode], gauge_dimension=gauge_dimension)
+        external_potential = _site_external_point_charge_potential(
+            external_point_charges,
+            np.asarray(site.real_space_coordinate, dtype=float),
+            position_unit=molecule.unit,
+            softening=spec.grid.softening,
+        )
+        if external_potential:
+            for spin in range(spin_components):
+                mode = _mode_index(site.linear_index, spin, spin_components)
+                sectors["external_point_charge"] += external_potential * _embed_matter(
+                    number_ops[mode],
+                    gauge_dimension=gauge_dimension,
+                )
 
     if spec.matter.include_soft_coulomb_density:
         for left in grid.sites:
@@ -740,6 +783,7 @@ def _build_sector_matrices(
 def _zero_sparse_sectors(total_dimension: int) -> dict[str, sp.csr_matrix]:
     return {
         "onsite": sp.csr_matrix((total_dimension, total_dimension), dtype=complex),
+        "external_point_charge": sp.csr_matrix((total_dimension, total_dimension), dtype=complex),
         "hopping": sp.csr_matrix((total_dimension, total_dimension), dtype=complex),
         "density_coulomb": sp.csr_matrix((total_dimension, total_dimension), dtype=complex),
         "electric": sp.csr_matrix((total_dimension, total_dimension), dtype=complex),
@@ -756,6 +800,7 @@ def _build_sparse_sector_matrices(
     grid: LatticeGrid,
     link_ops: U1LinkOperators,
     target_electrons: int,
+    external_point_charges: ResolvedExternalPointCharges | None,
 ) -> tuple[dict[str, sp.csr_matrix], list[sp.csr_matrix], int, int, int]:
     spin_components = int(spec.matter.spin_components)
     if spin_components < 1:
@@ -785,6 +830,19 @@ def _build_sparse_sector_matrices(
                 number_ops[mode],
                 gauge_dimension=gauge_dimension,
             )
+        external_potential = _site_external_point_charge_potential(
+            external_point_charges,
+            np.asarray(site.real_space_coordinate, dtype=float),
+            position_unit=molecule.unit,
+            softening=spec.grid.softening,
+        )
+        if external_potential:
+            for spin_index in range(spin_components):
+                mode = _mode_index(site.linear_index, spin_index, spin_components)
+                sectors["external_point_charge"] += external_potential * _embed_matter_sparse(
+                    number_ops[mode],
+                    gauge_dimension=gauge_dimension,
+                )
 
     if spec.matter.include_soft_coulomb_density:
         for left in grid.sites:
@@ -1088,6 +1146,7 @@ def _build_sparse_lattice_qed_context(
     grid: LatticeGrid,
     link_ops: U1LinkOperators,
     target: int,
+    external_point_charges: ResolvedExternalPointCharges | None,
     *,
     actual_representation: str,
     materialize_resolved: bool,
@@ -1099,6 +1158,7 @@ def _build_sparse_lattice_qed_context(
         grid,
         link_ops,
         target,
+        external_point_charges,
     )
     full_dimension = matter_dimension * gauge_dimension
     tolerance = float(spec.engine.projector_tolerance)
@@ -1168,6 +1228,32 @@ def _build_sparse_lattice_qed_context(
     pauli_materialization = "materialized" if materialize_resolved else "skipped"
     gauge_qubits = len(grid.links) * link_ops.num_qubits
     nuclear_repulsion = _nuclear_repulsion(molecule, spec.grid.softening)
+    external_nuclear_energy = float(
+        external_point_charges.qm_nuclear_interaction_energy
+        if external_point_charges is not None and external_point_charges.enabled
+        else 0.0
+    )
+    external_summary = (
+        external_point_charges.to_summary(adapter_strategy="lattice_qed.scalar_potential_only")
+        if external_point_charges is not None and external_point_charges.enabled
+        else None
+    )
+    external_payload = {}
+    if external_summary is not None:
+        external_summary.risk_notes.append(
+            "Lattice-QED treats external point charges as an added scalar onsite potential only; Gauss-law background charges are unchanged."
+        )
+        external_payload = {
+            "enabled": True,
+            "charge_count": external_summary.charge_count,
+            "total_charge": external_summary.total_charge,
+            "unit": external_summary.unit,
+            "adapter_strategy": external_summary.adapter_strategy,
+            "qm_nuclear_interaction_energy": external_summary.qm_nuclear_interaction_energy,
+            "includes_mm_self_energy": external_summary.includes_mm_self_energy,
+            "gauss_law_background_modified": False,
+            "risk_notes": list(external_summary.risk_notes),
+        }
     qubit_hamiltonian = SparsePauliOp.from_list([("I" * total_qubits, 0.0)])
     if materialize_resolved:
         source = sparse_bundle.full_hamiltonian
@@ -1223,6 +1309,7 @@ def _build_sparse_lattice_qed_context(
             gauge_invariant_ansatz=ansatz_metadata,
             constraint_expectations=constraint_expectations,
             engine=engine_metadata,
+            external_point_charges=external_payload,
             notes=[
                 "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
                 "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
@@ -1232,6 +1319,8 @@ def _build_sparse_lattice_qed_context(
         grid=grid,
         link_operator=link_ops,
         nuclear_repulsion_energy=nuclear_repulsion,
+        external_point_charge_nuclear_interaction_energy=external_nuclear_energy,
+        external_point_charges=external_summary,
         target_electrons=target,
         hamiltonian_matrix=np.zeros((0, 0), dtype=complex),
         sector_matrices={},
@@ -1247,6 +1336,7 @@ def build_lattice_qed_context(
     *,
     mapping_kind: str,
     materialize_pauli: bool = True,
+    external_point_charges: ResolvedExternalPointCharges | None = None,
 ) -> LatticeQEDContext:
     """Build a finite real-space compact-U(1) lattice-QED qubit Hamiltonian."""
     if spec.model.strip().lower() != "lattice_qed_minimal_coupling":
@@ -1276,6 +1366,7 @@ def build_lattice_qed_context(
             grid,
             link_ops,
             target,
+            external_point_charges,
             actual_representation=actual_representation,
             materialize_resolved=materialize_resolved,
             total_qubits=total_qubits,
@@ -1286,6 +1377,7 @@ def build_lattice_qed_context(
         grid,
         link_ops,
         target,
+        external_point_charges,
     )
     hamiltonian_matrix = sum(sectors.values())
     hamiltonian_matrix = 0.5 * (hamiltonian_matrix + hamiltonian_matrix.conj().T)
@@ -1303,6 +1395,32 @@ def build_lattice_qed_context(
     }
     gauge_qubits = len(grid.links) * link_ops.num_qubits
     nuclear_repulsion = _nuclear_repulsion(molecule, spec.grid.softening)
+    external_nuclear_energy = float(
+        external_point_charges.qm_nuclear_interaction_energy
+        if external_point_charges is not None and external_point_charges.enabled
+        else 0.0
+    )
+    external_summary = (
+        external_point_charges.to_summary(adapter_strategy="lattice_qed.scalar_potential_only")
+        if external_point_charges is not None and external_point_charges.enabled
+        else None
+    )
+    external_payload = {}
+    if external_summary is not None:
+        external_summary.risk_notes.append(
+            "Lattice-QED treats external point charges as an added scalar onsite potential only; Gauss-law background charges are unchanged."
+        )
+        external_payload = {
+            "enabled": True,
+            "charge_count": external_summary.charge_count,
+            "total_charge": external_summary.total_charge,
+            "unit": external_summary.unit,
+            "adapter_strategy": external_summary.adapter_strategy,
+            "qm_nuclear_interaction_energy": external_summary.qm_nuclear_interaction_energy,
+            "includes_mm_self_energy": external_summary.includes_mm_self_energy,
+            "gauss_law_background_modified": False,
+            "risk_notes": list(external_summary.risk_notes),
+        }
     tolerance = float(spec.constraints.gauss_law_tolerance)
     target_charge_values = _target_charge_values(spec, grid.site_count)
     gauss_metadata, commutator_metadata = _build_gauss_law_summary(
@@ -1421,6 +1539,7 @@ def build_lattice_qed_context(
             gauge_invariant_ansatz=ansatz_metadata,
             constraint_expectations=constraint_expectations,
             engine=engine_metadata,
+            external_point_charges=external_payload,
             notes=[
                 "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
                 "Exact baselines compare against this discretized Hamiltonian, not continuum chemistry.",
@@ -1435,6 +1554,8 @@ def build_lattice_qed_context(
         grid=grid,
         link_operator=link_ops,
         nuclear_repulsion_energy=nuclear_repulsion,
+        external_point_charge_nuclear_interaction_energy=external_nuclear_energy,
+        external_point_charges=external_summary,
         target_electrons=target,
         hamiltonian_matrix=hamiltonian_matrix,
         sector_matrices=sectors,

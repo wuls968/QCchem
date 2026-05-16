@@ -33,6 +33,84 @@ def test_h2_lattice_qed_exact_generates_exploratory_artifact(tmp_path: Path) -> 
 
 
 @pytest.mark.integration
+def test_lattice_qed_external_point_charges_are_reported_as_scalar_potential(tmp_path: Path) -> None:
+    config_path = tmp_path / "h2_lattice_external.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-lattice-external
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+  unit: angstrom
+policy:
+  allow_exploratory: true
+exploratory:
+  enabled: true
+  modules: [lattice_qed]
+problem:
+  external_point_charges:
+    enabled: true
+    unit: angstrom
+    charges:
+      - label: mm_probe
+        coords: [0.0, 0.0, 2.0]
+        charge: -0.5
+  qft:
+    enabled: true
+    dimensions: 1
+    grid:
+      shape: [2]
+      spacing: [0.75]
+      softening: 0.35
+    matter:
+      spin_components: 2
+      target_electrons: auto
+    gauge:
+      electric_cutoff: 1
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      max_sector_enumeration_qubits: 8
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+run:
+  output_dir: artifacts/h2_lattice_external
+  overwrite: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(
+        config_path,
+        output_dir=tmp_path / "h2-lattice-external",
+        exploratory_command=True,
+    )
+
+    assert result.external_point_charges is not None
+    assert result.external_point_charges.adapter_strategy == "lattice_qed.scalar_potential_only"
+    assert result.qft_model is not None
+    assert result.qft_model.term_counts_by_sector["external_point_charge"] > 0
+    assert result.qft_model.external_point_charges["gauss_law_background_modified"] is False
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert payload["external_point_charges"]["includes_mm_self_energy"] is False
+    assert payload["qft_model"]["external_point_charges"]["gauss_law_background_modified"] is False
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "External Point Charges" in report
+    assert "scalar_potential_only" in report
+
+
+@pytest.mark.integration
 def test_h2_lattice_qed_vqe_records_variational_qft_metadata(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h2_lattice_qed_vqe.yaml",

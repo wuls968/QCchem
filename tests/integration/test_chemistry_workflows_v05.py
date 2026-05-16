@@ -138,3 +138,165 @@ run:
     assert "response_property_result" in payload
     assert "hardware_error_diagnostic" in payload
     assert "artifact_index_entry" in payload
+
+
+@pytest.mark.integration
+def test_external_point_charges_are_persisted_and_energy_formula_closes(tmp_path: Path) -> None:
+    config_path = tmp_path / "h2_external_point_charges.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-external-point-charges
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+  unit: angstrom
+problem:
+  external_point_charges:
+    enabled: true
+    unit: angstrom
+    charges:
+      - label: mm_probe
+        coords: [0.0, 0.0, 2.0]
+        charge: -0.5
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+run:
+  output_dir: artifacts/h2_external_point_charges
+  overwrite: true
+  exports:
+    qcschema_json: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(config_path, output_dir=tmp_path / "h2-external")
+
+    assert result.external_point_charges is not None
+    assert result.external_point_charges.charge_count == 1
+    assert result.external_point_charges.includes_mm_self_energy is False
+    assert result.energy.external_point_charge_nuclear_interaction_energy != 0.0
+    assert result.energy.total_energy == pytest.approx(
+        result.energy.solver_energy
+        + result.energy.constant_energy_correction
+        + result.energy.nuclear_repulsion_energy
+        + result.energy.external_point_charge_nuclear_interaction_energy
+        + result.energy.boundary_embedding_constant_energy
+    )
+
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert payload["external_point_charges"]["adapter_strategy"] == "pyscf.qmmm.mm_charge"
+    assert payload["energy"]["external_point_charge_nuclear_interaction_energy"] == pytest.approx(
+        result.energy.external_point_charge_nuclear_interaction_energy
+    )
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "External Point Charges" in report
+    assert "MM-MM" in report
+    qcschema = json.loads(result.artifacts.qcschema_json.read_text(encoding="utf-8"))
+    assert qcschema["extras"]["external_point_charges"]["charge_count"] == 1
+    assert qcschema["extras"]["environment_embedding"]["provenance"]["compatibility_notes"]
+
+
+@pytest.mark.integration
+def test_environment_embedding_damped_charges_cache_and_report(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "environment.xyzq").write_text(
+        "mm_probe 0.0 0.0 2.0 -0.5\n",
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "h2_environment_embedding.yaml"
+    cache_dir = tmp_path / "effective_cache"
+    config_path.write_text(
+        f"""
+molecule:
+  name: H2-environment-embedding
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+  unit: angstrom
+problem:
+  environment_embedding:
+    enabled: true
+    point_charges:
+      enabled: true
+      unit: angstrom
+      source_file: data/environment.xyzq
+      damping:
+        kind: gaussian
+        default_radius: 0.4
+        radius_unit: angstrom
+    boundary:
+      enabled: true
+      cut_bonds:
+        - label: H0-MM
+          qm_atom: 0
+          mm_atom: 10
+      leakage_threshold: 1.0
+      strict: false
+    cache:
+      enabled: true
+      directory: {cache_dir}
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+run:
+  output_dir: artifacts/h2_environment_embedding
+  overwrite: true
+  exports:
+    qcschema_json: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(config_path, output_dir=tmp_path / "h2-env")
+
+    assert result.environment_embedding is not None
+    assert result.environment_embedding.cache_enabled is True
+    assert result.environment_embedding.cache_hit is False
+    assert result.environment_embedding.cache_fingerprint
+    assert result.environment_embedding.one_body_environment["frobenius_norm"] > 0.0
+    assert result.environment_embedding.active_space_projection["environment_qubit_growth"] == 0
+    assert result.environment_embedding.boundary is not None
+    assert result.environment_embedding.boundary.max_boundary_leakage is not None
+    assert result.external_point_charges is not None
+    assert result.external_point_charges.provenance["damping_model"]["kind"] == "gaussian"
+    assert result.energy.total_energy == pytest.approx(
+        result.energy.solver_energy
+        + result.energy.constant_energy_correction
+        + result.energy.nuclear_repulsion_energy
+        + result.energy.external_point_charge_nuclear_interaction_energy
+        + result.energy.boundary_embedding_constant_energy
+    )
+    assert len(list(cache_dir.glob("*.json"))) == 1
+    assert len(list(cache_dir.glob("*.npz"))) == 1
+
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert payload["environment_embedding"]["one_body_environment"]["available"] is True
+    assert payload["energy"]["boundary_embedding_constant_energy"] == 0.0
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Environment Effective Hamiltonian" in report
+    assert "boundary_max_leakage" in report
+    qcschema = json.loads(result.artifacts.qcschema_json.read_text(encoding="utf-8"))
+    assert qcschema["extras"]["environment_embedding"]["cache_fingerprint"]

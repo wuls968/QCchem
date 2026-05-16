@@ -218,3 +218,113 @@ solver:
     assert spec.tasks.gradient.enabled is True
     assert spec.tasks.response_properties.enabled is True
     assert spec.tasks.response_properties.finite_field_step == 0.002
+
+
+def test_load_external_point_charge_config_resolves_inline_and_xyzq(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "environment.xyzq").write_text(
+        """
+# label x y z q
+mm_file 0.0 0.0 2.5 -0.25
+        """.strip(),
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "h2_external.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-external
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  unit: angstrom
+problem:
+  external_point_charges:
+    enabled: true
+    unit: angstrom
+    source_file: data/environment.xyzq
+    min_distance_to_qm_atoms: 1.0e-5
+    charges:
+      - label: inline_mm
+        coords: [0.0, 0.0, 2.0]
+        charge: -0.5
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    external = spec.problem.external_point_charges
+    assert external.enabled is True
+    assert external.unit == "angstrom"
+    assert external.source_file == (data_dir / "environment.xyzq").resolve()
+    assert external.min_distance_to_qm_atoms == 1.0e-5
+    assert len(external.charges) == 1
+    assert external.charges[0].label == "inline_mm"
+    assert external.charges[0].charge == -0.5
+
+
+def test_load_environment_embedding_config_resolves_damping_boundary_and_cache(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "environment.xyzq").write_text("mm1 0.0 0.0 2.0 -0.5\n", encoding="utf-8")
+    config_path = tmp_path / "h2_environment_embedding.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-env
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  unit: angstrom
+problem:
+  environment_embedding:
+    enabled: true
+    mode: effective_hamiltonian
+    point_charges:
+      enabled: true
+      unit: angstrom
+      source_file: data/environment.xyzq
+      damping:
+        kind: gaussian
+        default_radius: 0.4
+        radius_unit: angstrom
+        min_radius: 0.15
+        overpolarization_warning_potential_au: 2.0
+    boundary:
+      enabled: true
+      cut_bonds:
+        - label: H0-MM1
+          qm_atom: 0
+          mm_atom: 9
+      leakage_threshold: 1.0
+      strict: false
+    cache:
+      enabled: true
+      directory: env_cache
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    embedding = spec.problem.environment_embedding
+    assert embedding.enabled is True
+    assert embedding.mode == "effective_hamiltonian"
+    assert embedding.point_charges.enabled is True
+    assert embedding.point_charges.source_file == (data_dir / "environment.xyzq").resolve()
+    assert embedding.point_charges.damping.kind == "gaussian"
+    assert embedding.point_charges.damping.default_radius == 0.4
+    assert embedding.boundary.enabled is True
+    assert embedding.boundary.cut_bonds[0].qm_atom == 0
+    assert embedding.boundary.strict is False
+    assert embedding.cache.directory == (tmp_path / "env_cache").resolve()

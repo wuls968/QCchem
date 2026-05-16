@@ -261,6 +261,7 @@ def _qft_model_lines(data: dict[str, Any]) -> list[str]:
         f"- constraints: `{qft.get('constraints', {})}`",
         f"- engine: `{engine}`",
         f"- nuclear_charge_by_site: `{qft.get('nuclear_charge_by_site', [])}`",
+        f"- external_point_charges: `{qft.get('external_point_charges', {})}`",
         f"- notes: `{qft.get('notes', [])}`",
         "",
     ]
@@ -346,6 +347,59 @@ def _field_model_lines(data: dict[str, Any]) -> list[str]:
         f"- resource_estimate: `{field_model.get('resource_estimate', {})}`",
         f"- error_budget: `{field_model.get('error_budget', {})}`",
         f"- risk_notes: `{field_model.get('risk_notes', [])}`",
+        "",
+    ]
+
+
+def _external_point_charge_lines(data: dict[str, Any], units: str) -> list[str]:
+    external = data.get("external_point_charges") or {}
+    if not external:
+        return []
+    return [
+        "## External Point Charges",
+        "",
+        "> Static electrostatic embedding only: electron-charge and QM-nucleus-charge interactions are included; MM-MM, van der Waals, polarization, and environment relaxation terms are not included.",
+        "",
+        f"- enabled: `{external.get('enabled')}`",
+        f"- charge_count: `{external.get('charge_count')}`",
+        f"- total_charge: `{external.get('total_charge')}`",
+        f"- unit: `{external.get('unit')}`",
+        f"- sources: `{external.get('sources', [])}`",
+        f"- min_distance_to_qm_atoms: `{external.get('min_distance_to_qm_atoms')}`",
+        f"- min_distance_threshold: `{external.get('min_distance_threshold')}`",
+        f"- qm_nuclear_interaction_energy: {_fmt_energy(external.get('qm_nuclear_interaction_energy'), units)}",
+        f"- includes_mm_self_energy: `{external.get('includes_mm_self_energy')}`",
+        f"- adapter_strategy: `{external.get('adapter_strategy')}`",
+        f"- charges_preview: `{external.get('charges_preview', [])}`",
+        f"- risk_notes: `{external.get('risk_notes', [])}`",
+        "",
+    ]
+
+
+def _environment_embedding_lines(data: dict[str, Any], units: str) -> list[str]:
+    embedding = data.get("environment_embedding") or {}
+    if not embedding:
+        return []
+    boundary = embedding.get("boundary") or {}
+    one_body = embedding.get("one_body_environment") or {}
+    return [
+        "## Environment Effective Hamiltonian",
+        "",
+        "> Quantum-algorithm-oriented environment embedding: fixed classical environment and boundary diagnostics are compressed into the molecular active-space Hamiltonian; the MM environment is not mapped to qubits.",
+        "",
+        f"- enabled: `{embedding.get('enabled')}`",
+        f"- mode: `{embedding.get('mode')}`",
+        f"- solver_surface: `{embedding.get('solver_surface')}`",
+        f"- cache_enabled: `{embedding.get('cache_enabled')}`",
+        f"- cache_hit: `{embedding.get('cache_hit')}`",
+        f"- cache_fingerprint: `{embedding.get('cache_fingerprint')}`",
+        f"- one_body_environment: `{one_body}`",
+        f"- active_space_projection: `{embedding.get('active_space_projection', {})}`",
+        f"- boundary_enabled: `{boundary.get('enabled')}`",
+        f"- boundary_max_leakage: `{boundary.get('max_boundary_leakage')}`",
+        f"- boundary_constant_energy: {_fmt_energy(boundary.get('constant_energy', 0.0), units)}",
+        f"- boundary_risk_notes: `{boundary.get('risk_notes', [])}`",
+        f"- risk_notes: `{embedding.get('risk_notes', [])}`",
         "",
     ]
 
@@ -528,6 +582,8 @@ def render_markdown_report(result: Any) -> str:
         "",
         f"- electronic_energy: {_fmt_energy(energy['electronic_energy'], units)}",
         f"- nuclear_repulsion_energy: {_fmt_energy(energy['nuclear_repulsion_energy'], units)}",
+        f"- external_point_charge_nuclear_interaction_energy: {_fmt_energy(energy.get('external_point_charge_nuclear_interaction_energy', 0.0), units)}",
+        f"- boundary_embedding_constant_energy: {_fmt_energy(energy.get('boundary_embedding_constant_energy', 0.0), units)}",
         f"- total_energy: {_fmt_energy(energy['total_energy'], units)}",
         f"- hf_reference_energy: {_fmt_energy(energy['hf_reference_energy'], units)}",
         f"- solver_energy: {_fmt_energy(energy['solver_energy'], units)} (raw solver-Hamiltonian energy, before QCchem constant-shift correction)",
@@ -542,6 +598,8 @@ def render_markdown_report(result: Any) -> str:
         "- `solver_energy` is the raw energy returned by the configured solver on the mapped qubit Hamiltonian.",
         "- `exact_ground_energy` is the raw exact-diagonalization energy of that same mapped Hamiltonian.",
         "- `electronic_energy` is QCchem's corrected electronic energy after adding any non-nuclear Hamiltonian constants, such as active-space offsets.",
+        "- `external_point_charge_nuclear_interaction_energy` is the explicit QM nuclei/static point-charge Coulomb constant; MM-MM and non-electrostatic environment terms are not included.",
+        "- `boundary_embedding_constant_energy` is the explicit constant generated by boundary embedding; the first implementation records a zero constant unless a nonzero boundary projector is supplied.",
         "- `total_energy` is reconstructed from the explicit `energy_formula`, so active-space and transformed problems remain auditable.",
         "- `hf_reference_energy` is the Hartree-Fock total reference energy exposed by Qiskit Nature.",
         "- `correlation_energy` is `total_energy - hf_reference_energy` and therefore measures post-HF improvement in the total-energy convention.",
@@ -580,6 +638,8 @@ def render_markdown_report(result: Any) -> str:
         f"- Hamiltonian constants: `{problem['hamiltonian_constants']}`",
         f"- Electronic constant correction: {_fmt_energy(problem.get('electronic_constant_correction'), units)}",
         "",
+        *_external_point_charge_lines(data, units),
+        *_environment_embedding_lines(data, units),
         "## Mapping",
         "",
         f"- Mapping kind: `{mapping['kind']}`",
@@ -731,6 +791,8 @@ def render_markdown_report(result: Any) -> str:
                 f"- hamiltonian_constants: `{reduction.get('hamiltonian_constants', {})}`",
                 f"- constant_energy_correction: {_fmt_energy(reduction.get('constant_energy_correction'), units)}",
                 f"- nuclear_repulsion_energy: {_fmt_energy(reduction.get('nuclear_repulsion_energy'), units)}",
+                f"- external_point_charge_nuclear_interaction_energy: {_fmt_energy(reduction.get('external_point_charge_nuclear_interaction_energy', 0.0), units)}",
+                f"- boundary_embedding_constant_energy: {_fmt_energy(reduction.get('boundary_embedding_constant_energy', 0.0), units)}",
                 f"- total_constant_correction: {_fmt_energy(reduction.get('total_constant_correction'), units)}",
                 f"- energy_formula: `{reduction.get('energy_formula')}`",
                 "",

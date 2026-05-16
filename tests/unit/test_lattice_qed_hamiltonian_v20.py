@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from qcchem.core import AtomSpec, LatticeQEDSpec, MoleculeSpec
+from qcchem.chem.external_charges import resolve_external_point_charges
+from qcchem.core import AtomSpec, ExternalPointChargeSpec, LatticeQEDSpec, MoleculeSpec, PointChargeSpec
 from qcchem.qft.lattice_qed import build_lattice_qed_context
 
 
@@ -57,3 +58,30 @@ def test_lattice_qed_penalties_change_the_finite_cutoff_operator() -> None:
     unconstrained_matrix = np.asarray(unconstrained.qubit_hamiltonian.to_matrix(), dtype=complex)
     assert not np.allclose(constrained_matrix, unconstrained_matrix)
     assert len(constrained.qubit_hamiltonian) > len(unconstrained.qubit_hamiltonian)
+
+
+def test_lattice_qed_external_point_charges_add_scalar_potential_without_gauss_background_change() -> None:
+    molecule = _h2_molecule()
+    external = resolve_external_point_charges(
+        molecule,
+        ExternalPointChargeSpec(
+            enabled=True,
+            unit="angstrom",
+            charges=[
+                PointChargeSpec(label="mm_probe", coords=(0.0, 0.0, 2.0), charge=-0.5)
+            ],
+        ),
+    )
+    baseline = build_lattice_qed_context(molecule, _spec(), mapping_kind="jordan_wigner")
+    embedded = build_lattice_qed_context(
+        molecule,
+        _spec(),
+        mapping_kind="jordan_wigner",
+        external_point_charges=external,
+    )
+
+    assert embedded.summary.term_counts_by_sector["external_point_charge"] > 0
+    assert embedded.summary.nuclear_charge_by_site == baseline.summary.nuclear_charge_by_site
+    assert embedded.summary.external_point_charges["gauss_law_background_modified"] is False
+    assert embedded.external_point_charge_nuclear_interaction_energy != 0.0
+    assert not np.allclose(embedded.hamiltonian_matrix, baseline.hamiltonian_matrix)

@@ -31,7 +31,11 @@ from qcchem.backends import (
     resolve_policy,
     resolve_execution_policy,
 )
-from qcchem.chem import build_electronic_structure_context, build_reduction_plan
+from qcchem.chem import (
+    build_electronic_structure_context,
+    build_reduction_plan,
+    resolve_external_point_charges,
+)
 from qcchem.chem.compression import build_compressed_fermionic_hamiltonian, build_compression_result
 from qcchem.chem.plugins import build_embedding_result, run_nevpt2_correction
 from qcchem.core.chemical_accuracy import check_chemical_accuracy
@@ -84,7 +88,8 @@ from qcchem.core.evidence import build_run_evidence_summary
 SCHEMA_VERSION = "qcchem.result.v0.8-alpha"
 ENERGY_UNITS = "Hartree"
 ENERGY_FORMULA = (
-    "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; "
+    "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy "
+    "+ external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; "
     "electronic_energy = solver_energy + constant_energy_correction"
 )
 
@@ -281,6 +286,8 @@ def _build_runtime_chemical_accuracy(
     exact_total_energy: float | None,
     constant_energy_correction: float,
     nuclear_repulsion_energy: float,
+    external_point_charge_nuclear_interaction_energy: float,
+    boundary_embedding_constant_energy: float,
 ) -> Any:
     if (
         runtime_submission is None
@@ -297,7 +304,13 @@ def _build_runtime_chemical_accuracy(
     statistical_error = None
     if isinstance(stds, list) and stds:
         statistical_error = float(stds[0])
-    runtime_total_energy = float(evs[0]) + constant_energy_correction + nuclear_repulsion_energy
+    runtime_total_energy = (
+        float(evs[0])
+        + constant_energy_correction
+        + nuclear_repulsion_energy
+        + external_point_charge_nuclear_interaction_energy
+        + boundary_embedding_constant_energy
+    )
     return check_chemical_accuracy(
         runtime_total_energy,
         exact_total_energy,
@@ -405,6 +418,12 @@ def _qft_particle_tuple(target_electrons: int) -> tuple[int, int]:
 
 def _build_qft_chemistry_context(spec, qft_context):
     constants = {"nuclear_repulsion_energy": float(qft_context.nuclear_repulsion_energy)}
+    external_nuclear_energy = float(
+        getattr(qft_context, "external_point_charge_nuclear_interaction_energy", 0.0)
+        or 0.0
+    )
+    if external_nuclear_energy:
+        constants["external_point_charge_nuclear_interaction_energy"] = external_nuclear_energy
     particles = _qft_particle_tuple(qft_context.target_electrons)
     problem_summary = ProblemSummary(
         molecule_name=spec.molecule.name,
@@ -437,7 +456,10 @@ def _build_qft_chemistry_context(spec, qft_context):
         hamiltonian_constants=constants,
         constant_energy_correction=0.0,
         nuclear_repulsion_energy=float(qft_context.nuclear_repulsion_energy),
-        total_constant_correction=float(qft_context.nuclear_repulsion_energy),
+        external_point_charge_nuclear_interaction_energy=external_nuclear_energy,
+        boundary_embedding_constant_energy=0.0,
+        total_constant_correction=float(qft_context.nuclear_repulsion_energy)
+        + external_nuclear_energy,
         energy_formula=ENERGY_FORMULA,
     )
     return SimpleNamespace(
@@ -446,9 +468,12 @@ def _build_qft_chemistry_context(spec, qft_context):
         summary=problem_summary,
         nuclear_repulsion_energy=float(qft_context.nuclear_repulsion_energy),
         electronic_constant_correction=0.0,
-        total_constant_correction=float(qft_context.nuclear_repulsion_energy),
+        total_constant_correction=float(qft_context.nuclear_repulsion_energy)
+        + external_nuclear_energy,
         hf_reference_energy=None,
         reduction_audit=reduction_audit,
+        external_point_charges=getattr(qft_context, "external_point_charges", None),
+        environment_embedding=None,
     )
 
 
@@ -488,6 +513,8 @@ def _build_sampled_result(
     operator,
     constant_energy_correction: float,
     nuclear_repulsion_energy: float,
+    external_point_charge_nuclear_interaction_energy: float,
+    boundary_embedding_constant_energy: float,
 ) -> SampledResultSummary | None:
     if backend is None or solver_kind not in {"vqe", "lr_ace", "lattice_qed_givqe"}:
         return None
@@ -521,7 +548,13 @@ def _build_sampled_result(
         sampled_solver_energy_mean=mean,
         sampled_solver_energy_std=empirical_std,
         sampled_electronic_energy_mean=float(mean + constant_energy_correction),
-        sampled_total_energy_mean=float(mean + constant_energy_correction + nuclear_repulsion_energy),
+        sampled_total_energy_mean=float(
+            mean
+            + constant_energy_correction
+            + nuclear_repulsion_energy
+            + external_point_charge_nuclear_interaction_energy
+            + boundary_embedding_constant_energy
+        ),
         standard_error=standard_error,
         confidence_interval_low=float(mean - ci_half_width),
         confidence_interval_high=float(mean + ci_half_width),
@@ -620,11 +653,16 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         raise ValueError("Enable either problem.qft or problem.cavity_qed, not both in the same run.")
     if spec.problem.qft.enabled:
         _record(logger, events, "Building exploratory lattice-QED field Hamiltonian")
+        qft_external_point_charges = resolve_external_point_charges(
+            spec.molecule,
+            spec.problem.external_point_charges,
+        )
         qft_context = build_lattice_qed_context(
             spec.molecule,
             spec.problem.qft,
             mapping_kind=spec.mapping.kind,
             materialize_pauli=not qft_dynamics_audit_requested,
+            external_point_charges=qft_external_point_charges,
         )
         chemistry = _build_qft_chemistry_context(spec, qft_context)
         uncompressed_mapping = _build_qft_mapping(spec, qft_context)
@@ -810,6 +848,24 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         operator=mapping.qubit_hamiltonian,
         constant_energy_correction=chemistry.electronic_constant_correction,
         nuclear_repulsion_energy=chemistry.nuclear_repulsion_energy,
+        external_point_charge_nuclear_interaction_energy=float(
+            getattr(
+                chemistry.reduction_audit,
+                "external_point_charge_nuclear_interaction_energy",
+                0.0,
+            )
+            if chemistry.reduction_audit is not None
+            else 0.0
+        ),
+        boundary_embedding_constant_energy=float(
+            getattr(
+                chemistry.reduction_audit,
+                "boundary_embedding_constant_energy",
+                0.0,
+            )
+            if chemistry.reduction_audit is not None
+            else 0.0
+        ),
     )
     if sampled_result is not None:
         _record(logger, events, "Collected repeated shot-based sampling statistics")
@@ -1205,6 +1261,24 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         exact_total_energy=exact_baseline.total_energy if exact_baseline.available else None,
         constant_energy_correction=float(chemistry.electronic_constant_correction),
         nuclear_repulsion_energy=float(chemistry.nuclear_repulsion_energy),
+        external_point_charge_nuclear_interaction_energy=float(
+            getattr(
+                chemistry.reduction_audit,
+                "external_point_charge_nuclear_interaction_energy",
+                0.0,
+            )
+            if chemistry.reduction_audit is not None
+            else 0.0
+        ),
+        boundary_embedding_constant_energy=float(
+            getattr(
+                chemistry.reduction_audit,
+                "boundary_embedding_constant_energy",
+                0.0,
+            )
+            if chemistry.reduction_audit is not None
+            else 0.0
+        ),
     )
 
     verification_status = _classify_verification_status(benchmark, sampled_result)
@@ -1266,6 +1340,14 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     if cavity_context is not None:
         module_origin = "exploratory"
         capability_tier = "exploratory"
+        if chemistry.external_point_charges is not None:
+            chemistry.external_point_charges.adapter_strategy = (
+                "pyscf.qmmm.mm_charge + "
+                "pauli_fierz_cavity_qed.embedded_electronic_hamiltonian"
+            )
+            chemistry.external_point_charges.risk_notes.append(
+                "Cavity-QED uses the static point-charge embedded electronic Hamiltonian before adding photon-mode terms."
+            )
         scientific_risk_notes.extend(
             [
                 "Pauli-Fierz cavity-QED execution uses a finite photon cutoff.",
@@ -1320,6 +1402,24 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             constant_energy_correction=float(chemistry.electronic_constant_correction),
             electronic_energy=electronic_energy,
             nuclear_repulsion_energy=float(chemistry.nuclear_repulsion_energy),
+            external_point_charge_nuclear_interaction_energy=float(
+                getattr(
+                    chemistry.reduction_audit,
+                    "external_point_charge_nuclear_interaction_energy",
+                    0.0,
+                )
+                if chemistry.reduction_audit is not None
+                else 0.0
+            ),
+            boundary_embedding_constant_energy=float(
+                getattr(
+                    chemistry.reduction_audit,
+                    "boundary_embedding_constant_energy",
+                    0.0,
+                )
+                if chemistry.reduction_audit is not None
+                else 0.0
+            ),
             total_energy=total_energy,
             hf_reference_energy=chemistry.hf_reference_energy,
             exact_ground_energy=exact_energy,
@@ -1364,6 +1464,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         response_property_result=response_property_result,
         perturbative_correction_result=perturbative_correction_result,
         embedding_result=embedding_result,
+        external_point_charges=chemistry.external_point_charges,
+        environment_embedding=chemistry.environment_embedding,
         hardware_error_diagnostic=None,
         tc_qsci_result=(
             tc_qsci_payload.get("tc_qsci_result") if tc_qsci_payload is not None else None

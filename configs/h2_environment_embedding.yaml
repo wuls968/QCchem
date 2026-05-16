@@ -1,0 +1,61 @@
+molecule:
+  name: H2-environment-embedding
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+
+problem:
+  active_space: null
+  environment_embedding:
+    enabled: true
+    mode: effective_hamiltonian
+    point_charges:
+      enabled: true
+      unit: angstrom
+      source_file: configs/data/h2_environment.xyzq
+      min_distance_to_qm_atoms: 1.0e-6
+      damping:
+        kind: gaussian
+        default_radius: 0.40
+        radius_unit: angstrom
+        min_radius: 0.15
+        overpolarization_warning_potential_au: 2.0
+    boundary:
+      enabled: false
+      method: localized_orbital_freeze_project_downfold
+      localization: iao_lowdin
+      cut_bonds: []
+      leakage_threshold: 0.05
+      strict: true
+    cache:
+      enabled: true
+      directory: artifacts/effective_hamiltonians
+      refresh: false
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+run:
+  seed: 7
+  output_dir: artifacts/h2_environment_embedding
+  overwrite: true
+  exports:
+    qcschema_json: true

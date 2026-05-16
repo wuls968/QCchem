@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 import scipy.sparse as sp
 
-from qcchem.core import AtomSpec, LatticeQEDSpec, MoleculeSpec
+from qcchem.chem.external_charges import resolve_external_point_charges
+from qcchem.core import AtomSpec, ExternalPointChargeSpec, LatticeQEDSpec, MoleculeSpec, PointChargeSpec
 from qcchem.qft.lattice_qed import build_lattice_qed_context
 from qcchem.qft.observables import build_qft_observable_matrices
 
@@ -65,6 +66,37 @@ def test_sparse_full_hamiltonian_matches_dense_sector_by_sector_for_2_site_h2() 
         assert sp.issparse(sparse_matrix)
         assert np.allclose(sparse_matrix.toarray(), dense_matrix)
     assert np.allclose(bundle.full_hamiltonian.toarray(), dense_context.hamiltonian_matrix)
+
+
+def test_sparse_engine_includes_external_point_charge_sector_without_gauss_background_change() -> None:
+    molecule = _h2_molecule()
+    external = resolve_external_point_charges(
+        molecule,
+        ExternalPointChargeSpec(
+            enabled=True,
+            unit="angstrom",
+            charges=[
+                PointChargeSpec(label="mm_probe", coords=(0.0, 0.0, 2.0), charge=-0.5)
+            ],
+        ),
+    )
+    baseline = build_lattice_qed_context(molecule, _spec(), mapping_kind="jordan_wigner")
+    embedded = build_lattice_qed_context(
+        molecule,
+        _spec(),
+        mapping_kind="jordan_wigner",
+        external_point_charges=external,
+    )
+
+    assert baseline.sparse_bundle is not None
+    assert embedded.sparse_bundle is not None
+    assert embedded.summary.term_counts_by_sector["external_point_charge"] > 0
+    assert embedded.summary.external_point_charges["gauss_law_background_modified"] is False
+    assert embedded.summary.nuclear_charge_by_site == baseline.summary.nuclear_charge_by_site
+    assert not np.allclose(
+        embedded.sparse_bundle.full_hamiltonian.toarray(),
+        baseline.sparse_bundle.full_hamiltonian.toarray(),
+    )
 
 
 def test_projected_hamiltonian_is_hermitian_and_matches_indexed_full_hamiltonian() -> None:

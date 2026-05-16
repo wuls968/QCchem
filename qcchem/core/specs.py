@@ -117,6 +117,94 @@ class EmbeddingSpec:
 
 
 @dataclass(slots=True)
+class PointChargeSpec:
+    """One fixed external point charge used for electrostatic embedding."""
+
+    label: str | None
+    coords: tuple[float, float, float]
+    charge: float
+
+
+@dataclass(slots=True)
+class ExternalPointChargeSpec:
+    """Static external point-charge electrostatic embedding configuration."""
+
+    enabled: bool = False
+    unit: str | None = None
+    source_file: Path | None = None
+    charges: list[PointChargeSpec] = field(default_factory=list)
+    min_distance_to_qm_atoms: float = 1.0e-6
+
+
+@dataclass(slots=True)
+class PointChargeDampingSpec:
+    """Damping model for classical environment charges."""
+
+    kind: str = "gaussian"
+    default_radius: float | None = 0.40
+    radius_unit: str = "angstrom"
+    min_radius: float = 0.15
+    overpolarization_warning_potential_au: float = 2.0
+
+
+@dataclass(slots=True)
+class EnvironmentPointChargeSpec:
+    """Point-charge source used by the effective environment Hamiltonian path."""
+
+    enabled: bool = False
+    unit: str | None = None
+    source_file: Path | None = None
+    charges: list[PointChargeSpec] = field(default_factory=list)
+    min_distance_to_qm_atoms: float = 1.0e-6
+    damping: PointChargeDampingSpec = field(default_factory=PointChargeDampingSpec)
+
+
+@dataclass(slots=True)
+class BoundaryCutBondSpec:
+    """One declared QM/MM covalent boundary crossing."""
+
+    label: str | None
+    qm_atom: int
+    mm_atom: int
+
+
+@dataclass(slots=True)
+class BoundaryEmbeddingSpec:
+    """Localized-boundary-orbital audit and correction settings."""
+
+    enabled: bool = False
+    method: str = "localized_orbital_freeze_project_downfold"
+    localization: str = "iao_lowdin"
+    cut_bonds: list[BoundaryCutBondSpec] = field(default_factory=list)
+    leakage_threshold: float = 0.05
+    strict: bool = True
+
+
+@dataclass(slots=True)
+class EffectiveHamiltonianCacheSpec:
+    """Cache policy for generated environment effective-Hamiltonian artifacts."""
+
+    enabled: bool = True
+    directory: Path = Path("artifacts/effective_hamiltonians")
+    refresh: bool = False
+
+
+@dataclass(slots=True)
+class EnvironmentEmbeddingSpec:
+    """Quantum-algorithm-oriented classical-environment embedding."""
+
+    enabled: bool = False
+    mode: str = "effective_hamiltonian"
+    point_charges: EnvironmentPointChargeSpec = field(
+        default_factory=EnvironmentPointChargeSpec
+    )
+    boundary: BoundaryEmbeddingSpec = field(default_factory=BoundaryEmbeddingSpec)
+    cache: EffectiveHamiltonianCacheSpec = field(
+        default_factory=EffectiveHamiltonianCacheSpec
+    )
+
+
+@dataclass(slots=True)
 class LatticeQEDGridSpec:
     """Real-space grid settings for exploratory lattice-QED models."""
 
@@ -285,6 +373,12 @@ class ProblemSpec:
     compression: CompressionSpec = field(default_factory=CompressionSpec)
     measurement: MeasurementSpec = field(default_factory=MeasurementSpec)
     embedding: EmbeddingSpec = field(default_factory=EmbeddingSpec)
+    external_point_charges: ExternalPointChargeSpec = field(
+        default_factory=ExternalPointChargeSpec
+    )
+    environment_embedding: EnvironmentEmbeddingSpec = field(
+        default_factory=EnvironmentEmbeddingSpec
+    )
     qft: LatticeQEDSpec = field(default_factory=LatticeQEDSpec)
     cavity_qed: CavityQEDSpec = field(default_factory=CavityQEDSpec)
 
