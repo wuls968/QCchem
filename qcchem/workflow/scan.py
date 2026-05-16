@@ -16,6 +16,12 @@ from qcchem.io.scan_config import load_scan_spec
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report
 from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
+from qcchem.workflow.continuity import (
+    attach_initial_point_candidate,
+    build_continuity_record,
+    build_initial_point_candidate,
+    summarize_initial_point_continuity,
+)
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
 
@@ -56,6 +62,7 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
 
     point_results: list[ScanPointResult] = []
     registry_entries = []
+    continuity_records = []
 
     for index, value in enumerate(spec.parameter.values):
         point_spec = load_run_spec(spec.base_config)
@@ -70,11 +77,18 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
         else:
             raise ValueError(f"Unsupported scan parameter kind: {spec.parameter.kind}")
         point_label = f"point_{index:02d}_{value:.3f}"
+        initial_point_candidate = build_initial_point_candidate(
+            continuity_records,
+            spec.continuity,
+            target_parameter_value=float(value),
+        )
+        attach_initial_point_candidate(point_spec, initial_point_candidate)
         result = run_spec(
             point_spec,
             source_config=str(spec.base_config),
             output_dir=points_root / point_label,
         )
+        continuity_summary = summarize_initial_point_continuity(result)
         point_results.append(
             ScanPointResult(
                 point_label=point_label,
@@ -93,8 +107,23 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
                     },
                     parameter_name=spec.parameter.name,
                 ),
+                initial_point_reused=continuity_summary["initial_point_reused"],
+                initial_point_source=continuity_summary["initial_point_source"],
+                initial_point_strategy=continuity_summary["initial_point_strategy"],
+                history_sources=continuity_summary["history_sources"],
+                fallback_reason=continuity_summary["fallback_reason"],
+                iterations=continuity_summary["iterations"],
+                evaluations=continuity_summary["evaluations"],
+                parameter_count=continuity_summary["parameter_count"],
             )
         )
+        continuity_record = build_continuity_record(
+            result,
+            source_label=point_label,
+            parameter_value=float(value),
+        )
+        if continuity_record is not None:
+            continuity_records.append(continuity_record)
         registry_entries.append(
             make_registry_entry(
                 name=point_label,
@@ -108,9 +137,43 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
 
     with artifacts.scan_table_csv.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
-        writer.writerow([spec.parameter.name, "total_energy", "verification_status", "absolute_error"])
+        writer.writerow(
+            [
+                spec.parameter.name,
+                "total_energy",
+                "verification_status",
+                "absolute_error",
+                "initial_point_reused",
+                "initial_point_source",
+                "initial_point_strategy",
+                "candidate_source",
+                "effective_strategy",
+                "history_sources",
+                "fallback_reason",
+                "iterations",
+                "evaluations",
+                "parameter_count",
+            ]
+        )
         for point in point_results:
-            writer.writerow([point.parameter_value, point.total_energy, point.verification_status, point.exact_error])
+            writer.writerow(
+                [
+                    point.parameter_value,
+                    point.total_energy,
+                    point.verification_status,
+                    point.exact_error,
+                    point.initial_point_reused,
+                    point.initial_point_source,
+                    point.initial_point_strategy,
+                    point.initial_point_source,
+                    point.initial_point_strategy,
+                    ";".join(point.history_sources),
+                    point.fallback_reason,
+                    point.iterations,
+                    point.evaluations,
+                    point.parameter_count,
+                ]
+            )
 
     status_counts: dict[str, int] = {}
     for point in point_results:

@@ -106,21 +106,90 @@ class VQESolver(BaseSolver):
             return self._build_cavity_twolocal(num_qubits)
         return self._hardware_efficient_layer(num_qubits)
 
-    def _initial_point(self, num_parameters: int) -> np.ndarray:
+    def _base_initial_point(self, num_parameters: int) -> tuple[np.ndarray, str]:
         if isinstance(self.spec.initial_point, list):
-            return np.asarray(self.spec.initial_point, dtype=float)
+            values = np.asarray(self.spec.initial_point, dtype=float)
+            if len(values) != num_parameters:
+                raise ValueError(
+                    f"VQE initial_point length {len(values)} does not match parameter count {num_parameters}."
+                )
+            return values, "custom"
         strategy = str(self.spec.initial_point).strip().lower()
         if strategy == "zeros":
-            return np.zeros(num_parameters, dtype=float)
+            return np.zeros(num_parameters, dtype=float), "zeros"
         if strategy == "random":
-            return self.rng.uniform(-0.1, 0.1, size=num_parameters)
+            return self.rng.uniform(-0.1, 0.1, size=num_parameters), "random"
         raise ValueError(f"Unsupported initial point strategy: {self.spec.initial_point}")
+
+    def _initial_point(self, num_parameters: int) -> tuple[np.ndarray, dict[str, object]]:
+        candidate = self.spec.initial_point_candidate
+        fallback_strategy = "custom" if isinstance(self.spec.initial_point, list) else str(self.spec.initial_point)
+        provenance: dict[str, object] = {
+            "mode": None,
+            "candidate_source": None,
+            "candidate_source_run_id": None,
+            "candidate_source_artifact_root": None,
+            "candidate_parameter_count": None,
+            "history_sources": [],
+            "history_parameter_values": [],
+            "target_parameter_value": None,
+            "current_parameter_count": int(num_parameters),
+            "reused": False,
+            "fallback_reason": None,
+            "fallback_strategy": fallback_strategy,
+            "effective_strategy": fallback_strategy,
+        }
+        if candidate is not None:
+            candidate_values = np.asarray(candidate.values, dtype=float)
+            provenance.update(
+                {
+                    "mode": candidate.mode,
+                    "candidate_source": candidate.source,
+                    "candidate_source_run_id": candidate.source_run_id,
+                    "candidate_source_artifact_root": candidate.source_artifact_root,
+                    "candidate_parameter_count": (
+                        candidate.source_parameter_count
+                        if candidate.source_parameter_count is not None
+                        else int(len(candidate_values))
+                    ),
+                    "history_sources": list(candidate.history_sources),
+                    "history_parameter_values": list(candidate.history_parameter_values),
+                    "target_parameter_value": candidate.target_parameter_value,
+                }
+            )
+            if candidate.fallback_reason:
+                provenance["fallback_reason"] = candidate.fallback_reason
+                initial_point, strategy = self._base_initial_point(num_parameters)
+                provenance["effective_strategy"] = strategy
+                provenance["fallback_strategy"] = strategy
+                return initial_point, provenance
+            if len(candidate_values) == num_parameters:
+                provenance.update(
+                    {
+                        "reused": True,
+                        "fallback_strategy": None,
+                        "effective_strategy": candidate.mode,
+                    }
+                )
+                return candidate_values, provenance
+            reason = (
+                f"candidate_parameter_count={len(candidate_values)} does not match "
+                f"current_parameter_count={num_parameters}"
+            )
+            if str(candidate.on_parameter_mismatch).strip().lower() != "fallback":
+                raise ValueError(f"Cannot reuse VQE initial-point candidate: {reason}.")
+            provenance["fallback_reason"] = reason
+
+        initial_point, strategy = self._base_initial_point(num_parameters)
+        provenance["effective_strategy"] = strategy
+        provenance["fallback_strategy"] = strategy
+        return initial_point, provenance
 
     def solve(self, operator) -> SolverOutcome:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", SparseEfficiencyWarning)
             ansatz = self._build_ansatz(operator.num_qubits)
-            initial_point = self._initial_point(ansatz.num_parameters)
+            initial_point, initial_point_provenance = self._initial_point(ansatz.num_parameters)
             evaluations = 0
 
             def objective(point: np.ndarray) -> float:
@@ -144,6 +213,8 @@ class VQESolver(BaseSolver):
             metadata={
                 "ansatz_circuit": ansatz,
                 "ansatz_num_parameters": ansatz.num_parameters,
+                "initial_point_strategy": initial_point_provenance["effective_strategy"],
+                "initial_point_provenance": initial_point_provenance,
                 "optimizer_message": str(result.message),
             },
         )

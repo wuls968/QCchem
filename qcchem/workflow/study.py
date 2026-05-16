@@ -13,6 +13,12 @@ from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report
 from qcchem.core.evidence import build_study_evidence_summary
 from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
+from qcchem.workflow.continuity import (
+    attach_initial_point_candidate,
+    build_continuity_record,
+    build_initial_point_candidate,
+    summarize_initial_point_continuity,
+)
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
 
@@ -41,6 +47,7 @@ def run_study_from_spec(spec, *, source_config: str, output_dir: Path | None = N
     registry_entries = []
     runs_root = artifacts.root / "runs"
     runs_root.mkdir(parents=True, exist_ok=True)
+    continuity_records = []
 
     for run_entry in spec.runs:
         run_spec_obj = load_run_spec(run_entry.config)
@@ -48,11 +55,14 @@ def run_study_from_spec(spec, *, source_config: str, output_dir: Path | None = N
             run_spec_obj.policy.name = spec.policy_name
         if run_entry.overrides:
             run_spec_obj = clone_spec_with_overrides(run_spec_obj, run_entry.overrides)
+        initial_point_candidate = build_initial_point_candidate(continuity_records, spec.continuity)
+        attach_initial_point_candidate(run_spec_obj, initial_point_candidate)
         result = run_spec(
             run_spec_obj,
             source_config=str(run_entry.config),
             output_dir=runs_root / run_entry.name,
         )
+        continuity_summary = summarize_initial_point_continuity(result)
         run_records.append(
             RunRecord(
                 name=run_entry.name,
@@ -66,8 +76,22 @@ def run_study_from_spec(spec, *, source_config: str, output_dir: Path | None = N
                 absolute_error=result.benchmark.absolute_error,
                 tags=run_entry.tags,
                 evidence_summary=result.evidence_summary,
+                initial_point_reused=continuity_summary["initial_point_reused"],
+                initial_point_source=continuity_summary["initial_point_source"],
+                initial_point_strategy=continuity_summary["initial_point_strategy"],
+                history_sources=continuity_summary["history_sources"],
+                fallback_reason=continuity_summary["fallback_reason"],
+                iterations=continuity_summary["iterations"],
+                evaluations=continuity_summary["evaluations"],
+                parameter_count=continuity_summary["parameter_count"],
             )
         )
+        continuity_record = build_continuity_record(
+            result,
+            source_label=run_entry.name,
+        )
+        if continuity_record is not None:
+            continuity_records.append(continuity_record)
         registry_entries.append(
             make_registry_entry(
                 name=run_entry.name,

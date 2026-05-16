@@ -102,7 +102,12 @@ def render_study_report(result: Any) -> str:
         lines.append(
             f"- `{item['name']}` | status=`{item['verification_status']}` | "
             f"backend=`{item['backend_kind']}` | mapping=`{item['mapping_kind']}` | "
-            f"total_energy=`{item['total_energy']}`"
+            f"total_energy=`{item['total_energy']}` | "
+            f"warm_start=`{item.get('initial_point_reused')}` | "
+            f"effective_strategy=`{item.get('initial_point_strategy')}` | "
+            f"candidate_source=`{item.get('initial_point_source')}` | "
+            f"history=`{item.get('history_sources', [])}` | "
+            f"fallback=`{item.get('fallback_reason')}`"
         )
     if exploratory_runs:
         lines.extend(["", "## Exploratory Runs", ""])
@@ -110,7 +115,12 @@ def render_study_report(result: Any) -> str:
             lines.append(
                 f"- `{item['name']}` | status=`{item['verification_status']}` | "
                 f"backend=`{item['backend_kind']}` | mapping=`{item['mapping_kind']}` | "
-                f"total_energy=`{item['total_energy']}`"
+                f"total_energy=`{item['total_energy']}` | "
+                f"warm_start=`{item.get('initial_point_reused')}` | "
+                f"effective_strategy=`{item.get('initial_point_strategy')}` | "
+                f"candidate_source=`{item.get('initial_point_source')}` | "
+                f"history=`{item.get('history_sources', [])}` | "
+                f"fallback=`{item.get('fallback_reason')}`"
             )
     lines.append("")
     return "\n".join(lines)
@@ -288,14 +298,24 @@ def render_scan_report(result: Any) -> str:
     for point in validated_points:
         lines.append(
             f"- `{point['point_label']}` | value=`{point['parameter_value']}` | "
-            f"total_energy=`{point['total_energy']}` | status=`{point['verification_status']}`"
+            f"total_energy=`{point['total_energy']}` | status=`{point['verification_status']}` | "
+            f"warm_start=`{point.get('initial_point_reused')}` | "
+            f"effective_strategy=`{point.get('initial_point_strategy')}` | "
+            f"candidate_source=`{point.get('initial_point_source')}` | "
+            f"history=`{point.get('history_sources', [])}` | "
+            f"fallback=`{point.get('fallback_reason')}`"
         )
     if exploratory_points:
         lines.extend(["", "## Exploratory Points", ""])
         for point in exploratory_points:
             lines.append(
                 f"- `{point['point_label']}` | value=`{point['parameter_value']}` | "
-                f"total_energy=`{point['total_energy']}` | status=`{point['verification_status']}`"
+                f"total_energy=`{point['total_energy']}` | status=`{point['verification_status']}` | "
+                f"warm_start=`{point.get('initial_point_reused')}` | "
+                f"effective_strategy=`{point.get('initial_point_strategy')}` | "
+                f"candidate_source=`{point.get('initial_point_source')}` | "
+                f"history=`{point.get('history_sources', [])}` | "
+                f"fallback=`{point.get('fallback_reason')}`"
             )
     lines.append("")
     return "\n".join(lines)

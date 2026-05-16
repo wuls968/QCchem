@@ -1,6 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from qcchem.io.config import load_run_spec
+from qcchem.io.scan_config import load_scan_spec
+from qcchem.io.study_config import load_study_spec
 
 
 def test_load_run_spec_from_yaml() -> None:
@@ -15,6 +19,66 @@ def test_load_run_spec_from_yaml() -> None:
     assert spec.benchmark.enabled is True
     assert spec.benchmark.exact_baseline_qubit_limit == 12
     assert spec.run.seed == 7
+
+
+def test_load_aggregate_continuity_defaults() -> None:
+    scan = load_scan_spec(Path("configs/scans/h2_short_scan.yaml"))
+    study = load_study_spec(Path("configs/studies/mini_comparison.yaml"))
+
+    assert scan.continuity.enabled is True
+    assert scan.continuity.mode == "linear_predictor"
+    assert scan.continuity.on_parameter_mismatch == "fallback"
+    assert study.continuity.enabled is False
+    assert study.continuity.mode == "previous_optimal"
+    assert study.continuity.on_parameter_mismatch == "fallback"
+
+
+def test_load_study_continuity_from_yaml(tmp_path: Path) -> None:
+    config_path = tmp_path / "study_continuity.yaml"
+    config_path.write_text(
+        """
+study:
+  name: continuity_study
+  continuity:
+    enabled: true
+    mode: previous_optimal
+    on_parameter_mismatch: fallback
+  runs:
+    - name: h2_first
+      config: configs/h2.yaml
+    - name: h2_second
+      config: configs/h2.yaml
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_study_spec(config_path)
+
+    assert spec.continuity.enabled is True
+    assert spec.continuity.mode == "previous_optimal"
+    assert spec.continuity.on_parameter_mismatch == "fallback"
+
+
+def test_study_rejects_linear_predictor_continuity(tmp_path: Path) -> None:
+    config_path = tmp_path / "study_linear_continuity.yaml"
+    config_path.write_text(
+        """
+study:
+  name: continuity_study
+  continuity:
+    enabled: true
+    mode: linear_predictor
+  runs:
+    - name: h2_first
+      config: configs/h2.yaml
+    - name: h2_second
+      config: configs/h2.yaml
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="continuity.mode"):
+        load_study_spec(config_path)
 
 
 def test_load_shot_backend_and_mitigation_config() -> None:

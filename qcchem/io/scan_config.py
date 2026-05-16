@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 from qcchem.core import ScanParameterSpec, ScanSpec
-from qcchem.io.config import _project_root, _require_mapping
+from qcchem.io.config import _parse_continuity, _project_root, _require_mapping
 
 
 def load_scan_spec(path: Path) -> ScanSpec:
@@ -39,4 +39,10 @@ def load_scan_spec(path: Path) -> ScanSpec:
         ),
         policy_name=scan_raw.get("policy_name"),
         tags=[str(value) for value in scan_raw.get("tags", [])],
+        continuity=_parse_continuity(
+            scan_raw,
+            default_enabled=True,
+            default_mode="linear_predictor",
+            allowed_modes={"previous_optimal", "linear_predictor"},
+        ),
     )

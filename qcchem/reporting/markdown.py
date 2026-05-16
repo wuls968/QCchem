@@ -887,6 +887,7 @@ def render_markdown_report(result: Any) -> str:
 
     if variational is not None:
         lr_ace = (variational.get("ansatz") or {}).get("lr_ace") if isinstance(variational.get("ansatz"), dict) else None
+        initial_point_provenance = variational.get("initial_point_provenance") or {}
         lines.extend(
             [
                 "## Variational Result",
@@ -896,6 +897,10 @@ def render_markdown_report(result: Any) -> str:
                 f"- optimizer: `{variational['optimizer']}`",
                 f"- ansatz: `{variational['ansatz']}`",
                 f"- initial_point_strategy: `{variational['initial_point_strategy']}`",
+                f"- initial_point_reused: `{initial_point_provenance.get('reused')}`",
+                f"- initial_point_source: `{initial_point_provenance.get('candidate_source')}`",
+                f"- initial_point_fallback_reason: `{initial_point_provenance.get('fallback_reason')}`",
+                f"- initial_point_provenance: `{initial_point_provenance}`",
                 f"- parameter_count: `{variational['parameter_count']}`",
                 f"- converged: `{variational['converged']}`",
                 f"- iterations: `{variational['iterations']}`",
