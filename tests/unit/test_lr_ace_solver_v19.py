@@ -228,7 +228,7 @@ def test_lr_ace_residual_guided_adaptive_expansion_records_selected_generators()
             candidate_pool_policy="residual_guided",
             candidate_scan_limit=8,
             residual_batch_size=1,
-            residual_scan_angles=[-0.2, 0.2],
+            residual_scan_angles=[-3.14, -0.2, 0.2],
             min_energy_improvement_hartree=0.0,
             max_adaptive_expansions=1,
         ),

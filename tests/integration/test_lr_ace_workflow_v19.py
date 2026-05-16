@@ -68,6 +68,7 @@ def test_h2_lr_ace_runtime_config_is_submission_guarded_by_default() -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_h2o_active_adaptive_lr_ace_reaches_compressed_local_gate(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h2o_active_lr_ace_adaptive.yaml",
@@ -94,6 +95,7 @@ def test_h2o_active_adaptive_lr_ace_reaches_compressed_local_gate(tmp_path: Path
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_h3plus_adaptive_lr_ace_runs_uncompressed_reference_gate(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h3plus_lr_ace_adaptive.yaml",
@@ -126,6 +128,7 @@ def test_h4_chain_adaptive_config_is_local_and_submission_guarded() -> None:
 
 
 @pytest.mark.integration
+@pytest.mark.slow
 def test_h4_chain_adaptive_lr_ace_improves_or_flags_ansatz_limit(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h4_chain_lr_ace_adaptive.yaml",

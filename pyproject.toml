@@ -59,6 +59,7 @@ include = ["qcchem*"]
 testpaths = ["tests"]
 markers = [
   "integration: integration tests requiring the quantum chemistry stack",
+  "slow: exploratory stress tests that are validated outside the default CI gate",
 ]
 filterwarnings = [
   "ignore:The class ``qiskit\\..*`` is deprecated.*:DeprecationWarning",

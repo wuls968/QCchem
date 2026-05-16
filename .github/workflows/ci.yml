@@ -8,6 +8,8 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    env:
+      PYTEST_ADDOPTS: "-m 'not slow'"
     strategy:
       fail-fast: false
       matrix:

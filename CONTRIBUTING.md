@@ -24,6 +24,14 @@ python -m compileall qcchem
 python -m pytest
 ```
 
+GitHub CI runs the default release gate with `PYTEST_ADDOPTS="-m 'not slow'"`.
+Run the exploratory stress tests explicitly when changing LR-ACE adaptive
+budgets or solver trust semantics:
+
+```bash
+python -m pytest -m slow
+```
+
 For release-facing changes, also run the Trust-First release audit when the
 required artifacts are present:
 
