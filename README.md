@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="qcchem/workbench/assets/qcchem-logo.png" alt="QCchem logo" width="560">
+</p>
+
 # QCchem
 
 QCchem is a research workflow scaffold for quantum chemistry experiments built on
@@ -111,8 +115,9 @@ If you use QCchem in research, cite the software metadata in
 
 ## Branding
 
-The QCchem logo direction is tracked in [docs/branding.md](docs/branding.md),
-including the editable Canva design and export checklist.
+The QCchem logo and app icon are committed under
+`qcchem/workbench/assets/`. The editable Canva design and asset notes are
+tracked in [docs/branding.md](docs/branding.md).
 
 ## Core Concepts
 

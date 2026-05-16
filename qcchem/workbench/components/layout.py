@@ -187,6 +187,16 @@ def build_context_bar() -> html.Header:
             html.Div(
                 className="qcchem-context-bar__identity",
                 children=[
+                    html.Div(
+                        className="qcchem-context-bar__brand",
+                        children=[
+                            html.Img(
+                                src="/assets/qcchem-logo.png",
+                                alt="QCchem logo",
+                                className="qcchem-context-bar__logo",
+                            )
+                        ],
+                    ),
                     html.P("QCchem Evidence Console", className="qcchem-context-bar__eyebrow"),
                     html.H1("Evidence Workbench", className="qcchem-context-bar__title"),
                     html.P(
