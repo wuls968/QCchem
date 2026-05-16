@@ -1,0 +1,40 @@
+{
+  "task_id": "review-hardware-boundary-demo",
+  "task_type": "analysis",
+  "title": "Review hardware boundary claim",
+  "request_text": "Check whether the linked hardware campaign is being overstated as publication-grade chemistry validation.",
+  "plan_summary": "Review the claim against linked hardware evidence and write deterministic findings.",
+  "expected_outputs": [
+    "review_findings.json",
+    "review_findings.md"
+  ],
+  "risk_notes": [
+    "Do not treat hardware_verified as chemical-accuracy validation."
+  ],
+  "boundary_notes": [
+    "hardware_verified records runtime result retrieval only."
+  ],
+  "linked_artifacts": [
+    "artifacts/hardware_calibration_suite_v1"
+  ],
+  "status": "accepted",
+  "execution_target": "analysis_only_assistant",
+  "action_plan": {
+    "action_id": "action-review-hardware-boundary",
+    "action_kind": "review_claims",
+    "title": "Review Claims",
+    "rationale": "Run deterministic overclaim checks against the linked QCchem artifacts.",
+    "inputs": {
+      "targets": [
+        "artifacts/hardware_calibration_suite_v1"
+      ],
+      "claim_text": "hardware_verified proves publication-grade chemical accuracy"
+    },
+    "outputs": {},
+    "requires_confirmation": true,
+    "risk_tier": "standard",
+    "allowed": true,
+    "blocked_reason": "",
+    "route": "analysis_only_assistant"
+  }
+}

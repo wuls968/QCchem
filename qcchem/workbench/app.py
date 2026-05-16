@@ -57,6 +57,9 @@ def create_app() -> Dash:
         linked_artifacts = record.get("linked_artifacts") or []
         if not isinstance(linked_artifacts, list):
             linked_artifacts = []
+        evidence_context = record.get("evidence_context") if isinstance(record.get("evidence_context"), dict) else {}
+        action_plan = record.get("action_plan") if isinstance(record.get("action_plan"), dict) else {}
+        risk_assessment = record.get("risk_assessment") if isinstance(record.get("risk_assessment"), dict) else {}
         return html.Div(
             className="qcchem-ai-workspace-page__ticket",
             children=[
@@ -74,6 +77,9 @@ def create_app() -> Dash:
                     children=[
                         html.Div([html.Span("Artifacts"), html.Strong(str(len(linked_artifacts)))]),
                         html.Div([html.Span("Ticket"), html.Strong(str(record.get("task_id", "")))]),
+                        html.Div([html.Span("Trust"), html.Strong(str(evidence_context.get("trust_tier") or "n/a"))]),
+                        html.Div([html.Span("Action"), html.Strong(str(action_plan.get("action_kind") or "n/a"))]),
+                        html.Div([html.Span("Risk"), html.Strong(str(risk_assessment.get("risk_tier") or "standard"))]),
                     ],
                 ),
             ],

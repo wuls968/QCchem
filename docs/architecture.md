@@ -37,6 +37,7 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 
 `qcchem/workflow`
 : run、study、benchmark、scan、task 编排、runtime collect/rehydrate、hardware optimization candidate planning 和 registry 写出。
+  `evidence_agent.py` 是 AI-native 科研中枢的本地规则层：它读取 bounded artifact set，生成 evidence graph、research action proposal、risk/cost gate、claim review 和 AI provenance event。
 
 `qcchem/reporting`
 : run report 与 aggregate report 生成。
@@ -81,6 +82,16 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 14. 如启用 runtime path，额外记录 empirical calibration 与 real runtime submission attempt
 15. 构建 `Evidence Summary`，把 scientific claim、baseline、error metric、trust tier 和 recommended action 收成统一读口
 16. hardware calibration suite 以 `runtime_submission` 为 authoritative runtime-evidence source 聚合 dashboard，并把 `hardware_verified` / `hardware_evidence_tier` 一起纳入导出和汇总
+
+### Evidence-Grounded AI Agent
+
+1. `qcchem ai summarize-evidence` 或 ticket drafting 读取有限数量的 artifact summary 文件
+2. 每个 source 被规范化为 `EvidenceSourceRecord`，包含 path hash、payload hash、trust tier、baseline、error metric、runtime evidence 和 output links
+3. `EvidenceGraphSummary` 分开选择 `best_chemistry_evidence` 与 `best_runtime_evidence`
+4. `ResearchActionProposal` 固定为单一 action，并由本地白名单检查
+5. `risk_assessment` 与 `cost_estimate` 决定是否需要确认、是否阻断
+6. `run-ticket` 只路由到已有本地 workflow；真实 hardware submit 不在 v1 AI route 里
+7. 每次 evidence load、review、workflow start/complete/block 都追加到 `artifacts/ai_workspace/provenance/ai_provenance.jsonl`
 
 ### Hardware Optimization
 
@@ -188,6 +199,15 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
   - `trust_tier`
   - `recommended_action`
   release-facing 术语 `baseline strength` 与 `hardware verification boundary` 继续作为 derived companion language 出现，而不额外扩成第二套顶层 schema。
+
+`EvidenceSourceRecord`
+: AI research agent 的单个证据输入。它不替代原 artifact，只缓存 summary 级 claim、baseline、error、trust 和 hash provenance。
+
+`EvidenceGraphSummary`
+: AI research agent 的 evidence context。它显式区分 chemistry best evidence 和 runtime best evidence，避免把 `hardware_verified` 提升成发表级 chemistry validation。
+
+`ResearchActionProposal`
+: AI ticket 中唯一可执行 action。它必须在 local allowlist 内，且真实 hardware/runtime submit 被阻断；`runtime_collect` 只能收已有 job。
 
 `BaselineDescriptorSummary`
 : comparison 口径描述层，显式记录：

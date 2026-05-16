@@ -14,11 +14,20 @@ from qcchem.reporting.hardware_campaign import (
     write_hardware_campaign_report,
     write_hardware_campaign_summary,
 )
+from qcchem.reporting import write_markdown_report
 from qcchem.reporting.jsonio import write_result_json
 from qcchem.core.evidence import summarize_artifact_payload
+from qcchem.workflow.evidence_agent import (
+    review_claims,
+    summarize_evidence_artifacts,
+    write_review_outputs,
+)
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
+from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
+from qcchem.workflow.scan import run_scan_from_config
+from qcchem.workflow.study import run_study_from_config
 
 
 def run_analysis_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
@@ -184,6 +193,74 @@ def run_agent_task(spec: AgentTaskSpec) -> dict[str, Any]:
         if written_summary is not None:
             summary["summary_json"] = written_summary
         return summary
+    if spec.kind == "study":
+        config = resolve_user_path(base_dir, str(spec.inputs["config"]))
+        output_dir = spec.inputs.get("output_dir")
+        result = run_study_from_config(
+            config,
+            output_dir=(resolve_user_path(base_dir, str(output_dir)) if output_dir else None),
+        )
+        summary = {
+            "task_name": spec.name,
+            "task_kind": spec.kind,
+            "study_name": result.study_name,
+            "artifact_root": str(result.artifacts.root) if result.artifacts else None,
+            "total_runs": result.summary.total_runs,
+        }
+        written_summary = _write_optional_summary_output(base_dir, spec.outputs.get("summary_json"), summary)
+        if written_summary is not None:
+            summary["summary_json"] = written_summary
+        return summary
+    if spec.kind == "scan":
+        config = resolve_user_path(base_dir, str(spec.inputs["config"]))
+        output_dir = spec.inputs.get("output_dir")
+        result = run_scan_from_config(
+            config,
+            output_dir=(resolve_user_path(base_dir, str(output_dir)) if output_dir else None),
+        )
+        summary = {
+            "task_name": spec.name,
+            "task_kind": spec.kind,
+            "scan_name": result.scan_name,
+            "artifact_root": str(result.artifacts.root) if result.artifacts else None,
+            "total_runs": result.summary.total_runs,
+        }
+        written_summary = _write_optional_summary_output(base_dir, spec.outputs.get("summary_json"), summary)
+        if written_summary is not None:
+            summary["summary_json"] = written_summary
+        return summary
+    if spec.kind == "hardware_optimize_preview":
+        config = resolve_user_path(base_dir, str(spec.inputs["config"]))
+        output_dir = spec.inputs.get("output_dir")
+        result = run_hardware_optimization_from_config(
+            config,
+            output_dir=(resolve_user_path(base_dir, str(output_dir)) if output_dir else None),
+            mode="preview",
+        )
+        summary = {"task_name": spec.name, "task_kind": spec.kind, **result}
+        written_summary = _write_optional_summary_output(base_dir, spec.outputs.get("summary_json"), summary)
+        if written_summary is not None:
+            summary["summary_json"] = written_summary
+        return summary
+    if spec.kind == "compare_artifacts":
+        artifacts = [str(item) for item in spec.inputs["artifacts"]]
+        summary = summarize_evidence_artifacts(artifacts, workspace_base=base_dir)
+        summary = {"task_name": spec.name, "task_kind": spec.kind, **summary}
+        written_summary = _write_optional_summary_output(base_dir, spec.outputs.get("summary_json"), summary)
+        if written_summary is not None:
+            summary["summary_json"] = written_summary
+        return summary
+    if spec.kind == "review_claims":
+        targets = [str(item) for item in spec.inputs["targets"]]
+        review = review_claims(
+            targets=targets,
+            claim_text=spec.inputs.get("claim_text"),
+            workspace_base=base_dir,
+        )
+        output_dir_text = spec.outputs.get("output_dir")
+        if output_dir_text:
+            review.update(write_review_outputs(review, resolve_user_path(base_dir, str(output_dir_text))))
+        return {"task_name": spec.name, "task_kind": spec.kind, **review}
     if spec.kind == "hardware_campaign_summary":
         target = resolve_user_path(base_dir, str(spec.inputs["target"]))
         summary = summarize_agent_target(target)
@@ -203,6 +280,20 @@ def run_agent_task(spec: AgentTaskSpec) -> dict[str, Any]:
             "task_name": spec.name,
             "task_kind": spec.kind,
             **summary,
+        }
+    if spec.kind == "report":
+        result_json = resolve_user_path(base_dir, str(spec.inputs["result_json"]))
+        output = resolve_user_path(
+            base_dir,
+            str(spec.outputs.get("report_markdown") or result_json.with_name("report.md")),
+        )
+        payload = json.loads(result_json.read_text(encoding="utf-8"))
+        output.parent.mkdir(parents=True, exist_ok=True)
+        write_markdown_report(payload, output)
+        return {
+            "task_name": spec.name,
+            "task_kind": spec.kind,
+            "report_markdown": str(output),
         }
     raise ValueError(f"Unsupported agent task kind: {spec.kind}")
 
