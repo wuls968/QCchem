@@ -85,6 +85,35 @@ Open the local workbench when UI dependencies are installed:
 qcchem workbench serve
 ```
 
+## Development
+
+Install the full development extras and run the same checks used by CI:
+
+```bash
+python -m pip install -e ".[dev,ui,ai,runtime]"
+python -m compileall qcchem
+python -m pytest
+```
+
+GitHub Actions runs these checks on push and pull request for Python 3.10,
+3.11, and 3.12. The CI workflow does not require OpenAI, IBM Quantum, or other
+runtime secrets; real hardware submission stays behind explicit local
+confirmation.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules, evidence
+boundaries, and PR expectations.
+
+## Citation And Security
+
+If you use QCchem in research, cite the software metadata in
+[CITATION.cff](CITATION.cff). Security guidance and secret-handling rules are in
+[SECURITY.md](SECURITY.md).
+
+## Branding
+
+The QCchem logo direction is tracked in [docs/branding.md](docs/branding.md),
+including the editable Canva design and export checklist.
+
 ## Core Concepts
 
 ### Evidence Summary

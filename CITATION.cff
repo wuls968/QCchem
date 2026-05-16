@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use QCchem in research, please cite this software."
+title: "QCchem"
+version: "0.1.0a1"
+date-released: "2026-05-16"
+license: "MIT"
+authors:
+  - name: "QCchem Contributors"
+abstract: "Research-grade quantum chemistry workflow scaffold built on Qiskit, Qiskit Nature, PySCF, and artifact-first evidence workflows."
+repository-code: "https://github.com/wuls968/QCchem"
+keywords:
+  - quantum chemistry
+  - qiskit
+  - pyscf
+  - evidence workflows
+  - computational chemistry
