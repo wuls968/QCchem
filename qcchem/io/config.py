@@ -18,9 +18,12 @@ from qcchem.core import (
     BenchmarkSpec,
     CompressionSpec,
     EmbeddingSpec,
+    EmbeddingExecutionSpec,
     ExploratorySpec,
     ExcitedStateTaskSpec,
     FragmentSpec,
+    GeometryOptimizationTaskSpec,
+    GradientTaskSpec,
     HardwareOptimizationSpec,
     LatticeQEDAnsatzSpec,
     LatticeQEDConstraintSpec,
@@ -46,6 +49,7 @@ from qcchem.core import (
     PolicySpec,
     ProblemSpec,
     PropertyTaskSpec,
+    ResponsePropertyTaskSpec,
     ReadoutMitigationSpec,
     RunConfig,
     RunSpec,
@@ -158,6 +162,11 @@ def _parse_compression(problem_raw: dict[str, Any]) -> CompressionSpec:
             compression_raw.get("compression_error_budget_hartree", 8.0e-4)
         ),
         allow_pauli_truncation=bool(compression_raw.get("allow_pauli_truncation", False)),
+        runtime_term_budget=(
+            int(compression_raw["runtime_term_budget"])
+            if compression_raw.get("runtime_term_budget") is not None
+            else None
+        ),
         apply_to_solver=bool(compression_raw.get("apply_to_solver", False)),
         execution_enabled=bool(
             compression_raw.get(
@@ -266,12 +275,22 @@ def _parse_embedding(problem_raw: dict[str, Any]) -> EmbeddingSpec:
                 atom_indices=[int(value) for value in item.get("atom_indices", [])],
             )
         )
+    execution_raw = embedding_raw.get("execution", {})
+    if execution_raw is None:
+        execution_raw = {}
+    if not isinstance(execution_raw, dict):
+        raise ValueError("problem.embedding.execution must be a mapping.")
     return EmbeddingSpec(
         enabled=bool(embedding_raw.get("enabled", False)),
         method=str(embedding_raw.get("method", "dmet_skeleton")),
         bath_threshold=float(embedding_raw.get("bath_threshold", 0.05)),
         solver_plugin=str(embedding_raw.get("solver_plugin", "placeholder_fragment_solver")),
         fragments=fragments,
+        execution=EmbeddingExecutionSpec(
+            enabled=bool(execution_raw.get("enabled", False)),
+            plugin=str(execution_raw.get("plugin", "pyscf_rhf_fragment")),
+            validate_against_full_system=bool(execution_raw.get("validate_against_full_system", True)),
+        ),
     )
 
 
@@ -489,6 +508,44 @@ def _parse_perturbative_correction(tasks_raw: dict[str, Any]) -> PerturbativeCor
         method=str(raw.get("method", "nevpt2")),
         plugin=str(raw.get("plugin", "pyscf")),
         root=int(raw.get("root", 0)),
+    )
+
+
+def _parse_geometry_optimization(tasks_raw: dict[str, Any]) -> GeometryOptimizationTaskSpec:
+    raw = tasks_raw.get("geometry_optimization")
+    if not isinstance(raw, dict):
+        return GeometryOptimizationTaskSpec()
+    return GeometryOptimizationTaskSpec(
+        enabled=bool(raw.get("enabled", False)),
+        method=str(raw.get("method", "pyscf_rhf")),
+        max_steps=int(raw.get("max_steps", 50)),
+        gradient_tolerance=float(raw.get("gradient_tolerance", 3.0e-4)),
+    )
+
+
+def _parse_gradient(tasks_raw: dict[str, Any]) -> GradientTaskSpec:
+    raw = tasks_raw.get("gradient")
+    if not isinstance(raw, dict):
+        return GradientTaskSpec()
+    return GradientTaskSpec(
+        enabled=bool(raw.get("enabled", False)),
+        method=str(raw.get("method", "pyscf_rhf")),
+        state_index=int(raw.get("state_index", 0)),
+    )
+
+
+def _parse_response_properties(tasks_raw: dict[str, Any]) -> ResponsePropertyTaskSpec:
+    raw = tasks_raw.get("response_properties")
+    if not isinstance(raw, dict):
+        return ResponsePropertyTaskSpec()
+    properties = raw.get("properties", ["static_polarizability"])
+    if not isinstance(properties, list):
+        raise ValueError("tasks.response_properties.properties must be a list.")
+    return ResponsePropertyTaskSpec(
+        enabled=bool(raw.get("enabled", False)),
+        properties=[str(item) for item in properties],
+        method=str(raw.get("method", "finite_field_rhf")),
+        finite_field_step=float(raw.get("finite_field_step", 1.0e-3)),
     )
 
 
@@ -772,6 +829,9 @@ def load_run_spec(path: Path) -> RunSpec:
             ),
             properties=_parse_property_tasks(tasks_raw),
             perturbative_correction=_parse_perturbative_correction(tasks_raw),
+            geometry_optimization=_parse_geometry_optimization(tasks_raw),
+            gradient=_parse_gradient(tasks_raw),
+            response_properties=_parse_response_properties(tasks_raw),
         ),
         tc_qsci=_parse_tc_qsci(raw, base_dir=resolved_path.parent),
         hardware_optimization=_parse_hardware_optimization(raw),

@@ -71,3 +71,70 @@ def test_embedding_skeleton_persists_fragment_metadata(tmp_path: Path) -> None:
     assert all(fragment["atom_indices"] for fragment in result.embedding_result.fragments)
     regenerated = render_markdown_report(json.loads(result.artifacts.result_json.read_text(encoding="utf-8")))
     assert "Embedding Audit" in regenerated
+
+
+@pytest.mark.integration
+def test_trust_loop_chemistry_tasks_persist_reference_artifacts(tmp_path: Path) -> None:
+    config_path = tmp_path / "h2_trust_loop_tasks.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-trust-loop-tasks
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+problem:
+  embedding:
+    enabled: true
+    fragments:
+      - name: full_h2_fragment
+        atom_indices: [0, 1]
+    execution:
+      enabled: true
+      plugin: pyscf_rhf_fragment
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+tasks:
+  geometry_optimization:
+    enabled: true
+    max_steps: 12
+  gradient:
+    enabled: true
+  response_properties:
+    enabled: true
+    properties: [static_polarizability]
+    finite_field_step: 0.002
+run:
+  output_dir: artifacts/h2_trust_loop_tasks
+  overwrite: true
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_from_config(config_path, output_dir=tmp_path / "h2-trust-loop")
+
+    assert result.geometry_optimization_result is not None
+    assert result.geometry_optimization_result["verification_status"] == "validated"
+    assert result.gradient_result is not None
+    assert result.gradient_result["verification_status"] == "validated"
+    assert result.response_property_result is not None
+    assert result.response_property_result["verification_status"] == "validated"
+    assert result.embedding_result is not None
+    assert result.embedding_result.verification_status == "validated"
+    assert result.hardware_error_diagnostic is not None
+    assert result.hardware_error_diagnostic["diagnostic_label"] == "missing_runtime_result"
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert "geometry_optimization_result" in payload
+    assert "gradient_result" in payload
+    assert "response_property_result" in payload
+    assert "hardware_error_diagnostic" in payload
+    assert "artifact_index_entry" in payload

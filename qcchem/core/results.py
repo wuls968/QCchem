@@ -617,8 +617,12 @@ class RunResult:
     execution_policy: ExecutionPolicySummary
     excited_state_result: ExcitedStateTaskResult | None
     property_result: PropertyTaskResult | None
+    geometry_optimization_result: dict[str, Any] | None
+    gradient_result: dict[str, Any] | None
+    response_property_result: dict[str, Any] | None
     perturbative_correction_result: PerturbativeCorrectionResultSummary | None
     embedding_result: EmbeddingResultSummary | None
+    hardware_error_diagnostic: dict[str, Any] | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
     artifacts: ArtifactPaths
@@ -629,6 +633,8 @@ class RunResult:
     verification_notes: list[str] = field(default_factory=list)
     scientific_risk_notes: list[str] = field(default_factory=list)
     evidence_summary: EvidenceSummary | None = None
+    acceptance_summary: dict[str, Any] | None = None
+    artifact_index_entry: dict[str, Any] | None = None
     tc_qsci_result: dict[str, Any] | None = None
     determinant_selection: dict[str, Any] | None = None
     symmetry_sector: dict[str, Any] | None = None
@@ -749,6 +755,8 @@ class BenchmarkSuiteResult:
     cases: list[BenchmarkCaseResult] = field(default_factory=list)
     calibration_summary: dict[str, Any] = field(default_factory=dict)
     dashboard_summary: dict[str, Any] = field(default_factory=dict)
+    acceptance_summary: dict[str, Any] = field(default_factory=dict)
+    artifact_index_entry: dict[str, Any] | None = None
     registry_entries: list[RegistryEntry] = field(default_factory=list)
     artifacts: BenchmarkArtifactPaths | None = None
     evidence_summary: EvidenceSummary | None = None

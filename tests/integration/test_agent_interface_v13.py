@@ -9,6 +9,8 @@ from qcchem.cli.main import main
 from qcchem.io.agent_config import load_agent_task_spec
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def test_load_agent_task_spec_reads_runtime_collect_task(tmp_path: Path) -> None:
     task_path = tmp_path / "runtime_collect.yaml"
@@ -53,7 +55,7 @@ def test_run_agent_task_executes_runtime_collect(monkeypatch: pytest.MonkeyPatch
     )
 
     def _fake_collect_runtime_artifact(artifact_root: Path) -> dict[str, object]:
-        assert artifact_root == (Path("/Users/a0000/QCchem") / "artifacts/h2_runtime_hardware_probe_ca_layout")
+        assert artifact_root == (REPO_ROOT / "artifacts/h2_runtime_hardware_probe_ca_layout")
         return {
             "task_kind": "runtime_collect",
             "artifact_root": str(artifact_root),

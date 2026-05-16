@@ -131,6 +131,7 @@ def build_embedding_result(
     ao_slices = mol.aoslice_by_atom()
     ao_labels = mol.ao_labels()
     fragments: list[dict[str, Any]] = []
+    fragment_energies: list[float] = []
     for fragment in spec.fragments:
         ao_indices: list[int] = []
         for atom_index in fragment.atom_indices:
@@ -151,6 +152,38 @@ def build_embedding_result(
             }
         except Exception as exc:  # pragma: no cover - defensive plugin boundary
             recommendation = {"error": f"{type(exc).__name__}: {exc}"}
+        execution_result: dict[str, Any] | None = None
+        if spec.execution.enabled:
+            try:
+                fragment_atoms = [
+                    molecule.geometry[index]
+                    for index in fragment.atom_indices
+                    if 0 <= index < len(molecule.geometry)
+                ]
+                if not fragment_atoms:
+                    raise ValueError("fragment has no valid atoms")
+                fragment_molecule = MoleculeSpec(
+                    name=f"{molecule.name}:{fragment.name}",
+                    geometry=fragment_atoms,
+                    charge=0,
+                    multiplicity=1,
+                    basis=molecule.basis,
+                    unit=molecule.unit,
+                )
+                _frag_mol, frag_mf = build_pyscf_mean_field(fragment_molecule)
+                fragment_energies.append(float(frag_mf.e_tot))
+                execution_result = {
+                    "plugin": spec.execution.plugin,
+                    "method": "pyscf_rhf",
+                    "total_energy": float(frag_mf.e_tot),
+                    "verification_status": "validated",
+                }
+            except Exception as exc:  # pragma: no cover - defensive plugin boundary
+                execution_result = {
+                    "plugin": spec.execution.plugin,
+                    "verification_status": "exploratory",
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
         fragments.append(
             {
                 "name": fragment.name,
@@ -158,8 +191,19 @@ def build_embedding_result(
                 "ao_count": len(ao_indices),
                 "ao_labels": [ao_labels[index] for index in ao_indices],
                 "recommended_active_space": recommendation,
+                "execution_result": execution_result,
             }
         )
+    execution_enabled = bool(spec.execution.enabled)
+    assembled = {
+        "execution_enabled": execution_enabled,
+        "plugin": spec.execution.plugin,
+        "fragment_energy_sum": float(sum(fragment_energies)) if fragment_energies else None,
+        "full_system_mean_field_energy": float(mf.e_tot),
+        "fragment_count_executed": len(fragment_energies),
+        "validate_against_full_system": spec.execution.validate_against_full_system,
+    }
+    execution_validated = execution_enabled and len(fragment_energies) == len(spec.fragments) and bool(spec.fragments)
 
     return EmbeddingResultSummary(
         enabled=True,
@@ -171,10 +215,11 @@ def build_embedding_result(
             "environment_model": "rhf_density_matrix",
             "mean_field_energy": float(mf.e_tot),
             "num_fragments": len(fragments),
+            "fragment_execution": assembled,
         },
-        verification_status="exploratory",
+        verification_status="validated" if execution_validated else "exploratory",
         notes=[
             "Current embedding path is a DMET-style skeleton built from PySCF mean-field density information.",
-            "Fragment solver execution remains a formal plugin interface in QCchem v0.5.",
+            "Fragment execution is validated only for PySCF RHF small-fragment reference runs; assembled embedding energy is a diagnostic, not a replacement for the full-system benchmark.",
         ],
     )

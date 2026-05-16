@@ -4,6 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from qcchem.io.artifact_index import build_artifact_index
+from qcchem.reporting.hardware_campaign import build_hardware_campaign_summary
+from qcchem.workbench.viewmodels import build_run_view_model
+
 
 def _load_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
@@ -91,3 +95,68 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
         },
     }
     return bundle
+
+
+def _repo_artifact_root() -> Path:
+    return Path(__file__).resolve().parents[2] / "artifacts"
+
+
+def _preferred_entry(entries: list[dict[str, Any]], *, kinds: set[str]) -> dict[str, Any] | None:
+    matching = [entry for entry in entries if str(entry.get("artifact_kind")) in kinds]
+    if not matching:
+        return None
+    preferred_names = [
+        "h2_runtime_hardware_probe_puccd_layout",
+        "h2",
+        "benchmark_suite_v1",
+        "hardware_calibration_suite_v1",
+    ]
+    for name in preferred_names:
+        for entry in matching:
+            if str(entry.get("artifact_root", "")).endswith(f"/{name}") or entry.get("artifact_name") == name:
+                return entry
+    return max(matching, key=lambda item: float(item.get("mtime") or 0.0))
+
+
+def load_featured_run_view_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
+    """Load the best available run artifact for workbench pages."""
+
+    root = artifact_root or _repo_artifact_root()
+    index = build_artifact_index(root)
+    entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"run"})
+    if not entry:
+        return None
+    bundle = load_artifact_bundle(Path(str(entry["artifact_root"])))
+    run = bundle.get("run")
+    if not isinstance(run, dict):
+        return None
+    view = build_run_view_model(run)
+    view["artifact_index_entry"] = entry
+    return view
+
+
+def load_featured_benchmark_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
+    root = artifact_root or _repo_artifact_root()
+    index = build_artifact_index(root)
+    entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"benchmark_suite"})
+    if not entry:
+        return None
+    payload = _load_json(Path(str(entry["result_json"])))
+    if isinstance(payload, dict):
+        payload["artifact_index_entry"] = entry
+        return payload
+    return None
+
+
+def load_featured_hardware_campaign_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
+    root = artifact_root or _repo_artifact_root()
+    index = build_artifact_index(root)
+    entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"hardware_calibration"})
+    if not entry:
+        return None
+    payload = _load_json(Path(str(entry["result_json"])))
+    if not isinstance(payload, dict):
+        return None
+    summary = build_hardware_campaign_summary(payload)
+    summary["artifact_index_entry"] = entry
+    return summary

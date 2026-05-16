@@ -53,6 +53,7 @@ from qcchem.core import (
     VariationalResultSummary,
 )
 from qcchem.io.config import load_run_spec
+from qcchem.io.artifact_index import build_artifact_index_entry
 from qcchem.io.exports import workspace_fingerprint, write_hdf5_result, write_qcschema_json
 from qcchem.io.serialization import to_primitive
 from qcchem.mapping import MappedHamiltonian, map_fermionic_hamiltonian
@@ -65,10 +66,14 @@ from qcchem.solvers import SolverOutcome, build_solver
 from qcchem.solvers.spectrum import ExactSpectrum, compute_exact_spectrum
 from qcchem.workflow.tasks import (
     build_excited_state_result,
+    build_geometry_optimization_result,
+    build_gradient_result,
     build_property_result,
+    build_response_property_result,
     required_exact_states,
 )
 from qcchem.workflow.calibration import build_calibration_summary
+from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 from qcchem.core.evidence import build_run_evidence_summary
 
 SCHEMA_VERSION = "qcchem.result.v0.8-alpha"
@@ -320,6 +325,9 @@ def _with_simplified_mapping(mapping: MappedHamiltonian, *, atol: float) -> Mapp
 def _compression_post_term_limit(bundle, total_terms: int, spec=None) -> int | None:
     if bundle is None or bundle.rank <= 0:
         return None
+    explicit_budget = getattr(spec, "runtime_term_budget", None)
+    if explicit_budget is not None:
+        return min(total_terms, max(int(explicit_budget), 1))
     policy = str(getattr(spec, "term_budget_policy", "legacy_rank_multiple")).strip().lower()
     if policy == "precision_first":
         if not bool(getattr(spec, "allow_pauli_truncation", False)):
@@ -1074,6 +1082,9 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         total_constant_correction=chemistry.total_constant_correction,
     )
     property_result = build_property_result(spec, chemistry, mapping, spectrum)
+    geometry_optimization_result = build_geometry_optimization_result(spec)
+    gradient_result = build_gradient_result(spec)
+    response_property_result = build_response_property_result(spec)
     perturbative_correction_result = run_nevpt2_correction(
         spec.molecule,
         chemistry.reduction_audit,
@@ -1254,8 +1265,12 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         execution_policy=policy_summary,
         excited_state_result=excited_state_result,
         property_result=property_result,
+        geometry_optimization_result=geometry_optimization_result,
+        gradient_result=gradient_result,
+        response_property_result=response_property_result,
         perturbative_correction_result=perturbative_correction_result,
         embedding_result=embedding_result,
+        hardware_error_diagnostic=None,
         tc_qsci_result=(
             tc_qsci_payload.get("tc_qsci_result") if tc_qsci_payload is not None else None
         ),
@@ -1312,6 +1327,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         scientific_risk_notes=scientific_risk_notes,
     )
     result.evidence_summary = build_run_evidence_summary(to_primitive(result))
+    result.hardware_error_diagnostic = build_hardware_error_diagnostic(to_primitive(result))
 
     _record(logger, events, f"Writing JSON result to {artifacts.result_json}")
     result.log_summary.events = list(events)
@@ -1325,6 +1341,9 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     result.log_summary.events = list(events)
     result.provenance.wall_time_seconds = float(perf_counter() - started_at)
     result.evidence_summary = build_run_evidence_summary(to_primitive(result))
+    result.hardware_error_diagnostic = build_hardware_error_diagnostic(to_primitive(result))
+    write_result_json(result, artifacts.result_json)
+    result.artifact_index_entry = build_artifact_index_entry(artifacts.result_json)
     write_result_json(result, artifacts.result_json)
     write_markdown_report(result, artifacts.report_markdown)
     _write_optional_artifacts(

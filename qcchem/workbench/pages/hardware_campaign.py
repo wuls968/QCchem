@@ -9,6 +9,7 @@ from plotly.subplots import make_subplots
 from qcchem.reporting.hardware_campaign import build_hardware_campaign_summary
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme, case_label
+from qcchem.workbench.data import load_featured_hardware_campaign_model
 from qcchem.workbench.evidence_console import format_action_label
 from qcchem.workbench.theme import THEME
 
@@ -459,4 +460,4 @@ def build_hardware_campaign_page(model: dict[str, Any]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_hardware_campaign_page(sample_hardware_campaign_model())
+    return build_hardware_campaign_page(load_featured_hardware_campaign_model() or sample_hardware_campaign_model())

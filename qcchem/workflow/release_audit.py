@@ -80,6 +80,26 @@ def _skipped(
     )
 
 
+def _warning(
+    checks: list[dict[str, Any]],
+    *,
+    check_id: str,
+    label: str,
+    summary: str = "",
+    details: dict[str, Any] | None = None,
+) -> None:
+    checks.append(
+        {
+            "id": check_id,
+            "label": label,
+            "status": "warning",
+            "required": False,
+            "summary": summary,
+            "details": details or {},
+        }
+    )
+
+
 def _evidence_missing_fields(payload: dict[str, Any]) -> list[str]:
     evidence = payload.get("evidence_summary")
     if not isinstance(evidence, dict):
@@ -115,6 +135,7 @@ def _artifact_matrix_entry(name: str, kind: str, path: Path, payload: dict[str, 
         "hardware_verified": payload.get("hardware_verified", False),
         "runtime_submission_status": (payload.get("runtime_submission") or {}).get("status")
         or (payload.get("runtime_submission") or {}).get("failure_category"),
+        "acceptance_status": (payload.get("acceptance_summary") or {}).get("accepted"),
     }
 
 
@@ -195,6 +216,7 @@ def _audit_artifact(
     checks: list[dict[str, Any]],
     evidence_matrix: list[dict[str, Any]],
     id_prefix: str,
+    acceptance_required: bool = False,
 ) -> dict[str, Any] | None:
     if not path.exists():
         _check(
@@ -243,6 +265,44 @@ def _audit_artifact(
         else "hardware_verified is inconsistent with runtime_submission.",
         details={"failure": runtime_failure},
     )
+    acceptance = payload.get("acceptance_summary") or evidence_payload.get("acceptance_summary")
+    sidecar_acceptance_path = path.parent / "acceptance_summary.json"
+    if not isinstance(acceptance, dict) and sidecar_acceptance_path.exists():
+        acceptance = _read_json(sidecar_acceptance_path)
+    if not isinstance(acceptance, dict):
+        if acceptance_required:
+            _check(
+                checks,
+                check_id=f"{id_prefix}:{name}:acceptance_summary",
+                label=f"{name} acceptance summary is present",
+                passed=False,
+                required=True,
+                summary="Acceptance summary is required but missing.",
+                details={"path": str(sidecar_acceptance_path)},
+            )
+        else:
+            _warning(
+                checks,
+                check_id=f"{id_prefix}:{name}:acceptance_summary",
+                label=f"{name} acceptance summary is missing",
+                summary="Acceptance summary is not present; release audit treats this as a warning unless required.",
+                details={"path": str(sidecar_acceptance_path)},
+            )
+    else:
+        accepted = bool(acceptance.get("accepted"))
+        _check(
+            checks,
+            check_id=f"{id_prefix}:{name}:acceptance_summary",
+            label=f"{name} acceptance summary is accepted",
+            passed=accepted,
+            required=acceptance_required,
+            summary=(
+                "Acceptance summary is present and accepted."
+                if accepted
+                else "Acceptance summary is present but not accepted."
+            ),
+            details={"recommended_action": acceptance.get("recommended_action")},
+        )
     return evidence_payload
 
 
@@ -281,9 +341,10 @@ def _audit_exploratory_asset(
         required=asset.required,
         kind=asset.kind,
         checks=checks,
-        evidence_matrix=evidence_matrix,
-        id_prefix="exploratory_asset",
-    )
+            evidence_matrix=evidence_matrix,
+            id_prefix="exploratory_asset",
+            acceptance_required=False,
+        )
     if payload is None:
         return
 
@@ -357,6 +418,7 @@ def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
         f"- recommended_action: `{summary['recommended_action']}`",
         f"- required_pass_count: `{summary['required_pass_count']}`",
         f"- required_fail_count: `{summary['required_fail_count']}`",
+        f"- warning_count: `{summary.get('warning_count', 0)}`",
         "",
         "## Evidence Matrix",
         "",
@@ -416,6 +478,7 @@ def run_release_audit(
             checks=checks,
             evidence_matrix=evidence_matrix,
             id_prefix="curated_artifact",
+            acceptance_required=artifact.acceptance_required,
         )
 
     for asset in spec.exploratory_assets:
@@ -425,6 +488,7 @@ def run_release_audit(
 
     required_pass_count = sum(1 for check in checks if check["required"] and check["status"] == "passed")
     required_fail_count = sum(1 for check in checks if check["required"] and check["status"] == "failed")
+    warning_count = sum(1 for check in checks if check["status"] == "warning")
     status = "passed" if required_fail_count == 0 else "failed"
     summary = {
         "schema_version": RELEASE_AUDIT_SCHEMA_VERSION,
@@ -433,6 +497,7 @@ def run_release_audit(
         "status": status,
         "required_pass_count": required_pass_count,
         "required_fail_count": required_fail_count,
+        "warning_count": warning_count,
         "checks": checks,
         "evidence_matrix": evidence_matrix,
         "acceptance_commands": list(spec.acceptance_commands),

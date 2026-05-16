@@ -21,6 +21,7 @@ class ReleaseAuditArtifactSpec:
     name: str
     path: Path
     required: bool = True
+    acceptance_required: bool = False
 
 
 @dataclass(slots=True)
@@ -85,6 +86,7 @@ def _artifact_spec(raw: dict[str, Any], *, key: str) -> ReleaseAuditArtifactSpec
         name=name,
         path=Path(path),
         required=bool(raw.get("required", True)),
+        acceptance_required=bool(raw.get("acceptance_required", False)),
     )
 
 

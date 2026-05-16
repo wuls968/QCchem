@@ -1,0 +1,14 @@
+campaign:
+  name: trust_loop_mini
+  description: Artifact-only smoke campaign for the trusted-computation loop.
+  output_root: artifacts/trust_loop_mini_campaign
+  tags: [trust-loop, artifact-driven]
+  entries:
+    - name: h2_anchor
+      kind: artifact
+      artifact: artifacts/h2
+      tags: [run, validated-anchor]
+    - name: benchmark_anchor
+      kind: artifact
+      artifact: artifacts/benchmark_suite_v1/benchmark_result.json
+      tags: [benchmark, acceptance]

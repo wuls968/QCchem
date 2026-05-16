@@ -143,9 +143,9 @@ def test_property_validation_tracks_validated_and_exploratory_entries(tmp_path: 
     properties = {item.property_name: item for item in result.property_result.properties}
     assert properties["dipole_moment"].implementation_status == "validated"
     assert properties["dipole_moment"].provenance["source"] == "exact_expectation"
-    assert properties["transition_dipole"].implementation_status == "exploratory"
+    assert properties["transition_dipole"].implementation_status == "validated"
     assert properties["transition_dipole"].value is not None
-    assert properties["oscillator_strength"].implementation_status == "exploratory"
+    assert properties["oscillator_strength"].implementation_status == "validated"
     assert properties["oscillator_strength"].value is not None
 
 

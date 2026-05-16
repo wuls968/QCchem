@@ -21,6 +21,7 @@ from qcchem.io.benchmark_config import (
     HardwareCalibrationSuiteSpec,
     load_benchmark_entry_spec,
 )
+from qcchem.io.artifact_index import build_artifact_index_entry
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.mapping import map_fermionic_hamiltonian
@@ -35,6 +36,8 @@ from qcchem.core.evidence import (
 from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
+from qcchem.workflow.acceptance import build_benchmark_acceptance_summary
+from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 
 SCHEMA_VERSION = "qcchem.benchmark.v0.4-alpha"
 
@@ -182,6 +185,7 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
     distance_to_chemical_accuracy = (
         None if achieved_error is None else float(max(achieved_error - CHEMICAL_ACCURACY_HARTREE, 0.0))
     )
+    diagnostic = build_hardware_error_diagnostic(payload)
     return {
         "name": str(payload.get("run_id") or result_json_path.parent.name),
         "artifact_root": str(result_json_path.parent),
@@ -214,6 +218,7 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
         "meets_chemical_accuracy": meets_chemical_accuracy,
         "distance_to_chemical_accuracy": distance_to_chemical_accuracy,
         "hardware_verified": bool(runtime_submission and runtime_submission.get("submitted") and runtime_submission.get("succeeded")),
+        "hardware_error_diagnostic": diagnostic,
     }
 
 
@@ -649,7 +654,31 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
         artifacts=artifacts,
     )
     result.evidence_summary = build_benchmark_suite_evidence_summary(to_primitive(result))
+    if spec.acceptance.enabled:
+        result.acceptance_summary = build_benchmark_acceptance_summary(
+            to_primitive(result),
+            benchmark_result_path=artifacts.result_json,
+            required_files=spec.acceptance.required_files,
+            require_evidence_summary=spec.acceptance.require_evidence_summary,
+            require_runtime_sidecar_for_hardware_verified=(
+                spec.acceptance.require_runtime_sidecar_for_hardware_verified
+            ),
+            fail_on_runtime_accuracy_promotion=spec.acceptance.fail_on_runtime_accuracy_promotion,
+            strict_exit_code=spec.acceptance.strict_exit_code,
+        )
+    else:
+        result.acceptance_summary = {
+            "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
+            "suite_name": spec.name,
+            "accepted": True,
+            "blocking_failures": [],
+            "warnings": [{"reason": "acceptance_disabled"}],
+            "recommended_action": "review_acceptance_warnings",
+        }
     write_result_json(result, artifacts.result_json)
+    result.artifact_index_entry = build_artifact_index_entry(artifacts.result_json)
+    write_result_json(result, artifacts.result_json)
+    write_result_json(result.acceptance_summary, artifacts.root / "acceptance_summary.json")
     write_result_json(calibration_summary, artifacts.root / "calibration_summary.json")
     (artifacts.root / "calibration_report.md").write_text(
         "\n".join(

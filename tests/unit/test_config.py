@@ -170,3 +170,51 @@ def test_load_h2_runtime_micro_probe_v2_config() -> None:
     assert spec.run.output_dir == Path("artifacts/h2_runtime_micro_probe_v2")
     assert spec.exploratory.enabled is True
     assert "runtime_micro_probe" in spec.exploratory.modules
+
+
+def test_load_trust_loop_task_extensions_from_yaml(tmp_path: Path) -> None:
+    config_path = tmp_path / "trust_loop_tasks.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-trust-loop
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+problem:
+  compression:
+    enabled: true
+    execution_enabled: true
+    runtime_term_budget: 12
+  embedding:
+    enabled: true
+    execution:
+      enabled: true
+      plugin: pyscf_rhf_fragment
+tasks:
+  geometry_optimization:
+    enabled: true
+    max_steps: 8
+  gradient:
+    enabled: true
+  response_properties:
+    enabled: true
+    properties: [static_polarizability]
+    finite_field_step: 0.002
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.problem.compression.runtime_term_budget == 12
+    assert spec.problem.embedding.execution.enabled is True
+    assert spec.tasks.geometry_optimization.enabled is True
+    assert spec.tasks.geometry_optimization.max_steps == 8
+    assert spec.tasks.gradient.enabled is True
+    assert spec.tasks.response_properties.enabled is True
+    assert spec.tasks.response_properties.finite_field_step == 0.002

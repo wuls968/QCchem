@@ -6,6 +6,7 @@ from plotly.subplots import make_subplots
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
+from qcchem.workbench.data import load_featured_benchmark_model
 from qcchem.workbench.theme import THEME
 
 
@@ -165,4 +166,4 @@ def build_benchmarks_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_benchmarks_page(sample_benchmark_suite_model())
+    return build_benchmarks_page(load_featured_benchmark_model() or sample_benchmark_suite_model())

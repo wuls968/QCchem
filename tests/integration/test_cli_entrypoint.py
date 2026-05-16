@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -62,6 +63,110 @@ def test_runtime_collect_cli_reports_polled_status(
     assert "Runtime collect completed" in stdout
     assert "job-collect" in stdout
     assert "QUEUED" in stdout
+
+
+def test_benchmark_accept_and_artifact_index_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    case_root = tmp_path / "case"
+    case_root.mkdir()
+    (case_root / "result.json").write_text(
+        json.dumps(
+            {
+                "verification_status": "validated",
+                "evidence_summary": {
+                    "trust_tier": "validated",
+                    "recommended_action": "promote_validated_result",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    benchmark_result = tmp_path / "benchmark_result.json"
+    benchmark_result.write_text(
+        json.dumps(
+            {
+                "suite_name": "mini",
+                "evidence_summary": {"trust_tier": "validated", "recommended_action": "promote_validated_result"},
+                "cases": [
+                    {
+                        "name": "case",
+                        "kind": "run",
+                        "status": "validated",
+                        "expected_status": "validated",
+                        "artifact_root": str(case_root),
+                        "evidence_summary": {"trust_tier": "validated"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(["benchmark", "accept", str(benchmark_result)]) == 0
+    assert (tmp_path / "acceptance_summary.json").exists()
+    assert main(["artifacts", "index", str(tmp_path), "-o", str(tmp_path / "index.json")]) == 0
+    stdout = capsys.readouterr().out
+    assert "Benchmark acceptance: accepted" in stdout
+    assert "Artifact index written" in stdout
+
+
+def test_benchmark_run_honors_strict_acceptance_exit_code(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    result = SimpleNamespace(
+        suite_name="strict_suite",
+        summary=SimpleNamespace(total_cases=1, status_counts={"exploratory": 1}),
+        evidence_summary=None,
+        artifacts=SimpleNamespace(root=tmp_path),
+        acceptance_summary={
+            "accepted": False,
+            "blocking_failures": [{"reason": "status_mismatch"}],
+            "policy": {"strict_exit_code": True},
+        },
+    )
+    monkeypatch.setattr("qcchem.cli.main.run_benchmark_suite_from_config", lambda *args, **kwargs: result)
+
+    assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml")]) == 2
+
+
+def test_campaign_artifact_only_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    artifact_root = tmp_path / "artifacts" / "h2"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "result.json").write_text(
+        json.dumps(
+            {
+                "run_id": "h2",
+                "verification_status": "validated",
+                "evidence_summary": {
+                    "trust_tier": "validated",
+                    "recommended_action": "promote_validated_result",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = tmp_path / "campaign.yaml"
+    config.write_text(
+        f"""
+campaign:
+  name: mini_campaign
+  output_root: {tmp_path / "campaign_out"}
+  entries:
+    - name: existing_h2
+      kind: artifact
+      artifact: {artifact_root}
+""",
+        encoding="utf-8",
+    )
+
+    result_path = tmp_path / "campaign_out" / "campaign_result.json"
+    assert main(["campaign", "run", "-c", str(config)]) == 0
+    assert result_path.exists()
+    assert main(["campaign", "report", str(result_path)]) == 0
+    assert main(["campaign", "accept", str(result_path)]) == 0
+    stdout = capsys.readouterr().out
+    assert "Campaign completed: mini_campaign" in stdout
+    assert "Campaign acceptance: accepted" in stdout
 
 
 def test_workbench_cli_reports_startup(

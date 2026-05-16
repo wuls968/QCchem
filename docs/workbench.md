@@ -43,6 +43,17 @@ At startup, the server summary reads the repo's artifact inventory and reports:
 
 That makes the workbench a navigation layer over QCchem's existing evidence, not a second source of truth.
 
+The artifact inventory is now generated from the same normalized index used by
+the CLI:
+
+```bash
+qcchem artifacts index artifacts
+```
+
+Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
+indexed artifacts when they exist. The built-in sample models remain only as
+empty-workspace fallbacks.
+
 ## Showcase Path
 
 The recommended release-grade reading path is:
@@ -132,5 +143,5 @@ Workbench pages are expected to surface the same Evidence Core vocabulary as CLI
 ## Boundaries
 
 - Validated: startup summary, page registry ordering, and the `/overview` landing route.
-- Preview: deeper per-page artifact auto-selection. The pages are grounded in real repo artifacts, but not every screen is yet wired to a live artifact picker.
+- Preview: live artifact picker controls. The pages now choose indexed repo artifacts by default, but the selector UI is still read-only and conservative.
 - Not in scope: starting a background web server inside tests. The integration tests build the app and summary without launching a browser server.

@@ -57,6 +57,24 @@ qcchem release audit \
   -o artifacts/release_audit
 ```
 
+Evaluate a benchmark acceptance artifact:
+
+```bash
+qcchem benchmark accept artifacts/benchmark_suite_v1/benchmark_result.json
+```
+
+Build the artifact-driven workbench index:
+
+```bash
+qcchem artifacts index artifacts
+```
+
+Run an artifact-only campaign:
+
+```bash
+qcchem campaign run -c configs/campaign/trust_loop_mini.yaml
+```
+
 Open the local workbench when UI dependencies are installed:
 
 ```bash
@@ -114,6 +132,8 @@ qcchem report artifacts/h2/result.json
 
 Single-run artifacts include `result.json`, `report.md`,
 `resolved_config.yaml`, `run.log`, and usually `exact_result.json`.
+Runtime-facing runs also carry `hardware_error_diagnostic`, which separates
+local solver error from runtime-derived error and names the next measurement.
 
 ### Benchmarks, Studies, And Scans
 
@@ -125,6 +145,9 @@ qcchem scan run -c configs/scans/h2_short_scan.yaml -o artifacts/h2_short_scan
 
 These aggregate workflows preserve the underlying run artifacts while adding
 suite-level JSON, Markdown, tables, and registry files.
+Benchmark suites can additionally write `acceptance_summary.json`; this is the
+machine-readable gate used by campaigns and release audits to decide whether the
+evidence loop is accepted.
 
 ### Runtime Collection
 
