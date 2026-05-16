@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import add_chart_note, add_threshold_line, apply_chart_theme
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.pages.overview import build_sample_view_model
 from qcchem.workbench.theme import THEME
 
@@ -142,4 +143,4 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_result_confidence_page(build_sample_view_model())
+    return build_result_confidence_page(load_featured_run_view_model() or build_sample_view_model())

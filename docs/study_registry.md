@@ -19,7 +19,8 @@
 - `RunRecord`
 - `StudyResult`
 - `RegistryEntry`
-- `CampaignSpec`（当前先落 schema）
+- `CampaignSpec`
+- `CampaignEntrySpec`
 
 ## Registry 的作用
 
@@ -50,6 +51,20 @@ registry 不是数据库替代品，而是 artifact 层的最小索引：
 
 ## 当前限制
 
-- campaign 目前还没有独立 CLI/workflow
+- campaign 目前已有独立 CLI/workflow，但默认应优先使用 artifact-only 或本地 workflow；真实 runtime 仍必须显式走预算确认边界
 - registry 目前是 artifact-local，不是全局查询服务
 - comparison 目前以 summary 为主，不是交互式分析层
+
+## Campaign Workflow
+
+campaign 把 run、benchmark、study、scan、hardware calibration 或已有 artifact
+收成一个更高层的证据闭环。最小示例：
+
+```bash
+qcchem campaign run -c configs/campaign/trust_loop_mini.yaml
+qcchem campaign report artifacts/trust_loop_mini_campaign/campaign_result.json
+qcchem campaign accept artifacts/trust_loop_mini_campaign/campaign_result.json
+```
+
+输出包括 `campaign_result.json`、`campaign_report.md`、`registry.json`、
+`artifact_index.json` 和 `acceptance_summary.json`。

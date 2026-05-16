@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from qcchem.core import BenchmarkCaseSpec, BenchmarkSuiteSpec
+from qcchem.core import BenchmarkAcceptanceSpec, BenchmarkCaseSpec, BenchmarkSuiteSpec
 from qcchem.io.config import _project_root, _require_mapping, resolve_user_path
 
 
@@ -72,12 +72,30 @@ def load_benchmark_suite_spec(path: Path) -> BenchmarkSuiteSpec:
             )
         )
 
+    acceptance_raw = suite_raw.get("acceptance", {})
+    if acceptance_raw is None:
+        acceptance_raw = {}
+    if not isinstance(acceptance_raw, dict):
+        raise ValueError("benchmark_suite.acceptance must be a mapping.")
+
     return BenchmarkSuiteSpec(
         name=str(suite_raw["name"]),
         description=str(suite_raw.get("description", "")),
         registry_name=str(suite_raw.get("registry_name", suite_raw["name"])),
         cases=cases,
         tags=[str(value) for value in suite_raw.get("tags", [])],
+        acceptance=BenchmarkAcceptanceSpec(
+            enabled=bool(acceptance_raw.get("enabled", True)),
+            required_files=[str(value) for value in acceptance_raw.get("required_files", ["result.json"])],
+            require_evidence_summary=bool(acceptance_raw.get("require_evidence_summary", True)),
+            require_runtime_sidecar_for_hardware_verified=bool(
+                acceptance_raw.get("require_runtime_sidecar_for_hardware_verified", True)
+            ),
+            fail_on_runtime_accuracy_promotion=bool(
+                acceptance_raw.get("fail_on_runtime_accuracy_promotion", True)
+            ),
+            strict_exit_code=bool(acceptance_raw.get("strict_exit_code", True)),
+        ),
     )
 
 

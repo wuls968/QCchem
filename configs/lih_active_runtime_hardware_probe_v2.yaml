@@ -29,6 +29,7 @@ problem:
     method: modified_cholesky
     threshold: 1.0e-3
     max_rank: 2
+    runtime_term_budget: 12
     execution_enabled: true
   measurement:
     strategy: low_rank_commuting

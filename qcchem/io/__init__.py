@@ -1,7 +1,8 @@
 """Input and output helpers for QCchem."""
 
-from .artifact_index import build_artifact_index
+from .artifact_index import build_artifact_index, build_artifact_index_entry
 from .benchmark_config import load_benchmark_suite_spec
+from .campaign_config import load_campaign_spec
 from .config import load_run_spec
 from .release_audit_config import load_release_audit_spec
 from .scan_config import load_scan_spec
@@ -9,6 +10,8 @@ from .study_config import load_study_spec
 
 __all__ = [
     "build_artifact_index",
+    "build_artifact_index_entry",
+    "load_campaign_spec",
     "load_benchmark_suite_spec",
     "load_release_audit_spec",
     "load_run_spec",

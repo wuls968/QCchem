@@ -61,6 +61,19 @@ task 层不是跟着 run 的总状态一起混掉，而是单独表达：
 - `property_result.verification_status`
 - `property_result.properties[*].implementation_status`
 
+## Trust-loop task extensions
+
+可信闭环升级新增三个 PySCF-backed reference task：
+
+- `tasks.geometry_optimization`
+- `tasks.gradient`
+- `tasks.response_properties`
+
+这些任务默认作为 chemistry fact/reference layer 使用，不替代 quantum solver
+主线。小体系 H2/LiH 风格 geometry optimization、RHF nuclear gradient、finite-field
+static polarizability 可以进入 validated artifact；超出边界或未实现 property
+必须保持 exploratory / placeholder_only。
+
 这可以避免“ground-state validated”误导成“整份 artifact 全部 validated”。
 
 ## 当前边界

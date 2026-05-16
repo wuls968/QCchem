@@ -72,6 +72,7 @@ class CompressionSpec:
     term_budget_policy: str = "precision_first"
     compression_error_budget_hartree: float = 8.0e-4
     allow_pauli_truncation: bool = False
+    runtime_term_budget: int | None = None
     apply_to_solver: bool = False
     execution_enabled: bool = False
 
@@ -95,6 +96,15 @@ class FragmentSpec:
 
 
 @dataclass(slots=True)
+class EmbeddingExecutionSpec:
+    """Optional fragment execution settings for embedding workflows."""
+
+    enabled: bool = False
+    plugin: str = "pyscf_rhf_fragment"
+    validate_against_full_system: bool = True
+
+
+@dataclass(slots=True)
 class EmbeddingSpec:
     """Embedding/fragmentation workflow configuration."""
 
@@ -103,6 +113,7 @@ class EmbeddingSpec:
     bath_threshold: float = 0.05
     solver_plugin: str = "placeholder_fragment_solver"
     fragments: list[FragmentSpec] = field(default_factory=list)
+    execution: EmbeddingExecutionSpec = field(default_factory=EmbeddingExecutionSpec)
 
 
 @dataclass(slots=True)
@@ -484,6 +495,35 @@ class PerturbativeCorrectionTaskSpec:
 
 
 @dataclass(slots=True)
+class GeometryOptimizationTaskSpec:
+    """Classical geometry optimization reference task."""
+
+    enabled: bool = False
+    method: str = "pyscf_rhf"
+    max_steps: int = 50
+    gradient_tolerance: float = 3.0e-4
+
+
+@dataclass(slots=True)
+class GradientTaskSpec:
+    """Classical nuclear-gradient reference task."""
+
+    enabled: bool = False
+    method: str = "pyscf_rhf"
+    state_index: int = 0
+
+
+@dataclass(slots=True)
+class ResponsePropertyTaskSpec:
+    """Response-property task bundle."""
+
+    enabled: bool = False
+    properties: list[str] = field(default_factory=lambda: ["static_polarizability"])
+    method: str = "finite_field_rhf"
+    finite_field_step: float = 1.0e-3
+
+
+@dataclass(slots=True)
 class TaskSpec:
     """Optional chemistry tasks attached to a run."""
 
@@ -492,6 +532,11 @@ class TaskSpec:
     perturbative_correction: PerturbativeCorrectionTaskSpec = field(
         default_factory=PerturbativeCorrectionTaskSpec
     )
+    geometry_optimization: GeometryOptimizationTaskSpec = field(
+        default_factory=GeometryOptimizationTaskSpec
+    )
+    gradient: GradientTaskSpec = field(default_factory=GradientTaskSpec)
+    response_properties: ResponsePropertyTaskSpec = field(default_factory=ResponsePropertyTaskSpec)
 
 
 @dataclass(slots=True)
@@ -633,12 +678,39 @@ class StudySpec:
 
 
 @dataclass(slots=True)
-class CampaignSpec:
-    """A higher-level grouping of studies."""
+class CampaignEntrySpec:
+    """One entry in a trust-loop campaign workflow."""
 
     name: str
-    studies: list[Path] = field(default_factory=list)
+    kind: str
+    config: Path | None = None
+    artifact: Path | None = None
+    output_dir: Path | None = None
+    allow_runtime_submission: bool = False
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class CampaignSpec:
+    """A higher-level grouping of artifact-producing workflows."""
+
+    name: str
+    entries: list[CampaignEntrySpec] = field(default_factory=list)
     description: str = ""
+    output_root: Path = Path("artifacts/campaign")
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class BenchmarkAcceptanceSpec:
+    """Benchmark-suite acceptance policy."""
+
+    enabled: bool = True
+    required_files: list[str] = field(default_factory=lambda: ["result.json"])
+    require_evidence_summary: bool = True
+    require_runtime_sidecar_for_hardware_verified: bool = True
+    fail_on_runtime_accuracy_promotion: bool = True
+    strict_exit_code: bool = True
 
 
 @dataclass(slots=True)
@@ -664,6 +736,7 @@ class BenchmarkSuiteSpec:
     registry_name: str | None = None
     cases: list[BenchmarkCaseSpec] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    acceptance: BenchmarkAcceptanceSpec = field(default_factory=BenchmarkAcceptanceSpec)
 
 
 @dataclass(slots=True)

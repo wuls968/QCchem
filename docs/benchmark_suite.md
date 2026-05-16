@@ -80,6 +80,25 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 - aggregate report 必须能从 JSON 再生成
 - exploratory 或 unstable case 也必须有正式 schema，而不是临时脚本输出
 
+## Acceptance Policy
+
+`benchmark_suite.acceptance` 是 benchmark 的可信闭环 gate。默认规则是：
+
+- 每个 case 的 `status` 必须匹配 `expected_status`
+- 每个 case artifact 必须有 `result.json`
+- suite 和 case 必须能提供 `evidence_summary`
+- `hardware_verified=true` 的 case 必须有可读取的 `runtime_submission.json`
+- runtime-derived chemistry miss 不允许被误升成 `promote_validated_result`
+
+可用命令：
+
+```bash
+qcchem benchmark accept artifacts/benchmark_suite_v1/benchmark_result.json
+```
+
+输出 `acceptance_summary.json`，其中包含 `accepted`、`blocking_failures`、
+`warnings` 和 `recommended_action`。
+
 ## 后续扩展
 
 - 更丰富的 shot/noise/runtime benchmark

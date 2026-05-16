@@ -8,10 +8,12 @@ import json
 from pathlib import Path
 
 from qcchem.io.agent_config import load_agent_task_spec
+from qcchem.io.artifact_index import build_artifact_index
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
+from qcchem.workflow.acceptance import accept_benchmark_result
 from qcchem.workflow.evidence_agent import (
     append_ai_provenance_event,
     review_claims,
@@ -19,6 +21,7 @@ from qcchem.workflow.evidence_agent import (
     write_review_outputs,
 )
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
+from qcchem.workflow.campaign import accept_campaign_result, report_campaign_result, run_campaign_from_config
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
 from qcchem.workflow.release_audit import run_release_audit_from_config
 from qcchem.workflow.runner import run_from_config
@@ -59,6 +62,27 @@ def _build_parser() -> argparse.ArgumentParser:
     benchmark_report = benchmark_subparsers.add_parser("report", help="Regenerate a benchmark report from JSON.")
     benchmark_report.add_argument("result_json", type=Path)
     benchmark_report.add_argument("-o", "--output", type=Path)
+    benchmark_accept = benchmark_subparsers.add_parser("accept", help="Evaluate benchmark acceptance from JSON.")
+    benchmark_accept.add_argument("result_json", type=Path)
+    benchmark_accept.add_argument("-o", "--output", type=Path)
+
+    artifacts_parser = subparsers.add_parser("artifacts", help="Artifact index commands.")
+    artifacts_subparsers = artifacts_parser.add_subparsers(dest="artifacts_command", required=True)
+    artifacts_index = artifacts_subparsers.add_parser("index", help="Build a normalized artifact index.")
+    artifacts_index.add_argument("artifact_root", type=Path, nargs="?", default=Path("artifacts"))
+    artifacts_index.add_argument("-o", "--output", type=Path)
+
+    campaign_parser = subparsers.add_parser("campaign", help="Artifact-driven campaign workflow commands.")
+    campaign_subparsers = campaign_parser.add_subparsers(dest="campaign_command", required=True)
+    campaign_run = campaign_subparsers.add_parser("run", help="Run a campaign from YAML config.")
+    campaign_run.add_argument("-c", "--config", type=Path, required=True)
+    campaign_run.add_argument("-o", "--output-dir", type=Path)
+    campaign_report = campaign_subparsers.add_parser("report", help="Regenerate a campaign report from JSON.")
+    campaign_report.add_argument("result_json", type=Path)
+    campaign_report.add_argument("-o", "--output", type=Path)
+    campaign_accept = campaign_subparsers.add_parser("accept", help="Evaluate campaign acceptance from JSON.")
+    campaign_accept.add_argument("result_json", type=Path)
+    campaign_accept.add_argument("-o", "--output", type=Path)
 
     scan_parser = subparsers.add_parser("scan", help="Scan workflow commands.")
     scan_subparsers = scan_parser.add_subparsers(dest="scan_command", required=True)
@@ -169,6 +193,14 @@ def _build_parser() -> argparse.ArgumentParser:
     ai_review.add_argument("--claim", help="Claim text to review. Defaults to artifact claims.")
     ai_review.add_argument("-o", "--output-dir", type=Path, help="Optional output directory for review files.")
     return parser
+
+
+def _acceptance_exit_code(summary: dict[str, object] | None) -> int:
+    if not isinstance(summary, dict):
+        return 0
+    policy = summary.get("policy")
+    strict_exit_code = bool(policy.get("strict_exit_code")) if isinstance(policy, dict) else False
+    return 2 if strict_exit_code and not bool(summary.get("accepted")) else 0
 
 
 def _write_aggregate_from_json(result_json: Path, output: Path | None, *, kind: str) -> int:
@@ -340,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
                     f"{summary.get('runtime_evidence_status_counts', {})}"
                 )
                 print(f"Artifacts: {result.get('artifact_root')}")
-                return 0
+                return _acceptance_exit_code(result.get("acceptance_summary"))
             print(f"Benchmark suite completed: {result.suite_name}")
             print(f"Cases: {result.summary.total_cases}")
             print(f"Status counts: {result.summary.status_counts}")
@@ -349,9 +381,43 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Trust tier: {result.evidence_summary.trust_tier}")
                 print(f"Recommended action: {result.evidence_summary.recommended_action}")
             print(f"Artifacts: {result.artifacts.root}")
-            return 0
+            return _acceptance_exit_code(getattr(result, "acceptance_summary", None))
         if args.benchmark_command == "report":
             return _write_aggregate_from_json(args.result_json, args.output, kind="benchmark")
+        if args.benchmark_command == "accept":
+            summary = accept_benchmark_result(args.result_json, output_path=args.output)
+            print(f"Benchmark acceptance: {'accepted' if summary['accepted'] else 'failed'}")
+            print(f"Blocking failures: {len(summary['blocking_failures'])}")
+            print(f"Recommended action: {summary['recommended_action']}")
+            return 0 if summary["accepted"] else 2
+
+    if args.command == "artifacts":
+        if args.artifacts_command == "index":
+            index = build_artifact_index(args.artifact_root)
+            output = args.output or args.artifact_root / "artifact_index.json"
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(to_primitive(index), indent=2, sort_keys=True), encoding="utf-8")
+            print(f"Artifact index written to {output}")
+            print(f"Artifacts: {index['total_artifacts']}")
+            return 0
+
+    if args.command == "campaign":
+        if args.campaign_command == "run":
+            summary = run_campaign_from_config(args.config, output_dir=args.output_dir)
+            print(f"Campaign completed: {summary['campaign_name']}")
+            print(f"Status: {summary['status']}")
+            print(f"Artifacts: {summary['artifact_root']}")
+            return 0 if summary["acceptance_summary"]["accepted"] else 2
+        if args.campaign_command == "report":
+            report_campaign_result(args.result_json, output_path=args.output)
+            print(f"Campaign report written to {args.output or args.result_json.with_name('campaign_report.md')}")
+            return 0
+        if args.campaign_command == "accept":
+            summary = accept_campaign_result(args.result_json, output_path=args.output)
+            print(f"Campaign acceptance: {'accepted' if summary['accepted'] else 'failed'}")
+            print(f"Blocking failures: {len(summary['blocking_failures'])}")
+            print(f"Recommended action: {summary['recommended_action']}")
+            return 0 if summary["accepted"] else 2
 
     if args.command == "scan":
         if args.scan_command == "run":

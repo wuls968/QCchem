@@ -78,6 +78,13 @@ def test_precision_first_compression_disables_legacy_rank_times_six_truncation()
     assert _compression_post_term_limit(bundle, 100, spec) is None
 
 
+def test_explicit_runtime_term_budget_restores_low_rank_truncation() -> None:
+    bundle = SimpleNamespace(method="modified_cholesky", rank=3, secondary_rank=None)
+    spec = CompressionSpec(enabled=True, execution_enabled=True, runtime_term_budget=12)
+
+    assert _compression_post_term_limit(bundle, 100, spec) == 12
+
+
 def test_lr_ace_adaptive_config_is_loaded_from_yaml(tmp_path: Path) -> None:
     config_path = tmp_path / "adaptive_lr_ace.yaml"
     config_path.write_text(

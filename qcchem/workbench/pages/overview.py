@@ -12,6 +12,7 @@ from qcchem.workflow.ai_store import list_ticket_records, workspace_root
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.components.molecule import build_molecule_viewer
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.evidence_console import build_evidence_console_model, format_action_label
 from qcchem.workbench.theme import THEME
 from qcchem.workbench.viewmodels import build_run_view_model
@@ -260,6 +261,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     confidence = view.get("confidence") or {}
     evidence_summary = view.get("evidence_summary") or {}
     evidence_console = build_evidence_console_model(view)
+    artifact_entry = view.get("artifact_index_entry") or {}
+    artifact_entry_path = artifact_entry.get("result_json") or artifact_entry.get("artifact_root") or "sample fallback"
     workspace_snapshot = _workspace_snapshot()
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
@@ -445,6 +448,17 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         ],
                     ),
                     detail_card(
+                        "Artifact browser",
+                        [
+                            ("Selected artifact", str(artifact_entry.get("artifact_name", "sample model"))),
+                            ("Kind", str(artifact_entry.get("artifact_kind", "sample"))),
+                            ("Trust tier", str(artifact_entry.get("trust_tier", evidence_summary.get("trust_tier", "sample")))),
+                            ("Runtime sidecar", str(artifact_entry.get("runtime_submission_status", "not indexed"))),
+                            ("Path", str(artifact_entry_path)),
+                        ],
+                        eyebrow="Read-only Index",
+                    ),
+                    detail_card(
                         "Execution posture",
                         [
                             ("Benchmark target", str(benchmark.get("comparison_target", "exact diagonalization"))),
@@ -479,4 +493,4 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_overview_page(build_sample_view_model())
+    return build_overview_page(load_featured_run_view_model() or build_sample_view_model())
