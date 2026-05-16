@@ -1,0 +1,2297 @@
+{
+  "artifacts": {
+    "calibration_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/calibration.json",
+    "calibration_report_markdown": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/calibration_report.md",
+    "exact_result_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/exact_result.json",
+    "hdf5_file": null,
+    "log_file": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/run.log",
+    "qcschema_json": null,
+    "report_markdown": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/report.md",
+    "resolved_config": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/resolved_config.yaml",
+    "result_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/result.json",
+    "root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics",
+    "runtime_submission_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/runtime_submission.json"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": 2042,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 0.0,
+    "absolute_error_threshold": 1e-09,
+    "comparison_target": "variational_result",
+    "compressed_vs_uncompressed": null,
+    "exact_available": true,
+    "exact_electronic_energy": -8.706043896722274,
+    "exact_total_energy": -7.484440614181889,
+    "meets_threshold": true,
+    "relative_error": 0.0,
+    "relative_error_threshold": 1e-09,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "calibration": {
+    "achieved_error": 0.0,
+    "available": true,
+    "estimated_measurement_cost": 10000.0,
+    "estimated_vs_measured_cost": null,
+    "measured_shot_usage": null,
+    "measured_wall_time_seconds": 0.00030162499751895666,
+    "notes": [
+      "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+      "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+    ],
+    "precision_target": 0.01,
+    "reference_target": "variational_result"
+  },
+  "capability_tier": "exploratory",
+  "cast_hamiltonian": null,
+  "cavity_qed_model": null,
+  "chemical_accuracy": {
+    "absolute_error_hartree": 0.0,
+    "absolute_error_kcal_mol": 0.0,
+    "assessment_target": "local_execution",
+    "available": true,
+    "computed_energy": -7.484440614181889,
+    "meets_chemical_accuracy": true,
+    "notes": [
+      "Meets chemical accuracy threshold."
+    ],
+    "reference_energy": -7.484440614181889,
+    "relative_error": 0.0,
+    "statistical_error": null,
+    "status": "validated",
+    "threshold_hartree": 0.0016,
+    "threshold_kcal_mol": 1.0040151583999999
+  },
+  "compression_result": null,
+  "determinant_selection": null,
+  "embedding_result": null,
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": null,
+    "electronic_energy": -8.706043896722274,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -8.706043896722274,
+    "hf_reference_energy": null,
+    "nuclear_repulsion_energy": 1.221603282540386,
+    "solver_energy": -8.706043896722274,
+    "total_energy": -7.484440614181889
+  },
+  "error_budget": null,
+  "evidence_summary": {
+    "chemical_accuracy_status": "met",
+    "comparison_evidence": {
+      "absolute_error": 0.0,
+      "baseline_strength": "strong",
+      "comparison_target": "variational_result",
+      "compressed_vs_uncompressed": null,
+      "relative_error": 0.0,
+      "statistical_error": null
+    },
+    "decision_worthiness": {
+      "blocking_issues": [
+        "Sparse exact energy is exact only for the configured finite lattice/cutoff Hamiltonian.",
+        "Physical-sector projection is a finite-cutoff Gauss-law audit, not continuum chemistry accuracy.",
+        "Lattice-QED execution uses a finite cutoff real-space field Hamiltonian.",
+        "Exact baselines compare against the discretized finite cutoff model, not continuum chemistry.",
+        "Continuum, gauge-cutoff, and grid-convergence claims require explicit follow-up studies.",
+        "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+        "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
+        "Runtime circuits still act on the full qubit register unless explicitly transformed.",
+        "QFT dynamics curves are exact/Trotter trajectories of the finite lattice/cutoff Hamiltonian.",
+        "Trotter and runtime-batch evidence do not establish continuum-limit molecular accuracy."
+      ],
+      "compression_context": {
+        "method": null,
+        "verification_status": null
+      },
+      "recommended_action": "collect_stronger_baseline",
+      "reduction_context": {
+        "selection_mode": "qft_lattice_discretization",
+        "transformers_applied": [
+          "LatticeQEDRealSpaceDiscretization"
+        ]
+      },
+      "why": [
+        "trust_tier=exploratory",
+        "chemical_accuracy_status=met",
+        "runtime_evidence_status=none",
+        "runtime_accuracy_status=unavailable"
+      ]
+    },
+    "energy_evidence": {
+      "constant_energy_correction": 0.0,
+      "electronic_energy": -8.706043896722274,
+      "perturbative_correction": null,
+      "solver_energy": -8.706043896722274,
+      "total_energy": -7.484440614181889
+    },
+    "execution_evidence": {
+      "field_model_kind": "lattice_qed",
+      "measured_shot_usage": null,
+      "measurement_group_count": 1,
+      "measurement_strategy": "lattice_qed_sparse_dynamics",
+      "runtime_backend": null,
+      "runtime_job_id": null,
+      "shots": null,
+      "wall_time_seconds": 0.43915962503524497
+    },
+    "primary_baseline": {
+      "baseline_kind": "exact",
+      "baseline_scope": "single_run",
+      "baseline_source": "exact_diagonalization",
+      "baseline_strength": "strong"
+    },
+    "primary_error_metric": {
+      "comparison_target": "variational_result",
+      "metric_kind": "absolute_error_hartree",
+      "threshold": 1e-09,
+      "units": "Hartree",
+      "value": 0.0
+    },
+    "primary_scientific_claim": "H2-4site-lattice-QED-sparse-dynamics lattice-QED result is gauge-audited finite-cutoff evidence compared against variational_result.",
+    "recommended_action": "collect_stronger_baseline",
+    "result_identity": {
+      "artifact_kind": "run",
+      "artifact_name": "h2_lattice_qed_4site_sparse_dynamics",
+      "backend_kind": "statevector",
+      "basis": "real_space_lattice",
+      "field_model_kind": "lattice_qed",
+      "mapping_kind": "lattice_qed:jordan_wigner",
+      "molecule_name": "H2-4site-lattice-QED-sparse-dynamics"
+    },
+    "runtime_derived_accuracy": {
+      "absolute_error_hartree": null,
+      "assessment_target": null,
+      "meets_chemical_accuracy": null,
+      "status": "unavailable",
+      "threshold_hartree": null
+    },
+    "runtime_evidence_status": "none",
+    "scientific_accuracy": {
+      "absolute_error_hartree": 0.0,
+      "assessment_target": "local_execution",
+      "meets_chemical_accuracy": true,
+      "status": "met",
+      "threshold_hartree": 0.0016
+    },
+    "trust_judgment": {
+      "hardware_evidence_tier": null,
+      "hardware_verified": false,
+      "module_origin": "exploratory",
+      "scientific_risk_notes": [
+        "Sparse exact energy is exact only for the configured finite lattice/cutoff Hamiltonian.",
+        "Physical-sector projection is a finite-cutoff Gauss-law audit, not continuum chemistry accuracy.",
+        "Lattice-QED execution uses a finite cutoff real-space field Hamiltonian.",
+        "Exact baselines compare against the discretized finite cutoff model, not continuum chemistry.",
+        "Continuum, gauge-cutoff, and grid-convergence claims require explicit follow-up studies.",
+        "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+        "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
+        "Runtime circuits still act on the full qubit register unless explicitly transformed.",
+        "QFT dynamics curves are exact/Trotter trajectories of the finite lattice/cutoff Hamiltonian.",
+        "Trotter and runtime-batch evidence do not establish continuum-limit molecular accuracy."
+      ],
+      "verification_notes": [
+        "validation_scope=lattice_qed_sparse_projected_exact",
+        "validation_scope=lattice_qed_finite_cutoff_exact_gate",
+        "validation_scope=lattice_qed_real_time_dynamics"
+      ],
+      "verification_status": "exploratory"
+    },
+    "trust_tier": "exploratory"
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -8.706043896722274,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -8.706043896722274,
+    "source": "exact_diagonalization",
+    "total_energy": -7.484440614181889
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "field_model": {
+    "capability_tier": "exploratory",
+    "error_budget": {},
+    "model_kind": "lattice_qed",
+    "observables": [
+      "gauss_law",
+      "physical_sector",
+      "electric_flux",
+      "electric_energy",
+      "wilson_loop",
+      "real_time_dynamics",
+      "trotter_resource_estimate",
+      "qpe_resource_estimate"
+    ],
+    "registry_name": "finite_cutoff_lattice_qed",
+    "resource_estimate": {},
+    "risk_notes": [
+      "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+    ]
+  },
+  "hardware_evidence_tier": null,
+  "hardware_verified": false,
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_4site_lattice_qed_sparse_dynamics.yaml",
+      "Building exploratory lattice-QED field Hamiltonian",
+      "Constructed lattice-QED Hamiltonian: sites=4, links=3, qubits=10",
+      "Prepared measurement plan: groups=1, cost=10000",
+      "Skipping backend construction for solver: lattice_qed_sparse_exact",
+      "Running solver: lattice_qed_sparse_exact",
+      "Using sparse lattice-QED exact solver as the finite-cutoff exact baseline",
+      "Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/exact_result.json",
+      "Computed empirical calibration: wall_time=0.000s, measured_cost=None",
+      "Building lattice-QED real-time dynamics artifact",
+      "Computed lattice-QED dynamics: exact_skipped_reason=None, trotter_skipped_reason=None",
+      "Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/result.json",
+      "Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics/report.md",
+      "Run completed"
+    ]
+  },
+  "low_rank_resource_estimate": null,
+  "mapping": {
+    "fermionic_term_count": 4,
+    "kind": "lattice_qed:jordan_wigner",
+    "num_qubits": 10,
+    "qubit_term_count": 1
+  },
+  "measurement": {
+    "cost_reduction_ratio": 1.0,
+    "estimated_shot_cost": 10000.0,
+    "execution_mode": "estimator",
+    "group_count": 1,
+    "grouping_policy": "finite_cutoff_sparse_projected",
+    "low_rank_aware": false,
+    "notes": [
+      "Measurement groups estimated with strategy 'lattice_qed_sparse_dynamics'.",
+      "Per-group shot estimate derived from precision target 0.01.",
+      "Measurement planning reflects the uncompressed execution path."
+    ],
+    "runtime_precision_target": 0.01,
+    "strategy": "lattice_qed_sparse_dynamics",
+    "term_count": 1,
+    "uncompressed_estimated_shot_cost": 10000.0,
+    "uncompressed_group_count": 1
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "module_origin": "exploratory",
+  "noise_model": null,
+  "perturbative_correction_result": null,
+  "policy_engine": {
+    "overrides_applied": [
+      "backend.shots"
+    ],
+    "policy_name": "benchmark",
+    "presets_used": [
+      "benchmark"
+    ],
+    "provenance": {
+      "allow_exploratory": true,
+      "source": "qcchem.backends.policy_engine"
+    },
+    "resolved_policy": {
+      "backend": {
+        "abelian_grouping": true,
+        "kind": "statevector",
+        "noise": {
+          "basis_gates": [],
+          "depolarizing_probability_1q": 0.0,
+          "depolarizing_probability_2q": 0.0,
+          "enabled": false,
+          "profile": "none",
+          "readout_error_probability": 0.0
+        },
+        "precision": null,
+        "repetitions": 1,
+        "runtime": {
+          "batch_ready": false,
+          "calibration_strategy": "default",
+          "enabled": false,
+          "grouping_policy": "default",
+          "instance": null,
+          "max_budgeted_shots": null,
+          "max_execution_seconds": null,
+          "options": {},
+          "precision_target": null,
+          "resilience_level": 0,
+          "runtime_ready": false,
+          "service": "local",
+          "session_ready": false
+        },
+        "seed": 2042,
+        "shots": 4096
+      },
+      "benchmark": {
+        "absolute_error_threshold": 1e-09,
+        "enabled": true,
+        "exact_baseline_qubit_limit": 0,
+        "relative_error_threshold": 1e-09
+      },
+      "exploratory": {
+        "enabled": true,
+        "modules": [
+          "lattice_qed",
+          "sparse_projected_engine",
+          "qft_dynamics"
+        ],
+        "notes": [
+          "Sparse projected exact dynamics and Trotter comparison for a finite lattice-QED Hamiltonian."
+        ]
+      },
+      "hardware_optimization": {
+        "candidate_strategies": [
+          "jw_puccd_layout_baseline",
+          "parity_puccd_layout",
+          "parity_succd_layout",
+          "parity_uccsd_layout"
+        ],
+        "enabled": false,
+        "max_real_jobs": 3,
+        "max_total_budgeted_shots": 40960,
+        "max_total_estimated_quantum_seconds": 600.0,
+        "profile": "h2_precision_push",
+        "requires_confirmation": true,
+        "selection_metric": "accuracy_then_cost",
+        "stop_if_error_below": 0.0016
+      },
+      "mapping": {
+        "kind": "jordan_wigner"
+      },
+      "mitigation": {
+        "experimental": false,
+        "pec": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "readout": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "symmetry_check": {
+          "enabled": true,
+          "strategy": "parity_placeholder"
+        },
+        "zne": {
+          "enabled": false,
+          "method": "placeholder"
+        }
+      },
+      "molecule": {
+        "basis": "real_space_lattice",
+        "charge": 0,
+        "geometry": [
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "symbol": "H"
+          },
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.74
+            ],
+            "symbol": "H"
+          }
+        ],
+        "multiplicity": 1,
+        "name": "H2-4site-lattice-QED-sparse-dynamics",
+        "unit": "angstrom"
+      },
+      "policy": {
+        "allow_exploratory": true,
+        "name": "benchmark"
+      },
+      "problem": {
+        "active_space": null,
+        "cavity_qed": {
+          "enabled": false,
+          "include_dipole_self_energy": true,
+          "model": "pauli_fierz_cavity_qed",
+          "modes": [
+            {
+              "coupling_strength": 0.05,
+              "frequency": 0.4,
+              "max_occupation": 1,
+              "polarization": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ],
+          "photon_encoding": "linear",
+          "photon_physical_subspace_penalty": 25.0
+        },
+        "compression": {
+          "allow_pauli_truncation": false,
+          "apply_to_solver": false,
+          "compression_error_budget_hartree": 0.0008,
+          "enabled": false,
+          "execution_enabled": false,
+          "max_rank": null,
+          "method": "modified_cholesky",
+          "rank_schedule": null,
+          "term_budget_policy": "precision_first",
+          "threshold": 1e-08
+        },
+        "embedding": {
+          "bath_threshold": 0.05,
+          "enabled": false,
+          "fragments": [],
+          "method": "dmet_skeleton",
+          "solver_plugin": "placeholder_fragment_solver"
+        },
+        "freeze_core": false,
+        "measurement": {
+          "execution_mode": "estimator",
+          "grouping_policy": "finite_cutoff_sparse_projected",
+          "runtime_precision_target": null,
+          "strategy": "lattice_qed_sparse_dynamics"
+        },
+        "qft": {
+          "ansatz": {
+            "generator_policy": "gauge_invariant_hopping"
+          },
+          "constraints": {
+            "enforce_physical_sector": true,
+            "gauss_law_penalty": 10.0,
+            "gauss_law_tolerance": 1e-08,
+            "max_sector_enumeration_qubits": 12,
+            "padding_penalty": 50.0,
+            "particle_number_penalty": 10.0,
+            "target_charge_sector": "neutral"
+          },
+          "dimensions": 1,
+          "dynamics": {
+            "enabled": true,
+            "evolution": {
+              "exact_enabled": true,
+              "exact_qubit_limit": 12,
+              "trotter_enabled": true,
+              "trotter_order": 1,
+              "trotter_step": 0.05
+            },
+            "initial_state": {
+              "base": "physical_reference",
+              "kind": "local_hopping_pulse",
+              "link_index": 0,
+              "pulse_strength": 1.0,
+              "pulse_time": 0.05
+            },
+            "method": "real_time_quench",
+            "runtime": {
+              "enabled": false,
+              "runtime_observables": "aggregate_gauge"
+            },
+            "time_grid": {
+              "num_points": 21,
+              "start": 0.0,
+              "stop": 1.0
+            }
+          },
+          "enabled": true,
+          "engine": {
+            "auto_project_physical_sector": true,
+            "materialize_pauli": "never",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "projector_tolerance": 1e-08,
+            "representation": "sparse_projected",
+            "store_basis_indices": "full"
+          },
+          "gauge": {
+            "coupling": 1.0,
+            "electric_cutoff": 1,
+            "group": "u1",
+            "include_magnetic_plaquettes": true
+          },
+          "grid": {
+            "axes": "principal",
+            "boundary": "open",
+            "origin": "molecule_center",
+            "shape": [
+              4
+            ],
+            "softening": 0.35,
+            "spacing": [
+              0.75
+            ]
+          },
+          "matter": {
+            "include_soft_coulomb_density": false,
+            "spin_components": 1,
+            "target_electrons": "auto"
+          },
+          "model": "lattice_qed_minimal_coupling"
+        },
+        "remove_orbitals": []
+      },
+      "run": {
+        "exports": {
+          "hdf5": false,
+          "qcschema_json": false
+        },
+        "output_dir": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_4site_sparse_dynamics",
+        "overwrite": true,
+        "seed": 2042
+      },
+      "solver": {
+        "ansatz": {
+          "entanglement": "full",
+          "entanglement_blocks": "cz",
+          "kind": "twolocal",
+          "reps": 2,
+          "rotation_blocks": [
+            "ry",
+            "rz"
+          ],
+          "skip_final_rotation_layer": false
+        },
+        "experimental": true,
+        "initial_point": "zeros",
+        "kind": "lattice_qed_sparse_exact",
+        "lr_ace_adaptive": {
+          "candidate_pool_policy": "residual_guided",
+          "candidate_scan_limit": 64,
+          "enabled": false,
+          "generator_schedule": [
+            8,
+            16,
+            24,
+            32
+          ],
+          "initial_point_strategies": [
+            "zeros",
+            "random"
+          ],
+          "max_adaptive_expansions": 3,
+          "max_wall_time_seconds": 1200.0,
+          "min_energy_improvement_hartree": 0.0002,
+          "optimizer_maxiter_schedule": [
+            1000,
+            2000,
+            5000
+          ],
+          "random_restarts": 3,
+          "residual_batch_size": 8,
+          "residual_scan_angles": [
+            -0.15,
+            -0.05,
+            0.05,
+            0.15
+          ],
+          "target_error_hartree": 0.0016,
+          "uncompressed_check_qubit_limit": 12
+        },
+        "optimizer": {
+          "kind": "COBYLA",
+          "maxiter": 100,
+          "tol": null
+        }
+      },
+      "tasks": {
+        "excited_state": {
+          "enabled": false,
+          "method": "exact_spectrum",
+          "num_states": 2,
+          "state_indices": [
+            1
+          ]
+        },
+        "perturbative_correction": {
+          "enabled": false,
+          "method": "nevpt2",
+          "plugin": "pyscf",
+          "root": 0
+        },
+        "properties": []
+      },
+      "tc_qsci": {
+        "cast_model": {
+          "kind": "identity",
+          "npz_path": null
+        },
+        "enabled": false,
+        "initial_state": {
+          "determinants": [],
+          "kind": "hf",
+          "max_determinants": null
+        },
+        "kick": {
+          "num_kicks": 1,
+          "pauli_term_budget": null,
+          "shots": 1024,
+          "time": 0.05
+        },
+        "resource_estimation": {
+          "enabled": true,
+          "target_precision": 0.001
+        },
+        "resource_estimation_only": false,
+        "selection": {
+          "max_determinants": 64,
+          "min_count": 1,
+          "symmetry_postselect": true
+        }
+      }
+    }
+  },
+  "problem": {
+    "active_space_metadata": {
+      "field_model": "lattice_qed_minimal_coupling",
+      "gauge_links": 3,
+      "grid_shape": [
+        4
+      ],
+      "matter_modes": 4
+    },
+    "basis": "real_space_lattice",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 1.221603282540386
+    },
+    "molecule_name": "H2-4site-lattice-QED-sparse-dynamics",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 4,
+    "transformers_applied": [
+      "LatticeQEDRealSpaceDiscretization"
+    ]
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "1.26.4",
+      "pyscf": "2.8.0",
+      "python": "3.12.2",
+      "qiskit": "1.4.0",
+      "qiskit_aer": "0.16.1",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.13.1"
+    },
+    "git_branch": "HEAD",
+    "git_commit": "164b7ff23843a5187d6aeba0c0bbd1bc2e3f287b",
+    "git_commit_short": "164b7ff23843",
+    "git_describe": "164b7ff-dirty",
+    "git_remote_origin": "https://github.com/wuls968/QCchem.git",
+    "git_status_summary": {
+      "staged": 0,
+      "unstaged": 15,
+      "untracked": 14
+    },
+    "repo_root": "/Users/a0000/.codex/worktrees/c397/QCchem",
+    "seed": 2042,
+    "source_config": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_4site_lattice_qed_sparse_dynamics.yaml",
+    "timestamp": "2026-05-15T13:03:17.174989+00:00",
+    "wall_time_seconds": 0.43915962503524497,
+    "workspace_dirty": true,
+    "workspace_fingerprint": "1f384e77cecbc8e53807e867825c37fa1437fb4ddb77693a48a70276c0b21cf6"
+  },
+  "qft_dynamics": {
+    "enabled": true,
+    "evolution": {
+      "exact_enabled": true,
+      "exact_qubit_limit": 12,
+      "trotter_enabled": true,
+      "trotter_order": 1,
+      "trotter_step": 0.05
+    },
+    "exact": {
+      "available": true,
+      "evolution_space": "physical_sector",
+      "observables": {
+        "gauss_residual_by_site": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        "link_electric_energy": [
+          [
+            0.0,
+            4.869308955931717e-07,
+            7.752627782125856e-06,
+            3.8926751161451074e-05,
+            0.00012162058851342378,
+            0.00029256143869794407,
+            0.0005957622141934965,
+            0.0010803037232017694,
+            0.0017978236839708724,
+            0.002799819258635813,
+            0.004134878238519072,
+            0.00584595760801484,
+            0.007967826893015981,
+            0.010524787496976478,
+            0.013528768380607117,
+            0.01697788338313751,
+            0.020855516827610422,
+            0.025129982570057666,
+            0.02975477823850217,
+            0.03466943204657898,
+            0.03980091528809581
+          ],
+          [
+            0.5,
+            0.49901337169117105,
+            0.4960657563700223,
+            0.49119364618560385,
+            0.4844568205135788,
+            0.4759368350964395,
+            0.465735004416048,
+            0.45396996739305157,
+            0.4407749422315876,
+            0.4262947855448778,
+            0.4106829734862122,
+            0.39409861864650764,
+            0.37670362660300777,
+            0.35866008124051035,
+            0.34012792962582233,
+            0.32126301676335334,
+            0.3022154994835669,
+            0.28312864840129437,
+            0.26413802849967205,
+            0.24537103332589863,
+            0.22694673556524467
+          ],
+          [
+            0.5,
+            0.4999995132529735,
+            0.49999225908183415,
+            0.4999612055342147,
+            0.49987911414659186,
+            0.4997102000199679,
+            0.4994123348935833,
+            0.49893967945880735,
+            0.49824560863337203,
+            0.4972857777822078,
+            0.49602116970476806,
+            0.49442096201233043,
+            0.4924650622999722,
+            0.4901461738911054,
+            0.487471277140501,
+            0.4844624392358031,
+            0.4811568977727909,
+            0.47760639852409625,
+            0.4738758040732095,
+            0.47004102559771466,
+            0.466186363347759
+          ]
+        ],
+        "link_electric_flux": [
+          [
+            0.0,
+            -9.738617911863433e-07,
+            -1.550525556425171e-05,
+            -7.785350232290215e-05,
+            -0.00024324117702684755,
+            -0.0005851228773958881,
+            -0.001191524428386993,
+            -0.002160607446403539,
+            -0.0035956473679417448,
+            -0.005599638517271626,
+            -0.008269756477038145,
+            -0.01169191521602968,
+            -0.015935653786031963,
+            -0.021049574993952956,
+            -0.027057536761214234,
+            -0.03395576676627502,
+            -0.041711033655220844,
+            -0.05025996514011533,
+            -0.05950955647700434,
+            -0.06933886409315795,
+            -0.07960183057619162
+          ],
+          [
+            1.0,
+            0.9980267433821312,
+            0.9921315126863549,
+            0.9823872910092154,
+            0.9689136276162452,
+            0.9518735917179518,
+            0.9314696789259977,
+            0.907938832259724,
+            0.8815467730236756,
+            0.8525818615561304,
+            0.8213487226786549,
+            0.7881618750360653,
+            0.7533395972691038,
+            0.7171982474629407,
+            0.6800472263903202,
+            0.6421847409783812,
+            0.6038944838048176,
+            0.5654432991990512,
+            0.5270798588179828,
+            0.489034321617658,
+            0.45151890718392157
+          ],
+          [
+            1.0,
+            0.999999026505947,
+            0.9999845181636683,
+            0.9999224110684294,
+            0.9997582282931837,
+            0.9994204000399358,
+            0.9988246697871666,
+            0.9978793589176147,
+            0.9964912172667441,
+            0.9945715555644156,
+            0.9920423394095361,
+            0.9888419240246609,
+            0.9849301245999444,
+            0.9802923477822107,
+            0.974942554281002,
+            0.9689248784716062,
+            0.9623137955455818,
+            0.9552127970481925,
+            0.947751608146419,
+            0.9400820511954293,
+            0.932372726695518
+          ]
+        ],
+        "loschmidt_echo": [
+          1.0,
+          0.9980267433822366,
+          0.9921315127131998,
+          0.9823872916902117,
+          0.9689136343217013,
+          0.9518736309554156,
+          0.9314698438790469,
+          0.9079393835229136,
+          0.8815483287434254,
+          0.8525857163229428,
+          0.8213573348255397,
+          0.7881795561645403,
+          0.7533734252375597,
+          0.7172592049719807,
+          0.6801515428209823,
+          0.6423553872525439,
+          0.6041627413859757,
+          0.5658502980008201,
+          0.5276779579086633,
+          0.4898881941347276,
+          0.45270618915720545
+        ],
+        "matter_density_by_site": [
+          [
+            0.0,
+            9.738617911863433e-07,
+            1.550525556425171e-05,
+            7.785350232290215e-05,
+            0.00024324117702684755,
+            0.0005851228773958881,
+            0.001191524428386993,
+            0.002160607446403539,
+            0.0035956473679417448,
+            0.005599638517271626,
+            0.008269756477038145,
+            0.01169191521602968,
+            0.015935653786031963,
+            0.021049574993952956,
+            0.027057536761214234,
+            0.03395576676627502,
+            0.041711033655220844,
+            0.05025996514011533,
+            0.05950955647700434,
+            0.06933886409315795,
+            0.07960183057619162
+          ],
+          [
+            0.0,
+            0.0019722827560777123,
+            0.007852982058080594,
+            0.017534855488461638,
+            0.0308431312067279,
+            0.04754128540465207,
+            0.06733879664561557,
+            0.08990056029387218,
+            0.11485757960838301,
+            0.14181849992659826,
+            0.1703815208443071,
+            0.20014620974790526,
+            0.23072474894486417,
+            0.26175217754310665,
+            0.2928952368484657,
+            0.32385949225534405,
+            0.3543944825399615,
+            0.384296735660834,
+            0.4134105847050131,
+            0.4416268142891841,
+            0.46887926223988663
+          ],
+          [
+            1.0,
+            0.9980277168761841,
+            0.9921469945226865,
+            0.9824648799407859,
+            0.9691553993230614,
+            0.952453191678016,
+            0.9326450091388314,
+            0.910059473342109,
+            0.8850555557569316,
+            0.8580103059917151,
+            0.829306383269119,
+            0.7993199510114049,
+            0.7684094726691595,
+            0.7369058996807303,
+            0.7051046721093183,
+            0.673259862506775,
+            0.6415806882592358,
+            0.6102305021508593,
+            0.5793282506715639,
+            0.5489522704222286,
+            0.5191461804884033
+          ],
+          [
+            1.0,
+            0.999999026505947,
+            0.9999845181636683,
+            0.9999224110684294,
+            0.9997582282931837,
+            0.9994204000399358,
+            0.9988246697871666,
+            0.9978793589176147,
+            0.9964912172667441,
+            0.9945715555644156,
+            0.9920423394095361,
+            0.9888419240246609,
+            0.9849301245999444,
+            0.9802923477822107,
+            0.974942554281002,
+            0.9689248784716062,
+            0.9623137955455818,
+            0.9552127970481925,
+            0.947751608146419,
+            0.9400820511954293,
+            0.932372726695518
+          ]
+        ],
+        "particle_number": [
+          2.0,
+          1.9999999999999998,
+          1.9999999999999998,
+          1.9999999999999998,
+          1.9999999999999998,
+          2.0,
+          2.0000000000000004,
+          1.9999999999999993,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.000000000000001,
+          2.0,
+          2.0000000000000004,
+          2.0,
+          2.0000000000000004,
+          2.0,
+          2.000000000000001,
+          2.0000000000000004,
+          2.0,
+          1.9999999999999996
+        ],
+        "plaquette_wilson": [],
+        "total_electric_energy": [
+          1.0,
+          0.9990133718750401,
+          0.9960657680796385,
+          0.99119377847098,
+          0.9844575552486841,
+          0.9759395965551053,
+          0.9657431015238248,
+          0.9539899505750606,
+          0.9408183745489305,
+          0.9263803825857214,
+          0.9108390214294994,
+          0.8943655382668528,
+          0.877136515795996,
+          0.8593310426285922,
+          0.8411279751469305,
+          0.822703339382294,
+          0.8042279140839683,
+          0.7858650294954482,
+          0.7677686108113837,
+          0.7500814909701923,
+          0.7329340142010994
+        ],
+        "total_gauss_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "total_wilson": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "operator_representation": "sparse_projected",
+      "physical_sector_dimension": 6,
+      "projected_dimension": 6,
+      "skipped_reason": null,
+      "state_norms": [
+        1.0,
+        1.0,
+        0.9999999999999999,
+        1.0,
+        0.9999999999999999,
+        1.0,
+        1.0,
+        0.9999999999999999,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0000000000000002,
+        1.0,
+        1.0,
+        0.9999999999999999
+      ],
+      "time_points": [
+        0.0,
+        0.05,
+        0.1,
+        0.15000000000000002,
+        0.2,
+        0.25,
+        0.30000000000000004,
+        0.35000000000000003,
+        0.4,
+        0.45,
+        0.5,
+        0.55,
+        0.6000000000000001,
+        0.65,
+        0.7000000000000001,
+        0.75,
+        0.8,
+        0.8500000000000001,
+        0.9,
+        0.9500000000000001,
+        1.0
+      ]
+    },
+    "method": "real_time_quench",
+    "notes": [
+      "Exploratory finite-cutoff lattice-QED real-time dynamics.",
+      "Exact curves and Trotter curves are for the same finite Hamiltonian.",
+      "Runtime batch submissions are guarded by backend.runtime.options.submit_real_job."
+    ],
+    "observables": {
+      "aggregate_observables": [
+        "particle_number",
+        "total_electric_energy",
+        "total_gauss_violation",
+        "total_wilson"
+      ],
+      "gauss_residual_count": 4,
+      "link_electric_energy_count": 3,
+      "link_electric_flux_count": 3,
+      "plaquette_wilson_count": 0,
+      "site_density_count": 4
+    },
+    "quench": {
+      "base": "physical_reference",
+      "evolution_reference_index": 0,
+      "kind": "local_hopping_pulse",
+      "link_index": 0,
+      "post_pulse_state_norm": 1.0,
+      "pulse_strength": 1.0,
+      "pulse_time": 0.05,
+      "reference_basis_index": 218
+    },
+    "runtime_batch": null,
+    "time_grid": {
+      "num_points": 21,
+      "start": 0.0,
+      "stop": 1.0
+    },
+    "trotter": {
+      "available": true,
+      "circuit_resources": {
+        "max_depth": 62,
+        "max_operation_count": 66,
+        "max_two_qubit_gate_count": 0,
+        "per_time_point": [
+          {
+            "depth": 2,
+            "operation_count": 6,
+            "time": 0.0,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 5,
+            "operation_count": 9,
+            "time": 0.05,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 8,
+            "operation_count": 12,
+            "time": 0.1,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 14,
+            "operation_count": 18,
+            "time": 0.15000000000000002,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 14,
+            "operation_count": 18,
+            "time": 0.2,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 17,
+            "operation_count": 21,
+            "time": 0.25,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 23,
+            "operation_count": 27,
+            "time": 0.30000000000000004,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 23,
+            "operation_count": 27,
+            "time": 0.35000000000000003,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 26,
+            "operation_count": 30,
+            "time": 0.4,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 29,
+            "operation_count": 33,
+            "time": 0.45,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 32,
+            "operation_count": 36,
+            "time": 0.5,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 35,
+            "operation_count": 39,
+            "time": 0.55,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 41,
+            "operation_count": 45,
+            "time": 0.6000000000000001,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 41,
+            "operation_count": 45,
+            "time": 0.65,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 44,
+            "operation_count": 48,
+            "time": 0.7000000000000001,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 47,
+            "operation_count": 51,
+            "time": 0.75,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 50,
+            "operation_count": 54,
+            "time": 0.8,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 53,
+            "operation_count": 57,
+            "time": 0.8500000000000001,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 56,
+            "operation_count": 60,
+            "time": 0.9,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 59,
+            "operation_count": 63,
+            "time": 0.9500000000000001,
+            "two_qubit_gate_count": 0
+          },
+          {
+            "depth": 62,
+            "operation_count": 66,
+            "time": 1.0,
+            "two_qubit_gate_count": 0
+          }
+        ],
+        "time_point_count": 21,
+        "trotter_order": 1,
+        "trotter_step": 0.05
+      },
+      "observables": {
+        "gauss_residual_by_site": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        "link_electric_energy": [
+          [
+            0.0,
+            4.873560062527029e-07,
+            7.755221528893754e-06,
+            3.893121482464882e-05,
+            0.00012164593306674353,
+            0.00029261964142286197,
+            0.0005958469382396822,
+            0.0010805229727214357,
+            0.0017982028298867405,
+            0.0028004393758540237,
+            0.004135847203349621,
+            0.005847414678767346,
+            0.007969629986012517,
+            0.010527784897412221,
+            0.013532899383393691,
+            0.016983447730178593,
+            0.02086285745817741,
+            0.025139483468437397,
+            0.029766860154589448,
+            0.03468454596044522,
+            0.03981953358950595
+          ],
+          [
+            0.5,
+            0.4990133205195334,
+            0.4960655467608504,
+            0.49119336924795187,
+            0.4844559062249294,
+            0.47593532225429924,
+            0.4657332960687911,
+            0.45396659753996094,
+            0.4407702427740668,
+            0.42628844561539986,
+            0.4106746564310075,
+            0.3940879701258889,
+            0.37669224992605993,
+            0.3586436860848144,
+            0.3401081368299846,
+            0.3212395076024801,
+            0.3021879921676193,
+            0.2830969080378729,
+            0.2641018757111679,
+            0.24533035125916672,
+            0.22690147512932754
+          ],
+          [
+            0.5,
+            0.4999995126439937,
+            0.49999225137019354,
+            0.49996118510733084,
+            0.49987900038249933,
+            0.4997099275285262,
+            0.49941192808159446,
+            0.49893866994633435,
+            0.49824392071775947,
+            0.4972831333470874,
+            0.49601723680776366,
+            0.4944153576816535,
+            0.49245849928025676,
+            0.4901359029486198,
+            0.4874579458030429,
+            0.4844455388336612,
+            0.4811359194708903,
+            0.47758084959111424,
+            0.47384522532762496,
+            0.47000500949218266,
+            0.4661445720851896
+          ]
+        ],
+        "link_electric_flux": [
+          [
+            0.0,
+            -9.747120125054058e-07,
+            -1.551044305778751e-05,
+            -7.786242964929763e-05,
+            -0.00024329186613348706,
+            -0.0005852392828457239,
+            -0.0011916938764793643,
+            -0.0021610459454428715,
+            -0.003596405659773481,
+            -0.0056008787517080475,
+            -0.008271694406699242,
+            -0.011694829357534691,
+            -0.015939259972025034,
+            -0.021055569794824442,
+            -0.027065798766787382,
+            -0.03396689546035719,
+            -0.04172571491635482,
+            -0.050278966936874794,
+            -0.059533720309178896,
+            -0.06936909192089044,
+            -0.0796390671790119
+          ],
+          [
+            1.0,
+            0.9980266410388554,
+            0.9921310934681168,
+            0.9823867371360413,
+            0.9689117990761678,
+            0.951870566258636,
+            0.93146626294492,
+            0.9079320957882764,
+            0.8815373832669241,
+            0.8525692044007743,
+            0.8213321392209584,
+            0.7881406816962693,
+            0.7533170125548446,
+            0.7171658115436351,
+            0.6800082438241902,
+            0.6421387027791803,
+            0.6038409989725187,
+            0.5653821214547625,
+            0.5270109091893777,
+            0.4889577055929169,
+            0.45143492540997304
+          ],
+          [
+            1.0,
+            0.9999990252879875,
+            0.9999845027403871,
+            0.9999223702146617,
+            0.9997580007649987,
+            0.9994198550570524,
+            0.9988238561631889,
+            0.9978773398926687,
+            0.9964878414355189,
+            0.9945662666941748,
+            0.9920344736155273,
+            0.988830715363307,
+            0.9849169985605135,
+            0.9802718058972396,
+            0.9749158916060858,
+            0.9688910776673224,
+            0.9622718389417806,
+            0.9551616991822285,
+            0.9476904506552499,
+            0.9400100189843653,
+            0.9322891441703792
+          ]
+        ],
+        "loschmidt_echo": [
+          1.0,
+          0.9980266410389612,
+          0.9921310934949088,
+          0.9823867378159725,
+          0.9689118057630133,
+          0.9518706053836172,
+          0.9314664275412511,
+          0.9079326454340991,
+          0.8815389344075287,
+          0.852573047815787,
+          0.8213407260414866,
+          0.7881583109740234,
+          0.7533507562034822,
+          0.717226591856632,
+          0.6801122587420798,
+          0.6423088589920704,
+          0.6041084916538787,
+          0.5657879687652542,
+          0.5276073303058565,
+          0.4898092040556252,
+          0.4526189378343141
+        ],
+        "matter_density_by_site": [
+          [
+            0.0,
+            9.747120125054058e-07,
+            1.551044305778751e-05,
+            7.786242964929763e-05,
+            0.00024329186613348706,
+            0.0005852392828457239,
+            0.0011916938764793643,
+            0.0021610459454428715,
+            0.003596405659773481,
+            0.0056008787517080475,
+            0.008271694406699242,
+            0.011694829357534691,
+            0.015939259972025034,
+            0.021055569794824442,
+            0.027065798766787382,
+            0.03396689546035719,
+            0.04172571491635482,
+            0.050278966936874794,
+            0.059533720309178896,
+            0.06936909192089044,
+            0.0796390671790119
+          ],
+          [
+            0.0,
+            0.0019723842491319375,
+            0.007853396088825315,
+            0.017535400434309432,
+            0.030844909057699054,
+            0.047544194458518325,
+            0.06734204317860085,
+            0.08990685826628063,
+            0.11486621107330257,
+            0.14182991684751758,
+            0.17039616637234284,
+            0.20016448894619623,
+            0.23074372747313066,
+            0.2617786186615406,
+            0.2929259574090226,
+            0.32389440176046275,
+            0.35443328611112684,
+            0.3843389116083629,
+            0.4134553705014435,
+            0.4416732024861925,
+            0.46892600741101526
+          ],
+          [
+            1.0,
+            0.998027615750868,
+            0.9921465907277296,
+            0.9824643669213797,
+            0.9691537983111694,
+            0.9524507112015836,
+            0.9326424067817312,
+            0.9100547558956077,
+            0.8850495418314055,
+            0.8580029377065996,
+            0.8292976656054314,
+            0.7993099663329624,
+            0.7684000139943317,
+            0.7368940056463956,
+            0.7050923522181046,
+            0.6732476251118581,
+            0.6415691600307386,
+            0.6102204222725341,
+            0.5793204585341278,
+            0.5489476866085515,
+            0.5191457812395941
+          ],
+          [
+            1.0,
+            0.9999990252879875,
+            0.9999845027403871,
+            0.9999223702146617,
+            0.9997580007649987,
+            0.9994198550570524,
+            0.9988238561631889,
+            0.9978773398926687,
+            0.9964878414355189,
+            0.9945662666941748,
+            0.9920344736155273,
+            0.988830715363307,
+            0.9849169985605135,
+            0.9802718058972396,
+            0.9749158916060858,
+            0.9688910776673224,
+            0.9622718389417806,
+            0.9551616991822285,
+            0.9476904506552499,
+            0.9400100189843653,
+            0.9322891441703792
+          ]
+        ],
+        "particle_number": [
+          2.0,
+          2.0,
+          1.9999999999999998,
+          2.0,
+          2.0000000000000004,
+          2.0,
+          2.0000000000000004,
+          2.0,
+          2.0000000000000004,
+          2.0,
+          2.000000000000001,
+          2.0000000000000004,
+          2.000000000000001,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.0000000000000004,
+          2.0,
+          2.0,
+          2.0000000000000004
+        ],
+        "plaquette_wilson": [],
+        "total_electric_energy": [
+          1.0,
+          0.9990133205195333,
+          0.996065553352573,
+          0.9911934855701073,
+          0.9844565525404956,
+          0.9759378694242483,
+          0.9657410710886254,
+          0.9539857904590168,
+          0.9408123663217131,
+          0.9263720183383414,
+          0.9108277404421208,
+          0.8943507424863097,
+          0.8771203791923292,
+          0.8593073739308464,
+          0.8410989820164212,
+          0.82266849416632,
+          0.804186769096687,
+          0.7858172410974246,
+          0.7677139611933823,
+          0.7500199067117945,
+          0.7328655808040231
+        ],
+        "total_gauss_violation": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "total_wilson": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "skipped_reason": null,
+      "state_norms": [
+        1.0,
+        0.9999999999999999,
+        0.9999999999999999,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0000000000000002,
+        1.0,
+        1.0,
+        1.0000000000000002,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "time_points": [
+        0.0,
+        0.05,
+        0.1,
+        0.15000000000000002,
+        0.2,
+        0.25,
+        0.30000000000000004,
+        0.35000000000000003,
+        0.4,
+        0.45,
+        0.5,
+        0.55,
+        0.6000000000000001,
+        0.65,
+        0.7000000000000001,
+        0.75,
+        0.8,
+        0.8500000000000001,
+        0.9,
+        0.9500000000000001,
+        1.0
+      ]
+    },
+    "trotter_error_summary": {
+      "available": true,
+      "max_loschmidt_abs_error": 8.725132289133519e-05,
+      "max_particle_number_abs_error": 8.881784197001252e-16,
+      "max_total_gauss_violation_abs_error": 0.0
+    }
+  },
+  "qft_model": {
+    "boundary": "open",
+    "constraint_expectations": {
+      "available": true,
+      "gauss_law_tolerance": 1e-08,
+      "reference_basis_index": 218,
+      "reference_state_gauss_law_residuals": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reference_state_max_abs_gauss_law": 0.0,
+      "target_charge_sector": "neutral"
+    },
+    "constraint_residuals": {
+      "gauss_law_penalty": 10.0,
+      "max_hamiltonian_gauge_commutator_norm": null,
+      "padding_penalty": 50.0,
+      "particle_number_penalty": 10.0,
+      "reference_state_max_abs_gauss_law": 0.0
+    },
+    "constraints": {
+      "enforce_physical_sector": true,
+      "gauss_law_penalty": 10.0,
+      "gauss_law_tolerance": 1e-08,
+      "max_sector_enumeration_qubits": 12,
+      "padding_penalty": 50.0,
+      "particle_number_penalty": 10.0,
+      "target_charge_sector": "neutral"
+    },
+    "dimensions": 1,
+    "enabled": true,
+    "engine": {
+      "actual_representation": "sparse_projected",
+      "auto_project_physical_sector": true,
+      "dense_full_matrix_materialized": false,
+      "full_dimension": 1024,
+      "full_hamiltonian_nnz": 1792,
+      "materialize_pauli": "never",
+      "max_full_qubits_for_dense": 10,
+      "max_projected_dimension": 4096,
+      "operator_representation": "sparse_projected",
+      "pauli_materialization": "skipped",
+      "projected_dimension": 6,
+      "projection_skipped_reason": null,
+      "projector_tolerance": 1e-08,
+      "requested_representation": "sparse_projected",
+      "sector_nnz": {
+        "density_coulomb": 0,
+        "electric": 896,
+        "gauss_law_penalty": 1002,
+        "hopping": 768,
+        "magnetic_plaquette": 0,
+        "onsite": 960,
+        "padding_penalty": 592,
+        "particle_number_penalty": 640
+      },
+      "store_basis_indices": "full"
+    },
+    "gauge_coupling": 1.0,
+    "gauge_electric_cutoff": 1,
+    "gauge_group": "u1",
+    "gauge_invariant_ansatz": {
+      "commutator_checks": [
+        {
+          "commutator_norms": [],
+          "commutes_with_all_gauss_law_generators": false,
+          "max_commutator_norm": null,
+          "pauli_materialized": false,
+          "pauli_term_count": -1,
+          "sector": "hopping",
+          "selected": false,
+          "skipped_reason": "ansatz_commutator_skipped_for_dynamics_resource_guard"
+        }
+      ],
+      "generator_policy": "gauge_invariant_hopping",
+      "kind": "gauss_law_preserving",
+      "selected_generator_count": 0,
+      "selected_generators": []
+    },
+    "gauge_qubits": 6,
+    "gauss_law_generators": [
+      {
+        "diagonal_max": 2.0,
+        "diagonal_min": -1.0,
+        "frobenius_norm": 32.0,
+        "hermitian": true,
+        "pauli_materialized": false,
+        "pauli_term_count": null,
+        "site_index": 0,
+        "target_charge": 0.0
+      },
+      {
+        "diagonal_max": 2.0,
+        "diagonal_min": -3.0,
+        "frobenius_norm": 39.191835884530846,
+        "hermitian": true,
+        "pauli_materialized": false,
+        "pauli_term_count": null,
+        "site_index": 1,
+        "target_charge": 0.0
+      },
+      {
+        "diagonal_max": 2.0,
+        "diagonal_min": -3.0,
+        "frobenius_norm": 39.191835884530846,
+        "hermitian": true,
+        "pauli_materialized": false,
+        "pauli_term_count": null,
+        "site_index": 2,
+        "target_charge": 0.0
+      },
+      {
+        "diagonal_max": 2.0,
+        "diagonal_min": -1.0,
+        "frobenius_norm": 32.0,
+        "hermitian": true,
+        "pauli_materialized": false,
+        "pauli_term_count": null,
+        "site_index": 3,
+        "target_charge": 0.0
+      }
+    ],
+    "grid_axes": "principal",
+    "grid_origin": "molecule_center",
+    "grid_shape": [
+      4
+    ],
+    "grid_spacing": [
+      0.75
+    ],
+    "hamiltonian_gauge_commutator_norms": [
+      {
+        "frobenius_norm": null,
+        "site_index": 0,
+        "skipped_reason": "full_commutator_skipped_for_dynamics_resource_guard",
+        "within_tolerance": null
+      },
+      {
+        "frobenius_norm": null,
+        "site_index": 1,
+        "skipped_reason": "full_commutator_skipped_for_dynamics_resource_guard",
+        "within_tolerance": null
+      },
+      {
+        "frobenius_norm": null,
+        "site_index": 2,
+        "skipped_reason": "full_commutator_skipped_for_dynamics_resource_guard",
+        "within_tolerance": null
+      },
+      {
+        "frobenius_norm": null,
+        "site_index": 3,
+        "skipped_reason": "full_commutator_skipped_for_dynamics_resource_guard",
+        "within_tolerance": null
+      }
+    ],
+    "link_count": 3,
+    "matter_mode_count": 4,
+    "matter_qubits": 4,
+    "model": "lattice_qed_minimal_coupling",
+    "notes": [
+      "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+      "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
+      "Runtime circuits still act on the full qubit register unless explicitly transformed."
+    ],
+    "nuclear_charge_by_site": [
+      0.0,
+      1.0,
+      1.0,
+      0.0
+    ],
+    "physical_sector": {
+      "basis_hash": "c1ac3f8aba45be3c3c2dd81d9c9a506de7de893471fc782827698ecf3ce26405",
+      "basis_index_count": 6,
+      "basis_indices": [
+        218,
+        342,
+        405,
+        582,
+        645,
+        769
+      ],
+      "basis_indices_preview": [
+        218,
+        342,
+        405,
+        582,
+        645,
+        769
+      ],
+      "enumerated": true,
+      "estimated_full_dimension": 1024,
+      "max_sector_enumeration_qubits": 12,
+      "padding_state_rejection_count": 592,
+      "physical_sector_dimension": 6,
+      "reference_basis_index": 218,
+      "skipped_reason": null,
+      "target_charge_sector": "neutral",
+      "tolerance": 1e-08
+    },
+    "plaquette_count": 0,
+    "site_count": 4,
+    "softening": 0.35,
+    "target_electrons": 2,
+    "term_counts_by_sector": {
+      "density_coulomb": 0,
+      "electric": 896,
+      "gauss_law_penalty": 1002,
+      "hopping": 768,
+      "magnetic_plaquette": 0,
+      "onsite": 960,
+      "padding_penalty": 592,
+      "particle_number_penalty": 640
+    },
+    "total_qubits": 10
+  },
+  "qpe_resource_estimate": null,
+  "reduction_audit": {
+    "active_space_metadata": {
+      "field_model": "lattice_qed_minimal_coupling",
+      "gauge_links": 3,
+      "grid_shape": [
+        4
+      ],
+      "matter_modes": 4
+    },
+    "constant_energy_correction": 0.0,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "frozen_core_orbitals": [],
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 1.221603282540386
+    },
+    "nuclear_repulsion_energy": 1.221603282540386,
+    "original_num_particles": [
+      1,
+      1
+    ],
+    "original_num_spatial_orbitals": 4,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 4,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "selected_active_orbitals_original": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "selection_mode": "qft_lattice_discretization",
+    "selection_reason": "Molecule projected onto a finite real-space compact-U(1) lattice-QED grid.",
+    "total_constant_correction": 1.221603282540386,
+    "transformers_applied": [
+      "LatticeQEDRealSpaceDiscretization"
+    ]
+  },
+  "reduction_plan": {
+    "enabled": true,
+    "mode": "audit_only",
+    "notes": [
+      "Reduction audit captures executed transformers even without explicit planning metadata."
+    ],
+    "provenance": {
+      "policy_name": "benchmark",
+      "source": "qcchem.chem.reduction_planner"
+    },
+    "recommended_changes": {},
+    "reduction_audit": {
+      "active_space_metadata": {
+        "field_model": "lattice_qed_minimal_coupling",
+        "gauge_links": 3,
+        "grid_shape": [
+          4
+        ],
+        "matter_modes": 4
+      },
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 1.221603282540386
+      },
+      "nuclear_repulsion_energy": 1.221603282540386,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 4,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 4,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "selected_active_orbitals_original": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "selection_mode": "qft_lattice_discretization",
+      "selection_reason": "Molecule projected onto a finite real-space compact-U(1) lattice-QED grid.",
+      "total_constant_correction": 1.221603282540386,
+      "transformers_applied": [
+        "LatticeQEDRealSpaceDiscretization"
+      ]
+    },
+    "strategy": "executed_transformers"
+  },
+  "run_id": "h2_lattice_qed_4site_sparse_dynamics",
+  "runtime_chemical_accuracy": null,
+  "runtime_options": null,
+  "runtime_submission": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "scientific_risk_notes": [
+    "Sparse exact energy is exact only for the configured finite lattice/cutoff Hamiltonian.",
+    "Physical-sector projection is a finite-cutoff Gauss-law audit, not continuum chemistry accuracy.",
+    "Lattice-QED execution uses a finite cutoff real-space field Hamiltonian.",
+    "Exact baselines compare against the discretized finite cutoff model, not continuum chemistry.",
+    "Continuum, gauge-cutoff, and grid-convergence claims require explicit follow-up studies.",
+    "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+    "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
+    "Runtime circuits still act on the full qubit register unless explicitly transformed.",
+    "QFT dynamics curves are exact/Trotter trajectories of the finite lattice/cutoff Hamiltonian.",
+    "Trotter and runtime-batch evidence do not establish continuum-limit molecular accuracy."
+  ],
+  "symmetry_sector": null,
+  "tc_qsci_result": null,
+  "variational_result": null,
+  "verification_notes": [
+    "validation_scope=lattice_qed_sparse_projected_exact",
+    "validation_scope=lattice_qed_finite_cutoff_exact_gate",
+    "validation_scope=lattice_qed_real_time_dynamics"
+  ],
+  "verification_status": "exploratory"
+}

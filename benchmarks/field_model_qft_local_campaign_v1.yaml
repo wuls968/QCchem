@@ -1,0 +1,136 @@
+benchmark_suite:
+  name: field_model_qft_local_campaign_v1
+  description: Local empirical field-model campaign for finite-cutoff lattice-QED and Pauli-Fierz H2 cavity-QED.
+  registry_name: field_model_qft_local_campaign_v1
+  tags: [benchmark, exploratory, field_model, lattice_qed, cavity_qed, local_campaign]
+  cases:
+    - name: h2_lattice_qed_2site_exact
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, exact, two_site]
+    - name: h2_lattice_qed_2site_sector_audit
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_sector_audit.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, gauss_law, sector_audit]
+    - name: h2_lattice_qed_2site_givqe
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_givqe.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, givqe, variational]
+    - name: h2_lattice_qed_2site_dynamics
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, dynamics, trotter]
+    - name: h2_lattice_qed_2site_runtime_preview
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics_runtime.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, runtime_preview, hardware_gate]
+    - name: h2_lattice_qed_4site_sparse_exact
+      kind: run
+      config: configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, sparse_projected, exact]
+    - name: h2_lattice_qed_4site_sparse_dynamics
+      kind: run
+      config: configs/exploratory/h2_4site_lattice_qed_sparse_dynamics.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, sparse_projected, dynamics]
+    - name: h2_lattice_qed_2d_projected_exact
+      kind: run
+      config: configs/exploratory/h2_2d_lattice_qed_projected_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, sparse_projected, plaquette, exact]
+    - name: h2_lattice_qed_2d_plaquette_dynamics
+      kind: run
+      config: configs/exploratory/h2_2d_lattice_qed_plaquette_dynamics.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, plaquette, dynamics]
+    - name: h2_lattice_qed_gauge_coupling_0p5
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.coupling: 0.5
+      tags: [lattice_qed, gauge_coupling_scan]
+    - name: h2_lattice_qed_gauge_coupling_1p0
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.coupling: 1.0
+      tags: [lattice_qed, gauge_coupling_scan]
+    - name: h2_lattice_qed_gauge_coupling_1p5
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.coupling: 1.5
+      tags: [lattice_qed, gauge_coupling_scan]
+    - name: h2_lattice_qed_trotter_step_0p20
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.20
+      tags: [lattice_qed, trotter_step_scan]
+    - name: h2_lattice_qed_trotter_step_0p10
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.10
+      tags: [lattice_qed, trotter_step_scan]
+    - name: h2_lattice_qed_trotter_step_0p05
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.05
+      tags: [lattice_qed, trotter_step_scan]
+    - name: h2_cavity_pf_exact_cutoff_1
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+      tags: [cavity_qed, pauli_fierz, exact, cutoff_1]
+    - name: h2_cavity_pf_exact_cutoff_2
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_cutoff_convergence.yaml
+      expected_status: exploratory
+      tags: [cavity_qed, pauli_fierz, exact, cutoff_2]
+    - name: h2_cavity_pf_vqe_cutoff_1
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_vqe.yaml
+      expected_status: exploratory
+      tags: [cavity_qed, pauli_fierz, vqe, cutoff_1]
+    - name: h2_cavity_pf_coupling_0p00
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.cavity_qed.modes.0.coupling_strength: 0.0
+      tags: [cavity_qed, coupling_scan]
+    - name: h2_cavity_pf_coupling_0p02
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.cavity_qed.modes.0.coupling_strength: 0.02
+      tags: [cavity_qed, coupling_scan]
+    - name: h2_cavity_pf_coupling_0p05
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.cavity_qed.modes.0.coupling_strength: 0.05
+      tags: [cavity_qed, coupling_scan]
+    - name: h2_cavity_pf_coupling_0p10
+      kind: run
+      config: configs/exploratory/h2_cavity_pf_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.cavity_qed.modes.0.coupling_strength: 0.10
+      tags: [cavity_qed, coupling_scan]

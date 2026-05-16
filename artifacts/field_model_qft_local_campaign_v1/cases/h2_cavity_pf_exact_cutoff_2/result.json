@@ -1,0 +1,955 @@
+{
+  "artifacts": {
+    "calibration_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/calibration.json",
+    "calibration_report_markdown": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/calibration_report.md",
+    "exact_result_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/exact_result.json",
+    "hdf5_file": null,
+    "log_file": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/run.log",
+    "qcschema_json": null,
+    "report_markdown": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/report.md",
+    "resolved_config": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/resolved_config.yaml",
+    "result_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/result.json",
+    "root": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2",
+    "runtime_submission_json": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/runtime_submission.json"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": 2143,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 1.9761969838327786e-14,
+    "absolute_error_threshold": 1e-09,
+    "comparison_target": "exact_baseline",
+    "compressed_vs_uncompressed": null,
+    "exact_available": true,
+    "exact_electronic_energy": -1.85288990139787,
+    "exact_total_energy": -1.1377855623167887,
+    "meets_threshold": true,
+    "relative_error": 1.066548520957388e-14,
+    "relative_error_threshold": 1e-09,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "calibration": {
+    "achieved_error": 1.9761969838327786e-14,
+    "available": true,
+    "estimated_measurement_cost": 90000.0,
+    "estimated_vs_measured_cost": null,
+    "measured_shot_usage": null,
+    "measured_wall_time_seconds": 0.0022747499751858413,
+    "notes": [
+      "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+      "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+    ],
+    "precision_target": 0.01,
+    "reference_target": "exact_baseline"
+  },
+  "capability_tier": "exploratory",
+  "cast_hamiltonian": null,
+  "cavity_qed_model": {
+    "electronic_qubits": 4,
+    "enabled": true,
+    "error_budget": {
+      "exact_residual_norm": 1.3711030439130465e-14,
+      "photon_cutoff": {
+        "max_occupation_by_mode": [
+          2
+        ],
+        "status": "finite_cutoff_configured"
+      },
+      "photon_encoding_leakage": 1.1359335436452865e-31,
+      "vqe_vs_exact_error": 1.9761969838327786e-14
+    },
+    "hamiltonian_formula": "H = H_e + sum_m omega_m a_m^dagger a_m + sum_m g_m (e_m dot mu)(a_m + a_m^dagger) + 1/2 sum_m g_m^2 (e_m dot mu)^2",
+    "include_dipole_self_energy": true,
+    "mode_count": 1,
+    "model": "pauli_fierz_cavity_qed",
+    "modes": [
+      {
+        "coupling_strength": 0.04,
+        "frequency": 0.4,
+        "max_occupation": 2,
+        "mode_index": 0,
+        "mode_qubits": 3,
+        "polarization": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    ],
+    "notes": [
+      "Exploratory Pauli-Fierz cavity-QED Hamiltonian with finite photon cutoff.",
+      "Exact baselines are exact only for the configured electron-photon qubit Hamiltonian."
+    ],
+    "observables": {
+      "dipole_expectation": [
+        {
+          "expectation": -2.2273672569152637e-09,
+          "mode_index": 0
+        }
+      ],
+      "dipole_self_energy": [
+        {
+          "expectation": 0.0010786369217246233,
+          "mode_index": 0
+        }
+      ],
+      "dipole_self_energy_enabled": true,
+      "electron_photon_coupling_energy": [
+        {
+          "expectation": -0.0031724681699303913,
+          "mode_index": 0
+        }
+      ],
+      "exact_residual_norm": 1.3711030439130465e-14,
+      "photon_occupation": [
+        {
+          "expectation": 0.0011740991335326984,
+          "mode_index": 0
+        }
+      ],
+      "photon_physical_subspace_leakage": 1.1359335436452865e-31,
+      "polaritonic_state_composition": [
+        {
+          "component": "electronic_marginal_x_photon_occupation",
+          "max_occupation": 2,
+          "mode_index": 0,
+          "occupation": 0,
+          "weight": 0.9988349627781982
+        },
+        {
+          "component": "electronic_marginal_x_photon_occupation",
+          "max_occupation": 2,
+          "mode_index": 0,
+          "occupation": 1,
+          "weight": 0.0011559753100669464
+        },
+        {
+          "component": "electronic_marginal_x_photon_occupation",
+          "max_occupation": 2,
+          "mode_index": 0,
+          "occupation": 2,
+          "weight": 9.061911732986956e-06
+        },
+        {
+          "component": "exact_ground_state_photon_marginal",
+          "mean_photon_occupation": 0.0011740991335326984,
+          "mode_index": 0
+        }
+      ],
+      "vqe_vs_exact_error": 1.9761969838327786e-14
+    },
+    "photon_encoding": "linear",
+    "photon_physical_subspace_penalty": 25.0,
+    "photon_qubits": 3,
+    "resource_estimate": {
+      "electronic_qubits": 4,
+      "mode_qubits": [
+        3
+      ],
+      "pauli_terms": 65,
+      "photon_qubits": 3,
+      "total_qubits": 7
+    },
+    "term_counts_by_sector": {
+      "dipole_self_energy": 19,
+      "electron_photon_coupling": 36,
+      "electronic": 15,
+      "photon": 7,
+      "photon_physical_subspace_penalty": 7,
+      "total": 65
+    },
+    "total_qubits": 7
+  },
+  "chemical_accuracy": {
+    "absolute_error_hartree": 1.9761969838327786e-14,
+    "absolute_error_kcal_mol": 1.2400823298452934e-11,
+    "assessment_target": "local_execution",
+    "available": true,
+    "computed_energy": -1.1377855623168085,
+    "meets_chemical_accuracy": true,
+    "notes": [
+      "Meets chemical accuracy threshold."
+    ],
+    "reference_energy": -1.1377855623167887,
+    "relative_error": 1.736879996797283e-14,
+    "statistical_error": null,
+    "status": "validated",
+    "threshold_hartree": 0.0016,
+    "threshold_kcal_mol": 1.0040151583999999
+  },
+  "compression_result": null,
+  "determinant_selection": null,
+  "embedding_result": null,
+  "energy": {
+    "constant_energy_correction": 0.0,
+    "correlation_energy": -0.021026254920383236,
+    "electronic_energy": -1.8528899013978897,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -1.85288990139787,
+    "hf_reference_energy": -1.1167593073964253,
+    "nuclear_repulsion_energy": 0.7151043390810812,
+    "solver_energy": -1.8528899013978897,
+    "total_energy": -1.1377855623168085
+  },
+  "error_budget": null,
+  "evidence_summary": {
+    "chemical_accuracy_status": "met",
+    "comparison_evidence": {
+      "absolute_error": 1.9761969838327786e-14,
+      "baseline_strength": "strong",
+      "comparison_target": "exact_baseline",
+      "compressed_vs_uncompressed": null,
+      "relative_error": 1.066548520957388e-14,
+      "statistical_error": null
+    },
+    "decision_worthiness": {
+      "blocking_issues": [
+        "Pauli-Fierz cavity-QED execution uses a finite photon cutoff.",
+        "Exact baselines compare against the configured electron-photon Hamiltonian, not an external cavity-QED benchmark.",
+        "Photon cutoff convergence and gauge-form comparisons require explicit follow-up studies.",
+        "Exploratory Pauli-Fierz cavity-QED Hamiltonian with finite photon cutoff.",
+        "Exact baselines are exact only for the configured electron-photon qubit Hamiltonian."
+      ],
+      "compression_context": {
+        "method": null,
+        "verification_status": null
+      },
+      "recommended_action": "collect_stronger_baseline",
+      "reduction_context": {
+        "selection_mode": "none",
+        "transformers_applied": []
+      },
+      "why": [
+        "trust_tier=exploratory",
+        "chemical_accuracy_status=met",
+        "runtime_evidence_status=none",
+        "runtime_accuracy_status=unavailable"
+      ]
+    },
+    "energy_evidence": {
+      "constant_energy_correction": 0.0,
+      "electronic_energy": -1.8528899013978897,
+      "perturbative_correction": null,
+      "solver_energy": -1.8528899013978897,
+      "total_energy": -1.1377855623168085
+    },
+    "execution_evidence": {
+      "field_model_kind": "pauli_fierz_cavity_qed",
+      "measured_shot_usage": null,
+      "measurement_group_count": 9,
+      "measurement_strategy": "cavity_qed_exact_cutoff_2",
+      "runtime_backend": null,
+      "runtime_job_id": null,
+      "shots": null,
+      "wall_time_seconds": 0.09035937499720603
+    },
+    "primary_baseline": {
+      "baseline_kind": "exact",
+      "baseline_scope": "single_run",
+      "baseline_source": "exact_diagonalization",
+      "baseline_strength": "strong"
+    },
+    "primary_error_metric": {
+      "comparison_target": "exact_baseline",
+      "metric_kind": "absolute_error_hartree",
+      "threshold": 1e-09,
+      "units": "Hartree",
+      "value": 1.9761969838327786e-14
+    },
+    "primary_scientific_claim": "H2-cavity-PF-cutoff-2 Pauli-Fierz cavity-QED result uses a finite photon cutoff and is compared against exact_baseline within the configured electron-photon Hamiltonian.",
+    "recommended_action": "collect_stronger_baseline",
+    "result_identity": {
+      "artifact_kind": "run",
+      "artifact_name": "h2_cavity_pf_exact_cutoff_2",
+      "backend_kind": "statevector",
+      "basis": "sto3g",
+      "field_model_kind": "pauli_fierz_cavity_qed",
+      "mapping_kind": "pauli_fierz_cavity_qed:jordan_wigner+bosonic_linear",
+      "molecule_name": "H2-cavity-PF-cutoff-2"
+    },
+    "runtime_derived_accuracy": {
+      "absolute_error_hartree": null,
+      "assessment_target": null,
+      "meets_chemical_accuracy": null,
+      "status": "unavailable",
+      "threshold_hartree": null
+    },
+    "runtime_evidence_status": "none",
+    "scientific_accuracy": {
+      "absolute_error_hartree": 1.9761969838327786e-14,
+      "assessment_target": "local_execution",
+      "meets_chemical_accuracy": true,
+      "status": "met",
+      "threshold_hartree": 0.0016
+    },
+    "trust_judgment": {
+      "hardware_evidence_tier": null,
+      "hardware_verified": false,
+      "module_origin": "exploratory",
+      "scientific_risk_notes": [
+        "Pauli-Fierz cavity-QED execution uses a finite photon cutoff.",
+        "Exact baselines compare against the configured electron-photon Hamiltonian, not an external cavity-QED benchmark.",
+        "Photon cutoff convergence and gauge-form comparisons require explicit follow-up studies.",
+        "Exploratory Pauli-Fierz cavity-QED Hamiltonian with finite photon cutoff.",
+        "Exact baselines are exact only for the configured electron-photon qubit Hamiltonian."
+      ],
+      "verification_notes": [
+        "validation_scope=pauli_fierz_cavity_qed_finite_photon_cutoff"
+      ],
+      "verification_status": "exploratory"
+    },
+    "trust_tier": "exploratory"
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -1.85288990139787,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -1.85288990139787,
+    "source": "exact_diagonalization",
+    "total_energy": -1.1377855623167887
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "field_model": {
+    "capability_tier": "exploratory",
+    "error_budget": {
+      "exact_residual_norm": 1.3711030439130465e-14,
+      "photon_cutoff": {
+        "max_occupation_by_mode": [
+          2
+        ],
+        "status": "finite_cutoff_configured"
+      },
+      "photon_encoding_leakage": 1.1359335436452865e-31,
+      "vqe_vs_exact_error": 1.9761969838327786e-14
+    },
+    "model_kind": "pauli_fierz_cavity_qed",
+    "observables": [
+      "photon_occupation",
+      "dipole_expectation",
+      "electron_photon_coupling_energy",
+      "dipole_self_energy",
+      "polaritonic_state_composition",
+      "photon_cutoff_convergence"
+    ],
+    "registry_name": "molecular_pauli_fierz_cavity_qed",
+    "resource_estimate": {
+      "electronic_qubits": 4,
+      "mode_qubits": [
+        3
+      ],
+      "pauli_terms": 65,
+      "photon_qubits": 3,
+      "total_qubits": 7
+    },
+    "risk_notes": [
+      "Pauli-Fierz cavity-QED evidence is exact or variational only for the configured photon cutoff.",
+      "External cavity-QED benchmark validation is outside this first QCchem milestone."
+    ]
+  },
+  "hardware_evidence_tier": null,
+  "hardware_verified": false,
+  "log_summary": {
+    "events": [
+      "Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_cutoff_convergence.yaml",
+      "Building electronic structure problem",
+      "Applying mapping: jordan_wigner",
+      "Building exploratory Pauli-Fierz cavity-QED Hamiltonian",
+      "Constructed cavity-QED Hamiltonian: modes=1, electronic_qubits=4, photon_qubits=3",
+      "Prepared measurement plan: groups=9, cost=90000",
+      "Skipping backend construction for solver: exact",
+      "Running solver: exact",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/exact_result.json",
+      "Computed empirical calibration: wall_time=0.002s, measured_cost=None",
+      "Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/result.json",
+      "Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2/report.md",
+      "Run completed"
+    ]
+  },
+  "low_rank_resource_estimate": null,
+  "mapping": {
+    "fermionic_term_count": 36,
+    "kind": "pauli_fierz_cavity_qed:jordan_wigner+bosonic_linear",
+    "num_qubits": 7,
+    "qubit_term_count": 65
+  },
+  "measurement": {
+    "cost_reduction_ratio": 1.8,
+    "estimated_shot_cost": 90000.0,
+    "execution_mode": "estimator",
+    "group_count": 9,
+    "grouping_policy": "electron_photon_pauli",
+    "low_rank_aware": false,
+    "notes": [
+      "Measurement groups estimated with strategy 'cavity_qed_exact_cutoff_2'.",
+      "Per-group shot estimate derived from precision target 0.01.",
+      "Measurement planning reflects the uncompressed execution path."
+    ],
+    "runtime_precision_target": 0.01,
+    "strategy": "cavity_qed_exact_cutoff_2",
+    "term_count": 65,
+    "uncompressed_estimated_shot_cost": 50000.0,
+    "uncompressed_group_count": 5
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "module_origin": "exploratory",
+  "noise_model": null,
+  "perturbative_correction_result": null,
+  "policy_engine": {
+    "overrides_applied": [
+      "backend.shots"
+    ],
+    "policy_name": "benchmark",
+    "presets_used": [
+      "benchmark"
+    ],
+    "provenance": {
+      "allow_exploratory": true,
+      "source": "qcchem.backends.policy_engine"
+    },
+    "resolved_policy": {
+      "backend": {
+        "abelian_grouping": true,
+        "kind": "statevector",
+        "noise": {
+          "basis_gates": [],
+          "depolarizing_probability_1q": 0.0,
+          "depolarizing_probability_2q": 0.0,
+          "enabled": false,
+          "profile": "none",
+          "readout_error_probability": 0.0
+        },
+        "precision": null,
+        "repetitions": 1,
+        "runtime": {
+          "batch_ready": false,
+          "calibration_strategy": "default",
+          "enabled": false,
+          "grouping_policy": "default",
+          "instance": null,
+          "max_budgeted_shots": null,
+          "max_execution_seconds": null,
+          "options": {},
+          "precision_target": null,
+          "resilience_level": 0,
+          "runtime_ready": false,
+          "service": "local",
+          "session_ready": false
+        },
+        "seed": 2143,
+        "shots": 4096
+      },
+      "benchmark": {
+        "absolute_error_threshold": 1e-09,
+        "enabled": true,
+        "exact_baseline_qubit_limit": 9,
+        "relative_error_threshold": 1e-09
+      },
+      "exploratory": {
+        "enabled": true,
+        "modules": [
+          "cavity_qed",
+          "photon_cutoff_convergence"
+        ],
+        "notes": []
+      },
+      "hardware_optimization": {
+        "candidate_strategies": [
+          "jw_puccd_layout_baseline",
+          "parity_puccd_layout",
+          "parity_succd_layout",
+          "parity_uccsd_layout"
+        ],
+        "enabled": false,
+        "max_real_jobs": 3,
+        "max_total_budgeted_shots": 40960,
+        "max_total_estimated_quantum_seconds": 600.0,
+        "profile": "h2_precision_push",
+        "requires_confirmation": true,
+        "selection_metric": "accuracy_then_cost",
+        "stop_if_error_below": 0.0016
+      },
+      "mapping": {
+        "kind": "jordan_wigner"
+      },
+      "mitigation": {
+        "experimental": false,
+        "pec": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "readout": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "symmetry_check": {
+          "enabled": true,
+          "strategy": "parity_placeholder"
+        },
+        "zne": {
+          "enabled": false,
+          "method": "placeholder"
+        }
+      },
+      "molecule": {
+        "basis": "sto3g",
+        "charge": 0,
+        "geometry": [
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "symbol": "H"
+          },
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.74
+            ],
+            "symbol": "H"
+          }
+        ],
+        "multiplicity": 1,
+        "name": "H2-cavity-PF-cutoff-2",
+        "unit": "angstrom"
+      },
+      "policy": {
+        "allow_exploratory": true,
+        "name": "benchmark"
+      },
+      "problem": {
+        "active_space": null,
+        "cavity_qed": {
+          "enabled": true,
+          "include_dipole_self_energy": true,
+          "model": "pauli_fierz_cavity_qed",
+          "modes": [
+            {
+              "coupling_strength": 0.04,
+              "frequency": 0.4,
+              "max_occupation": 2,
+              "polarization": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ],
+          "photon_encoding": "linear",
+          "photon_physical_subspace_penalty": 25.0
+        },
+        "compression": {
+          "allow_pauli_truncation": false,
+          "apply_to_solver": false,
+          "compression_error_budget_hartree": 0.0008,
+          "enabled": false,
+          "execution_enabled": false,
+          "max_rank": null,
+          "method": "modified_cholesky",
+          "rank_schedule": null,
+          "term_budget_policy": "precision_first",
+          "threshold": 1e-08
+        },
+        "embedding": {
+          "bath_threshold": 0.05,
+          "enabled": false,
+          "fragments": [],
+          "method": "dmet_skeleton",
+          "solver_plugin": "placeholder_fragment_solver"
+        },
+        "freeze_core": false,
+        "measurement": {
+          "execution_mode": "estimator",
+          "grouping_policy": "electron_photon_pauli",
+          "runtime_precision_target": null,
+          "strategy": "cavity_qed_exact_cutoff_2"
+        },
+        "qft": {
+          "ansatz": {
+            "generator_policy": "gauge_invariant_hopping"
+          },
+          "constraints": {
+            "enforce_physical_sector": false,
+            "gauss_law_penalty": 10.0,
+            "gauss_law_tolerance": 1e-08,
+            "max_sector_enumeration_qubits": 10,
+            "padding_penalty": 50.0,
+            "particle_number_penalty": 10.0,
+            "target_charge_sector": "neutral"
+          },
+          "dimensions": 1,
+          "dynamics": {
+            "enabled": false,
+            "evolution": {
+              "exact_enabled": true,
+              "exact_qubit_limit": 12,
+              "trotter_enabled": true,
+              "trotter_order": 1,
+              "trotter_step": 0.05
+            },
+            "initial_state": {
+              "base": "physical_reference",
+              "kind": "local_hopping_pulse",
+              "link_index": 0,
+              "pulse_strength": 1.0,
+              "pulse_time": 0.05
+            },
+            "method": "real_time_quench",
+            "runtime": {
+              "enabled": false,
+              "runtime_observables": "aggregate_gauge"
+            },
+            "time_grid": {
+              "num_points": 41,
+              "start": 0.0,
+              "stop": 2.0
+            }
+          },
+          "enabled": false,
+          "engine": {
+            "auto_project_physical_sector": true,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "projector_tolerance": 1e-08,
+            "representation": "auto",
+            "store_basis_indices": "preview"
+          },
+          "gauge": {
+            "coupling": 1.0,
+            "electric_cutoff": 1,
+            "group": "u1",
+            "include_magnetic_plaquettes": true
+          },
+          "grid": {
+            "axes": "principal",
+            "boundary": "open",
+            "origin": "molecule_center",
+            "shape": [
+              2
+            ],
+            "softening": 0.35,
+            "spacing": [
+              1.0
+            ]
+          },
+          "matter": {
+            "include_soft_coulomb_density": false,
+            "spin_components": 2,
+            "target_electrons": "auto"
+          },
+          "model": "lattice_qed_minimal_coupling"
+        },
+        "remove_orbitals": []
+      },
+      "run": {
+        "exports": {
+          "hdf5": false,
+          "qcschema_json": false
+        },
+        "output_dir": "/Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_cavity_pf_exact_cutoff_2",
+        "overwrite": true,
+        "seed": 2143
+      },
+      "solver": {
+        "ansatz": {
+          "entanglement": "full",
+          "entanglement_blocks": "cz",
+          "kind": "twolocal",
+          "reps": 2,
+          "rotation_blocks": [
+            "ry",
+            "rz"
+          ],
+          "skip_final_rotation_layer": false
+        },
+        "experimental": false,
+        "initial_point": "zeros",
+        "kind": "exact",
+        "lr_ace_adaptive": {
+          "candidate_pool_policy": "residual_guided",
+          "candidate_scan_limit": 64,
+          "enabled": false,
+          "generator_schedule": [
+            8,
+            16,
+            24,
+            32
+          ],
+          "initial_point_strategies": [
+            "zeros",
+            "random"
+          ],
+          "max_adaptive_expansions": 3,
+          "max_wall_time_seconds": 1200.0,
+          "min_energy_improvement_hartree": 0.0002,
+          "optimizer_maxiter_schedule": [
+            1000,
+            2000,
+            5000
+          ],
+          "random_restarts": 3,
+          "residual_batch_size": 8,
+          "residual_scan_angles": [
+            -0.15,
+            -0.05,
+            0.05,
+            0.15
+          ],
+          "target_error_hartree": 0.0016,
+          "uncompressed_check_qubit_limit": 12
+        },
+        "optimizer": {
+          "kind": "COBYLA",
+          "maxiter": 100,
+          "tol": null
+        }
+      },
+      "tasks": {
+        "excited_state": {
+          "enabled": false,
+          "method": "exact_spectrum",
+          "num_states": 2,
+          "state_indices": [
+            1
+          ]
+        },
+        "perturbative_correction": {
+          "enabled": false,
+          "method": "nevpt2",
+          "plugin": "pyscf",
+          "root": 0
+        },
+        "properties": []
+      },
+      "tc_qsci": {
+        "cast_model": {
+          "kind": "identity",
+          "npz_path": null
+        },
+        "enabled": false,
+        "initial_state": {
+          "determinants": [],
+          "kind": "hf",
+          "max_determinants": null
+        },
+        "kick": {
+          "num_kicks": 1,
+          "pauli_term_budget": null,
+          "shots": 1024,
+          "time": 0.05
+        },
+        "resource_estimation": {
+          "enabled": true,
+          "target_precision": 0.001
+        },
+        "resource_estimation_only": false,
+        "selection": {
+          "max_determinants": 64,
+          "min_count": 1,
+          "symmetry_postselect": true
+        }
+      }
+    }
+  },
+  "problem": {
+    "active_space_metadata": null,
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": 0.0,
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7151043390810812
+    },
+    "molecule_name": "H2-cavity-PF-cutoff-2",
+    "multiplicity": 1,
+    "num_particles": [
+      1,
+      1
+    ],
+    "num_spatial_orbitals": 2,
+    "transformers_applied": []
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "1.26.4",
+      "pyscf": "2.8.0",
+      "python": "3.12.2",
+      "qiskit": "1.4.0",
+      "qiskit_aer": "0.16.1",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.13.1"
+    },
+    "git_branch": "HEAD",
+    "git_commit": "164b7ff23843a5187d6aeba0c0bbd1bc2e3f287b",
+    "git_commit_short": "164b7ff23843",
+    "git_describe": "164b7ff-dirty",
+    "git_remote_origin": "https://github.com/wuls968/QCchem.git",
+    "git_status_summary": {
+      "staged": 0,
+      "unstaged": 15,
+      "untracked": 14
+    },
+    "repo_root": "/Users/a0000/.codex/worktrees/c397/QCchem",
+    "seed": 2143,
+    "source_config": "/Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_cavity_pf_cutoff_convergence.yaml",
+    "timestamp": "2026-05-15T13:03:21.071285+00:00",
+    "wall_time_seconds": 0.09035937499720603,
+    "workspace_dirty": true,
+    "workspace_fingerprint": "a3dd06f5f898454d2fb46652205d3dd7e7285729031b2970342511888679fda5"
+  },
+  "qft_dynamics": null,
+  "qft_model": null,
+  "qpe_resource_estimate": null,
+  "reduction_audit": {
+    "active_space_metadata": null,
+    "constant_energy_correction": 0.0,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "frozen_core_orbitals": [],
+    "hamiltonian_constants": {
+      "nuclear_repulsion_energy": 0.7151043390810812
+    },
+    "nuclear_repulsion_energy": 0.7151043390810812,
+    "original_num_particles": [
+      1,
+      1
+    ],
+    "original_num_spatial_orbitals": 2,
+    "reduced_num_particles": [
+      1,
+      1
+    ],
+    "reduced_num_spatial_orbitals": 2,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [],
+    "selected_active_orbitals_original": [],
+    "selection_mode": "none",
+    "selection_reason": "No active-space reduction requested.",
+    "total_constant_correction": 0.7151043390810812,
+    "transformers_applied": []
+  },
+  "reduction_plan": {
+    "enabled": true,
+    "mode": "disabled",
+    "notes": [
+      "No reduction planning inputs were requested."
+    ],
+    "provenance": {
+      "policy_name": "benchmark",
+      "source": "qcchem.chem.reduction_planner"
+    },
+    "recommended_changes": {},
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7151043390810812
+      },
+      "nuclear_repulsion_energy": 0.7151043390810812,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7151043390810812,
+      "transformers_applied": []
+    },
+    "strategy": "none"
+  },
+  "run_id": "h2_cavity_pf_exact_cutoff_2",
+  "runtime_chemical_accuracy": null,
+  "runtime_options": null,
+  "runtime_submission": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "scientific_risk_notes": [
+    "Pauli-Fierz cavity-QED execution uses a finite photon cutoff.",
+    "Exact baselines compare against the configured electron-photon Hamiltonian, not an external cavity-QED benchmark.",
+    "Photon cutoff convergence and gauge-form comparisons require explicit follow-up studies.",
+    "Exploratory Pauli-Fierz cavity-QED Hamiltonian with finite photon cutoff.",
+    "Exact baselines are exact only for the configured electron-photon qubit Hamiltonian."
+  ],
+  "symmetry_sector": null,
+  "tc_qsci_result": null,
+  "variational_result": null,
+  "verification_notes": [
+    "validation_scope=pauli_fierz_cavity_qed_finite_photon_cutoff"
+  ],
+  "verification_status": "exploratory"
+}

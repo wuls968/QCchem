@@ -16,6 +16,8 @@ from qcchem.core import (
     AtomSpec,
     BackendSpec,
     BenchmarkSpec,
+    CavityQEDModeSpec,
+    CavityQEDSpec,
     CompressionSpec,
     EmbeddingSpec,
     ExploratorySpec,
@@ -461,6 +463,74 @@ def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
     )
 
 
+def _parse_cavity_qed(problem_raw: dict[str, Any]) -> CavityQEDSpec:
+    cavity_raw = problem_raw.get("cavity_qed")
+    if not isinstance(cavity_raw, dict):
+        return CavityQEDSpec()
+
+    model = str(cavity_raw.get("model", "pauli_fierz_cavity_qed")).strip().lower()
+    if model != "pauli_fierz_cavity_qed":
+        raise ValueError("problem.cavity_qed.model must be pauli_fierz_cavity_qed.")
+    photon_encoding = str(cavity_raw.get("photon_encoding", "linear")).strip().lower()
+    if photon_encoding != "linear":
+        raise ValueError("problem.cavity_qed.photon_encoding must be linear.")
+    penalty = float(cavity_raw.get("photon_physical_subspace_penalty", 25.0))
+    if penalty < 0.0:
+        raise ValueError("problem.cavity_qed.photon_physical_subspace_penalty must be non-negative.")
+
+    modes_raw = cavity_raw.get("modes", [])
+    if modes_raw is None:
+        modes_raw = []
+    if not isinstance(modes_raw, list):
+        raise ValueError("problem.cavity_qed.modes must be a list.")
+    if bool(cavity_raw.get("enabled", False)) and not modes_raw:
+        modes_raw = [
+            {
+                "frequency": 0.4,
+                "coupling_strength": 0.05,
+                "polarization": [0.0, 0.0, 1.0],
+                "max_occupation": 1,
+            }
+        ]
+
+    modes: list[CavityQEDModeSpec] = []
+    for index, item in enumerate(modes_raw):
+        if not isinstance(item, dict):
+            raise ValueError(f"problem.cavity_qed.modes.{index} must be a mapping.")
+        frequency = float(item.get("frequency", 0.4))
+        if frequency <= 0.0:
+            raise ValueError(f"problem.cavity_qed.modes.{index}.frequency must be positive.")
+        coupling_strength = float(item.get("coupling_strength", 0.05))
+        if coupling_strength < 0.0:
+            raise ValueError(f"problem.cavity_qed.modes.{index}.coupling_strength must be non-negative.")
+        polarization = [float(value) for value in item.get("polarization", [0.0, 0.0, 1.0])]
+        if len(polarization) != 3:
+            raise ValueError(f"problem.cavity_qed.modes.{index}.polarization must have three entries.")
+        norm = sum(value * value for value in polarization) ** 0.5
+        if norm <= 1.0e-12:
+            raise ValueError(f"problem.cavity_qed.modes.{index}.polarization must be non-zero.")
+        max_occupation = int(item.get("max_occupation", 1))
+        if max_occupation < 0:
+            raise ValueError(f"problem.cavity_qed.modes.{index}.max_occupation must be non-negative.")
+        modes.append(
+            CavityQEDModeSpec(
+                frequency=frequency,
+                coupling_strength=coupling_strength,
+                polarization=polarization,
+                max_occupation=max_occupation,
+            )
+        )
+
+    return CavityQEDSpec(
+        enabled=bool(cavity_raw.get("enabled", False)),
+        model=model,
+        photon_encoding=photon_encoding,
+        include_dipole_self_energy=bool(cavity_raw.get("include_dipole_self_energy", True)),
+        photon_physical_subspace_penalty=penalty,
+        modes=modes or [CavityQEDModeSpec()],
+    )
+
+
 def _parse_property_tasks(tasks_raw: dict[str, Any]) -> list[PropertyTaskSpec]:
     properties_raw = tasks_raw.get("properties", [])
     if not isinstance(properties_raw, list):
@@ -698,6 +768,7 @@ def load_run_spec(path: Path) -> RunSpec:
             measurement=_parse_measurement(problem_raw),
             embedding=_parse_embedding(problem_raw),
             qft=_parse_lattice_qed(problem_raw),
+            cavity_qed=_parse_cavity_qed(problem_raw),
         ),
         mapping=MappingSpec(kind=str(_require_mapping(raw, "mapping").get("kind", "jordan_wigner"))),
         backend=BackendSpec(

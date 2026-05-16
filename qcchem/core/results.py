@@ -543,6 +543,41 @@ class QFTModelSummary:
 
 
 @dataclass(slots=True)
+class FieldModelSummary:
+    """Registry-level field-model metadata shared by QFT and cavity-QED paths."""
+
+    model_kind: str
+    registry_name: str
+    capability_tier: str
+    observables: list[str] = field(default_factory=list)
+    resource_estimate: dict[str, Any] = field(default_factory=dict)
+    error_budget: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class CavityQEDModelSummary:
+    """Exploratory molecular Pauli-Fierz cavity-QED model metadata."""
+
+    enabled: bool
+    model: str
+    mode_count: int
+    modes: list[dict[str, Any]]
+    photon_encoding: str
+    include_dipole_self_energy: bool
+    photon_physical_subspace_penalty: float
+    electronic_qubits: int
+    photon_qubits: int
+    total_qubits: int
+    hamiltonian_formula: str
+    term_counts_by_sector: dict[str, int] = field(default_factory=dict)
+    observables: dict[str, Any] = field(default_factory=dict)
+    resource_estimate: dict[str, Any] = field(default_factory=dict)
+    error_budget: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class ProvenanceSummary:
     """Versions and provenance needed for reproducibility."""
 
@@ -636,8 +671,10 @@ class RunResult:
     low_rank_resource_estimate: dict[str, Any] | None = None
     qpe_resource_estimate: dict[str, Any] | None = None
     error_budget: dict[str, Any] | None = None
+    field_model: FieldModelSummary | None = None
     qft_model: QFTModelSummary | None = None
     qft_dynamics: dict[str, Any] | None = None
+    cavity_qed_model: CavityQEDModelSummary | None = None
 
 
 @dataclass(slots=True)

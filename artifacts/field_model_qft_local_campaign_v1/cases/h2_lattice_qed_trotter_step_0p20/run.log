@@ -1,0 +1,14 @@
+2026-05-15 21:03:17,780 INFO Loading config from /Users/a0000/.codex/worktrees/c397/QCchem/configs/exploratory/h2_lattice_qed_dynamics.yaml
+2026-05-15 21:03:17,784 INFO Building exploratory lattice-QED field Hamiltonian
+2026-05-15 21:03:17,791 INFO Constructed lattice-QED Hamiltonian: sites=2, links=1, qubits=6
+2026-05-15 21:03:17,792 INFO Prepared measurement plan: groups=25, cost=250000
+2026-05-15 21:03:17,792 INFO Skipping backend construction for solver: exact
+2026-05-15 21:03:17,792 INFO Running solver: exact
+2026-05-15 21:03:17,795 INFO Computing exact spectrum for 1 states
+2026-05-15 21:03:17,801 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p20/exact_result.json
+2026-05-15 21:03:17,806 INFO Computed empirical calibration: wall_time=0.002s, measured_cost=None
+2026-05-15 21:03:17,806 INFO Building lattice-QED real-time dynamics artifact
+2026-05-15 21:03:18,378 INFO Computed lattice-QED dynamics: exact_skipped_reason=None, trotter_skipped_reason=None
+2026-05-15 21:03:18,382 INFO Writing JSON result to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p20/result.json
+2026-05-15 21:03:18,384 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/c397/QCchem/artifacts/field_model_qft_local_campaign_v1/cases/h2_lattice_qed_trotter_step_0p20/report.md
+2026-05-15 21:03:18,387 INFO Run completed

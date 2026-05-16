@@ -52,6 +52,11 @@ from qcchem.core import (
     SampledResultSummary,
     VariationalResultSummary,
 )
+from qcchem.field_models import (
+    build_cavity_qed_context,
+    build_field_model_summary,
+    summarize_cavity_qed_observables,
+)
 from qcchem.io.config import load_run_spec
 from qcchem.io.exports import workspace_fingerprint, write_hdf5_result, write_qcschema_json
 from qcchem.io.serialization import to_primitive
@@ -453,6 +458,20 @@ def _build_qft_mapping(spec, qft_context) -> MappedHamiltonian:
     )
 
 
+def _build_cavity_mapping(electronic_mapping: MappedHamiltonian, cavity_context) -> MappedHamiltonian:
+    return MappedHamiltonian(
+        fermionic_hamiltonian=electronic_mapping.fermionic_hamiltonian,
+        qubit_hamiltonian=cavity_context.qubit_hamiltonian,
+        mapper=electronic_mapping.mapper,
+        summary=MappingSummary(
+            kind=f"pauli_fierz_cavity_qed:{electronic_mapping.summary.kind}+bosonic_linear",
+            num_qubits=int(cavity_context.summary.total_qubits),
+            fermionic_term_count=electronic_mapping.summary.fermionic_term_count,
+            qubit_term_count=len(cavity_context.qubit_hamiltonian),
+        ),
+    )
+
+
 def _build_sampled_result(
     *,
     backend,
@@ -539,6 +558,7 @@ def _ensure_exploratory_allowed(spec, *, exploratory_command: bool) -> None:
         or spec.exploratory.enabled
         or bool(spec.exploratory.modules)
         or spec.problem.qft.enabled
+        or spec.problem.cavity_qed.enabled
         or spec.tc_qsci.enabled
     )
     if requested and not (exploratory_command or spec.policy.allow_exploratory):
@@ -586,6 +606,10 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     )
 
     qft_context = None
+    cavity_context = None
+    field_model = None
+    if spec.problem.qft.enabled and spec.problem.cavity_qed.enabled:
+        raise ValueError("Enable either problem.qft or problem.cavity_qed, not both in the same run.")
     if spec.problem.qft.enabled:
         _record(logger, events, "Building exploratory lattice-QED field Hamiltonian")
         qft_context = build_lattice_qed_context(
@@ -608,6 +632,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 f"qubits={qft_context.summary.total_qubits}"
             ),
         )
+        field_model = build_field_model_summary(kind="lattice_qed", model_summary=qft_context.summary)
     else:
         _record(logger, events, "Building electronic structure problem")
         chemistry = build_electronic_structure_context(spec)
@@ -645,6 +670,27 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         )
         if compression_result is not None:
             _record(logger, events, f"Computed compression audit: {compression_result.method}")
+        if spec.problem.cavity_qed.enabled:
+            if compression_result is not None and compression_result.execution_enabled:
+                raise ValueError("Pauli-Fierz cavity-QED runs currently require the uncompressed electronic Hamiltonian.")
+            _record(logger, events, "Building exploratory Pauli-Fierz cavity-QED Hamiltonian")
+            cavity_context = build_cavity_qed_context(spec, chemistry, uncompressed_mapping)
+            mapping = _build_cavity_mapping(uncompressed_mapping, cavity_context)
+            compression_result = None
+            _record(
+                logger,
+                events,
+                (
+                    "Constructed cavity-QED Hamiltonian: "
+                    f"modes={cavity_context.summary.mode_count}, "
+                    f"electronic_qubits={cavity_context.summary.electronic_qubits}, "
+                    f"photon_qubits={cavity_context.summary.photon_qubits}"
+                ),
+            )
+            field_model = build_field_model_summary(
+                kind="pauli_fierz_cavity_qed",
+                model_summary=cavity_context.summary,
+            )
     measurement = build_measurement_plan(
         measurement_spec=spec.problem.measurement,
         executed_mapping=mapping,
@@ -713,12 +759,20 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 qft_context=qft_context,
             )
         else:
+            field_solver_context = {}
+            if cavity_context is not None:
+                field_solver_context["cavity_qed"] = {
+                    "electronic_qubits": cavity_context.electronic_qubits,
+                    "photon_qubits": cavity_context.photon_qubits,
+                    "photon_mode_qubits": list(cavity_context.photon_mode_qubits),
+                }
             solver = build_solver(
                 spec.solver,
                 backend=backend,
                 seed=spec.run.seed,
                 problem_summary=chemistry.summary,
                 mapper=mapping.mapper,
+                field_model_context=field_solver_context,
             )
         solver_outcome, compressed_solve_wall_time = _solve_with_timing(solver, mapping.qubit_hamiltonian)
 
@@ -865,12 +919,20 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 qft_context=qft_context,
             )
         else:
+            reference_field_solver_context = {}
+            if cavity_context is not None:
+                reference_field_solver_context["cavity_qed"] = {
+                    "electronic_qubits": cavity_context.electronic_qubits,
+                    "photon_qubits": cavity_context.photon_qubits,
+                    "photon_mode_qubits": list(cavity_context.photon_mode_qubits),
+                }
             reference_solver = build_solver(
                 spec.solver,
                 backend=reference_backend,
                 seed=spec.run.seed,
                 problem_summary=chemistry.summary,
                 mapper=uncompressed_mapping.mapper,
+                field_model_context=reference_field_solver_context,
             )
         uncompressed_outcome, uncompressed_solve_wall_time = _solve_with_timing(
             reference_solver,
@@ -964,6 +1026,23 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         exact_total_energy=exact_baseline.total_energy,
         compressed_vs_uncompressed=compressed_comparison,
     )
+    if cavity_context is not None:
+        cavity_observables = summarize_cavity_qed_observables(
+            cavity_context,
+            spectrum=spectrum,
+            solver_energy=solver_energy,
+            exact_energy=exact_energy,
+        )
+        cavity_context.summary.observables.update(cavity_observables)
+        cavity_context.summary.error_budget["exact_residual_norm"] = cavity_observables.get("exact_residual_norm")
+        cavity_context.summary.error_budget["vqe_vs_exact_error"] = cavity_observables.get("vqe_vs_exact_error")
+        cavity_context.summary.error_budget["photon_encoding_leakage"] = cavity_observables.get(
+            "photon_physical_subspace_leakage"
+        )
+        field_model = build_field_model_summary(
+            kind="pauli_fierz_cavity_qed",
+            model_summary=cavity_context.summary,
+        )
 
     if variational_result is not None and solver_kind == "lr_ace":
         lr_ace_payload = variational_result.ansatz.get("lr_ace")
@@ -1144,6 +1223,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_status = "exploratory"
     if qft_context is not None:
         verification_status = "exploratory"
+    if cavity_context is not None:
+        verification_status = "exploratory"
     if tc_qsci_payload is not None and verification_status == "validated":
         verification_status = "exploratory"
 
@@ -1171,6 +1252,17 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 "Trotter and runtime-batch evidence do not establish continuum-limit molecular accuracy.",
             ]
         )
+    if cavity_context is not None:
+        module_origin = "exploratory"
+        capability_tier = "exploratory"
+        scientific_risk_notes.extend(
+            [
+                "Pauli-Fierz cavity-QED execution uses a finite photon cutoff.",
+                "Exact baselines compare against the configured electron-photon Hamiltonian, not an external cavity-QED benchmark.",
+                "Photon cutoff convergence and gauge-form comparisons require explicit follow-up studies.",
+            ]
+        )
+        scientific_risk_notes.extend(cavity_context.summary.notes)
     if tc_qsci_payload is not None:
         module_origin = "exploratory"
         capability_tier = "exploratory"
@@ -1196,6 +1288,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_notes.append("validation_scope=lattice_qed_finite_cutoff_exact_gate")
     if qft_dynamics is not None:
         verification_notes.append("validation_scope=lattice_qed_real_time_dynamics")
+    if cavity_context is not None:
+        verification_notes.append("validation_scope=pauli_fierz_cavity_qed_finite_photon_cutoff")
     hardware_verified = bool(
         runtime_submission is not None and runtime_submission.submitted and runtime_submission.succeeded
     )
@@ -1277,8 +1371,10 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         error_budget=(
             tc_qsci_payload.get("error_budget") if tc_qsci_payload is not None else None
         ),
+        field_model=field_model,
         qft_model=(qft_context.summary if qft_context is not None else None),
         qft_dynamics=qft_dynamics,
+        cavity_qed_model=(cavity_context.summary if cavity_context is not None else None),
         provenance=ProvenanceSummary(
             timestamp=datetime.now(timezone.utc).isoformat(),
             wall_time_seconds=0.0,

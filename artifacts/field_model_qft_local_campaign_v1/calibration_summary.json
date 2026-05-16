@@ -1,0 +1,60 @@
+{
+  "cases_with_estimated_cost": 22,
+  "cases_with_measured_cost": 0,
+  "field_model_campaign": {
+    "ansatz_limited_cases": [
+      "h2_cavity_pf_vqe_cutoff_1"
+    ],
+    "by_model": {
+      "lattice_qed": {
+        "case_count": 15,
+        "cases": [
+          "h2_lattice_qed_2site_exact",
+          "h2_lattice_qed_2site_sector_audit",
+          "h2_lattice_qed_2site_givqe",
+          "h2_lattice_qed_2site_dynamics",
+          "h2_lattice_qed_2site_runtime_preview",
+          "h2_lattice_qed_4site_sparse_exact",
+          "h2_lattice_qed_4site_sparse_dynamics",
+          "h2_lattice_qed_2d_projected_exact",
+          "h2_lattice_qed_2d_plaquette_dynamics",
+          "h2_lattice_qed_gauge_coupling_0p5",
+          "h2_lattice_qed_gauge_coupling_1p0",
+          "h2_lattice_qed_gauge_coupling_1p5",
+          "h2_lattice_qed_trotter_step_0p20",
+          "h2_lattice_qed_trotter_step_0p10",
+          "h2_lattice_qed_trotter_step_0p05"
+        ],
+        "hardware_candidates": []
+      },
+      "pauli_fierz_cavity_qed": {
+        "case_count": 7,
+        "cases": [
+          "h2_cavity_pf_exact_cutoff_1",
+          "h2_cavity_pf_exact_cutoff_2",
+          "h2_cavity_pf_vqe_cutoff_1",
+          "h2_cavity_pf_coupling_0p00",
+          "h2_cavity_pf_coupling_0p02",
+          "h2_cavity_pf_coupling_0p05",
+          "h2_cavity_pf_coupling_0p10"
+        ],
+        "hardware_candidates": []
+      }
+    },
+    "case_count": 22,
+    "cutoff_sensitive_cases": [],
+    "hardware_candidates": [],
+    "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+    "recommended_trotter_step": {
+      "case": "h2_lattice_qed_trotter_step_0p20",
+      "max_trotter_observable_error": 0.0023758504011507087,
+      "operation_count": 64,
+      "trotter_step": 0.2
+    },
+    "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+    "trotter_limited_cases": []
+  },
+  "mean_achieved_error": 0.0865558211517053,
+  "mean_estimated_cost": 153636.36363636365,
+  "mean_measured_cost": null
+}

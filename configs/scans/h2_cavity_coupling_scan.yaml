@@ -1,0 +1,11 @@
+scan:
+  name: h2_cavity_coupling_scan
+  description: Exploratory H2 Pauli-Fierz cavity-QED coupling-strength scan.
+  base_config: configs/exploratory/h2_cavity_pf_exact.yaml
+  policy_name: benchmark
+  tags: [scan, exploratory, cavity_qed]
+  parameter:
+    name: coupling_strength
+    kind: config_override
+    target: problem.cavity_qed.modes.0.coupling_strength
+    values: [0.0, 0.04, 0.08]

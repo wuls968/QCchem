@@ -86,6 +86,7 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
     mapping = payload.get("mapping") or {}
     runtime_submission = payload.get("runtime_submission") or {}
     measurement = payload.get("measurement") or {}
+    field_model = payload.get("field_model") or {}
     calibration = payload.get("calibration") or {}
     reduction = payload.get("reduction_audit") or {}
     compression = payload.get("compression_result") or {}
@@ -130,7 +131,17 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
         f"{problem.get('molecule_name', 'System')} total energy {energy.get('total_energy')} Hartree "
         f"from {method_label} compared against {comparison_target}."
     )
-    if chem_status == "met":
+    if field_model.get("model_kind") == "pauli_fierz_cavity_qed":
+        primary_claim = (
+            f"{problem.get('molecule_name', 'System')} Pauli-Fierz cavity-QED result uses a finite photon cutoff "
+            f"and is compared against {comparison_target} within the configured electron-photon Hamiltonian."
+        )
+    elif field_model.get("model_kind") == "lattice_qed":
+        primary_claim = (
+            f"{problem.get('molecule_name', 'System')} lattice-QED result is gauge-audited finite-cutoff evidence "
+            f"compared against {comparison_target}."
+        )
+    if chem_status == "met" and not field_model.get("model_kind"):
         primary_claim = (
             f"{problem.get('molecule_name', 'System')} stays within chemical accuracy against {comparison_target} "
             f"for the defended local execution path."
@@ -149,6 +160,7 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "basis": problem.get("basis"),
             "backend_kind": backend.get("kind"),
             "mapping_kind": mapping.get("kind"),
+            "field_model_kind": field_model.get("model_kind"),
         },
         primary_scientific_claim=primary_claim,
         primary_baseline=baseline,
@@ -188,6 +200,7 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "measured_shot_usage": calibration.get("measured_shot_usage"),
             "runtime_backend": runtime_submission.get("backend_name"),
             "runtime_job_id": runtime_submission.get("job_id"),
+            "field_model_kind": field_model.get("model_kind"),
         },
         trust_judgment={
             "verification_status": verification_status,

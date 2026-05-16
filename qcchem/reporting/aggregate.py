@@ -39,6 +39,16 @@ def _best_benchmark_case(cases: list[dict[str, Any]]) -> dict[str, Any] | None:
     return min(ranked, key=lambda case: float(_benchmark_case_error(case) or 0.0))
 
 
+def _field_model_cases(cases: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for case in cases:
+        metrics = case.get("metrics") or {}
+        model_kind = metrics.get("field_model_kind")
+        if model_kind is not None:
+            grouped.setdefault(str(model_kind), []).append(case)
+    return grouped
+
+
 def _best_hardware_case(cases: list[dict[str, Any]]) -> dict[str, Any] | None:
     preferred = [
         case
@@ -114,6 +124,8 @@ def render_benchmark_report(result: Any) -> str:
     best_case = _best_benchmark_case(validated_cases or data["cases"])
     best_case_error = None if best_case is None else _benchmark_case_error(best_case)
     best_case_distance = _distance_to_chemical_accuracy(best_case_error)
+    field_model_summary = (data.get("dashboard_summary") or {}).get("field_model_campaign") or {}
+    field_cases_by_model = _field_model_cases(data["cases"])
     lines = [
         f"# Benchmark Suite Report: {data['suite_name']}",
         "",
@@ -149,9 +161,49 @@ def render_benchmark_report(result: Any) -> str:
         f"- validated_like_cases: `{len(validated_cases)}`",
         f"- exploratory_cases: `{len(exploratory_cases)}`",
         "",
-        "## Validated-Like Cases",
+        "## Field-Model Campaign",
+        "",
+        f"- schema_version: `{field_model_summary.get('schema_version')}`",
+        f"- case_count: `{field_model_summary.get('case_count', 0)}`",
+        f"- hardware_candidates: `{field_model_summary.get('hardware_candidates', [])}`",
+        f"- cutoff_sensitive_cases: `{field_model_summary.get('cutoff_sensitive_cases', [])}`",
+        f"- trotter_limited_cases: `{field_model_summary.get('trotter_limited_cases', [])}`",
+        f"- ansatz_limited_cases: `{field_model_summary.get('ansatz_limited_cases', [])}`",
+        f"- recommended_trotter_step: `{field_model_summary.get('recommended_trotter_step')}`",
+        f"- hardware_gate_note: `{field_model_summary.get('hardware_gate_note')}`",
         "",
     ]
+    for model_kind, model_cases in sorted(field_cases_by_model.items()):
+        lines.extend([f"## Field Model: {model_kind}", ""])
+        for item in model_cases:
+            metrics = item.get("metrics", {})
+            decision = metrics.get("field_model_decision") or {}
+            resource = metrics.get("field_model_resource_estimate") or {}
+            lines.append(
+                f"- `{item['name']}` | status=`{item['status']}` | "
+                f"qubits=`{metrics.get('qubits')}` | terms=`{metrics.get('pauli_terms')}` | "
+                f"hardware_candidate=`{decision.get('hardware_candidate')}` | "
+                f"skip=`{decision.get('hardware_skip_reason')}`"
+            )
+            if model_kind == "lattice_qed":
+                lines.append(
+                    f"  lattice residual=`{metrics.get('gauss_law_residual')}` "
+                    f"projected_dimension=`{metrics.get('projected_dimension')}` "
+                    f"trotter_error=`{metrics.get('max_trotter_observable_error')}` "
+                    f"engine=`{metrics.get('engine_representation')}` "
+                    f"pauli_materialization=`{metrics.get('pauli_materialization')}`"
+                )
+            elif model_kind == "pauli_fierz_cavity_qed":
+                lines.append(
+                    f"  photon leakage=`{metrics.get('photon_physical_subspace_leakage')}` "
+                    f"boundary_weight=`{metrics.get('boundary_photon_occupation_weight')}` "
+                    f"cutoff_delta=`{metrics.get('photon_cutoff_delta_hartree')}` "
+                    f"vqe_vs_exact=`{metrics.get('vqe_vs_exact_error')}`"
+                )
+            if resource:
+                lines.append(f"  resource_estimate=`{resource}`")
+        lines.append("")
+    lines.extend(["## Validated-Like Cases", ""])
     for item in validated_cases:
         metrics = item.get("metrics", {})
         lines.append(
