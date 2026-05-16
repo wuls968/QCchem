@@ -14,6 +14,12 @@ SUPPORTED_AGENT_TASK_KINDS = {
     "run_config",
     "runtime_collect",
     "benchmark_suite",
+    "study",
+    "scan",
+    "hardware_optimize_preview",
+    "report",
+    "compare_artifacts",
+    "review_claims",
     "hardware_campaign_summary",
 }
 
@@ -63,8 +69,14 @@ def load_agent_task_spec(path: Path) -> AgentTaskSpec:
 
     if kind == "runtime_collect" and "artifact_root" not in inputs:
         raise ValueError("runtime_collect tasks require inputs.artifact_root.")
-    if kind in {"run_config", "benchmark_suite"} and "config" not in inputs:
+    if kind in {"run_config", "benchmark_suite", "study", "scan", "hardware_optimize_preview"} and "config" not in inputs:
         raise ValueError(f"{kind} tasks require inputs.config.")
+    if kind == "report" and "result_json" not in inputs:
+        raise ValueError("report tasks require inputs.result_json.")
+    if kind == "compare_artifacts" and "artifacts" not in inputs:
+        raise ValueError("compare_artifacts tasks require inputs.artifacts.")
+    if kind == "review_claims" and "targets" not in inputs:
+        raise ValueError("review_claims tasks require inputs.targets.")
     if kind == "hardware_campaign_summary" and "target" not in inputs:
         raise ValueError("hardware_campaign_summary tasks require inputs.target.")
 

@@ -4,6 +4,15 @@ QCchem AI Workspace adds a floating research copilot to the Dash workbench and a
 
 Within the current `Trust-First Release`, AI Workspace is intentionally conservative: it is an `evidence-aware`, `ticket-mediated`, `artifact-grounded` research copilot.
 
+The evidence-grounded research agent layer adds a stricter first version of the
+AI research center:
+
+- bounded artifact ingestion for run, benchmark, study, scan, hardware campaign, and runtime sidecar artifacts
+- an evidence graph with separate chemistry and runtime judgments
+- local trust/risk/cost gates before any workflow route is allowed
+- deterministic overclaim review for validated / exploratory / unstable and hardware boundaries
+- append-only AI provenance under `artifacts/ai_workspace/provenance/`
+
 ## What lives where
 
 - Workbench preview shell: floating assistant, draft preview, provider drawer, position recovery control
@@ -42,6 +51,15 @@ The floating assistant preview is no longer just a request echo. When the ticket
 - recommended action
 - evidence scope
 - limitation notes
+
+New tickets may also carry:
+
+- `evidence_context`: the normalized evidence graph consumed by the ticket
+- `action_plan`: a single `ResearchActionProposal`
+- `risk_assessment`: local guardrail output
+- `cost_estimate`: local budget/cost boundary
+- `model_provenance`: optional LLM call or fallback record
+- `execution_provenance`: workflow events written after execution
 
 That keeps the copilot aligned with the same Evidence Core language used by reports and the Research Console.
 
@@ -96,8 +114,16 @@ This is what keeps the copilot in its intended role: interpret evidence conserva
 ```bash
 qcchem ai draft-ticket --provider-config examples/ai_workspace/provider.openai-compatible.yaml --task-type analysis --request "Compare the H2 hardware campaign" --artifact artifacts/hardware_calibration_suite_v1
 qcchem ai run-ticket examples/ai_workspace/tickets/analysis_h2_campaign.json
+qcchem ai summarize-evidence --artifact artifacts/hardware_calibration_suite_v1 -o artifacts/ai_workspace/evidence/hardware_campaign.json
+qcchem ai review --target artifacts/hardware_calibration_suite_v1 --claim "hardware_verified proves publication-grade chemical accuracy" -o artifacts/ai_workspace/reviews/hardware_boundary
 qcchem workbench serve
 ```
+
+The v1 action route allows local `run_config`, `benchmark_suite`, `study`,
+`scan`, `report`, `compare_artifacts`, `review_claims`, `runtime_collect`, and
+`hardware_optimize_preview`. Real hardware submission is intentionally blocked
+from this route; runtime collection requires an existing `runtime_submission.json`
+with `job_id` plus explicit high-risk confirmation.
 
 ## Notes
 

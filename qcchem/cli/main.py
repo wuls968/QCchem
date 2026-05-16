@@ -12,6 +12,12 @@ from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
+from qcchem.workflow.evidence_agent import (
+    append_ai_provenance_event,
+    review_claims,
+    summarize_evidence_artifacts,
+    write_review_outputs,
+)
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
 from qcchem.workflow.release_audit import run_release_audit_from_config
@@ -139,6 +145,29 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ai_run = ai_subparsers.add_parser("run-ticket", help="Run an accepted AI workspace ticket.")
     ai_run.add_argument("ticket", type=Path, help="Path to one AI workspace ticket JSON file.")
+    ai_summarize = ai_subparsers.add_parser(
+        "summarize-evidence",
+        help="Summarize linked QCchem artifacts into an evidence graph.",
+    )
+    ai_summarize.add_argument(
+        "--artifact",
+        action="append",
+        required=True,
+        help="QCchem artifact directory or summary JSON path. Repeat for multiple artifacts.",
+    )
+    ai_summarize.add_argument("-o", "--output", type=Path, help="Optional JSON output path.")
+    ai_review = ai_subparsers.add_parser(
+        "review",
+        help="Review claims against QCchem artifact evidence boundaries.",
+    )
+    ai_review.add_argument(
+        "--target",
+        action="append",
+        required=True,
+        help="QCchem artifact directory or summary JSON path. Repeat for multiple targets.",
+    )
+    ai_review.add_argument("--claim", help="Claim text to review. Defaults to artifact claims.")
+    ai_review.add_argument("-o", "--output-dir", type=Path, help="Optional output directory for review files.")
     return parser
 
 
@@ -452,6 +481,34 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.ai_command == "run-ticket":
             result = run_ticket(args.ticket)
+            print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
+            return 0
+        if args.ai_command == "summarize-evidence":
+            result = summarize_evidence_artifacts(args.artifact, workspace_base=Path.cwd())
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(to_primitive(result), indent=2, sort_keys=True), encoding="utf-8")
+                append_ai_provenance_event(
+                    workspace_base=Path.cwd(),
+                    event_type="evidence_loaded",
+                    summary="Summarized QCchem evidence artifacts from CLI.",
+                    artifacts=[str(item) for item in args.artifact],
+                    metadata={"output": str(args.output)},
+                )
+            print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
+            return 0
+        if args.ai_command == "review":
+            result = review_claims(targets=args.target, claim_text=args.claim, workspace_base=Path.cwd())
+            if args.output_dir is not None:
+                outputs = write_review_outputs(result, args.output_dir)
+                result["outputs"] = outputs
+                append_ai_provenance_event(
+                    workspace_base=Path.cwd(),
+                    event_type="claim_reviewed",
+                    summary="Reviewed QCchem claim boundaries from CLI.",
+                    artifacts=[str(item) for item in args.target],
+                    metadata=outputs,
+                )
             print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
             return 0
 

@@ -1,5 +1,12 @@
 """Core specifications and result models for QCchem."""
 
+from .ai_workspace import (
+    AIModelCallRecord,
+    AIProvenanceEvent,
+    EvidenceGraphSummary,
+    EvidenceSourceRecord,
+    ResearchActionProposal,
+)
 from .results import (
     ArtifactPaths,
     BackendCapabilitySummary,
@@ -111,6 +118,8 @@ from .specs import (
 )
 
 __all__ = [
+    "AIModelCallRecord",
+    "AIProvenanceEvent",
     "ActiveSpaceSpec",
     "AutoActiveSpaceSpec",
     "AnsatzSpec",
@@ -140,6 +149,8 @@ __all__ = [
     "ExploratorySpec",
     "EnergyResult",
     "EvidenceSummary",
+    "EvidenceGraphSummary",
+    "EvidenceSourceRecord",
     "ExactBaselineSummary",
     "ExcitedStateLevelResult",
     "ExcitedStateTaskResult",
@@ -184,6 +195,7 @@ __all__ = [
     "ProvenanceSummary",
     "QFTModelSummary",
     "ReductionPlanResult",
+    "ResearchActionProposal",
     "ReadoutMitigationSpec",
     "ReductionAuditSummary",
     "RegistryEntry",
