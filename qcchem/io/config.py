@@ -21,6 +21,7 @@ from qcchem.core import (
     CavityQEDModeSpec,
     CavityQEDSpec,
     CompressionSpec,
+    ContinuitySpec,
     EmbeddingSpec,
     EmbeddingExecutionSpec,
     EffectiveHamiltonianCacheSpec,
@@ -236,6 +237,34 @@ def _parse_compression(problem_raw: dict[str, Any]) -> CompressionSpec:
                 compression_raw.get("apply_to_solver", False),
             )
         ),
+    )
+
+
+def _parse_continuity(
+    raw: dict[str, Any],
+    *,
+    default_enabled: bool,
+    default_mode: str = "previous_optimal",
+    allowed_modes: set[str] | None = None,
+) -> ContinuitySpec:
+    """Parse aggregate workflow warm-start policy."""
+    continuity_raw = raw.get("continuity")
+    allowed = allowed_modes or {"previous_optimal"}
+    if continuity_raw is None:
+        return ContinuitySpec(enabled=default_enabled, mode=default_mode)
+    if not isinstance(continuity_raw, dict):
+        raise ValueError("continuity must be a mapping.")
+    mode = str(continuity_raw.get("mode", default_mode)).strip().lower()
+    if mode not in allowed:
+        allowed_text = ", ".join(sorted(allowed))
+        raise ValueError(f"continuity.mode must be one of {allowed_text}.")
+    mismatch = str(continuity_raw.get("on_parameter_mismatch", "fallback")).strip().lower()
+    if mismatch != "fallback":
+        raise ValueError("continuity.on_parameter_mismatch currently supports only fallback.")
+    return ContinuitySpec(
+        enabled=bool(continuity_raw.get("enabled", default_enabled)),
+        mode=mode,
+        on_parameter_mismatch=mismatch,
     )
 
 

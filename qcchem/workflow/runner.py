@@ -1033,7 +1033,12 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 "tol": spec.solver.optimizer.tol,
             },
             ansatz=ansatz_payload,
-            initial_point_strategy=spec.solver.initial_point if isinstance(spec.solver.initial_point, str) else "custom",
+            initial_point_strategy=str(
+                solver_outcome.metadata.get(
+                    "initial_point_strategy",
+                    spec.solver.initial_point if isinstance(spec.solver.initial_point, str) else "custom",
+                )
+            ),
             parameter_count=int(solver_outcome.metadata.get("ansatz_num_parameters", 0)),
             converged=solver_outcome.converged,
             iterations=solver_outcome.iterations,
@@ -1041,6 +1046,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             optimal_parameters=solver_outcome.optimal_parameters,
             final_objective_energy=solver_energy,
             optimizer_message=str(solver_outcome.metadata.get("optimizer_message")),
+            initial_point_provenance=dict(solver_outcome.metadata.get("initial_point_provenance", {})),
         )
 
     compressed_comparison = None

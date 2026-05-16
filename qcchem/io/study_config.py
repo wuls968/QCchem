@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 
 from qcchem.core import StudyRunSpec, StudySpec
-from qcchem.io.config import _project_root, _require_mapping
+from qcchem.io.config import _parse_continuity, _project_root, _require_mapping
 
 
 def load_study_spec(path: Path) -> StudySpec:
@@ -44,4 +44,10 @@ def load_study_spec(path: Path) -> StudySpec:
         policy_name=study_raw.get("policy_name"),
         runs=runs,
         tags=[str(value) for value in study_raw.get("tags", [])],
+        continuity=_parse_continuity(
+            study_raw,
+            default_enabled=False,
+            default_mode="previous_optimal",
+            allowed_modes={"previous_optimal"},
+        ),
     )

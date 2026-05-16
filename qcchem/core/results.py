@@ -106,6 +106,7 @@ class VariationalResultSummary:
     optimal_parameters: list[float] = field(default_factory=list)
     final_objective_energy: float | None = None
     optimizer_message: str | None = None
+    initial_point_provenance: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -785,6 +786,14 @@ class RunRecord:
     absolute_error: float | None
     tags: list[str] = field(default_factory=list)
     evidence_summary: EvidenceSummary | None = None
+    initial_point_reused: bool | None = None
+    initial_point_source: str | None = None
+    initial_point_strategy: str | None = None
+    history_sources: list[str] = field(default_factory=list)
+    fallback_reason: str | None = None
+    iterations: int | None = None
+    evaluations: int | None = None
+    parameter_count: int | None = None
 
 
 @dataclass(slots=True)
@@ -884,6 +893,14 @@ class ScanPointResult:
     run_artifact_root: Path
     exact_error: float | None = None
     evidence_summary: EvidenceSummary | None = None
+    initial_point_reused: bool | None = None
+    initial_point_source: str | None = None
+    initial_point_strategy: str | None = None
+    history_sources: list[str] = field(default_factory=list)
+    fallback_reason: str | None = None
+    iterations: int | None = None
+    evaluations: int | None = None
+    parameter_count: int | None = None
 
 
 @dataclass(slots=True)

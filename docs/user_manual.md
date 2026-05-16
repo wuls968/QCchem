@@ -77,6 +77,30 @@ qcchem scan run \
   -o artifacts/h2_short_scan_local
 ```
 
+VQE scan workflows use chemical continuity by default. The first scan point uses
+the configured `solver.initial_point`, the second point uses the previous VQE
+`optimal_parameters`, and later points use a `linear_predictor` over the two
+previous optimized parameter vectors. The run artifact records
+`variational_result.initial_point_provenance`, and scan tables include whether
+the candidate was reused, `candidate_source`, `effective_strategy`, predictor
+history, evaluations, parameter count, and any fallback reason.
+
+Study workflows keep continuity off by default because many studies compare
+different basis sets, active spaces, mappings, or ansatz shapes. Enable it only
+for ordered sweeps where the YAML run order is chemically meaningful:
+
+```yaml
+study:
+  continuity:
+    enabled: true
+    mode: previous_optimal
+    on_parameter_mismatch: fallback
+```
+
+If the previous optimum has a different parameter count from the current ansatz,
+QCchem does not pad or truncate parameters. It falls back to the run's configured
+`solver.initial_point` and records the mismatch in provenance.
+
 Aggregate reports should be read as evidence summaries first, then as detailed
 case lists.
 

@@ -498,6 +498,23 @@ class LRACEAdaptiveSpec:
 
 
 @dataclass(slots=True)
+class InitialPointCandidate:
+    """Runtime-only warm-start candidate supplied by aggregate workflows."""
+
+    values: list[float]
+    source: str
+    mode: str = "previous_optimal"
+    on_parameter_mismatch: str = "fallback"
+    source_run_id: str | None = None
+    source_artifact_root: str | None = None
+    source_parameter_count: int | None = None
+    history_sources: list[str] = field(default_factory=list)
+    history_parameter_values: list[float] = field(default_factory=list)
+    target_parameter_value: float | None = None
+    fallback_reason: str | None = None
+
+
+@dataclass(slots=True)
 class SolverSpec:
     """Solver configuration."""
 
@@ -505,6 +522,7 @@ class SolverSpec:
     optimizer: OptimizerSpec = field(default_factory=OptimizerSpec)
     ansatz: AnsatzSpec = field(default_factory=AnsatzSpec)
     initial_point: str | list[float] = "zeros"
+    initial_point_candidate: InitialPointCandidate | None = None
     experimental: bool = False
     lr_ace_adaptive: LRACEAdaptiveSpec = field(default_factory=LRACEAdaptiveSpec)
 
@@ -781,6 +799,15 @@ class StudyRunSpec:
 
 
 @dataclass(slots=True)
+class ContinuitySpec:
+    """Cross-run warm-start policy for aggregate workflows."""
+
+    enabled: bool = False
+    mode: str = "previous_optimal"
+    on_parameter_mismatch: str = "fallback"
+
+
+@dataclass(slots=True)
 class StudySpec:
     """A collection of related runs composing one study."""
 
@@ -790,6 +817,7 @@ class StudySpec:
     policy_name: str | None = None
     runs: list[StudyRunSpec] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    continuity: ContinuitySpec = field(default_factory=ContinuitySpec)
 
 
 @dataclass(slots=True)
@@ -883,3 +911,6 @@ class ScanSpec:
     )
     policy_name: str | None = None
     tags: list[str] = field(default_factory=list)
+    continuity: ContinuitySpec = field(
+        default_factory=lambda: ContinuitySpec(enabled=True, mode="linear_predictor")
+    )
