@@ -15,6 +15,12 @@ from qcchem.chem.active_space import (
     infer_frozen_core_orbitals,
     resolve_active_space,
 )
+from qcchem.chem.point_group import (
+    SymmetryAwarePySCFDriver,
+    resolve_point_group_filter,
+    run_point_group_pyscf,
+    skipped_point_group_metadata,
+)
 from qcchem.core import ProblemSummary, ReductionAuditSummary, RunSpec
 
 REDUCTION_ENERGY_FORMULA = (
@@ -46,19 +52,60 @@ def _distance_unit(unit: str) -> DistanceUnit:
     raise ValueError(f"Unsupported distance unit: {unit}")
 
 
-def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureContext:
-    """Construct an electronic-structure problem from a QCchem spec."""
-    method = MethodType.RHF if spec.molecule.spin == 0 else MethodType.UHF
-    transformers_applied: list[str] = []
-    driver = PySCFDriver(
+def _build_driver(spec: RunSpec, method: MethodType, *, symmetry: bool) -> PySCFDriver:
+    driver_cls = SymmetryAwarePySCFDriver if symmetry else PySCFDriver
+    subgroup = spec.problem.point_group.subgroup.strip()
+    kwargs = {}
+    if symmetry and subgroup and subgroup.lower() != "auto":
+        kwargs["symmetry_subgroup"] = subgroup
+    return driver_cls(
         atom=spec.molecule.geometry_string(),
         unit=_distance_unit(spec.molecule.unit),
         charge=spec.molecule.charge,
         spin=spec.molecule.spin,
         basis=spec.molecule.basis,
         method=method,
+        **kwargs,
     )
-    original_problem = driver.run()
+
+
+def _run_problem_driver(spec: RunSpec, method: MethodType):
+    point_group_mode = spec.mapping.symmetry_reduction.point_group.strip().lower()
+    strict = bool(spec.mapping.symmetry_reduction.strict)
+    if point_group_mode == "disabled":
+        if spec.problem.point_group.reduction_mode.strip().lower() == "irrep_filter":
+            raise ValueError("problem.point_group.irrep_filter requires mapping.symmetry_reduction.point_group.")
+        driver = _build_driver(spec, method, symmetry=False)
+        return driver.run(), skipped_point_group_metadata("Point-group symmetry audit disabled by mapping configuration.")
+
+    driver = _build_driver(spec, method, symmetry=True)
+    try:
+        result = run_point_group_pyscf(driver)
+        metadata = dict(result.metadata)
+        metadata.update(
+            {
+                "requested_mode": point_group_mode,
+                "requested_subgroup": spec.problem.point_group.subgroup,
+                "reduction_mode": spec.problem.point_group.reduction_mode,
+                "active_irreps": list(spec.problem.point_group.active_irreps),
+                "remove_irreps": list(spec.problem.point_group.remove_irreps),
+            }
+        )
+        return result.problem, metadata
+    except Exception as exc:
+        if strict or point_group_mode == "enabled":
+            raise
+        fallback_driver = _build_driver(spec, method, symmetry=False)
+        return fallback_driver.run(), skipped_point_group_metadata(
+            f"Point-group symmetry audit fell back to non-symmetry PySCF path: {type(exc).__name__}: {exc}"
+        )
+
+
+def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureContext:
+    """Construct an electronic-structure problem from a QCchem spec."""
+    method = MethodType.RHF if spec.molecule.spin == 0 else MethodType.UHF
+    transformers_applied: list[str] = []
+    original_problem, point_group_metadata = _run_problem_driver(spec, method)
     problem = original_problem
     original_num_spatial_orbitals = int(original_problem.num_spatial_orbitals)
     removed_orbitals = [int(value) for value in spec.problem.remove_orbitals]
@@ -86,6 +133,31 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
         frozen_core_orbitals=frozen_core_orbitals,
         remove_orbitals=removed_orbitals,
     )
+    point_group_filter = resolve_point_group_filter(
+        point_group=spec.problem.point_group,
+        metadata=point_group_metadata,
+        available_original_orbitals=available_original,
+        molecule=spec.molecule,
+    )
+    point_group_filter_metadata = None
+    if point_group_filter is not None:
+        transformer = ActiveSpaceTransformer(
+            num_electrons=point_group_filter.num_electrons,
+            num_spatial_orbitals=point_group_filter.num_spatial_orbitals,
+            active_orbitals=point_group_filter.active_orbitals_current,
+        )
+        problem = transformer.transform(problem)
+        transformers_applied.append("PointGroupIrrepFilter")
+        selection_mode = "point_group_irrep_filter"
+        selection_reason = "Explicit point-group irrep filter selected the active orbital subspace."
+        selected_active_orbitals = list(point_group_filter.active_orbitals_current)
+        selected_active_orbitals_original = list(point_group_filter.active_orbitals_original)
+        available_original = list(point_group_filter.active_orbitals_original)
+        point_group_filter_metadata = dict(point_group_filter.metadata)
+        point_group_metadata["selected_active_orbitals"] = list(point_group_filter.active_orbitals_current)
+        point_group_metadata["selected_active_orbitals_original"] = list(point_group_filter.active_orbitals_original)
+        point_group_metadata["filter"] = point_group_filter_metadata
+
     resolved_active_space = resolve_active_space(
         spec.problem.active_space,
         num_particles=tuple(int(value) for value in problem.num_particles),
@@ -111,6 +183,18 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
 
     fermionic_hamiltonian = problem.hamiltonian.second_q_op()
     active_space_summary = None
+    if point_group_filter_metadata is not None:
+        active_space_summary = {
+            "selection_mode": "point_group_irrep_filter",
+            "point_group_filter": point_group_filter_metadata,
+            "num_electrons": point_group_filter_metadata.get("num_active_electrons"),
+            "num_spatial_orbitals": point_group_filter_metadata.get("num_active_orbitals"),
+            "active_orbitals": point_group_filter_metadata.get("selected_active_orbitals", []),
+            "active_orbitals_original": point_group_filter_metadata.get(
+                "selected_active_orbitals_original",
+                [],
+            ),
+        }
     if resolved_active_space is not None:
         active_space_summary = {
             "num_electrons": resolved_active_space.num_electrons,
@@ -118,6 +202,8 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             "active_orbitals": resolved_active_space.active_orbitals_current,
             "active_orbitals_original": resolved_active_space.active_orbitals_original,
         }
+        if point_group_filter_metadata is not None:
+            active_space_summary["point_group_filter"] = point_group_filter_metadata
 
     constants = {
         str(key): float(value)
@@ -141,6 +227,7 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             transformers_applied=transformers_applied,
             hamiltonian_constants=constants,
             electronic_constant_correction=electronic_constant_correction,
+            point_group_metadata=point_group_metadata,
         ),
         nuclear_repulsion_energy=nuclear_repulsion_energy,
         electronic_constant_correction=electronic_constant_correction,
@@ -164,5 +251,6 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             nuclear_repulsion_energy=nuclear_repulsion_energy,
             total_constant_correction=total_constant_correction,
             energy_formula=REDUCTION_ENERGY_FORMULA,
+            point_group_metadata=point_group_metadata,
         ),
     )

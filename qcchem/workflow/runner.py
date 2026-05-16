@@ -7,6 +7,7 @@ import platform
 import shutil
 import subprocess
 import json
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
@@ -44,6 +45,7 @@ from qcchem.core import (
     ExactBaselineSummary,
     LogSummary,
     MappingSummary,
+    MappingSymmetryReductionSpec,
     ProblemSummary,
     ProvenanceSummary,
     ReductionAuditSummary,
@@ -312,18 +314,72 @@ def _solve_with_timing(solver, operator):
     return outcome, float(perf_counter() - started)
 
 
+def _append_mapping_note(mapping: MappedHamiltonian, note: str) -> MappedHamiltonian:
+    summary = replace(
+        mapping.summary,
+        symmetry_reduction_notes=[*mapping.summary.symmetry_reduction_notes, note],
+    )
+    return MappedHamiltonian(
+        fermionic_hamiltonian=mapping.fermionic_hamiltonian,
+        qubit_hamiltonian=mapping.qubit_hamiltonian,
+        mapper=mapping.mapper,
+        summary=summary,
+        raw_qubit_hamiltonian=mapping.raw_qubit_hamiltonian,
+        base_mapper=mapping.base_mapper,
+    )
+
+
+def _electronic_mapping_symmetry_policy(spec) -> tuple[MappingSymmetryReductionSpec, list[str]]:
+    base = spec.mapping.symmetry_reduction
+    notes: list[str] = []
+    z2 = base.z2
+    if spec.problem.cavity_qed.enabled and z2 != "disabled":
+        reason = "Z2 tapering skipped for Pauli-Fierz cavity-QED because dipole operators may leave the tapered sector."
+        if base.strict:
+            raise ValueError(reason)
+        z2 = "disabled"
+        notes.append(reason)
+    elif getattr(spec.tc_qsci, "enabled", False) and z2 != "disabled":
+        reason = "Z2 tapering skipped for TC-QSCI because determinant sampling v1 assumes untapered spin-orbital bitstrings."
+        if base.strict:
+            raise ValueError(reason)
+        z2 = "disabled"
+        notes.append(reason)
+    elif any(item.enabled for item in spec.tasks.properties) and z2 == "auto":
+        reason = "Z2 tapering skipped for property tasks in auto mode because mapped property operators may not commute with the Hamiltonian Z2 sector."
+        z2 = "disabled"
+        notes.append(reason)
+    elif spec.hardware_optimization.enabled and z2 == "auto":
+        reason = "Z2 tapering skipped for hardware optimization previews in auto mode to preserve existing mapping-candidate ranking semantics."
+        z2 = "disabled"
+        notes.append(reason)
+    elif spec.solver.experimental and spec.solver.kind.strip().lower() in {"lr_ace"} and z2 == "auto":
+        reason = "Z2 tapering skipped for LR-ACE in auto mode because its validated provenance currently targets untapered parity-reduced workloads."
+        z2 = "disabled"
+        notes.append(reason)
+    return (
+        MappingSymmetryReductionSpec(
+            z2=z2,
+            point_group=base.point_group,
+            strict=base.strict,
+        ),
+        notes,
+    )
+
+
 def _with_simplified_mapping(mapping: MappedHamiltonian, *, atol: float) -> MappedHamiltonian:
     simplified = mapping.qubit_hamiltonian.simplify(atol=atol)
     return MappedHamiltonian(
         fermionic_hamiltonian=mapping.fermionic_hamiltonian,
         qubit_hamiltonian=simplified,
         mapper=mapping.mapper,
-        summary=type(mapping.summary)(
-            kind=mapping.summary.kind,
+        summary=replace(
+            mapping.summary,
             num_qubits=int(simplified.num_qubits),
-            fermionic_term_count=mapping.summary.fermionic_term_count,
             qubit_term_count=len(simplified),
         ),
+        raw_qubit_hamiltonian=mapping.raw_qubit_hamiltonian,
+        base_mapper=mapping.base_mapper,
     )
 
 
@@ -388,12 +444,13 @@ def _with_truncated_mapping(mapping: MappedHamiltonian, *, atol: float, max_term
         fermionic_hamiltonian=mapping.fermionic_hamiltonian,
         qubit_hamiltonian=simplified,
         mapper=mapping.mapper,
-        summary=type(mapping.summary)(
-            kind=mapping.summary.kind,
+        summary=replace(
+            mapping.summary,
             num_qubits=int(simplified.num_qubits),
-            fermionic_term_count=mapping.summary.fermionic_term_count,
             qubit_term_count=len(simplified),
         ),
+        raw_qubit_hamiltonian=mapping.raw_qubit_hamiltonian,
+        base_mapper=mapping.base_mapper,
     )
 
 
@@ -462,7 +519,14 @@ def _build_qft_mapping(spec, qft_context) -> MappedHamiltonian:
             num_qubits=int(qft_context.summary.total_qubits),
             fermionic_term_count=int(qft_context.summary.matter_mode_count),
             qubit_term_count=len(qft_context.qubit_hamiltonian),
+            raw_num_qubits=int(qft_context.summary.total_qubits),
+            raw_qubit_term_count=len(qft_context.qubit_hamiltonian),
+            symmetry_reduction_status="skipped_unsupported_field_model",
+            symmetry_reduction_notes=[
+                "Molecular Z2 and point-group reduction are skipped for finite-cutoff lattice-QED field models."
+            ],
         ),
+        raw_qubit_hamiltonian=qft_context.qubit_hamiltonian,
     )
 
 
@@ -476,7 +540,14 @@ def _build_cavity_mapping(electronic_mapping: MappedHamiltonian, cavity_context)
             num_qubits=int(cavity_context.summary.total_qubits),
             fermionic_term_count=electronic_mapping.summary.fermionic_term_count,
             qubit_term_count=len(cavity_context.qubit_hamiltonian),
+            raw_num_qubits=int(cavity_context.summary.total_qubits),
+            raw_qubit_term_count=len(cavity_context.qubit_hamiltonian),
+            symmetry_reduction_status=electronic_mapping.summary.symmetry_reduction_status,
+            symmetry_reduction_notes=list(electronic_mapping.summary.symmetry_reduction_notes),
+            symmetry_reduction_validation=dict(electronic_mapping.summary.symmetry_reduction_validation),
         ),
+        raw_qubit_hamiltonian=cavity_context.qubit_hamiltonian,
+        base_mapper=electronic_mapping.base_mapper,
     )
 
 
@@ -644,13 +715,19 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     else:
         _record(logger, events, "Building electronic structure problem")
         chemistry = build_electronic_structure_context(spec)
+        symmetry_policy, symmetry_notes = _electronic_mapping_symmetry_policy(spec)
 
         _record(logger, events, f"Applying mapping: {spec.mapping.kind}")
         uncompressed_mapping = map_fermionic_hamiltonian(
             chemistry.fermionic_hamiltonian,
             spec.mapping.kind,
             num_particles=chemistry.summary.num_particles,
+            problem=chemistry.problem,
+            symmetry_reduction=symmetry_policy,
         )
+        for note in symmetry_notes:
+            uncompressed_mapping = _append_mapping_note(uncompressed_mapping, note)
+            _record(logger, events, note)
         compression_bundle = build_compressed_fermionic_hamiltonian(chemistry.problem, spec.problem.compression)
         compressed_mapping = None
         if compression_bundle is not None:
@@ -658,7 +735,11 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 compression_bundle.fermionic_hamiltonian,
                 spec.mapping.kind,
                 num_particles=chemistry.summary.num_particles,
+                problem=chemistry.problem,
+                symmetry_reduction=symmetry_policy,
             )
+            for note in symmetry_notes:
+                compressed_mapping = _append_mapping_note(compressed_mapping, note)
             compressed_mapping = _with_truncated_mapping(
                 compressed_mapping,
                 atol=spec.problem.compression.threshold,

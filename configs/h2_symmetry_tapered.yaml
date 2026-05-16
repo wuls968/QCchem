@@ -1,0 +1,42 @@
+molecule:
+  name: H2-symmetry-tapered
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+  point_group:
+    subgroup: auto
+    reduction_mode: audit
+    active_irreps: []
+    remove_irreps: []
+
+mapping:
+  kind: jordan_wigner
+  symmetry_reduction:
+    z2: auto
+    point_group: auto
+    strict: false
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+run:
+  seed: 71
+  output_dir: artifacts/h2_symmetry_tapered
+  overwrite: true
