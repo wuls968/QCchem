@@ -35,6 +35,10 @@ python -m pip install -e ".[runtime]"  # IBM Runtime helpers
 python -m pip install -e ".[ai]"       # AI workspace provider adapter
 ```
 
+## License
+
+QCchem is distributed under the MIT License. See [LICENSE](LICENSE).
+
 ## Quick Start
 
 Run a validated H2 example:
