@@ -390,6 +390,21 @@ def _case_metrics(
     )
     cache_hit = bool(embedding.cache_hit) if embedding is not None else False
     cache_validated = bool(cache_validation.get("validated", False))
+    mapping = getattr(result, "mapping", None)
+    raw_num_qubits = getattr(mapping, "raw_num_qubits", None)
+    num_qubits = getattr(mapping, "num_qubits", None)
+    raw_qubit_term_count = getattr(mapping, "raw_qubit_term_count", None)
+    qubit_term_count = getattr(mapping, "qubit_term_count", None)
+    pauli_term_delta = (
+        int(raw_qubit_term_count) - int(qubit_term_count)
+        if raw_qubit_term_count is not None and qubit_term_count is not None
+        else None
+    )
+    symmetry_reduction_status = getattr(mapping, "symmetry_reduction_status", None)
+    symmetry_reduction_validation = (
+        getattr(mapping, "symmetry_reduction_validation", None) or {}
+    )
+    symmetry_absolute_delta = symmetry_reduction_validation.get("absolute_delta")
     legacy_alias = (
         external is not None
         and (external.provenance or {}).get("compatibility_mode")
@@ -406,6 +421,18 @@ def _case_metrics(
             else cache_hit and cache_validated and float(cache_reload_error) < CACHE_RELOAD_TOLERANCE
         ),
         "qubit_growth": environment_growth == case.expected_environment_qubit_growth,
+        "mapping_resources": (
+            raw_num_qubits is not None
+            and num_qubits is not None
+            and raw_qubit_term_count is not None
+            and qubit_term_count is not None
+            and pauli_term_delta is not None
+        ),
+        "z2_validation": (
+            True
+            if symmetry_absolute_delta is None
+            else float(symmetry_absolute_delta) < 1.0e-8
+        ),
         "qcschema_embedding": _qcschema_has_embedding(result),
         "report_embedding": _report_has_embedding(result),
         "risk_notes": bool(risk_notes),
@@ -419,6 +446,14 @@ def _case_metrics(
         "cache_hit": cache_hit,
         "cache_validated": cache_validated,
         "environment_qubit_growth": environment_growth,
+        "raw_num_qubits": raw_num_qubits,
+        "num_qubits": num_qubits,
+        "raw_qubit_term_count": raw_qubit_term_count,
+        "qubit_term_count": qubit_term_count,
+        "pauli_term_delta_raw_to_executed": pauli_term_delta,
+        "symmetry_reduction_status": symmetry_reduction_status,
+        "symmetry_reduction_validation": symmetry_reduction_validation,
+        "symmetry_reduction_validation_absolute_delta": symmetry_absolute_delta,
         "qcschema_has_environment_embedding": _qcschema_has_embedding(result),
         "report_has_environment_embedding": _report_has_embedding(result),
         "legacy_alias": legacy_alias,
@@ -447,6 +482,8 @@ def _recommendation(pass_fail: dict[str, bool]) -> str:
         "hcore_hermiticity",
         "cache_reload",
         "qubit_growth",
+        "mapping_resources",
+        "z2_validation",
         "risk_notes",
         "qcschema_embedding",
         "report_embedding",
@@ -466,6 +503,13 @@ def _write_metrics_csv(metrics: list[dict[str, Any]], path: Path) -> None:
         "cache_hit",
         "cache_validated",
         "environment_qubit_growth",
+        "raw_num_qubits",
+        "num_qubits",
+        "raw_qubit_term_count",
+        "qubit_term_count",
+        "pauli_term_delta_raw_to_executed",
+        "symmetry_reduction_status",
+        "symmetry_reduction_validation_absolute_delta",
         "qcschema_has_environment_embedding",
         "report_has_environment_embedding",
         "legacy_alias",
@@ -495,21 +539,26 @@ def _write_markdown_report(summary: dict[str, Any], path: Path) -> None:
         f"- Hcore hermiticity: `< {HERMITICITY_TOLERANCE}`",
         f"- Cache reload matrix equality: `< {CACHE_RELOAD_TOLERANCE}`",
         "- Environment-induced qubit growth: `0`",
+        "- Raw/executed qubit and Pauli-term counts must be recorded",
+        "- Z2 tapering exact-spectrum delta, when present, must be `< 1e-8`",
         "",
         "## Case Metrics",
         "",
-        "| case | passed | formula error | PySCF delta error | hcore hermiticity | cache reload | recommendation |",
-        "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+        "| case | passed | formula error | PySCF delta error | hcore hermiticity | cache reload | qubits | Pauli delta | Z2 status | recommendation |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
     ]
     for item in summary["metrics"]:
         lines.append(
-            "| {case} | {passed} | {formula:.3e} | {nuclear:.3e} | {herm:.3e} | {cache:.3e} | {rec} |".format(
+            "| {case} | {passed} | {formula:.3e} | {nuclear:.3e} | {herm:.3e} | {cache:.3e} | {qubits} | {pauli_delta} | {z2_status} | {rec} |".format(
                 case=item["case"],
                 passed=item["passed"],
                 formula=float(item["formula_closure_error_hartree"]),
                 nuclear=float(item["pyscf_nuclear_delta_error_hartree"]),
                 herm=float(item["hcore_hermiticity_deviation"]),
                 cache=float(item["cache_reload_matrix_error"]),
+                qubits=f"{item.get('raw_num_qubits')} -> {item.get('num_qubits')}",
+                pauli_delta=item.get("pauli_term_delta_raw_to_executed"),
+                z2_status=item.get("symmetry_reduction_status"),
                 rec=item["recommendation"],
             )
         )

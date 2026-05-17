@@ -20,6 +20,8 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 - `jw_bk_consistency_h2`
 - `h2_shot_scaling`
 - `h2_optimizer_stability`
+- `qmmm_environment_embedding_smoke`
+- `qmmm_environment_embedding_full`
 
 ## case kind
 
@@ -33,6 +35,8 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
   - 比较不同优化器或设置的稳定性
 - `noise_comparison`
   - 比较 exact、ideal、noisy 三条路径
+- `qmmm_validation`
+  - 运行 `qcchem.validation.run_qmmm_embedding_validation`，把 smoke/full 环境嵌入验证闭环映射为 benchmark case
 
 ## status 语义
 
@@ -72,6 +76,25 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 - `noisy_minus_ideal`
 
 它的目的是把“能不能跑 noisy”与“noisy 偏移多大”分开表达，而不是把 noisy 路径混进普通单点 benchmark。
+
+## QMMM environment embedding suite
+
+`benchmarks/qmmm_environment_embedding_suite_v1.yaml` 是非共价
+electrostatic embedding 的主线验证 benchmark。它包含两个
+`qmmm_validation` case：
+
+- `qmmm_environment_embedding_smoke`: validated smoke gate，覆盖 damped point
+  charge、localized-boundary diagnostic、legacy alias、cache reload。
+- `qmmm_environment_embedding_full`: validated full gate，继续覆盖
+  charge/radius scan、active-space、compression、TC-QSCI、cavity-QED、LR-ACE
+  surface。
+
+该 suite 输出 `qmmm_validation.json`、`qmmm_validation.md`、`metrics.csv`，
+并在 benchmark metrics 中提升以下资源账本：raw/executed qubit counts、
+raw/executed Pauli-term counts、`pauli_term_delta_raw_to_executed`、
+symmetry-reduction status、cache reload error、environment qubit growth。
+MM environment 不被量子化；这些指标只描述嵌入后的 QM Hamiltonian 映射与
+Z2 tapering 验证。
 
 ## 设计原则
 

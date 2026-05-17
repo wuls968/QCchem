@@ -11,7 +11,7 @@ The first implementation supports:
 - AO-basis environment potential audit from the PySCF `hcore` delta
 - explicit QM-nucleus/environment constant-energy bookkeeping
 - declared boundary-bond leakage diagnostics without link atoms
-- cache fingerprints and `.npz` matrix artifacts for the effective-Hamiltonian audit
+- physics fingerprints and `.npz` matrix artifacts for the effective-Hamiltonian audit
 - unchanged solver surfaces for exact, VQE, LR-ACE, TC-QSCI, active-space, compression, and cavity-QED paths
 
 Example:
@@ -49,6 +49,20 @@ When only the legacy field is present, QCchem treats it as an undamped
 environment point-charge source and records that compatibility mode in
 `environment_embedding.provenance`.
 
+The effective-Hamiltonian cache is an audit cache, not a read-through speed
+cache. `physics_fingerprint` and the compatibility `cache_fingerprint` both
+hash the physical inputs only: molecule, basis, damped point charges, source
+file digests, boundary diagnostics, and active-space projection. Cache/output
+directories are intentionally excluded, so moving artifacts does not change the
+physics identity. On a cache hit QCchem still rebuilds the PySCF matrices and
+compares them against the stored `.npz` at `1e-12`; a corrupted cache artifact
+fails validation instead of replacing the physical recomputation.
+
+Point-charge provenance records `source_file_digests` when charges are loaded
+from an `.xyzq` or JSON file. Reports and QCSchema extras surface the digest,
+`storage_policy`, cache paths, cache validation result, and the active-space
+qubit-growth delta.
+
 Energy reporting uses:
 
 ```text
@@ -85,7 +99,29 @@ summary = run_qmmm_embedding_validation(Path("artifacts/qmmm_validation"), profi
 assert summary["overall_status"] == "passed"
 ```
 
+Equivalent CLI:
+
+```bash
+qcchem validation qmmm --profile smoke -o artifacts/qmmm_validation
+```
+
 The `smoke` profile covers exact, boundary diagnostics, and legacy alias
 compatibility. The `full` profile also covers charge/radius scan, active-space,
 compression, TC-QSCI, cavity-QED, and LR-ACE surfaces. Any algorithm change
 should first fail or improve one of these trust gates before being accepted.
+
+Each validation artifact records raw/executed qubit counts, raw/executed
+Pauli-term counts, `pauli_term_delta_raw_to_executed`, symmetry-reduction
+status, and exact-spectrum Z2 tapering deltas when tapering is explicitly
+enabled. The MM environment remains classical and is not quantumized; any qubit
+or Pauli reduction is a mapping/tapering property of the embedded QM
+Hamiltonian.
+
+The benchmark entry point for this surface is
+`benchmarks/qmmm_environment_embedding_suite_v1.yaml`. It runs the same smoke
+and full harness profiles as first-class `qmmm_validation` benchmark cases and
+can be accepted with the normal benchmark acceptance policy.
+
+LBO boundary optimization is deliberately outside this release target. The
+current localized-boundary path is a diagnostic gate only and does not claim a
+nonzero downfolding correction.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -66,6 +67,28 @@ def test_resolve_external_point_charges_rejects_overlapping_qm_atom() -> None:
         resolve_external_point_charges(_h2_molecule(), spec)
 
 
+def test_external_point_charge_summary_records_source_file_digest(tmp_path: Path) -> None:
+    source_file = tmp_path / "environment.xyzq"
+    source_text = "mm 0.0 0.0 2.0 -0.5\n"
+    source_file.write_text(source_text, encoding="utf-8")
+    spec = ExternalPointChargeSpec(
+        enabled=True,
+        unit="angstrom",
+        source_file=source_file,
+    )
+
+    resolved = resolve_external_point_charges(_h2_molecule(), spec)
+    summary = resolved.to_summary(adapter_strategy="pyscf.qmmm.mm_charge")
+
+    expected_digest = hashlib.sha256(source_text.encode("utf-8")).hexdigest()
+    assert resolved.source_file_digests == {str(source_file): expected_digest}
+    assert summary is not None
+    assert summary.source_file_digests == {str(source_file): expected_digest}
+    assert summary.provenance["source_file_digests"] == {
+        str(source_file): expected_digest
+    }
+
+
 def test_qm_nuclear_point_charge_energy_matches_pyscf_qmmm_energy_nuc_delta() -> None:
     molecule = _h2_molecule()
     charges = [PointChargeSpec(label="mm", coords=(0.0, 0.0, 2.0), charge=-0.5)]
@@ -116,6 +139,7 @@ def test_gaussian_damped_point_charges_expose_radii_energy_and_hcore_delta() -> 
     )
 
     assert resolved.radii == pytest.approx([0.4])
+    assert resolved.source_file_digests == {}
     assert resolved.damping_model["kind"] == "gaussian"
     assert resolved.qm_nuclear_interaction_energy == pytest.approx(
         pyscf_qmmm_nuclear_interaction_energy(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -128,17 +127,7 @@ def _matrix_summary(matrix: np.ndarray | None) -> dict[str, Any]:
     }
 
 
-def _file_digest(path: Path | None) -> str | None:
-    if path is None or not path.exists():
-        return None
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _cache_fingerprint(
+def _physics_fingerprint(
     *,
     spec: RunSpec,
     env_inputs: ResolvedEnvironmentInputs,
@@ -146,7 +135,7 @@ def _cache_fingerprint(
     matrix_shape: list[int],
 ) -> str:
     env = spec.problem.environment_embedding
-    charge_source = env.point_charges.source_file if env.enabled else spec.problem.external_point_charges.source_file
+    point_charges = env_inputs.point_charges
     payload = {
         "schema": "qcchem.environment_embedding.v1",
         "molecule": to_primitive(spec.molecule),
@@ -154,14 +143,43 @@ def _cache_fingerprint(
         "active_space": to_primitive(spec.problem.active_space),
         "freeze_core": spec.problem.freeze_core,
         "remove_orbitals": spec.problem.remove_orbitals,
-        "environment_embedding": to_primitive(env),
-        "legacy_external_point_charges": to_primitive(spec.problem.external_point_charges),
-        "resolved_point_charge_sources": env_inputs.point_charges.sources,
-        "source_file_digest": _file_digest(charge_source),
+        "environment_embedding": {
+            "enabled": bool(env_inputs.enabled),
+            "mode": env_inputs.mode,
+            "point_charges": {
+                "enabled": bool(point_charges.enabled),
+                "unit": point_charges.unit,
+                "charges": to_primitive(point_charges.charges),
+                "damping_model": to_primitive(point_charges.damping_model or {"kind": "none"}),
+                "radii": to_primitive(point_charges.radii or []),
+                "radii_unit": point_charges.radii_unit,
+                "source_file_digests": dict(point_charges.source_file_digests),
+                "compatibility_mode": point_charges.compatibility_mode,
+            },
+            "boundary": to_primitive(env.boundary) if env.enabled else {"enabled": False},
+        },
         "active_space_projection": active_space_projection,
         "matrix_shape": matrix_shape,
     }
     return workspace_fingerprint([json.dumps(payload, sort_keys=True, default=str)])
+
+
+def _storage_policy(env: EnvironmentEmbeddingSpec, *, cache_enabled: bool) -> dict[str, Any]:
+    return {
+        "enabled": bool(cache_enabled),
+        "cache_directory": str(env.cache.directory) if env.enabled else None,
+        "refresh": bool(env.cache.refresh) if env.enabled else False,
+        "audit_cache": bool(cache_enabled),
+        "read_through": False,
+        "recompute_on_cache_hit": True,
+        "skips_recomputation": False,
+        "validation_tolerance": 1.0e-12,
+        "semantics": (
+            "Validation/audit cache only: current matrices are recomputed on every run; "
+            "cache hits reload .npz matrices and compare them within tolerance before "
+            "being reported as validated."
+        ),
+    }
 
 
 def _write_cache(
@@ -198,9 +216,15 @@ def _write_cache(
             v_boundary_ao=current_boundary,
         )
     else:
-        with np.load(matrix_path) as cached:
-            cached_env = np.asarray(cached["v_env_ao"])
-            cached_boundary = np.asarray(cached["v_boundary_ao"])
+        try:
+            with np.load(matrix_path) as cached:
+                cached_env = np.asarray(cached["v_env_ao"])
+                cached_boundary = np.asarray(cached["v_boundary_ao"])
+        except Exception as exc:
+            raise ValueError(
+                "Environment effective-Hamiltonian cache validation failed: "
+                f"could not load cached matrices from {matrix_path}."
+            ) from exc
         if cached_env.shape != current_env.shape:
             raise ValueError(
                 "Environment effective-Hamiltonian cache shape mismatch: "
@@ -362,22 +386,28 @@ def build_effective_hamiltonian_summary(
     v_env_ao = getattr(pyscf_driver, "external_point_charge_potential_matrix_ao", None)
     env_matrix_summary = _matrix_summary(v_env_ao)
     env = spec.problem.environment_embedding
-    cache_fingerprint = _cache_fingerprint(
+    physics_fingerprint = _physics_fingerprint(
         spec=spec,
         env_inputs=env_inputs,
         active_space_projection=active_space_projection,
         matrix_shape=list(env_matrix_summary.get("shape") or []),
     )
+    cache_fingerprint = physics_fingerprint
     cache_hit = False
     cache_paths: dict[str, str] = {}
     cache_enabled = bool(env.enabled and env.cache.enabled)
+    storage_policy = _storage_policy(env, cache_enabled=cache_enabled)
     metadata = {
         "schema": "qcchem.environment_effective_hamiltonian.v1",
-        "fingerprint": cache_fingerprint,
+        "physics_fingerprint": physics_fingerprint,
+        "cache_fingerprint": cache_fingerprint,
+        "fingerprint": physics_fingerprint,
+        "storage_policy": storage_policy,
         "one_body_environment": env_matrix_summary,
         "boundary": to_primitive(boundary_summary),
         "active_space_projection": active_space_projection,
         "point_charge_sources": env_inputs.point_charges.sources,
+        "source_file_digests": dict(env_inputs.point_charges.source_file_digests),
         "damping_model": env_inputs.point_charges.damping_model,
     }
     if cache_enabled:
@@ -397,9 +427,11 @@ def build_effective_hamiltonian_summary(
         solver_surface="molecular_qubit_hamiltonian",
         cache_enabled=cache_enabled,
         cache_hit=cache_hit,
+        physics_fingerprint=physics_fingerprint,
         cache_fingerprint=cache_fingerprint,
         cache_paths=cache_paths,
         cache_validation=cache_validation,
+        storage_policy=storage_policy,
         one_body_environment={
             **env_matrix_summary,
             "source": "pyscf.qmmm.mm_charge hcore delta",
@@ -412,6 +444,7 @@ def build_effective_hamiltonian_summary(
             "compatibility_notes": list(env_inputs.compatibility_notes),
             "mm_environment_quantized": False,
             "active_space_qubit_growth_from_environment": 0,
+            "source_file_digests": dict(env_inputs.point_charges.source_file_digests),
         },
         risk_notes=[
             "The MM environment is represented as fixed classical sources compressed into the active-space Hamiltonian.",

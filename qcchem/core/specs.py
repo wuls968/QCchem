@@ -866,6 +866,7 @@ class BenchmarkCaseSpec:
     config: Path | None = None
     overrides: dict[str, Any] = field(default_factory=dict)
     expected_status: str = "validated"
+    profile: str | None = None
     shots: list[int] = field(default_factory=list)
     optimizers: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)

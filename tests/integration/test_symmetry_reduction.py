@@ -157,3 +157,68 @@ def test_symmetry_tapered_run_writes_artifacts_and_report(tmp_path: Path) -> Non
     assert "Symmetry tapered qubits" in report_text
     assert "Z2 tapering values" in report_text
     assert "Point-group metadata" in report_text
+
+
+@pytest.mark.integration
+def test_environment_embedding_auto_z2_skips_tapering_and_keeps_qubits_stable(
+    tmp_path: Path,
+) -> None:
+    result = run_from_config(
+        REPO_ROOT / "configs" / "h2_environment_embedding_z2_auto.yaml",
+        output_dir=tmp_path / "h2-env-z2-auto",
+    )
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    mapping = payload["mapping"]
+
+    assert result.environment_embedding is not None
+    assert mapping["raw_num_qubits"] == 4
+    assert mapping["num_qubits"] == 4
+    assert mapping["symmetry_tapered_qubits"] == 0
+    assert mapping["symmetry_reduction_status"] == "disabled"
+    assert any(
+        "environment embedding in auto mode" in note
+        for note in mapping["symmetry_reduction_notes"]
+    )
+
+
+@pytest.mark.integration
+def test_environment_embedding_explicit_z2_applies_and_reports_mapping_fields(
+    tmp_path: Path,
+) -> None:
+    _, mapping = _mapped_with_z2("h2_environment_embedding_z2_enabled.yaml")
+    raw_energy = compute_exact_spectrum(mapping.raw_qubit_hamiltonian, num_states=1).eigenvalues[0]
+    tapered_energy = compute_exact_spectrum(mapping.qubit_hamiltonian, num_states=1).eigenvalues[0]
+    validation = mapping.summary.symmetry_reduction_validation
+
+    assert mapping.summary.symmetry_reduction_status == "applied_z2"
+    assert mapping.summary.raw_num_qubits == 4
+    assert mapping.summary.num_qubits < mapping.summary.raw_num_qubits
+    assert mapping.summary.symmetry_tapered_qubits == (
+        mapping.summary.raw_num_qubits - mapping.summary.num_qubits
+    )
+    assert abs(float(raw_energy) - float(tapered_energy)) < 1.0e-8
+    assert validation["available"] is True
+    assert validation["absolute_delta"] < 1.0e-8
+
+    result = run_from_config(
+        REPO_ROOT / "configs" / "h2_environment_embedding_z2_enabled.yaml",
+        output_dir=tmp_path / "h2-env-z2-enabled",
+    )
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    artifact_mapping = payload["mapping"]
+
+    assert artifact_mapping["raw_num_qubits"] == 4
+    assert artifact_mapping["num_qubits"] < artifact_mapping["raw_num_qubits"]
+    assert artifact_mapping["raw_qubit_term_count"] > artifact_mapping["qubit_term_count"]
+    assert artifact_mapping["symmetry_tapered_qubits"] == (
+        artifact_mapping["raw_num_qubits"] - artifact_mapping["num_qubits"]
+    )
+    assert artifact_mapping["symmetry_reduction_status"] == "applied_z2"
+    assert artifact_mapping["symmetry_reduction_validation"]["absolute_delta"] < 1.0e-8
+
+    report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert f"Raw qubit count: `{artifact_mapping['raw_num_qubits']}`" in report_text
+    assert f"Raw qubit Hamiltonian terms: `{artifact_mapping['raw_qubit_term_count']}`" in report_text
+    assert f"Qubit count: `{artifact_mapping['num_qubits']}`" in report_text
+    assert f"Symmetry tapered qubits: `{artifact_mapping['symmetry_tapered_qubits']}`" in report_text
+    assert "Symmetry reduction status: `applied_z2`" in report_text

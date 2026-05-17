@@ -10,6 +10,7 @@ from qcchem.io.config import load_run_spec
 from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting.markdown import write_markdown_report
 from qcchem.solvers import ExactDiagonalizationSolver
+from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.runner import run_from_config
 
 
@@ -82,3 +83,78 @@ def test_report_can_be_regenerated_from_result_json(tmp_path: Path) -> None:
     report_text = regenerated_path.read_text(encoding="utf-8")
     assert "Benchmark" in report_text
     assert "energy_formula" in report_text
+
+
+@pytest.mark.integration
+def test_benchmark_run_exposes_environment_embedding_delta_metrics(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "environment.xyzq").write_text(
+        "mm_probe 0.0 0.0 2.0 -0.5\n",
+        encoding="utf-8",
+    )
+    cache_dir = tmp_path / "effective_cache"
+    config_path = tmp_path / "h2_environment_embedding.yaml"
+    config_path.write_text(
+        f"""
+molecule:
+  name: H2-benchmark-environment-embedding
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+  unit: angstrom
+problem:
+  environment_embedding:
+    enabled: true
+    point_charges:
+      enabled: true
+      unit: angstrom
+      source_file: data/environment.xyzq
+      damping:
+        kind: gaussian
+        default_radius: 0.4
+        radius_unit: angstrom
+    cache:
+      enabled: true
+      directory: {cache_dir}
+mapping:
+  kind: jordan_wigner
+backend:
+  kind: statevector
+solver:
+  kind: exact
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+run:
+  output_dir: artifacts/h2_environment_embedding
+  overwrite: true
+        """.strip(),
+        encoding="utf-8",
+    )
+    suite_path = tmp_path / "environment_suite.yaml"
+    suite_path.write_text(
+        f"""
+benchmark_suite:
+  name: environment_embedding_suite
+  cases:
+    - name: h2_environment_run
+      kind: run
+      config: {config_path}
+      expected_status: validated
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_benchmark_suite_from_config(suite_path, output_dir=tmp_path / "benchmark-env")
+
+    case = result.cases[0]
+    assert case.metrics["environment_embedding_enabled"] is True
+    assert case.metrics["environment_cache_enabled"] is True
+    assert case.metrics["environment_cache_hit"] is False
+    assert case.metrics["environment_hcore_delta_frobenius_norm"] > 0.0
+    assert case.metrics["environment_qubit_growth"] == 0
+    assert case.metrics["environment_mapping_tapered_qubit_delta"] == 0

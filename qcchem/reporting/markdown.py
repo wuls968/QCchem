@@ -365,6 +365,7 @@ def _external_point_charge_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- total_charge: `{external.get('total_charge')}`",
         f"- unit: `{external.get('unit')}`",
         f"- sources: `{external.get('sources', [])}`",
+        f"- source_file_digests: `{external.get('source_file_digests', {})}`",
         f"- min_distance_to_qm_atoms: `{external.get('min_distance_to_qm_atoms')}`",
         f"- min_distance_threshold: `{external.get('min_distance_threshold')}`",
         f"- qm_nuclear_interaction_energy: {_fmt_energy(external.get('qm_nuclear_interaction_energy'), units)}",
@@ -382,6 +383,7 @@ def _environment_embedding_lines(data: dict[str, Any], units: str) -> list[str]:
         return []
     boundary = embedding.get("boundary") or {}
     one_body = embedding.get("one_body_environment") or {}
+    provenance = embedding.get("provenance") or {}
     return [
         "## Environment Effective Hamiltonian",
         "",
@@ -392,7 +394,11 @@ def _environment_embedding_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- solver_surface: `{embedding.get('solver_surface')}`",
         f"- cache_enabled: `{embedding.get('cache_enabled')}`",
         f"- cache_hit: `{embedding.get('cache_hit')}`",
+        f"- physics_fingerprint: `{embedding.get('physics_fingerprint')}`",
         f"- cache_fingerprint: `{embedding.get('cache_fingerprint')}`",
+        f"- storage_policy: `{embedding.get('storage_policy', {})}`",
+        f"- cache_validation: `{embedding.get('cache_validation', {})}`",
+        f"- source_file_digests: `{provenance.get('source_file_digests', {})}`",
         f"- one_body_environment: `{one_body}`",
         f"- active_space_projection: `{embedding.get('active_space_projection', {})}`",
         f"- boundary_enabled: `{boundary.get('enabled')}`",

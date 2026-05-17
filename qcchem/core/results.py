@@ -435,6 +435,7 @@ class ExternalPointChargeSummary:
     total_charge: float
     unit: str
     sources: list[str] = field(default_factory=list)
+    source_file_digests: dict[str, str] = field(default_factory=dict)
     min_distance_to_qm_atoms: float | None = None
     min_distance_threshold: float = 1.0e-6
     qm_nuclear_interaction_energy: float = 0.0
@@ -473,9 +474,11 @@ class EffectiveHamiltonianSummary:
     solver_surface: str
     cache_enabled: bool
     cache_hit: bool
+    physics_fingerprint: str | None
     cache_fingerprint: str | None
     cache_paths: dict[str, str] = field(default_factory=dict)
     cache_validation: dict[str, Any] = field(default_factory=dict)
+    storage_policy: dict[str, Any] = field(default_factory=dict)
     one_body_environment: dict[str, Any] = field(default_factory=dict)
     boundary: BoundaryEmbeddingSummary | None = None
     active_space_projection: dict[str, Any] = field(default_factory=dict)

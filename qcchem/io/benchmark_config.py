@@ -66,6 +66,7 @@ def load_benchmark_suite_spec(path: Path) -> BenchmarkSuiteSpec:
                 config=config_path,
                 overrides=dict(item.get("overrides", {})),
                 expected_status=str(item.get("expected_status", "validated")),
+                profile=(str(item["profile"]) if item.get("profile") is not None else None),
                 shots=[int(value) for value in item.get("shots", [])],
                 optimizers=[str(value) for value in item.get("optimizers", [])],
                 tags=[str(value) for value in item.get("tags", [])],

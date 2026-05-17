@@ -33,6 +33,7 @@ from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report, write_hardware_calibration_report
 from qcchem.solvers import ExactDiagonalizationSolver
+from qcchem.validation import run_qmmm_embedding_validation
 from qcchem.core.evidence import (
     build_benchmark_case_evidence_summary,
     build_benchmark_suite_evidence_summary,
@@ -227,6 +228,59 @@ def _summarize_hardware_calibration_case(payload: dict[str, Any], result_json_pa
     }
 
 
+def _environment_embedding_case_metrics(result: Any) -> dict[str, Any]:
+    embedding = getattr(result, "environment_embedding", None)
+    if embedding is None:
+        return {}
+    one_body = getattr(embedding, "one_body_environment", {}) or {}
+    cache_validation = getattr(embedding, "cache_validation", {}) or {}
+    cache_paths = getattr(embedding, "cache_paths", {}) or {}
+    projection = getattr(embedding, "active_space_projection", {}) or {}
+    boundary = getattr(embedding, "boundary", None)
+    mapping = getattr(result, "mapping", None)
+    mapping_num_qubits = getattr(mapping, "num_qubits", None)
+    mapping_raw_num_qubits = getattr(mapping, "raw_num_qubits", None)
+    mapping_qubit_term_count = getattr(mapping, "qubit_term_count", None)
+    mapping_raw_qubit_term_count = getattr(mapping, "raw_qubit_term_count", None)
+    return {
+        "environment_embedding_enabled": bool(getattr(embedding, "enabled", False)),
+        "environment_embedding_mode": getattr(embedding, "mode", None),
+        "environment_solver_surface": getattr(embedding, "solver_surface", None),
+        "environment_hcore_delta_frobenius_norm": one_body.get("frobenius_norm"),
+        "environment_hcore_delta_max_abs": one_body.get("max_abs"),
+        "environment_hcore_delta_hermitian_deviation": one_body.get("hermitian_deviation"),
+        "environment_cache_enabled": bool(getattr(embedding, "cache_enabled", False)),
+        "environment_cache_hit": bool(getattr(embedding, "cache_hit", False)),
+        "environment_cache_fingerprint": getattr(embedding, "cache_fingerprint", None),
+        "environment_cache_metadata_json": cache_paths.get("metadata_json"),
+        "environment_cache_matrices_npz": cache_paths.get("matrices_npz"),
+        "environment_cache_validated": cache_validation.get("validated"),
+        "environment_cache_reload_matrix_error": cache_validation.get("reload_matrix_error"),
+        "environment_cache_boundary_reload_matrix_error": cache_validation.get("boundary_reload_matrix_error"),
+        "environment_boundary_enabled": bool(getattr(boundary, "enabled", False)) if boundary is not None else False,
+        "environment_boundary_max_leakage": (
+            getattr(boundary, "max_boundary_leakage", None) if boundary is not None else None
+        ),
+        "environment_qubit_growth": projection.get("environment_qubit_growth"),
+        "environment_original_num_spatial_orbitals": projection.get("original_num_spatial_orbitals"),
+        "environment_reduced_num_spatial_orbitals": projection.get("reduced_num_spatial_orbitals"),
+        "environment_mapping_num_qubits": mapping_num_qubits,
+        "environment_mapping_raw_num_qubits": mapping_raw_num_qubits,
+        "environment_mapping_tapered_qubit_delta": (
+            int(mapping_raw_num_qubits) - int(mapping_num_qubits)
+            if mapping_raw_num_qubits is not None and mapping_num_qubits is not None
+            else None
+        ),
+        "environment_mapping_qubit_term_count": mapping_qubit_term_count,
+        "environment_mapping_raw_qubit_term_count": mapping_raw_qubit_term_count,
+        "environment_mapping_tapered_term_delta": (
+            int(mapping_raw_qubit_term_count) - int(mapping_qubit_term_count)
+            if mapping_raw_qubit_term_count is not None and mapping_qubit_term_count is not None
+            else None
+        ),
+    }
+
+
 def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
     spec = load_run_spec(case.config)
     if case.overrides:
@@ -234,6 +288,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
     result = run_spec(spec, source_config=str(case.config), output_dir=case_root)
     runtime_evidence_status = _runtime_evidence_status_from_submission(result.runtime_submission)
     field_model_metrics = extract_field_model_case_metrics(result)
+    environment_metrics = _environment_embedding_case_metrics(result)
     return BenchmarkCaseResult(
         name=case.name,
         kind=case.kind,
@@ -307,6 +362,7 @@ def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
             "compressed_vs_uncompressed": result.benchmark.compressed_vs_uncompressed,
             "wall_time_seconds": result.provenance.wall_time_seconds,
             **field_model_metrics,
+            **environment_metrics,
         },
         evidence_summary=build_benchmark_case_evidence_summary(
             {
@@ -449,6 +505,108 @@ def _optimizer_stability_case(case, case_root: Path) -> BenchmarkCaseResult:
     return outcome
 
 
+def _metric_values(metrics: list[dict[str, Any]], key: str) -> list[float]:
+    values: list[float] = []
+    for item in metrics:
+        value = item.get(key)
+        if value is not None:
+            values.append(float(value))
+    return values
+
+
+def _qmmm_validation_case_metrics(summary: dict[str, Any], *, profile: str) -> dict[str, Any]:
+    metrics = list(summary.get("metrics") or [])
+    artifacts = dict(summary.get("artifacts") or {})
+    failed_cases = [item.get("case") for item in metrics if not item.get("passed")]
+    symmetry_statuses = sorted(
+        {
+            str(item.get("symmetry_reduction_status"))
+            for item in metrics
+            if item.get("symmetry_reduction_status") is not None
+        }
+    )
+    return {
+        "comparison_target": "qmmm_environment_embedding_validation",
+        "qmmm_validation_profile": profile,
+        "qmmm_validation_overall_status": summary.get("overall_status"),
+        "qmmm_validation_case_count": summary.get("case_count"),
+        "qmmm_validation_passed_cases": summary.get("passed_cases"),
+        "qmmm_validation_failed_cases": failed_cases,
+        "qmmm_validation_artifacts": artifacts,
+        "qmmm_validation_json": artifacts.get("json"),
+        "qmmm_validation_markdown": artifacts.get("markdown"),
+        "qmmm_validation_csv": artifacts.get("csv"),
+        "qmmm_formula_closure_max_hartree": (
+            max(_metric_values(metrics, "formula_closure_error_hartree")) if metrics else None
+        ),
+        "qmmm_pyscf_nuclear_delta_max_hartree": (
+            max(_metric_values(metrics, "pyscf_nuclear_delta_error_hartree")) if metrics else None
+        ),
+        "qmmm_hcore_hermiticity_max": (
+            max(_metric_values(metrics, "hcore_hermiticity_deviation")) if metrics else None
+        ),
+        "qmmm_cache_reload_max_error": (
+            max(_metric_values(metrics, "cache_reload_matrix_error")) if metrics else None
+        ),
+        "qmmm_environment_qubit_growth_max": (
+            max(_metric_values(metrics, "environment_qubit_growth")) if metrics else None
+        ),
+        "qmmm_pauli_term_delta_max": (
+            max(_metric_values(metrics, "pauli_term_delta_raw_to_executed"))
+            if metrics
+            else None
+        ),
+        "qmmm_symmetry_reduction_statuses": symmetry_statuses,
+        "qmmm_z2_validated_cases": sum(
+            1
+            for item in metrics
+            if item.get("symmetry_reduction_validation_absolute_delta") is not None
+        ),
+        "qmmm_cache_validated_cases": sum(1 for item in metrics if item.get("cache_validated")),
+    }
+
+
+def _qmmm_validation_case(case, case_root: Path) -> BenchmarkCaseResult:
+    profile = (case.profile or "smoke").strip().lower()
+    summary = run_qmmm_embedding_validation(case_root, profile=profile)
+    status = "validated" if summary.get("overall_status") == "passed" else "failed"
+    metrics = _qmmm_validation_case_metrics(summary, profile=profile)
+    evidence_summary = build_benchmark_case_evidence_summary(
+        {
+            "name": case.name,
+            "kind": case.kind,
+            "status": status,
+            "expected_status": case.expected_status,
+            "metrics": metrics,
+        }
+    )
+    outcome = BenchmarkCaseResult(
+        name=case.name,
+        kind=case.kind,
+        status=status,
+        expected_status=case.expected_status,
+        artifact_root=case_root,
+        metrics=metrics,
+        evidence_summary=evidence_summary,
+    )
+    write_result_json(
+        {
+            "schema_version": "qcchem.qmmm_validation_benchmark_case.v1",
+            "run_id": case.name,
+            "kind": case.kind,
+            "verification_status": status,
+            "expected_status": case.expected_status,
+            "profile": profile,
+            "artifact_root": str(case_root),
+            "metrics": metrics,
+            "qmmm_validation": summary,
+            "evidence_summary": to_primitive(evidence_summary),
+        },
+        case_root / "result.json",
+    )
+    return outcome
+
+
 def _noise_comparison_case(case, case_root: Path) -> BenchmarkCaseResult:
     spec = load_run_spec(case.config)
     noisy_result = run_spec(spec, source_config=str(case.config), output_dir=case_root / "noisy")
@@ -544,6 +702,8 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
             outcome = _optimizer_stability_case(case, case_root)
         elif case.kind == "noise_comparison":
             outcome = _noise_comparison_case(case, case_root)
+        elif case.kind == "qmmm_validation":
+            outcome = _qmmm_validation_case(case, case_root)
         else:
             raise ValueError(f"Unsupported benchmark case kind: {case.kind}")
         case_results.append(outcome)

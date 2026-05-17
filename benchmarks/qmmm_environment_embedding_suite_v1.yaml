@@ -1,0 +1,16 @@
+benchmark_suite:
+  name: qmmm_environment_embedding_suite_v1
+  description: Trust-first QM/MM-like environment-embedding validation suite.
+  registry_name: qmmm_environment_embedding_suite_v1
+  tags: [benchmark, qmmm, environment_embedding, validation]
+  cases:
+    - name: qmmm_environment_embedding_smoke
+      kind: qmmm_validation
+      profile: smoke
+      expected_status: validated
+      tags: [qmmm, environment_embedding, smoke]
+    - name: qmmm_environment_embedding_full
+      kind: qmmm_validation
+      profile: full
+      expected_status: validated
+      tags: [qmmm, environment_embedding, full]

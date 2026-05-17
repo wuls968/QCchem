@@ -82,6 +82,16 @@ run:
     )
 
 
+def _assert_environment_auto_z2_skip(result) -> None:
+    notes = " ".join(result.mapping.symmetry_reduction_notes)
+    assert result.mapping.raw_num_qubits == 4
+    assert result.mapping.num_qubits == result.mapping.raw_num_qubits
+    assert result.mapping.symmetry_tapered_qubits == 0
+    assert result.mapping.symmetry_reduction_status == "disabled"
+    assert "environment embedding in auto mode" in notes
+    assert "stable QM/MM-like qubit accounting" in notes
+
+
 @pytest.mark.integration
 def test_qmmm_environment_embedding_vqe_surface_keeps_qubit_count_stable(tmp_path: Path) -> None:
     config = tmp_path / "h2_env_vqe.yaml"
@@ -104,7 +114,7 @@ solver:
 
     assert result.environment_embedding is not None
     assert result.environment_embedding.active_space_projection["environment_qubit_growth"] == 0
-    assert result.mapping.num_qubits == 4
+    _assert_environment_auto_z2_skip(result)
     assert result.variational_result is not None
 
 

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass
+import hashlib
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
@@ -47,6 +48,7 @@ class ResolvedExternalPointCharges:
     min_distance_to_qm_atoms: float | None
     min_distance_threshold: float
     qm_nuclear_interaction_energy: float
+    source_file_digests: dict[str, str] = field(default_factory=dict)
     radii: list[float] | None = None
     radii_unit: str | None = None
     damping_model: dict[str, object] | None = None
@@ -63,6 +65,7 @@ class ResolvedExternalPointCharges:
             total_charge=float(sum(charge.charge for charge in self.charges)),
             unit=self.unit,
             sources=list(self.sources),
+            source_file_digests=dict(self.source_file_digests),
             min_distance_to_qm_atoms=self.min_distance_to_qm_atoms,
             min_distance_threshold=self.min_distance_threshold,
             qm_nuclear_interaction_energy=self.qm_nuclear_interaction_energy,
@@ -88,6 +91,7 @@ class ResolvedExternalPointCharges:
                 "radii_unit": self.radii_unit,
                 "compatibility_mode": self.compatibility_mode,
                 "max_abs_center_potential_au": self.max_abs_center_potential_au,
+                "source_file_digests": dict(self.source_file_digests),
             },
             risk_notes=[
                 "External point charges are fixed classical electrostatic sources.",
@@ -256,6 +260,14 @@ def read_xyzq(path: Path) -> list[PointChargeSpec]:
     return charges
 
 
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _qm_atom_bohr_positions(molecule: MoleculeSpec) -> list[tuple[float, np.ndarray]]:
     unit = normalize_unit(molecule.unit)
     atoms: list[tuple[float, np.ndarray]] = []
@@ -334,6 +346,7 @@ def resolve_external_point_charges(
             charges=[],
             unit=unit,
             sources=[],
+            source_file_digests={},
             min_distance_to_qm_atoms=None,
             min_distance_threshold=float(spec.min_distance_to_qm_atoms),
             qm_nuclear_interaction_energy=0.0,
@@ -349,11 +362,13 @@ def resolve_external_point_charges(
         for charge in spec.charges
     ]
     sources: list[str] = []
+    source_file_digests: dict[str, str] = {}
     if charges:
         sources.append("inline")
     if spec.source_file is not None:
         if not spec.source_file.exists():
             raise FileNotFoundError(f"External point-charge source_file not found: {spec.source_file}")
+        source_file_digests[str(spec.source_file)] = _file_digest(spec.source_file)
         file_charges = read_xyzq(spec.source_file)
         charges.extend(file_charges)
         sources.append(str(spec.source_file))
@@ -390,6 +405,7 @@ def resolve_external_point_charges(
         charges=charges,
         unit=unit,
         sources=sources,
+        source_file_digests=source_file_digests,
         min_distance_to_qm_atoms=min_distance,
         min_distance_threshold=float(spec.min_distance_to_qm_atoms),
         qm_nuclear_interaction_energy=pyscf_qmmm_nuclear_interaction_energy(

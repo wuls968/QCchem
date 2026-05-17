@@ -28,6 +28,7 @@ from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.scan import run_scan_from_config
 from qcchem.workflow.study import run_study_from_config
+from qcchem.validation import run_qmmm_embedding_validation
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -120,6 +121,15 @@ def _build_parser() -> argparse.ArgumentParser:
     release_audit.add_argument("-c", "--config", type=Path, required=True)
     release_audit.add_argument("-o", "--output-dir", type=Path)
     release_audit.add_argument("--repo-root", type=Path, help="Repository root to audit; defaults to current directory.")
+
+    validation_parser = subparsers.add_parser("validation", help="Validation harness commands.")
+    validation_subparsers = validation_parser.add_subparsers(dest="validation_command", required=True)
+    validation_qmmm = validation_subparsers.add_parser(
+        "qmmm",
+        help="Run the QM/MM environment-embedding validation harness.",
+    )
+    validation_qmmm.add_argument("--profile", choices=["smoke", "full"], default="smoke")
+    validation_qmmm.add_argument("-o", "--output-dir", type=Path, required=True)
 
     hardware_parser = subparsers.add_parser("hardware", help="Hardware optimization workflow commands.")
     hardware_subparsers = hardware_parser.add_subparsers(dest="hardware_command", required=True)
@@ -489,6 +499,18 @@ def main(argv: list[str] | None = None) -> int:
             output_dir = args.output_dir or Path("artifacts") / "release_audit"
             print(f"Report: {output_dir / 'release_readiness.md'}")
             return 0 if summary["status"] == "passed" else 2
+
+    if args.command == "validation":
+        if args.validation_command == "qmmm":
+            summary = run_qmmm_embedding_validation(args.output_dir, profile=args.profile)
+            artifacts = summary.get("artifacts", {})
+            print(f"QMMM validation completed: {summary.get('overall_status')}")
+            print(f"Profile: {summary.get('profile')}")
+            print(f"Cases: {summary.get('passed_cases')}/{summary.get('case_count')}")
+            print(f"Result JSON: {artifacts.get('json')}")
+            print(f"Report: {artifacts.get('markdown')}")
+            print(f"Metrics CSV: {artifacts.get('csv')}")
+            return 0 if summary.get("overall_status") == "passed" else 2
 
     if args.command == "hardware":
         if args.hardware_command == "optimize":
