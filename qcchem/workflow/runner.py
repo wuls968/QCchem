@@ -85,6 +85,7 @@ from qcchem.workflow.tasks import (
 )
 from qcchem.workflow.calibration import build_calibration_summary
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
+from qcchem.workflow.quantum_evidence import build_and_write_quantum_evidence
 from qcchem.core.evidence import build_run_evidence_summary
 
 SCHEMA_VERSION = "qcchem.result.v0.8-alpha"
@@ -122,6 +123,7 @@ def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool,
         calibration_json=resolved_root / "calibration.json",
         calibration_report_markdown=resolved_root / "calibration_report.md",
         runtime_submission_json=resolved_root / "runtime_submission.json",
+        quantum_evidence_json=resolved_root / "quantum_evidence.json",
         qcschema_json=(resolved_root / "qcschema.json") if qcschema_json else None,
         hdf5_file=(resolved_root / "result.h5") if hdf5 else None,
     )
@@ -1503,6 +1505,40 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         hardware_evidence_tier = "submitted"
     elif runtime_submission is not None and runtime_submission.attempted:
         hardware_evidence_tier = "runtime_attempt"
+    backend_summary = BackendSummary(
+        kind=spec.backend.kind,
+        shots=spec.backend.shots,
+        precision=spec.backend.precision,
+        seed=spec.backend.seed,
+        repetitions=spec.backend.repetitions,
+        abelian_grouping=spec.backend.abelian_grouping,
+        noise_enabled=spec.backend.noise.enabled,
+        runtime_enabled=spec.backend.runtime.enabled,
+    )
+    quantum_evidence = build_and_write_quantum_evidence(
+        run_id=run_id,
+        sidecar_path=artifacts.quantum_evidence_json,
+        mapping=mapping,
+        solver_outcome=solver_outcome,
+        spectrum=spectrum,
+        problem=chemistry.summary,
+        backend=backend,
+        measurement=measurement,
+        backend_summary=backend_summary,
+        benchmark=benchmark,
+        sampled_result=sampled_result,
+        runtime_submission=runtime_submission,
+        compression_result=compression_result,
+        qft_model=(qft_context.summary if qft_context is not None else None),
+        qft_dynamics=qft_dynamics,
+        cavity_qed_model=(cavity_context.summary if cavity_context is not None else None),
+        field_model=field_model,
+        environment_embedding=chemistry.environment_embedding,
+        external_point_charges=chemistry.external_point_charges,
+        existing_error_budget=(
+            tc_qsci_payload.get("error_budget") if tc_qsci_payload is not None else None
+        ),
+    )
     result = RunResult(
         schema_version=SCHEMA_VERSION,
         run_id=run_id,
@@ -1544,16 +1580,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         mitigation=mitigation,
         problem=chemistry.summary,
         mapping=mapping.summary,
-        backend=BackendSummary(
-            kind=spec.backend.kind,
-            shots=spec.backend.shots,
-            precision=spec.backend.precision,
-            seed=spec.backend.seed,
-            repetitions=spec.backend.repetitions,
-            abelian_grouping=spec.backend.abelian_grouping,
-            noise_enabled=spec.backend.noise.enabled,
-            runtime_enabled=spec.backend.runtime.enabled,
-        ),
+        backend=backend_summary,
         reduction_audit=chemistry.reduction_audit,
         noise_model=noise_model,
         measurement=measurement,
@@ -1577,6 +1604,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         external_point_charges=chemistry.external_point_charges,
         environment_embedding=chemistry.environment_embedding,
         hardware_error_diagnostic=None,
+        quantum_evidence=quantum_evidence,
         tc_qsci_result=(
             tc_qsci_payload.get("tc_qsci_result") if tc_qsci_payload is not None else None
         ),

@@ -30,8 +30,11 @@ def test_h2_cavity_pf_exact_writes_field_model_artifact(tmp_path: Path) -> None:
     payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
     assert payload["field_model"]["model_kind"] == "pauli_fierz_cavity_qed"
     assert payload["cavity_qed_model"]["mode_count"] == 1
+    assert payload["quantum_evidence"]["error_budget"]["field_model"]["finite_cutoff_boundary"] is True
+    assert payload["quantum_evidence"]["resources"]["num_qubits"] == payload["cavity_qed_model"]["total_qubits"]
     report = result.artifacts.report_markdown.read_text(encoding="utf-8")
     assert "Pauli-Fierz Cavity-QED Model" in report
+    assert "Quantum Evidence" in report
     assert "photon occupation" in report.lower()
 
 
@@ -99,6 +102,7 @@ run:
     assert payload["external_point_charges"]["charge_count"] == 1
     assert payload["environment_embedding"]["one_body_environment"]["available"] is True
     assert payload["field_model"]["model_kind"] == "pauli_fierz_cavity_qed"
+    assert payload["quantum_evidence"]["error_budget"]["qmmm_embedding"]["available"] is True
     report = result.artifacts.report_markdown.read_text(encoding="utf-8")
     assert "External Point Charges" in report
     assert "Environment Effective Hamiltonian" in report

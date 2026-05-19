@@ -36,12 +36,25 @@ def test_h2_workflow_generates_benchmarkable_artifacts(tmp_path: Path) -> None:
     assert result.artifacts.resolved_config.exists()
     assert result.artifacts.log_file.exists()
     assert result.artifacts.exact_result_json.exists()
+    assert result.artifacts.quantum_evidence_json is not None
+    assert result.artifacts.quantum_evidence_json.exists()
+    assert result.quantum_evidence is not None
+    assert result.quantum_evidence.available is True
+    assert result.quantum_evidence.hamiltonian["pauli_term_count"] == result.mapping.qubit_term_count
+    assert result.quantum_evidence.sampling["available"] is True
 
     payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    assert payload["quantum_evidence"]["sidecar_sha256"]
+    quantum_evidence = json.loads(result.artifacts.quantum_evidence_json.read_text(encoding="utf-8"))
+    assert quantum_evidence["schema"] == "qcchem.quantum_evidence.v1"
+    assert quantum_evidence["hamiltonian"]["pauli_terms"]
+    assert quantum_evidence["sampling"]["group_counts"]
+    assert quantum_evidence["optimization"]["trajectory"]
     regenerated_report = render_markdown_report(payload)
     assert "Field Definitions" in regenerated_report
     assert "exact_ground_energy" in regenerated_report
     assert "Exact Baseline" in regenerated_report
+    assert "Quantum Evidence" in regenerated_report
 
 
 @pytest.mark.integration
@@ -98,3 +111,4 @@ run:
     qcschema_source = qcschema["extras"]["input_provenance"][0]
     assert qcschema_source["file_sha256"] == input_source["file_sha256"]
     assert qcschema_source["normalized_geometry_sha256"] == input_source["normalized_geometry_sha256"]
+    assert qcschema["extras"]["quantum_evidence"]["available"] is True

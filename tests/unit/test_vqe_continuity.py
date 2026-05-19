@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from qcchem.core import ContinuitySpec, InitialPointCandidate, SolverSpec
+from qiskit.quantum_info import SparsePauliOp
+
+from qcchem.backends import BackendEstimate
+from qcchem.core import AnsatzSpec, ContinuitySpec, InitialPointCandidate, OptimizerSpec
+from qcchem.core import SolverSpec
 from qcchem.solvers.vqe import VQESolver
 from qcchem.workflow.continuity import ContinuityRecord, build_initial_point_candidate
 
@@ -178,3 +182,51 @@ def test_vqe_records_predictor_fallback_reason() -> None:
     assert provenance["effective_strategy"] == "zeros"
     assert provenance["history_sources"] == ["point_00", "point_01"]
     assert "non-finite" in str(provenance["fallback_reason"])
+
+
+def test_vqe_preserves_backend_evidence_for_each_evaluation() -> None:
+    class _EvidenceBackend:
+        def __init__(self) -> None:
+            self.estimate_expectation_calls = 0
+            self.evaluate_calls = 0
+
+        def estimate_expectation(self, circuit, operator, parameter_values) -> float:
+            self.estimate_expectation_calls += 1
+            raise AssertionError("VQESolver should preserve BackendEstimate evidence via evaluate().")
+
+        def evaluate(self, circuit, operator, parameter_values) -> BackendEstimate:
+            self.evaluate_calls += 1
+            values = [float(value) for value in parameter_values]
+            energy = sum(value * value for value in values) + 0.01 * self.evaluate_calls
+            return BackendEstimate(
+                value=energy,
+                reported_std=0.001 * self.evaluate_calls,
+                metadata={"backend_call": self.evaluate_calls, "precision": 0.25},
+                seed=700 + self.evaluate_calls,
+                shots=1024,
+            )
+
+    backend = _EvidenceBackend()
+    spec = SolverSpec(
+        optimizer=OptimizerSpec(kind="COBYLA", maxiter=2),
+        ansatz=AnsatzSpec(rotation_blocks=["ry"], reps=1, skip_final_rotation_layer=True),
+        initial_point="zeros",
+    )
+    solver = VQESolver(spec, backend=backend, seed=7)
+
+    outcome = solver.solve(SparsePauliOp.from_list([("I", 1.0)]))
+
+    trajectory = outcome.metadata["evaluation_trajectory"]
+    assert backend.estimate_expectation_calls == 0
+    assert backend.evaluate_calls == outcome.evaluations == len(trajectory)
+    assert trajectory[0] == {
+        "evaluation_index": 1,
+        "parameters": [0.0],
+        "energy": pytest.approx(0.01),
+        "reported_std": pytest.approx(0.001),
+        "seed": 701,
+        "shots": 1024,
+        "backend_metadata": {"backend_call": 1, "precision": 0.25},
+    }
+    assert outcome.metadata["initial_point_strategy"] == "zeros"
+    assert "optimizer_message" in outcome.metadata

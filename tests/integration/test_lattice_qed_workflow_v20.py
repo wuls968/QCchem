@@ -29,7 +29,10 @@ def test_h2_lattice_qed_exact_generates_exploratory_artifact(tmp_path: Path) -> 
     payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
     assert payload["qft_model"]["gauge_group"] == "u1"
     assert payload["qft_model"]["term_counts_by_sector"]["electric"] > 0
+    assert payload["quantum_evidence"]["symmetry_checks"]["qft_constraints"]["available"] is True
+    assert payload["quantum_evidence"]["error_budget"]["field_model"]["finite_cutoff_boundary"] is True
     assert "Lattice QED Field Model" in result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Quantum Evidence" in result.artifacts.report_markdown.read_text(encoding="utf-8")
 
 
 @pytest.mark.integration
@@ -126,6 +129,8 @@ def test_h2_lattice_qed_vqe_records_variational_qft_metadata(tmp_path: Path) -> 
     assert result.qft_model.link_count == 1
     assert result.measurement is not None
     assert result.measurement.term_count == result.mapping.qubit_term_count
+    assert result.quantum_evidence is not None
+    assert result.quantum_evidence.resources["num_qubits"] == result.qft_model.total_qubits
     assert any("finite cutoff" in note for note in result.scientific_risk_notes)
 
 

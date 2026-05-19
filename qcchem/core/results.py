@@ -279,6 +279,24 @@ class MeasurementSummary:
 
 
 @dataclass(slots=True)
+class QuantumEvidenceSummary:
+    """Compact pointer and summary for the detailed quantum-evidence sidecar."""
+
+    available: bool
+    schema: str
+    sidecar_path: str | None
+    sidecar_sha256: str | None
+    hamiltonian: dict[str, Any] = field(default_factory=dict)
+    measurement: dict[str, Any] = field(default_factory=dict)
+    sampling: dict[str, Any] = field(default_factory=dict)
+    state: dict[str, Any] = field(default_factory=dict)
+    symmetry_checks: dict[str, Any] = field(default_factory=dict)
+    resources: dict[str, Any] = field(default_factory=dict)
+    error_budget: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class ChemicalAccuracySummary:
     """Chemical-accuracy comparison summary."""
 
@@ -694,6 +712,7 @@ class ArtifactPaths:
     calibration_json: Path | None = None
     calibration_report_markdown: Path | None = None
     runtime_submission_json: Path | None = None
+    quantum_evidence_json: Path | None = None
     qcschema_json: Path | None = None
     hdf5_file: Path | None = None
 
@@ -737,6 +756,7 @@ class RunResult:
     external_point_charges: ExternalPointChargeSummary | None
     environment_embedding: EffectiveHamiltonianSummary | None
     hardware_error_diagnostic: dict[str, Any] | None
+    quantum_evidence: QuantumEvidenceSummary | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
     artifacts: ArtifactPaths

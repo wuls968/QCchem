@@ -196,11 +196,25 @@ class VQESolver(BaseSolver):
             ansatz = self._build_ansatz(operator.num_qubits)
             initial_point, initial_point_provenance = self._initial_point(ansatz.num_parameters)
             evaluations = 0
+            evaluation_trajectory: list[dict[str, object]] = []
 
             def objective(point: np.ndarray) -> float:
                 nonlocal evaluations
                 evaluations += 1
-                return self.backend.estimate_expectation(ansatz, operator, point)
+                estimate = self.backend.evaluate(ansatz, operator, point)
+                energy = float(estimate.value)
+                evaluation_trajectory.append(
+                    {
+                        "evaluation_index": int(evaluations),
+                        "parameters": [float(value) for value in np.asarray(point, dtype=float)],
+                        "energy": energy,
+                        "reported_std": float(estimate.reported_std),
+                        "seed": estimate.seed,
+                        "shots": estimate.shots,
+                        "backend_metadata": dict(estimate.metadata),
+                    }
+                )
+                return energy
 
             result = minimize(
                 objective,
@@ -221,6 +235,7 @@ class VQESolver(BaseSolver):
                 "initial_point_strategy": initial_point_provenance["effective_strategy"],
                 "initial_point_provenance": initial_point_provenance,
                 "optimizer_message": str(result.message),
+                "evaluation_trajectory": evaluation_trajectory,
             },
         )
 

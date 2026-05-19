@@ -23,6 +23,13 @@ def test_h2_shot_backend_records_sampling_statistics(tmp_path: Path) -> None:
     assert result.benchmark.comparison_target == "sampled_result"
     assert result.mitigation.symmetry_check["requested"] is True
     assert result.artifacts.exact_result_json.exists()
+    assert result.quantum_evidence is not None
+    assert result.quantum_evidence.sampling["available"] is True
+    assert result.quantum_evidence.sampling["source"] == "backend_measurement_circuits"
+    assert result.quantum_evidence.sampling["shots_per_group"] == 4096
+    sidecar = json.loads(result.artifacts.quantum_evidence_json.read_text(encoding="utf-8"))
+    assert sidecar["sampling"]["group_counts"]
+    assert sidecar["optimization"]["trajectory"]
 
 
 @pytest.mark.integration
@@ -63,4 +70,5 @@ def test_report_regeneration_includes_sampled_and_mitigation_sections(tmp_path: 
 
     assert "Sampled Result" in regenerated
     assert "Mitigation" in regenerated
+    assert "Quantum Evidence" in regenerated
     assert "energy_formula" in regenerated

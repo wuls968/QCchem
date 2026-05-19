@@ -463,6 +463,50 @@ def _evidence_summary_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _quantum_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
+    evidence = data.get("quantum_evidence") or {}
+    if not evidence:
+        return []
+    hamiltonian = evidence.get("hamiltonian") or {}
+    measurement = evidence.get("measurement") or {}
+    sampling = evidence.get("sampling") or {}
+    state = evidence.get("state") or {}
+    symmetry = evidence.get("symmetry_checks") or {}
+    resources = evidence.get("resources") or {}
+    error_budget = evidence.get("error_budget") or {}
+    dominant = state.get("dominant_configurations", [])
+    return [
+        "## Quantum Evidence",
+        "",
+        "> Full Pauli terms, measurement groups, bitstring counts, trajectory, state, symmetry, resource, and error-budget details are persisted in the quantum evidence sidecar.",
+        "",
+        f"- available: `{evidence.get('available')}`",
+        f"- schema: `{evidence.get('schema')}`",
+        f"- sidecar_path: `{evidence.get('sidecar_path')}`",
+        f"- sidecar_sha256: `{evidence.get('sidecar_sha256')}`",
+        f"- pauli_term_count: `{hamiltonian.get('pauli_term_count')}`",
+        f"- measurement_group_count: `{hamiltonian.get('measurement_group_count')}`",
+        f"- energy_contribution_sum: {_fmt_energy(hamiltonian.get('energy_contribution_sum'), units)}",
+        f"- coefficient_l1_norm: `{hamiltonian.get('coefficient_l1_norm')}`",
+        f"- groups_sha256: `{measurement.get('groups_sha256')}`",
+        f"- counts_available: `{sampling.get('available')}`",
+        f"- counts_source: `{sampling.get('source')}`",
+        f"- counts_sha256: `{sampling.get('counts_sha256')}`",
+        f"- shots_per_group: `{sampling.get('shots_per_group')}`",
+        f"- hamiltonian_variance: `{state.get('hamiltonian_variance')}`",
+        f"- ground_state_overlap: `{state.get('ground_state_overlap')}`",
+        f"- dominant_configurations: `{dominant[:8]}`",
+        f"- z2_check: `{symmetry.get('z2')}`",
+        f"- particle_number_check: `{symmetry.get('particle_number')}`",
+        f"- spin_check: `{symmetry.get('spin')}`",
+        f"- qft_constraints: `{symmetry.get('qft_constraints')}`",
+        f"- resources: `{resources}`",
+        f"- error_budget: `{error_budget}`",
+        f"- notes: `{evidence.get('notes', [])}`",
+        "",
+    ]
+
+
 def _claim_lines(data: dict[str, Any]) -> list[str]:
     evidence = data.get("evidence_summary") or {}
     return [
@@ -557,6 +601,7 @@ def render_markdown_report(result: Any) -> str:
     error_budget = data.get("error_budget")
     noise_model = data.get("noise_model")
     measurement = data.get("measurement")
+    quantum_evidence = data.get("quantum_evidence")
     runtime_options = data.get("runtime_options")
     chemical_accuracy = data.get("chemical_accuracy")
     runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")
@@ -654,6 +699,7 @@ def render_markdown_report(result: Any) -> str:
         f"- within_uncertainty: `{benchmark.get('within_uncertainty')}`",
         f"- meets_threshold: `{benchmark.get('meets_threshold')}`",
         "",
+        *_quantum_evidence_lines(data, units),
         "## Problem Summary",
         "",
         f"- Basis: `{problem['basis']}`",
@@ -1122,6 +1168,7 @@ def render_markdown_report(result: Any) -> str:
             f"- calibration.json: `{data['artifacts'].get('calibration_json')}`",
             f"- calibration_report.md: `{data['artifacts'].get('calibration_report_markdown')}`",
             f"- runtime_submission.json: `{data['artifacts'].get('runtime_submission_json')}`",
+            f"- quantum_evidence.json: `{data['artifacts'].get('quantum_evidence_json')}`",
             f"- qcschema.json: `{data['artifacts'].get('qcschema_json')}`",
             f"- result.h5: `{data['artifacts'].get('hdf5_file')}`",
             "",

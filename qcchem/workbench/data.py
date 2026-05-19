@@ -55,6 +55,7 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         "runtime_options": extras.get("runtime_options"),
         "perturbative_correction_result": extras.get("perturbative_correction_result"),
         "evidence_summary": extras.get("evidence_summary"),
+        "quantum_evidence": extras.get("quantum_evidence"),
         "provenance": qcschema.get("provenance"),
         "schema_version": qcschema.get("schema_version"),
         "run_id": extras.get("qcchem_run_id"),

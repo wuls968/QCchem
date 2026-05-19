@@ -93,6 +93,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "perturbative_correction_result": data.get("perturbative_correction_result"),
             "external_point_charges": data.get("external_point_charges"),
             "environment_embedding": data.get("environment_embedding"),
+            "quantum_evidence": data.get("quantum_evidence"),
             "tc_qsci_result": data.get("tc_qsci_result"),
             "determinant_selection": data.get("determinant_selection"),
             "symmetry_sector": data.get("symmetry_sector"),

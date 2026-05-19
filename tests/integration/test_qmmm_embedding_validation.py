@@ -29,6 +29,7 @@ def test_qmmm_embedding_validation_harness_writes_trust_artifacts(tmp_path):
 
     payload = json.loads(result_json.read_text(encoding="utf-8"))
     assert payload["acceptance_criteria"]["environment_qubit_growth"] == 0
+    assert payload["acceptance_criteria"]["quantum_evidence_closure_hartree"] == 1.0e-8
     assert all(item["passed"] for item in payload["metrics"])
     for item in payload["metrics"]:
         assert item["raw_num_qubits"] is not None
@@ -40,6 +41,8 @@ def test_qmmm_embedding_validation_harness_writes_trust_artifacts(tmp_path):
             == item["raw_qubit_term_count"] - item["qubit_term_count"]
         )
         assert item["symmetry_reduction_status"]
+        assert item["quantum_evidence_sidecar_exists"] is True
+        assert item["quantum_evidence_energy_closure_error_hartree"] < 1.0e-8
     cache_cases = [item for item in payload["metrics"] if item["case"] != "h2_legacy_alias"]
     assert cache_cases
     assert all(item["cache_hit"] for item in cache_cases)
@@ -63,6 +66,8 @@ def test_qmmm_embedding_validation_harness_writes_trust_artifacts(tmp_path):
         "pauli_term_delta_raw_to_executed",
         "symmetry_reduction_status",
         "symmetry_reduction_validation_absolute_delta",
+        "quantum_evidence_sidecar_exists",
+        "quantum_evidence_energy_closure_error_hartree",
     }.issubset(rows[0].keys())
 
 

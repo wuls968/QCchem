@@ -110,6 +110,13 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
             },
             "runtime_submission": {
               "backend_name": "ibm_kingston"
+            },
+            "quantum_evidence": {
+              "available": true,
+              "sidecar_path": "/tmp/quantum_evidence.json",
+              "hamiltonian": {
+                "pauli_term_count": 15
+              }
             }
           }
         }
@@ -133,6 +140,8 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     assert bundle["run"]["success"] is True
     assert bundle["run"]["problem"]["active_space_metadata"]["num_active_orbitals"] == 2
     assert bundle["run"]["mapping"]["num_qubits"] == 4
+    assert bundle["run"]["quantum_evidence"]["available"] is True
+    assert bundle["run"]["quantum_evidence"]["hamiltonian"]["pauli_term_count"] == 15
 
 
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:

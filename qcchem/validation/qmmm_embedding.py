@@ -21,6 +21,7 @@ FORMULA_TOLERANCE_HARTREE = 1.0e-10
 PYSCF_NUCLEAR_TOLERANCE_HARTREE = 1.0e-10
 HERMITICITY_TOLERANCE = 1.0e-12
 CACHE_RELOAD_TOLERANCE = 1.0e-12
+QUANTUM_EVIDENCE_CLOSURE_TOLERANCE = 1.0e-8
 
 
 @dataclass(slots=True)
@@ -364,6 +365,25 @@ def _report_has_embedding(result: Any) -> bool:
     )
 
 
+def _quantum_evidence_sidecar_exists(result: Any) -> bool:
+    evidence = getattr(result, "quantum_evidence", None)
+    if evidence is None or not getattr(evidence, "available", False):
+        return False
+    sidecar_path = getattr(evidence, "sidecar_path", None)
+    return bool(sidecar_path and Path(sidecar_path).exists())
+
+
+def _quantum_evidence_energy_closure_error(result: Any) -> float | None:
+    evidence = getattr(result, "quantum_evidence", None)
+    if evidence is None:
+        return None
+    hamiltonian = getattr(evidence, "hamiltonian", {}) or {}
+    contribution_sum = hamiltonian.get("energy_contribution_sum")
+    if contribution_sum is None:
+        return None
+    return abs(float(contribution_sum) - float(result.energy.solver_energy))
+
+
 def _case_metrics(
     *,
     case: QMMMValidationCase,
@@ -405,6 +425,7 @@ def _case_metrics(
         getattr(mapping, "symmetry_reduction_validation", None) or {}
     )
     symmetry_absolute_delta = symmetry_reduction_validation.get("absolute_delta")
+    quantum_evidence_closure = _quantum_evidence_energy_closure_error(result)
     legacy_alias = (
         external is not None
         and (external.provenance or {}).get("compatibility_mode")
@@ -436,6 +457,11 @@ def _case_metrics(
         "qcschema_embedding": _qcschema_has_embedding(result),
         "report_embedding": _report_has_embedding(result),
         "risk_notes": bool(risk_notes),
+        "quantum_evidence_sidecar": _quantum_evidence_sidecar_exists(result),
+        "quantum_evidence_energy_closure": (
+            quantum_evidence_closure is not None
+            and quantum_evidence_closure < QUANTUM_EVIDENCE_CLOSURE_TOLERANCE
+        ),
     }
     metrics = {
         "case": case.name,
@@ -456,6 +482,8 @@ def _case_metrics(
         "symmetry_reduction_validation_absolute_delta": symmetry_absolute_delta,
         "qcschema_has_environment_embedding": _qcschema_has_embedding(result),
         "report_has_environment_embedding": _report_has_embedding(result),
+        "quantum_evidence_sidecar_exists": _quantum_evidence_sidecar_exists(result),
+        "quantum_evidence_energy_closure_error_hartree": quantum_evidence_closure,
         "legacy_alias": legacy_alias,
         "boundary_enabled": bool(boundary.enabled) if boundary is not None else False,
         "boundary_max_leakage": (
@@ -485,6 +513,8 @@ def _recommendation(pass_fail: dict[str, bool]) -> str:
         "mapping_resources",
         "z2_validation",
         "risk_notes",
+        "quantum_evidence_sidecar",
+        "quantum_evidence_energy_closure",
         "qcschema_embedding",
         "report_embedding",
     ]
@@ -515,6 +545,8 @@ def _write_metrics_csv(metrics: list[dict[str, Any]], path: Path) -> None:
         "legacy_alias",
         "boundary_enabled",
         "boundary_max_leakage",
+        "quantum_evidence_sidecar_exists",
+        "quantum_evidence_energy_closure_error_hartree",
         "recommendation",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
@@ -541,15 +573,16 @@ def _write_markdown_report(summary: dict[str, Any], path: Path) -> None:
         "- Environment-induced qubit growth: `0`",
         "- Raw/executed qubit and Pauli-term counts must be recorded",
         "- Z2 tapering exact-spectrum delta, when present, must be `< 1e-8`",
+        "- Quantum evidence sidecar must exist and Pauli contribution sum must close to solver energy",
         "",
         "## Case Metrics",
         "",
-        "| case | passed | formula error | PySCF delta error | hcore hermiticity | cache reload | qubits | Pauli delta | Z2 status | recommendation |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
+        "| case | passed | formula error | PySCF delta error | hcore hermiticity | cache reload | qubits | Pauli delta | quantum evidence | Z2 status | recommendation |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |",
     ]
     for item in summary["metrics"]:
         lines.append(
-            "| {case} | {passed} | {formula:.3e} | {nuclear:.3e} | {herm:.3e} | {cache:.3e} | {qubits} | {pauli_delta} | {z2_status} | {rec} |".format(
+            "| {case} | {passed} | {formula:.3e} | {nuclear:.3e} | {herm:.3e} | {cache:.3e} | {qubits} | {pauli_delta} | {qe} | {z2_status} | {rec} |".format(
                 case=item["case"],
                 passed=item["passed"],
                 formula=float(item["formula_closure_error_hartree"]),
@@ -558,6 +591,7 @@ def _write_markdown_report(summary: dict[str, Any], path: Path) -> None:
                 cache=float(item["cache_reload_matrix_error"]),
                 qubits=f"{item.get('raw_num_qubits')} -> {item.get('num_qubits')}",
                 pauli_delta=item.get("pauli_term_delta_raw_to_executed"),
+                qe=item.get("quantum_evidence_energy_closure_error_hartree"),
                 z2_status=item.get("symmetry_reduction_status"),
                 rec=item["recommendation"],
             )
@@ -622,6 +656,7 @@ def run_qmmm_embedding_validation(
             "hcore_hermiticity_deviation": HERMITICITY_TOLERANCE,
             "cache_reload_matrix_error": CACHE_RELOAD_TOLERANCE,
             "environment_qubit_growth": 0,
+            "quantum_evidence_closure_hartree": QUANTUM_EVIDENCE_CLOSURE_TOLERANCE,
         },
         "metrics": metrics,
         "artifacts": {

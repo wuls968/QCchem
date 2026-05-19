@@ -70,6 +70,9 @@ Expected run outputs:
 - `resolved_config.yaml`: fully resolved config snapshot.
 - `run.log`: execution log.
 - `exact_result.json`: exact baseline when available.
+- `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms,
+  measurement groups, counts, trajectory, state diagnostics, resource metrics,
+  and error budgets.
 - `runtime_submission.json`: runtime sidecar when runtime submission is attempted.
 - `calibration.json` and `calibration_report.md`: empirical execution calibration
   when available.
@@ -192,6 +195,7 @@ Start with:
 - `chemical_accuracy`
 - `runtime_chemical_accuracy`
 - `evidence_summary`
+- `quantum_evidence`
 
 For Trust-First review, the most important fields are:
 
@@ -200,6 +204,16 @@ For Trust-First review, the most important fields are:
 - `evidence_summary.primary_error_metric`
 - `evidence_summary.trust_tier`
 - `evidence_summary.recommended_action`
+
+The compact `quantum_evidence` field points to `quantum_evidence.json` and
+summarizes the detailed evidence layer. Use the sidecar when you need to audit:
+
+- Pauli Hamiltonian decomposition and per-term energy contributions.
+- Measurement grouping, shots, bitstring counts, and count digests.
+- VQE evaluation trajectory and final-state dominant configurations.
+- Hamiltonian variance, particle/spin/Z2/QFT constraint checks.
+- Circuit resources, measurement cost, and ansatz/shot/compression/hardware
+  error budget.
 
 Mapping resources now separate the executed Hamiltonian from its untapered
 baseline:
