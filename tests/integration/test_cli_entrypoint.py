@@ -65,6 +65,62 @@ def test_runtime_collect_cli_reports_polled_status(
     assert "QUEUED" in stdout
 
 
+def test_active_space_recommend_cli_writes_json_and_yaml_patch(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "recommendation.json"
+
+    def _fake_recommend_active_space_from_config(config: Path) -> dict[str, object]:
+        assert config == tmp_path / "config.yaml"
+        return {
+            "strategy": "trusted_orbital_score",
+            "selected": {
+                "num_electrons": [1, 1],
+                "num_spatial_orbitals": 2,
+                "active_orbitals_original": [1, 2],
+            },
+            "candidates": [{"score": 0.91}],
+            "yaml_patch": {
+                "problem": {
+                    "active_space": {
+                        "selection_mode": "auto",
+                        "num_electrons": [1, 1],
+                        "num_spatial_orbitals": 2,
+                        "active_orbitals": [1, 2],
+                        "auto": {"enabled": True, "strategy": "trusted_orbital_score"},
+                    }
+                }
+            },
+        }
+
+    monkeypatch.setattr(
+        "qcchem.cli.main.recommend_active_space_from_config",
+        _fake_recommend_active_space_from_config,
+    )
+
+    exit_code = main(
+        [
+            "active-space",
+            "recommend",
+            "-c",
+            str(tmp_path / "config.yaml"),
+            "-o",
+            str(output),
+            "--emit-yaml-patch",
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["strategy"] == "trusted_orbital_score"
+    stdout = capsys.readouterr().out
+    assert "Active-space recommendation written" in stdout
+    assert "active_space:" in stdout
+    assert "trusted_orbital_score" in stdout
+
+
 def test_benchmark_accept_and_artifact_index_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     case_root = tmp_path / "case"
     case_root.mkdir()

@@ -354,11 +354,51 @@ def _parse_active_space(problem_raw: dict[str, Any]) -> ActiveSpaceSpec | None:
     auto_raw = active_space_raw.get("auto")
     auto = AutoActiveSpaceSpec()
     if isinstance(auto_raw, dict):
+        strategy = _choice(
+            auto_raw.get("strategy", "frontier_orbitals"),
+            field_name="problem.active_space.auto.strategy",
+            allowed={"frontier_orbitals", "trusted_orbital_score"},
+        )
+        natural_occupation_source = _choice(
+            auto_raw.get("natural_occupation_source", "mp2"),
+            field_name="problem.active_space.auto.natural_occupation_source",
+            allowed={"mp2", "scf", "none"},
+        )
+        min_spatial_orbitals = int(auto_raw.get("min_spatial_orbitals", 2))
+        max_spatial_orbitals = (
+            int(auto_raw["max_spatial_orbitals"])
+            if auto_raw.get("max_spatial_orbitals") is not None
+            else None
+        )
+        max_qubits = int(auto_raw["max_qubits"]) if auto_raw.get("max_qubits") is not None else None
+        max_candidates = int(auto_raw.get("max_candidates", 5))
+        if min_spatial_orbitals <= 0:
+            raise ValueError("problem.active_space.auto.min_spatial_orbitals must be positive.")
+        if max_spatial_orbitals is not None and max_spatial_orbitals < min_spatial_orbitals:
+            raise ValueError(
+                "problem.active_space.auto.max_spatial_orbitals must be greater than or equal to "
+                "min_spatial_orbitals."
+            )
+        if max_qubits is not None and max_qubits <= 0:
+            raise ValueError("problem.active_space.auto.max_qubits must be positive.")
+        if max_candidates <= 0:
+            raise ValueError("problem.active_space.auto.max_candidates must be positive.")
+        if float(auto_raw.get("energy_window_hartree", 0.25)) < 0.0:
+            raise ValueError("problem.active_space.auto.energy_window_hartree must be non-negative.")
+        if float(auto_raw.get("occupation_tolerance", 0.02)) < 0.0:
+            raise ValueError("problem.active_space.auto.occupation_tolerance must be non-negative.")
         auto = AutoActiveSpaceSpec(
             enabled=bool(auto_raw.get("enabled", False)),
-            strategy=str(auto_raw.get("strategy", "frontier_orbitals")),
+            strategy=strategy,
             num_occupied=int(auto_raw.get("num_occupied", 1)),
             num_virtual=int(auto_raw.get("num_virtual", 1)),
+            min_spatial_orbitals=min_spatial_orbitals,
+            max_spatial_orbitals=max_spatial_orbitals,
+            max_qubits=max_qubits,
+            energy_window_hartree=float(auto_raw.get("energy_window_hartree", 0.25)),
+            occupation_tolerance=float(auto_raw.get("occupation_tolerance", 0.02)),
+            max_candidates=max_candidates,
+            natural_occupation_source=natural_occupation_source,
         )
     return ActiveSpaceSpec(
         num_electrons=active_space_raw.get("num_electrons"),

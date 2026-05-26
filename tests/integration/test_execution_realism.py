@@ -72,3 +72,17 @@ def test_report_regeneration_includes_sampled_and_mitigation_sections(tmp_path: 
     assert "Mitigation" in regenerated
     assert "Quantum Evidence" in regenerated
     assert "energy_formula" in regenerated
+
+
+@pytest.mark.integration
+def test_report_regeneration_includes_active_space_recommendation(tmp_path: Path) -> None:
+    result = run_from_config(
+        Path("configs/lih_active_space_trusted_score.yaml"),
+        output_dir=tmp_path / "report-trusted-score",
+    )
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+
+    regenerated = render_markdown_report(payload)
+
+    assert "Active-Space Recommendation" in regenerated
+    assert "trusted_orbital_score" in regenerated

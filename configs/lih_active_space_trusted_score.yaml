@@ -1,0 +1,55 @@
+molecule:
+  name: LiH-active-space-trusted-score
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  freeze_core: true
+  remove_orbitals: [5]
+  active_space:
+    selection_mode: auto
+    auto:
+      enabled: true
+      strategy: trusted_orbital_score
+      num_occupied: 1
+      num_virtual: 1
+      min_spatial_orbitals: 2
+      max_spatial_orbitals: 3
+      max_qubits: 6
+      energy_window_hartree: 0.25
+      occupation_tolerance: 0.02
+      max_candidates: 5
+      natural_occupation_source: mp2
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-10
+  relative_error_threshold: 1.0e-10
+
+mitigation:
+  symmetry_check:
+    enabled: true
+  readout:
+    enabled: false
+    method: none
+
+run:
+  seed: 37
+  output_dir: artifacts/lih_active_space_trusted_score
+  overwrite: true

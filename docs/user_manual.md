@@ -323,6 +323,24 @@ baseline:
   Point-group `audit` mode records symmetry only; `irrep_filter` is the
   explicit model-reduction mode.
 
+Active-space auto selection supports two strategies:
+
+- `frontier_orbitals`: the legacy contiguous HOMO/LUMO window heuristic.
+- `trusted_orbital_score`: a PySCF-backed rule scorer that records orbital
+  energies, SCF occupations, optional MP2 natural-occupation diagnostics,
+  candidate scores, confidence, resource-budget rejections, warnings, and
+  provenance under `active_space_metadata.recommendation`.
+
+Preview a trusted active-space recommendation without running the quantum
+solver:
+
+```bash
+python -m qcchem.cli.main active-space recommend \
+  -c configs/lih_active_space_trusted_score.yaml \
+  -o artifacts/lih_active_space_trusted_score_recommendation.json \
+  --emit-yaml-patch
+```
+
 For exploratory assets, also inspect:
 
 - `qft_model`
