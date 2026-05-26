@@ -16,6 +16,30 @@ class AtomSpec:
 
 
 @dataclass(slots=True)
+class PeriodicCellSpec:
+    """Periodic simulation cell vectors."""
+
+    vectors: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+    lengths: tuple[float, float, float] | None = None
+    angles: tuple[float, float, float] | None = None
+    unit: str = "angstrom"
+    source: str | None = None
+
+
+@dataclass(slots=True)
+class MoleculePeriodicSpec:
+    """Periodic boundary metadata attached to molecular coordinates."""
+
+    enabled: bool = False
+    cell: PeriodicCellSpec | None = None
+    pbc: tuple[bool, bool, bool] = (False, False, False)
+    coordinate_mode: str = "cartesian"
+    wrap_policy: str = "preserve"
+    source: str | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class MoleculeSpec:
     """User-facing molecular input."""
 
@@ -26,6 +50,7 @@ class MoleculeSpec:
     basis: str = "sto3g"
     unit: str = "angstrom"
     input_provenance: dict[str, Any] = field(default_factory=dict)
+    periodic: MoleculePeriodicSpec = field(default_factory=MoleculePeriodicSpec)
 
     @property
     def spin(self) -> int:
@@ -149,6 +174,18 @@ class PointChargeDampingSpec:
 
 
 @dataclass(slots=True)
+class PBCQMMMPeriodicPolicySpec:
+    """Periodic electrostatic policy for environment embedding."""
+
+    mode: str = "finite"
+    require_charge_neutrality: bool = True
+    neutralization: str = "reject"
+    ewald_precision: float = 1.0e-8
+    real_space_cutoff: float | None = None
+    reciprocal_cutoff: float | None = None
+
+
+@dataclass(slots=True)
 class EnvironmentPointChargeSpec:
     """Point-charge source used by the effective environment Hamiltonian path."""
 
@@ -203,6 +240,28 @@ class EnvironmentEmbeddingSpec:
     cache: EffectiveHamiltonianCacheSpec = field(
         default_factory=EffectiveHamiltonianCacheSpec
     )
+    periodic_policy: PBCQMMMPeriodicPolicySpec = field(
+        default_factory=PBCQMMMPeriodicPolicySpec
+    )
+
+
+@dataclass(slots=True)
+class PBCSpec:
+    """Periodic electronic-structure execution settings."""
+
+    enabled: bool = False
+    cell: PeriodicCellSpec | None = None
+    pbc: tuple[bool, bool, bool] = (True, True, True)
+    coordinate_mode: str = "cartesian"
+    wrap_policy: str = "preserve"
+    source: str | None = None
+    driver: str = "pyscf_pbc"
+    mode: str = "gamma_supercell"
+    kpoint_mesh: tuple[int, int, int] = (1, 1, 1)
+    density_fitting: str = "fftdf"
+    precision: float = 1.0e-8
+    mesh: tuple[int, int, int] | None = None
+    neutralization: str = "reject"
 
 
 @dataclass(slots=True)
@@ -390,6 +449,7 @@ class ProblemSpec:
     environment_embedding: EnvironmentEmbeddingSpec = field(
         default_factory=EnvironmentEmbeddingSpec
     )
+    pbc: PBCSpec = field(default_factory=PBCSpec)
     qft: LatticeQEDSpec = field(default_factory=LatticeQEDSpec)
     cavity_qed: CavityQEDSpec = field(default_factory=CavityQEDSpec)
     point_group: PointGroupSpec = field(default_factory=PointGroupSpec)

@@ -8,7 +8,7 @@ import pytest
 
 from qcchem.cli.main import main
 from qcchem.io.benchmark_config import load_benchmark_suite_spec
-from qcchem.validation import run_qmmm_embedding_validation
+from qcchem.validation import run_pbc_qmmm_validation, run_qmmm_embedding_validation
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 
 
@@ -90,6 +90,50 @@ def test_qmmm_validation_cli_smoke_command_writes_artifacts(
     assert (output_dir / "metrics.csv").exists()
 
 
+def test_pbc_qmmm_validation_cli_smoke_command_writes_execution_artifacts(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output_dir = tmp_path / "pbc-qmmm-cli-smoke"
+
+    exit_code = main(["validation", "pbc-qmmm", "--profile", "smoke", "-o", str(output_dir)])
+
+    assert exit_code == 0
+    stdout = capsys.readouterr().out
+    assert "PBC-QMMM validation completed: passed" in stdout
+    assert "Profile: smoke" in stdout
+    assert "Cases: 3/3" in stdout
+    payload = json.loads((output_dir / "pbc_qmmm_validation.json").read_text(encoding="utf-8"))
+    assert payload["schema"] == "qcchem.pbc_qmmm_validation.v1"
+    assert payload["acceptance_criteria"]["core_runner_implemented"] is True
+    assert payload["acceptance_criteria"]["executes_gamma_pbc"] is True
+    assert payload["acceptance_criteria"]["executes_pbc_qmmm_ewald"] is True
+    assert {item["case"] for item in payload["metrics"]} == {
+        "pbc_gamma_exact",
+        "pbc_qmmm_ewald_exact",
+        "pbc_non_gamma_reject",
+    }
+    assert all(item["passed"] for item in payload["metrics"])
+    assert (output_dir / "pbc_qmmm_validation.md").exists()
+    assert (output_dir / "metrics.csv").exists()
+
+
+def test_pbc_qmmm_validation_full_profile_exercises_algorithm_surfaces(tmp_path: Path) -> None:
+    summary = run_pbc_qmmm_validation(tmp_path / "pbc-qmmm-validation", profile="full")
+
+    assert summary["overall_status"] == "passed"
+    assert summary["passed_cases"] == summary["case_count"] == 8
+    cases = {item["case"]: item for item in summary["metrics"]}
+    assert cases["pbc_gamma_exact"]["kpoint_grid"] == [1, 1, 1]
+    assert cases["pbc_qmmm_ewald_exact"]["embedding_mode"] == "ewald"
+    assert cases["pbc_non_gamma_reject"]["status"] == "rejected"
+    assert cases["pbc_gamma_vqe_twolocal"]["status"] == "executed"
+    assert cases["pbc_gamma_active_space"]["status"] == "executed"
+    assert cases["pbc_gamma_compression"]["status"] == "executed"
+    assert cases["pbc_gamma_lr_ace"]["status"] == "executed"
+    assert cases["pbc_gamma_tc_qsci"]["status"] == "executed"
+
+
 @pytest.mark.integration
 def test_qmmm_validation_benchmark_suite_runs_profiles_and_accepts(
     tmp_path: Path,
@@ -161,3 +205,14 @@ def test_qmmm_validation_benchmark_suite_runs_profiles_and_accepts(
         "not_requested"
     ]
     assert all((case.artifact_root / "result.json").exists() for case in result.cases)
+
+
+def test_pbc_qmmm_benchmark_suite_manifest_loads_profiles() -> None:
+    spec = load_benchmark_suite_spec(Path("benchmarks/pbc_qmmm_suite_v1.yaml"))
+
+    assert spec.name == "pbc_qmmm_suite_v1"
+    assert {case.name: case.profile for case in spec.cases} == {
+        "pbc_qmmm_smoke": "smoke",
+        "pbc_qmmm_full": "full",
+    }
+    assert {case.kind for case in spec.cases} == {"pbc_qmmm_validation"}

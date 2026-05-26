@@ -63,6 +63,25 @@ Regenerate a report from an existing result:
 qcchem report artifacts/h2/result.json
 ```
 
+Validate the executable Gamma-only PBC/PBC-QMMM path:
+
+```bash
+qcchem validation pbc-qmmm --profile smoke -o artifacts/pbc_qmmm_validation_smoke
+```
+
+The smoke profile runs `configs/pbc_h2_gamma.yaml`,
+`configs/pbc_h2_qmmm.yaml`, and the non-Gamma rejection fixture. Outputs are
+`pbc_qmmm_validation.json`, `pbc_qmmm_validation.md`, and `metrics.csv`.
+The full profile also exercises VQE/twolocal, active-space, compression,
+LR-ACE, and TC-QSCI routing on the Gamma-only PBC Hamiltonian. The validated
+scope is Gamma-only/supercell electronic structure plus fixed-charge
+PBC-QM/MM Ewald electrostatics; forces, stress, cell optimization, PME dynamics,
+and non-Gamma mapped quantum algorithms remain out of scope. PBC v1 also
+requires closed-shell RHF, fully periodic 3D cells, matching molecule/cell
+units, neutral full QM/MM cells, and `neutralization: reject`; uniform
+backgrounds, mixed periodic axes, open-shell/UHF mapping, and runtime
+submission are rejected.
+
 Expected run outputs:
 
 - `result.json`: structured result payload.
@@ -73,6 +92,21 @@ Expected run outputs:
 - `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms,
   measurement groups, counts, trajectory, state diagnostics, resource metrics,
   and error budgets.
+- `field_model_registry.json`: field-model registry sidecar for implemented and
+  placeholder model families.
+- `field_hamiltonian.json`: sector-level field Hamiltonian terms, energy
+  contributions, and closure checks.
+- `field_observables.json`: lattice-QED or cavity-QED observable payloads.
+- `field_dynamics.json`: finite-cutoff dynamics curves and exact-vs-Trotter
+  observable error matrix when dynamics are enabled.
+- `field_constraints.json`: Gauss-law, physical-sector, photon-subspace, and
+  cutoff constraint evidence.
+- `field_resources.json`: field-model qubit, Pauli-term, dynamics-circuit, and
+  runtime-preview resources.
+- `field_error_budget.json`: finite-cutoff, Trotter, ansatz, photon-cutoff, and
+  placeholder-boundary error budget.
+- PBC/PBC-QMMM: `periodic_boundary` and `pbc_qmmm` result dictionaries, mirrored
+  into reports, QCSchema extras, the artifact index, and workbench view models.
 - `runtime_submission.json`: runtime sidecar when runtime submission is attempted.
 - `calibration.json` and `calibration_report.md`: empirical execution calibration
   when available.
@@ -142,6 +176,51 @@ qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout
 This reads `runtime_submission.json`, polls provider state when available, and
 merges returned metadata back into `result.json` and `report.md`.
 
+## Research OS Analysis Loop
+
+Use Research Objectives when a study needs an explicit claim, required evidence,
+candidate configs, promotion policy, and recommended next action:
+
+```bash
+qcchem objective plan \
+  -c configs/objectives/h2_local_validation.yaml \
+  -o artifacts/objectives/h2_local_validation_plan
+
+qcchem objective status \
+  -c configs/objectives/h2_local_validation.yaml \
+  -o artifacts/objectives/h2_local_validation_status
+```
+
+Use Evidence Capsules before treating an artifact as best evidence:
+
+```bash
+qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2
+```
+
+Use the Claim Compiler to detect overclaim language and get a safe rewrite:
+
+```bash
+qcchem claim check \
+  --claim-file examples/claims/hardware_overclaim.txt \
+  --target artifacts/hardware_calibration_suite_v1 \
+  -o artifacts/claim_reviews/hardware_overclaim
+```
+
+Use the Promotion Gate before using candidate or validated language for QFT,
+LR-ACE, TC-QSCI, or other exploratory boundary artifacts:
+
+```bash
+qcchem promote exploratory \
+  --artifact artifacts/h2_lr_ace/result.json \
+  --target validated_algorithm_candidate \
+  -o artifacts/promotion/h2_lr_ace
+```
+
+All four commands are local analysis paths. They preserve `trust tier`,
+`baseline strength`, `chemical accuracy status`, `runtime evidence status`, and
+`hardware verification boundary`. They do not submit real hardware jobs or
+promote exploratory artifacts automatically.
+
 ## Hardware Optimization
 
 Preview first:
@@ -196,6 +275,9 @@ Start with:
 - `runtime_chemical_accuracy`
 - `evidence_summary`
 - `quantum_evidence`
+- `field_evidence`
+- `pbc`
+- `pbc_qmmm`
 
 For Trust-First review, the most important fields are:
 
@@ -214,6 +296,18 @@ summarizes the detailed evidence layer. Use the sidecar when you need to audit:
 - Hamiltonian variance, particle/spin/Z2/QFT constraint checks.
 - Circuit resources, measurement cost, and ansatz/shot/compression/hardware
   error budget.
+
+The compact `field_evidence` field points to the field-model sidecars. Use
+those files for finite-cutoff QFT/cavity evidence:
+
+- Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law generators,
+  physical-sector hash, Wilson/electric observables, and Trotter diagnostics.
+- Pauli-Fierz cavity-QED photon occupation, dipole expectation,
+  electron-photon coupling, dipole self energy, polaritonic composition, photon
+  leakage, and photon-cutoff inputs.
+- Sector-level field-Hamiltonian energy closure against the solver Hamiltonian.
+- Scalar, fermion, and generic gauge-field placeholder entries are registry
+  schema only and are not scientific evidence.
 
 Mapping resources now separate the executed Hamiltonian from its untapered
 baseline:

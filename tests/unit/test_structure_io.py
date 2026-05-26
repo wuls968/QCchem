@@ -22,6 +22,13 @@ HETATM    1  H1  H2      1       9.000   9.000   9.000  1.00  0.00           H
 ENDMDL
 """
 
+PDB_CRYST1_TEXT = """CRYST1   12.000   13.000   14.000  90.00 100.00 120.00 P 1           1
+HETATM    1  O   HOH A   1       1.000   2.000   3.000  1.00  0.00           O
+HETATM    2  H1  HOH A   1       1.700   2.000   3.000  1.00  0.00           H
+HETATM    3  H2  HOH A   1       1.000   2.700   3.000  1.00  0.00           H
+END
+"""
+
 MOL_TEXT = """
   QCchem
 
@@ -114,6 +121,20 @@ def test_load_structure_file_rejects_pdb_without_atoms(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="no ATOM/HETATM"):
         load_structure_file(path)
+
+
+def test_load_structure_file_parses_pdb_cryst1_cell_and_hashes_pbc(tmp_path: Path) -> None:
+    path = tmp_path / "water.pdb"
+    path.write_text(PDB_CRYST1_TEXT, encoding="utf-8")
+
+    parsed = load_structure_file(path)
+
+    assert parsed.periodic is not None
+    assert parsed.periodic["cell"]["lengths"] == pytest.approx((12.0, 13.0, 14.0))
+    assert parsed.periodic["cell"]["angles"] == pytest.approx((90.0, 100.0, 120.0))
+    assert parsed.periodic["pbc"] == (True, True, True)
+    assert parsed.provenance["periodic"]["source"] == "pdb_cryst1"
+    assert parsed.provenance["normalized_geometry_sha256"]
 
 
 def test_load_structure_file_rejects_non_v2000_mol(tmp_path: Path) -> None:

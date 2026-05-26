@@ -12,7 +12,7 @@ from qcchem.workflow.ai_store import list_ticket_records, workspace_root
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.components.molecule import build_molecule_viewer
-from qcchem.workbench.data import load_featured_run_view_model
+from qcchem.workbench.data import load_featured_run_view_model, load_research_os_snapshot
 from qcchem.workbench.evidence_console import build_evidence_console_model, format_action_label
 from qcchem.workbench.theme import THEME
 from qcchem.workbench.viewmodels import build_run_view_model
@@ -264,6 +264,11 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     artifact_entry = view.get("artifact_index_entry") or {}
     artifact_entry_path = artifact_entry.get("result_json") or artifact_entry.get("artifact_root") or "sample fallback"
     workspace_snapshot = _workspace_snapshot()
+    research_os = load_research_os_snapshot()
+    objective = research_os.get("objective") or {}
+    claim_review = research_os.get("claim_review") or {}
+    promotion_review = research_os.get("promotion_review") or {}
+    open_gaps = research_os.get("open_evidence_gaps") or []
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
     threshold = _overview_threshold(view, benchmark)
@@ -370,6 +375,29 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
             html.Div(
                 className="qcchem-overview__summary-grid",
                 children=[
+                    status_card(
+                        "Research Objective",
+                        str(objective.get("objective_name") or "No objective yet"),
+                        str(objective.get("recommended_action") or "Create an objective plan to connect claim, evidence, and next action."),
+                        tone=_status_tone(objective.get("status")),
+                    ),
+                    metric_card(
+                        "Open evidence gaps",
+                        str(len(open_gaps)),
+                        ", ".join(str(item) for item in open_gaps[:3]) if open_gaps else "No objective evidence gaps recorded.",
+                    ),
+                    status_card(
+                        "Claim compiler",
+                        str(claim_review.get("support_level") or "No review yet"),
+                        str(claim_review.get("safe_rewrite") or "Run qcchem claim check to persist a claim boundary review."),
+                        tone=_status_tone("unstable" if claim_review.get("support_level") == "overclaimed" else claim_review.get("status")),
+                    ),
+                    status_card(
+                        "Promotion gate",
+                        str(promotion_review.get("status") or "No gate review yet"),
+                        str(promotion_review.get("recommended_action") or "Exploratory artifacts require a promotion gate before candidate language."),
+                        tone=_status_tone(promotion_review.get("status")),
+                    ),
                     status_card(
                         "Best Evidence Desk",
                         str(evidence_summary.get("trust_tier", "validated")),

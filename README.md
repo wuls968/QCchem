@@ -79,6 +79,20 @@ qcchem release audit \
   -o artifacts/release_audit
 ```
 
+Validate the executable Gamma-only PBC/PBC-QMMM path:
+
+```bash
+qcchem validation pbc-qmmm --profile smoke -o artifacts/pbc_qmmm_validation_smoke
+```
+
+The smoke profile runs plain Gamma-only PBC, PBC-QM/MM Ewald, and non-Gamma
+k-point rejection cases, then writes `pbc_qmmm_validation.json`,
+`pbc_qmmm_validation.md`, and `metrics.csv`. The full profile also exercises
+VQE/twolocal, active-space, compression, LR-ACE, and TC-QSCI routing on the same
+Gamma-only PBC surface. PBC v1 is deliberately conservative: closed-shell RHF,
+fully periodic 3D cells, matching molecule/cell units, neutral full QM/MM cells,
+and no runtime submission or uniform-background neutralization.
+
 Evaluate a benchmark acceptance artifact:
 
 ```bash
@@ -89,6 +103,38 @@ Build the artifact-driven workbench index:
 
 ```bash
 qcchem artifacts index artifacts
+```
+
+Validate an artifact as an evidence capsule:
+
+```bash
+qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2
+```
+
+Plan a research objective without running calculations:
+
+```bash
+qcchem objective plan \
+  -c configs/objectives/h2_local_validation.yaml \
+  -o artifacts/objectives/h2_local_validation_plan
+```
+
+Compile a claim against best evidence:
+
+```bash
+qcchem claim check \
+  --claim-file examples/claims/hardware_overclaim.txt \
+  --target artifacts/hardware_calibration_suite_v1 \
+  -o artifacts/claim_reviews/hardware_overclaim
+```
+
+Review an exploratory promotion gate:
+
+```bash
+qcchem promote exploratory \
+  --artifact artifacts/h2_lr_ace/result.json \
+  --target validated_algorithm_candidate \
+  -o artifacts/promotion/h2_lr_ace
 ```
 
 Run an artifact-only campaign:
@@ -152,6 +198,20 @@ Every release-facing run or aggregate artifact should expose an
 This summary is the first object consumed by reports, the workbench, release
 audit, and AI tooling.
 
+### Quantum And Field Evidence
+
+Every run writes `quantum_evidence.json` for Pauli execution evidence. Field
+model runs additionally write a separate field-evidence artifact family:
+`field_model_registry.json`, `field_hamiltonian.json`,
+`field_observables.json`, `field_dynamics.json`, `field_constraints.json`,
+`field_resources.json`, and `field_error_budget.json`.
+
+These field sidecars are authoritative for finite-cutoff lattice-QED and
+Pauli-Fierz cavity-QED observables, constraints, cutoff metadata, sector energy
+closure, and field-model error budgets. Placeholder registry entries for scalar,
+fermion, and generic gauge fields are schema-only and must not be used as
+scientific evidence.
+
 ### Trust Tiers
 
 QCchem uses strict categories instead of a single blended score:
@@ -172,6 +232,23 @@ does not mean publication-grade chemistry accuracy. Hardware-derived chemistry
 accuracy is reported separately as `runtime_evidence_status` and, when present,
 `runtime_chemical_accuracy`.
 
+### Research OS Loop
+
+The Trust-First Quantum Chemistry Research OS prototype adds four local analysis
+objects:
+
+- `research objective`: records the claim, required evidence, candidate configs,
+  promotion policy, and recommended next action.
+- `evidence capsule`: validates result/report/config/log/sidecar completeness,
+  provenance, trust tier, and boundary warnings.
+- `claim compiler`: labels claims as supported, partially supported,
+  unsupported, or overclaimed and gives a safe rewrite.
+- `promotion gate`: blocks QFT, LR-ACE, and TC-QSCI exploratory artifacts from
+  direct validated language unless the required studies exist.
+
+These commands are analysis-only. They do not submit hardware jobs, spend IBM
+Runtime budget, read secrets, or mutate curated artifact trust tiers.
+
 ## Supported Workflows
 
 ### Single Runs
@@ -184,6 +261,7 @@ qcchem report artifacts/h2/result.json
 
 Single-run artifacts include `result.json`, `report.md`,
 `resolved_config.yaml`, `run.log`, and usually `exact_result.json`.
+Field-model runs add the seven `field_*.json` sidecars listed above.
 Runtime-facing runs also carry `hardware_error_diagnostic`, which separates
 local solver error from runtime-derived error and names the next measurement.
 

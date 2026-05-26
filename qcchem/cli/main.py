@@ -10,25 +10,29 @@ from pathlib import Path
 from qcchem.io.agent_config import load_agent_task_spec
 from qcchem.io.artifact_index import build_artifact_index
 from qcchem.io.config import load_run_spec
+from qcchem.io.objective_config import write_objective_template
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_aggregate_report, write_markdown_report
 from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
 from qcchem.workflow.acceptance import accept_benchmark_result
+from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
 from qcchem.workflow.evidence_agent import (
     append_ai_provenance_event,
     review_claims,
     summarize_evidence_artifacts,
     write_review_outputs,
 )
+from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.campaign import accept_campaign_result, report_campaign_result, run_campaign_from_config
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
+from qcchem.workflow.objective import plan_research_objective, status_research_objective
+from qcchem.workflow.promotion import review_exploratory_promotion, write_promotion_outputs
 from qcchem.workflow.release_audit import run_release_audit_from_config
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.scan import run_scan_from_config
 from qcchem.workflow.study import run_study_from_config
-from qcchem.validation import run_qmmm_embedding_validation
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -72,6 +76,43 @@ def _build_parser() -> argparse.ArgumentParser:
     artifacts_index = artifacts_subparsers.add_parser("index", help="Build a normalized artifact index.")
     artifacts_index.add_argument("artifact_root", type=Path, nargs="?", default=Path("artifacts"))
     artifacts_index.add_argument("-o", "--output", type=Path)
+    artifacts_capsule = artifacts_subparsers.add_parser("capsule", help="Validate an artifact root as an evidence capsule.")
+    artifacts_capsule.add_argument("artifact_root", type=Path, help="Artifact root, or artifacts root with --recursive.")
+    artifacts_capsule.add_argument("-o", "--output-dir", type=Path)
+    artifacts_capsule.add_argument("--recursive", action="store_true", help="Validate every indexed artifact under the root.")
+
+    objective_parser = subparsers.add_parser("objective", help="Research Objective planning commands.")
+    objective_subparsers = objective_parser.add_subparsers(dest="objective_command", required=True)
+    objective_init = objective_subparsers.add_parser("init", help="Write a Research Objective YAML template.")
+    objective_init.add_argument("--name", required=True)
+    objective_init.add_argument("--claim", required=True)
+    objective_init.add_argument("-o", "--output", type=Path, required=True)
+    objective_plan = objective_subparsers.add_parser("plan", help="Plan a Research Objective without running calculations.")
+    objective_plan.add_argument("-c", "--config", type=Path, required=True)
+    objective_plan.add_argument("-o", "--output-dir", type=Path, required=True)
+    objective_status = objective_subparsers.add_parser("status", help="Summarize Research Objective status.")
+    objective_status.add_argument("target", type=Path, nargs="?", help="Objective artifact root or objective YAML.")
+    objective_status.add_argument("-c", "--config", type=Path, help="Objective YAML.")
+    objective_status.add_argument("-o", "--output-dir", type=Path)
+
+    claim_parser = subparsers.add_parser("claim", help="Claim compiler commands.")
+    claim_subparsers = claim_parser.add_subparsers(dest="claim_command", required=True)
+    claim_check = claim_subparsers.add_parser("check", help="Check a scientific claim against artifact evidence.")
+    claim_text_group = claim_check.add_mutually_exclusive_group(required=True)
+    claim_text_group.add_argument("--claim", help="Claim text to check.")
+    claim_text_group.add_argument("--claim-file", type=Path, help="Text file containing the claim.")
+    claim_check.add_argument("--target", action="append", required=True, help="Artifact root or result JSON. Repeat for multiple targets.")
+    claim_check.add_argument("-o", "--output-dir", type=Path, required=True)
+
+    promote_parser = subparsers.add_parser("promote", help="Promotion gate commands.")
+    promote_subparsers = promote_parser.add_subparsers(dest="promote_command", required=True)
+    promote_exploratory = promote_subparsers.add_parser(
+        "exploratory",
+        help="Review whether exploratory evidence can enter a candidate promotion path.",
+    )
+    promote_exploratory.add_argument("--artifact", type=Path, required=True)
+    promote_exploratory.add_argument("--target", required=True)
+    promote_exploratory.add_argument("-o", "--output-dir", type=Path, required=True)
 
     campaign_parser = subparsers.add_parser("campaign", help="Artifact-driven campaign workflow commands.")
     campaign_subparsers = campaign_parser.add_subparsers(dest="campaign_command", required=True)
@@ -130,6 +171,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     validation_qmmm.add_argument("--profile", choices=["smoke", "full"], default="smoke")
     validation_qmmm.add_argument("-o", "--output-dir", type=Path, required=True)
+    validation_pbc_qmmm = validation_subparsers.add_parser(
+        "pbc-qmmm",
+        help="Run the Gamma-only PBC/PBC-QMMM Ewald validation harness.",
+    )
+    validation_pbc_qmmm.add_argument("--profile", choices=["smoke", "full"], default="smoke")
+    validation_pbc_qmmm.add_argument("-o", "--output-dir", type=Path, required=True)
 
     hardware_parser = subparsers.add_parser("hardware", help="Hardware optimization workflow commands.")
     hardware_subparsers = hardware_parser.add_subparsers(dest="hardware_command", required=True)
@@ -410,6 +457,77 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Artifact index written to {output}")
             print(f"Artifacts: {index['total_artifacts']}")
             return 0
+        if args.artifacts_command == "capsule":
+            if args.recursive:
+                index = build_artifact_index(args.artifact_root)
+                output_dir = args.output_dir or args.artifact_root / "capsules"
+                capsules = []
+                for entry in index.get("artifacts", []):
+                    root = Path(str(entry["artifact_root"]))
+                    capsules.append(build_and_write_evidence_capsule(root, output_dir / root.name))
+                summary = {
+                    "schema_version": "qcchem.evidence_capsule.batch.v0.1-alpha",
+                    "artifact_root": str(args.artifact_root),
+                    "total_capsules": len(capsules),
+                    "capsules": capsules,
+                }
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output = output_dir / "evidence_capsules.json"
+                output.write_text(json.dumps(to_primitive(summary), indent=2, sort_keys=True), encoding="utf-8")
+                print(f"Evidence capsule batch written to {output}")
+                print(f"Capsules: {len(capsules)}")
+                return 0 if all(item.get("capsule_status") != "invalid" for item in capsules) else 2
+            capsule = build_and_write_evidence_capsule(args.artifact_root, args.output_dir)
+            print(f"Evidence capsule written to {capsule['outputs']['capsule_json']}")
+            print(f"Capsule status: {capsule['capsule_status']}")
+            print(f"Trust tier: {capsule['trust_tier']}")
+            print(f"Recommended action: {capsule['recommended_action']}")
+            return 0 if capsule["capsule_status"] != "invalid" else 2
+
+    if args.command == "objective":
+        if args.objective_command == "init":
+            path = write_objective_template(name=args.name, claim=args.claim, output_path=args.output)
+            print(f"Objective template written to {path}")
+            return 0
+        if args.objective_command == "plan":
+            payload = plan_research_objective(args.config, args.output_dir)
+            print(f"Objective plan written to {payload['outputs']['json']}")
+            print(f"Objective: {payload['objective_name']}")
+            print(f"Status: {payload['status']}")
+            print(f"Recommended action: {payload['recommended_action']}")
+            return 0
+        if args.objective_command == "status":
+            target = args.config or args.target
+            if target is None:
+                print("Objective status requires either -c/--config or a target path.")
+                return 2
+            payload = status_research_objective(target, args.output_dir)
+            print(f"Objective status written to {payload['outputs']['json']}")
+            print(f"Objective: {payload['objective_name']}")
+            print(f"Status: {payload['status']}")
+            print(f"Recommended action: {payload['recommended_action']}")
+            return 0
+
+    if args.command == "claim":
+        if args.claim_command == "check":
+            claim_text = args.claim_file.read_text(encoding="utf-8").strip() if args.claim_file else str(args.claim)
+            review = compile_claim_review(claim_text=claim_text, targets=args.target, workspace_base=Path.cwd())
+            outputs = write_claim_review_outputs(review, args.output_dir)
+            review["outputs"] = outputs
+            print(f"Claim review written to {outputs['claim_review_json']}")
+            print(f"Support level: {review['support_level']}")
+            print(f"Recommended action: {review['recommended_action']}")
+            return 0 if review["status"] == "passed" else 2
+
+    if args.command == "promote":
+        if args.promote_command == "exploratory":
+            review = review_exploratory_promotion(artifact=args.artifact, target=args.target)
+            outputs = write_promotion_outputs(review, args.output_dir)
+            review["outputs"] = outputs
+            print(f"Promotion review written to {outputs['promotion_review_json']}")
+            print(f"Status: {review['status']}")
+            print(f"Recommended action: {review['recommended_action']}")
+            return 0 if review["status"] != "blocked" else 2
 
     if args.command == "campaign":
         if args.campaign_command == "run":
@@ -502,9 +620,23 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validation":
         if args.validation_command == "qmmm":
+            from qcchem.validation import run_qmmm_embedding_validation
+
             summary = run_qmmm_embedding_validation(args.output_dir, profile=args.profile)
             artifacts = summary.get("artifacts", {})
             print(f"QMMM validation completed: {summary.get('overall_status')}")
+            print(f"Profile: {summary.get('profile')}")
+            print(f"Cases: {summary.get('passed_cases')}/{summary.get('case_count')}")
+            print(f"Result JSON: {artifacts.get('json')}")
+            print(f"Report: {artifacts.get('markdown')}")
+            print(f"Metrics CSV: {artifacts.get('csv')}")
+            return 0 if summary.get("overall_status") == "passed" else 2
+        if args.validation_command == "pbc-qmmm":
+            from qcchem.validation import run_pbc_qmmm_validation
+
+            summary = run_pbc_qmmm_validation(args.output_dir, profile=args.profile)
+            artifacts = summary.get("artifacts", {})
+            print(f"PBC-QMMM validation completed: {summary.get('overall_status')}")
             print(f"Profile: {summary.get('profile')}")
             print(f"Cases: {summary.get('passed_cases')}/{summary.get('case_count')}")
             print(f"Result JSON: {artifacts.get('json')}")

@@ -54,6 +54,17 @@ Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
 indexed artifacts when they exist. The built-in sample models remain only as
 empty-workspace fallbacks.
 
+The Research OS surfaces are also read-only:
+
+- `/overview` shows the latest Research Objective plan/status, open evidence
+  gaps, Claim Compiler support level, and Promotion Gate status when the
+  corresponding JSON artifacts exist.
+- `/result-confidence` shows Evidence Capsule status, missing files, provenance
+  status, and boundary warnings for the selected artifact.
+- `/ai-workspace` shows ticket-mediated `claim_check`, `capsule_validate`,
+  `promotion_review`, `objective_plan`, and `objective_status` actions and their
+  delivery records.
+
 ## Showcase Path
 
 The recommended release-grade reading path is:
@@ -123,10 +134,13 @@ The release-facing terms `baseline strength` and `hardware verification boundary
 ### Evidence Console v2 pages
 
 - `/overview` is the best-evidence research home: chemical-accuracy gap, runtime boundary, open AI work, and next action appear before deep diagnostics.
+- `/overview` also acts as the Research Objective snapshot, showing the latest objective status and open evidence gaps when `artifacts/objectives/` exists.
 - `/runtime-monitoring` is the runtime decision cockpit: submission health, hardware-derived accuracy, simulator-vs-hardware gap, and budget/shot usage are separated before telemetry.
 - `/hardware-campaign` is the budget decision surface: best retrieved evidence is shown alongside whether another controlled runtime probe is worth the budget.
 - `/hardware-campaign` also surfaces `Optimization Trial` when a hardware optimization artifact is present, including selected candidate, compiled burden, budget ledger, and stop reason.
 - `/ai-workspace` is the evidence-first task hub: delivery/history entries carry evidence scope, limitations, review state, and recommended action.
+- `/ai-workspace` can execute local analysis-only AI tickets for claim compiler,
+  evidence capsule, promotion gate, and research objective planning/status.
 
 ## Evidence Language
 
@@ -139,6 +153,11 @@ Workbench pages are expected to surface the same Evidence Core vocabulary as CLI
 - `runtime evidence status`
 - `recommended next action`
 - `hardware verification boundary`
+- `exploratory boundary`
+- `evidence capsule`
+- `claim compiler`
+- `promotion gate`
+- `research objective`
 
 ## Boundaries
 

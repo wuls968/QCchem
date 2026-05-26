@@ -7,6 +7,52 @@ def _safe_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _normalized_pbc_model(value: Any) -> dict[str, Any]:
+    pbc = _safe_dict(value)
+    if not pbc:
+        return {}
+    if "cell_vectors" not in pbc:
+        return pbc
+    return {
+        **pbc,
+        "enabled": pbc.get("enabled"),
+        "status": "executed_gamma_supercell" if pbc.get("enabled") else None,
+        "periodicity": "3d" if pbc.get("pbc") == [True, True, True] else "mixed",
+        "cell": {
+            "units": pbc.get("cell_unit"),
+            "vectors": pbc.get("cell_vectors", []),
+            "volume": pbc.get("volume"),
+            "fingerprint": pbc.get("fingerprint"),
+        },
+        "kpoints": {"mode": "gamma", "grid": pbc.get("kpoint_mesh", [1, 1, 1])},
+        "boundary_conditions": pbc.get("pbc"),
+        "core_runner_implemented": True,
+    }
+
+
+def _normalized_pbc_qmmm_model(value: Any) -> dict[str, Any]:
+    pbc_qmmm = _safe_dict(value)
+    if not pbc_qmmm:
+        return {}
+    if "one_body_environment" not in pbc_qmmm:
+        return pbc_qmmm
+    return {
+        **pbc_qmmm,
+        "status": "executed_ewald" if pbc_qmmm.get("enabled") else None,
+        "embedding_mode": pbc_qmmm.get("mode"),
+        "qm_region": pbc_qmmm.get("provenance", {}).get("qm_region", {}),
+        "mm_region": {
+            "charge_count": pbc_qmmm.get("charge_count"),
+            "total_charge": pbc_qmmm.get("total_mm_charge"),
+        },
+        "boundary": {
+            "neutralization": pbc_qmmm.get("neutralization"),
+            "background_energy": pbc_qmmm.get("background_energy"),
+        },
+        "core_runner_implemented": True,
+    }
+
+
 def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
     benchmark = model.get("benchmark") or {}
     runtime = model.get("runtime") or {}
@@ -25,7 +71,7 @@ def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
     )
     backend_name = str(runtime.get("backend_name") or "n/a")
     backend_version = str(runtime.get("backend_version") or "")
-    queue_stage = str(runtime.get("result_provenance", {}).get("attempt_stage") or "pending")
+    queue_stage = str(_safe_dict(runtime.get("result_provenance")).get("attempt_stage") or "pending")
     returned_job_metadata = _safe_dict(runtime.get("returned_job_metadata"))
     shots = _safe_dict(returned_job_metadata.get("metadata")).get("shots")
     if shots is None:
@@ -67,6 +113,9 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     reduction = payload.get("reduction_audit") or {}
     compression = payload.get("compression_result") or {}
     evidence_summary = payload.get("evidence_summary") or {}
+    field_evidence = payload.get("field_evidence") or {}
+    pbc = _normalized_pbc_model(payload.get("periodic_boundary") or payload.get("pbc"))
+    pbc_qmmm = _normalized_pbc_qmmm_model(payload.get("pbc_qmmm"))
 
     view_model = {
         "hero": {
@@ -113,7 +162,39 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "reduction": reduction,
         "compression": compression,
+        "pbc": {
+            "enabled": pbc.get("enabled"),
+            "status": pbc.get("status"),
+            "periodicity": pbc.get("periodicity"),
+            "cell": pbc.get("cell", {}),
+            "kpoints": pbc.get("kpoints", {}),
+            "boundary_conditions": pbc.get("boundary_conditions"),
+            "core_runner_implemented": pbc.get("core_runner_implemented"),
+        },
+        "pbc_qmmm": {
+            "enabled": pbc_qmmm.get("enabled"),
+            "status": pbc_qmmm.get("status"),
+            "embedding_mode": pbc_qmmm.get("embedding_mode"),
+            "qm_region": pbc_qmmm.get("qm_region", {}),
+            "mm_region": pbc_qmmm.get("mm_region", {}),
+            "boundary": pbc_qmmm.get("boundary", {}),
+            "core_runner_implemented": pbc_qmmm.get("core_runner_implemented"),
+            "notes": pbc_qmmm.get("notes", []),
+        },
         "evidence_summary": evidence_summary,
+        "field_evidence": {
+            "available": field_evidence.get("available"),
+            "schema": field_evidence.get("schema"),
+            "active_model_kind": field_evidence.get("active_model_kind"),
+            "sidecars": field_evidence.get("sidecars", {}),
+            "sidecar_sha256": field_evidence.get("sidecar_sha256", {}),
+            "hamiltonian": field_evidence.get("hamiltonian", {}),
+            "observables": field_evidence.get("observables", {}),
+            "dynamics": field_evidence.get("dynamics", {}),
+            "constraints": field_evidence.get("constraints", {}),
+            "resources": field_evidence.get("resources", {}),
+            "error_budget": field_evidence.get("error_budget", {}),
+        },
         "confidence": {
             "verification_status": payload.get("verification_status"),
             "hardware_verified": payload.get("hardware_verified"),

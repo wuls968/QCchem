@@ -59,8 +59,22 @@ release_audit:
     - path: docs/release_audit.md
       terms: [release audit, release_readiness.json, release_readiness.md, no runtime submission]
       required: true
+    - path: docs/research_objectives.md
+      terms: [research objective, best evidence, trust tier, baseline strength, recommended next action]
+      required: true
+    - path: docs/evidence_capsule.md
+      terms: [evidence capsule, evidence_summary, provenance, trust tier, recommended next action]
+      required: true
+    - path: docs/claim_compiler.md
+      terms: [claim compiler, overclaim, chemical accuracy status, runtime evidence status, safe rewrite]
+      required: true
+    - path: docs/promotion_gate.md
+      terms: [promotion gate, exploratory boundary, QFT, LR-ACE, TC-QSCI, validated]
+      required: true
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
+    - python -m pytest tests/unit/test_release_audit_new_terms.py -q
+    - python -m pytest tests/unit/test_objective_config.py tests/unit/test_evidence_capsule.py tests/unit/test_claim_compiler.py tests/unit/test_promotion_gate.py -q
     - python -m pytest tests/integration/test_release_audit_workflow_v23.py -q
     - python -m pytest tests/integration/test_trust_first_release_v16.py -q
     - python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q

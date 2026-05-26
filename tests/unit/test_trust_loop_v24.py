@@ -78,6 +78,8 @@ def test_artifact_index_extracts_evidence_and_runtime_sidecar(tmp_path: Path) ->
                     "recommended_action": "promote_validated_result",
                     "runtime_evidence_status": "retrieved_result",
                 },
+                "pbc": {"enabled": True, "status": "metadata_only"},
+                "pbc_qmmm": {"enabled": True, "status": "metadata_only"},
             }
         ),
         encoding="utf-8",
@@ -94,6 +96,8 @@ def test_artifact_index_extracts_evidence_and_runtime_sidecar(tmp_path: Path) ->
     assert entry["trust_tier"] == "validated"
     assert entry["runtime_submission_status"] == "succeeded"
     assert entry["has_runtime_submission"] is True
+    assert entry["has_pbc_metadata"] is True
+    assert entry["has_pbc_qmmm_metadata"] is True
 
 
 def test_campaign_config_loads_entries(tmp_path: Path) -> None:

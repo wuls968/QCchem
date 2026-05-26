@@ -52,8 +52,12 @@ from qcchem.core import (
     MeasurementSpec,
     MitigationSpec,
     MoleculeSpec,
+    MoleculePeriodicSpec,
     NoiseModelSpec,
     OptimizerSpec,
+    PBCQMMMPeriodicPolicySpec,
+    PBCSpec,
+    PeriodicCellSpec,
     PECSpec,
     PointGroupSpec,
     PerturbativeCorrectionTaskSpec,
@@ -78,7 +82,20 @@ from qcchem.core import (
     TaskSpec,
     ZNESpec,
 )
-from qcchem.io.structure import build_inline_geometry_provenance, load_structure_file
+from qcchem.io.structure import (
+    build_inline_geometry_provenance,
+    load_structure_file,
+    normalized_geometry_sha256,
+)
+from qcchem.pbc.geometry import (
+    frac_to_cart,
+    normalize_cell_unit,
+    normalized_periodic_payload,
+    periodic_fingerprint,
+    validate_cell,
+    validate_pbc_flags,
+    wrap_positions,
+)
 
 
 def _project_root() -> Path:
@@ -127,6 +144,117 @@ def _parse_atoms(items: list[dict[str, Any]]) -> list[AtomSpec]:
     return atoms
 
 
+def _parse_bool_triplet(value: Any, *, field_name: str) -> tuple[bool, bool, bool]:
+    if not isinstance(value, list | tuple) or len(value) != 3:
+        raise ValueError(f"{field_name} must contain exactly three boolean values.")
+    return validate_pbc_flags(value)
+
+
+def _parse_cell(raw: Any, *, field_name: str, source: str | None = None) -> PeriodicCellSpec:
+    if not isinstance(raw, dict):
+        raise ValueError(f"{field_name} must be a mapping.")
+    if "vectors" not in raw:
+        raise ValueError(f"{field_name}.vectors is required.")
+    unit = normalize_cell_unit(str(raw.get("unit", "angstrom")))
+    vectors = validate_cell(raw["vectors"])
+    lengths = None
+    angles = None
+    if raw.get("lengths") is not None:
+        lengths = tuple(float(value) for value in raw["lengths"])
+        if len(lengths) != 3:
+            raise ValueError(f"{field_name}.lengths must contain exactly three values.")
+    if raw.get("angles") is not None:
+        angles = tuple(float(value) for value in raw["angles"])
+        if len(angles) != 3:
+            raise ValueError(f"{field_name}.angles must contain exactly three values.")
+    return PeriodicCellSpec(
+        vectors=vectors,
+        lengths=lengths,
+        angles=angles,
+        unit=unit,
+        source=str(raw.get("source", source)) if raw.get("source", source) is not None else None,
+    )
+
+
+def _periodic_to_payload(periodic: MoleculePeriodicSpec) -> dict[str, Any]:
+    if not periodic.enabled:
+        return {"enabled": False}
+    if periodic.cell is None:
+        raise ValueError("molecule.periodic.enabled=true requires molecule.periodic.cell.vectors.")
+    payload = normalized_periodic_payload(
+        enabled=True,
+        vectors=periodic.cell.vectors,
+        lengths=periodic.cell.lengths,
+        angles=periodic.cell.angles,
+        pbc=periodic.pbc,
+        unit=periodic.cell.unit,
+        coordinate_mode=periodic.coordinate_mode,
+        wrap_policy=periodic.wrap_policy,
+        source=periodic.source or periodic.cell.source,
+    )
+    return payload
+
+
+def _periodic_from_payload(raw: dict[str, Any]) -> MoleculePeriodicSpec:
+    if not raw or not bool(raw.get("enabled", False)):
+        return MoleculePeriodicSpec()
+    vectors = raw.get("cell_vectors") or raw.get("vectors")
+    if vectors is None and isinstance(raw.get("cell"), dict):
+        vectors = raw["cell"].get("vectors")
+    unit = str(raw.get("cell_unit") or raw.get("unit") or "angstrom")
+    lengths = None
+    angles = None
+    if isinstance(raw.get("cell"), dict):
+        lengths = raw["cell"].get("lengths")
+        angles = raw["cell"].get("angles")
+    cell = PeriodicCellSpec(
+        vectors=validate_cell(vectors),
+        lengths=tuple(float(value) for value in lengths) if lengths is not None else None,
+        angles=tuple(float(value) for value in angles) if angles is not None else None,
+        unit=normalize_cell_unit(unit),
+        source=str(raw.get("source")) if raw.get("source") is not None else None,
+    )
+    return MoleculePeriodicSpec(
+        enabled=True,
+        cell=cell,
+        pbc=_parse_bool_triplet(raw.get("pbc", [True, True, True]), field_name="molecule.periodic.pbc"),
+        coordinate_mode=str(raw.get("coordinate_mode", "cartesian")).strip().lower(),
+        wrap_policy=str(raw.get("wrap_policy", "preserve")).strip().lower(),
+        source=str(raw.get("source")) if raw.get("source") is not None else None,
+        provenance=dict(raw.get("provenance", {})),
+    )
+
+
+def _parse_molecule_periodic(raw: Any, *, parsed_periodic: dict[str, Any] | None = None) -> MoleculePeriodicSpec:
+    if raw is None:
+        return _periodic_from_payload(parsed_periodic or {"enabled": False})
+    if not isinstance(raw, dict):
+        raise ValueError("molecule.periodic must be a mapping.")
+    enabled = bool(raw.get("enabled", "cell" in raw or "pbc" in raw))
+    if not enabled:
+        return MoleculePeriodicSpec()
+    cell_raw = raw.get("cell")
+    if cell_raw is None and parsed_periodic and parsed_periodic.get("enabled"):
+        base = dict(parsed_periodic)
+        base.update({key: value for key, value in raw.items() if key != "cell"})
+        return _periodic_from_payload(base)
+    cell = _parse_cell(cell_raw, field_name="molecule.periodic.cell")
+    coordinate_mode = str(raw.get("coordinate_mode", "cartesian")).strip().lower()
+    if coordinate_mode not in {"cartesian", "fractional"}:
+        raise ValueError("molecule.periodic.coordinate_mode must be cartesian or fractional.")
+    wrap_policy = str(raw.get("wrap_policy", "preserve")).strip().lower()
+    if wrap_policy not in {"preserve", "wrap", "none"}:
+        raise ValueError("molecule.periodic.wrap_policy must be preserve, wrap, or none.")
+    return MoleculePeriodicSpec(
+        enabled=True,
+        cell=cell,
+        pbc=_parse_bool_triplet(raw.get("pbc", [True, True, True]), field_name="molecule.periodic.pbc"),
+        coordinate_mode=coordinate_mode,
+        wrap_policy=wrap_policy,
+        source=str(raw.get("source")) if raw.get("source") is not None else None,
+    )
+
+
 def _parse_molecule(molecule_raw: dict[str, Any], *, base_dir: Path) -> MoleculeSpec:
     structure_file_raw = molecule_raw.get("structure_file")
     unit = str(molecule_raw.get("unit", "angstrom"))
@@ -146,7 +274,19 @@ def _parse_molecule(molecule_raw: dict[str, Any], *, base_dir: Path) -> Molecule
             source_path=str(structure_file_raw),
         )
         geometry = parsed.atoms
-        input_provenance = parsed.provenance
+        periodic = _parse_molecule_periodic(
+            molecule_raw.get("periodic"),
+            parsed_periodic=parsed.periodic,
+        )
+        if (
+            periodic.enabled
+            and periodic.cell is not None
+            and normalize_cell_unit(periodic.cell.unit) != normalize_cell_unit(unit)
+        ):
+            raise ValueError("PBC v1 requires molecule.periodic.cell.unit to match molecule.unit.")
+        periodic_payload = _periodic_to_payload(periodic)
+        input_provenance = dict(parsed.provenance)
+        input_provenance["periodic"] = periodic_payload
     else:
         if molecule_raw.get("structure_format") is not None:
             raise ValueError("molecule.structure_format requires molecule.structure_file.")
@@ -154,7 +294,46 @@ def _parse_molecule(molecule_raw: dict[str, Any], *, base_dir: Path) -> Molecule
         if not isinstance(geometry_raw, list) or not geometry_raw:
             raise ValueError("Molecule geometry must be a non-empty list or molecule.structure_file must be set.")
         geometry = _parse_atoms(geometry_raw)
-        input_provenance = build_inline_geometry_provenance(geometry, unit=unit)
+        periodic = _parse_molecule_periodic(molecule_raw.get("periodic"))
+        if (
+            periodic.enabled
+            and periodic.cell is not None
+            and normalize_cell_unit(periodic.cell.unit) != normalize_cell_unit(unit)
+        ):
+            raise ValueError("PBC v1 requires molecule.periodic.cell.unit to match molecule.unit.")
+        if periodic.enabled and periodic.coordinate_mode == "fractional":
+            if periodic.cell is None:
+                raise ValueError("fractional periodic coordinates require molecule.periodic.cell.vectors.")
+            cartesian = [
+                frac_to_cart(atom.coords, periodic.cell.vectors)
+                for atom in geometry
+            ]
+            if periodic.wrap_policy == "wrap":
+                cartesian = wrap_positions(cartesian, periodic.cell.vectors, periodic.pbc)
+            geometry = [
+                AtomSpec(
+                    symbol=atom.symbol,
+                    coords=(float(coords[0]), float(coords[1]), float(coords[2])),
+                )
+                for atom, coords in zip(geometry, cartesian)
+            ]
+        elif periodic.enabled and periodic.wrap_policy == "wrap":
+            if periodic.cell is None:
+                raise ValueError("molecule.periodic.wrap_policy=wrap requires cell vectors.")
+            wrapped = wrap_positions([atom.coords for atom in geometry], periodic.cell.vectors, periodic.pbc)
+            geometry = [
+                AtomSpec(
+                    symbol=atom.symbol,
+                    coords=(float(coords[0]), float(coords[1]), float(coords[2])),
+                )
+                for atom, coords in zip(geometry, wrapped)
+            ]
+        periodic_payload = _periodic_to_payload(periodic)
+        input_provenance = build_inline_geometry_provenance(
+            geometry,
+            unit=unit,
+            periodic=periodic_payload,
+        )
 
     return MoleculeSpec(
         name=str(molecule_raw["name"]),
@@ -164,6 +343,7 @@ def _parse_molecule(molecule_raw: dict[str, Any], *, base_dir: Path) -> Molecule
         basis=str(molecule_raw.get("basis", "sto3g")),
         unit=unit,
         input_provenance=input_provenance,
+        periodic=periodic,
     )
 
 
@@ -666,6 +846,34 @@ def _parse_environment_cache(raw: Any, *, base_dir: Path) -> EffectiveHamiltonia
     )
 
 
+def _parse_environment_periodic_policy(raw: Any) -> PBCQMMMPeriodicPolicySpec:
+    if raw is None:
+        return PBCQMMMPeriodicPolicySpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.environment_embedding.periodic_policy must be a mapping.")
+    mode = str(raw.get("mode", "finite")).strip().lower()
+    if mode not in {"finite", "ewald"}:
+        raise ValueError("problem.environment_embedding.periodic_policy.mode must be finite or ewald.")
+    neutralization = str(raw.get("neutralization", "reject")).strip().lower()
+    if neutralization not in {"reject", "uniform_background"}:
+        raise ValueError(
+            "problem.environment_embedding.periodic_policy.neutralization must be reject or uniform_background."
+        )
+    ewald_precision = float(raw.get("ewald_precision", 1.0e-8))
+    if ewald_precision <= 0.0:
+        raise ValueError("problem.environment_embedding.periodic_policy.ewald_precision must be positive.")
+    real_space_cutoff = raw.get("real_space_cutoff")
+    reciprocal_cutoff = raw.get("reciprocal_cutoff")
+    return PBCQMMMPeriodicPolicySpec(
+        mode=mode,
+        require_charge_neutrality=bool(raw.get("require_charge_neutrality", True)),
+        neutralization=neutralization,
+        ewald_precision=ewald_precision,
+        real_space_cutoff=(float(real_space_cutoff) if real_space_cutoff is not None else None),
+        reciprocal_cutoff=(float(reciprocal_cutoff) if reciprocal_cutoff is not None else None),
+    )
+
+
 def _parse_environment_embedding(
     problem_raw: dict[str, Any],
     *,
@@ -688,6 +896,66 @@ def _parse_environment_embedding(
         ),
         boundary=_parse_boundary_embedding(raw.get("boundary")),
         cache=_parse_environment_cache(raw.get("cache"), base_dir=base_dir),
+        periodic_policy=_parse_environment_periodic_policy(raw.get("periodic_policy")),
+    )
+
+
+def _parse_pbc(problem_raw: dict[str, Any]) -> PBCSpec:
+    raw = problem_raw.get("pbc")
+    if raw is None:
+        return PBCSpec()
+    if not isinstance(raw, dict):
+        raise ValueError("problem.pbc must be a mapping.")
+    driver = str(raw.get("driver", "pyscf_pbc")).strip().lower()
+    if driver != "pyscf_pbc":
+        raise ValueError("problem.pbc.driver must be pyscf_pbc.")
+    mode = str(raw.get("mode", "gamma_supercell")).strip().lower()
+    if mode != "gamma_supercell":
+        raise ValueError("problem.pbc.mode must be gamma_supercell in v1.")
+    kpoint_mesh_raw = raw.get("kpoint_mesh", [1, 1, 1])
+    if not isinstance(kpoint_mesh_raw, list | tuple) or len(kpoint_mesh_raw) != 3:
+        raise ValueError("problem.pbc.kpoint_mesh must contain exactly three positive integers.")
+    kpoint_mesh = tuple(int(value) for value in kpoint_mesh_raw)
+    if any(value < 1 for value in kpoint_mesh):
+        raise ValueError("problem.pbc.kpoint_mesh entries must be positive.")
+    density_fitting = str(raw.get("density_fitting", "fftdf")).strip().lower()
+    if density_fitting not in {"fftdf", "gdf", "mdf", "aftdf"}:
+        raise ValueError("problem.pbc.density_fitting must be fftdf, gdf, mdf, or aftdf.")
+    precision = float(raw.get("precision", 1.0e-8))
+    if precision <= 0.0:
+        raise ValueError("problem.pbc.precision must be positive.")
+    mesh_raw = raw.get("mesh")
+    mesh = None
+    if mesh_raw is not None:
+        if not isinstance(mesh_raw, list | tuple) or len(mesh_raw) != 3:
+            raise ValueError("problem.pbc.mesh must contain exactly three positive integers.")
+        mesh = tuple(int(value) for value in mesh_raw)
+        if any(value < 1 for value in mesh):
+            raise ValueError("problem.pbc.mesh entries must be positive.")
+    neutralization = str(raw.get("neutralization", "reject")).strip().lower()
+    if neutralization not in {"reject", "uniform_background"}:
+        raise ValueError("problem.pbc.neutralization must be reject or uniform_background.")
+    cell = _parse_cell(raw.get("cell"), field_name="problem.pbc.cell") if raw.get("cell") is not None else None
+    coordinate_mode = str(raw.get("coordinate_mode", "cartesian")).strip().lower()
+    if coordinate_mode not in {"cartesian", "fractional"}:
+        raise ValueError("problem.pbc.coordinate_mode must be cartesian or fractional.")
+    wrap_policy = str(raw.get("wrap_policy", "preserve")).strip().lower()
+    if wrap_policy not in {"preserve", "wrap", "none"}:
+        raise ValueError("problem.pbc.wrap_policy must be preserve, wrap, or none.")
+    return PBCSpec(
+        enabled=bool(raw.get("enabled", False)),
+        cell=cell,
+        pbc=_parse_bool_triplet(raw.get("pbc", [True, True, True]), field_name="problem.pbc.pbc"),
+        coordinate_mode=coordinate_mode,
+        wrap_policy=wrap_policy,
+        source=str(raw.get("source")) if raw.get("source") is not None else None,
+        driver=driver,
+        mode=mode,
+        kpoint_mesh=kpoint_mesh,  # type: ignore[arg-type]
+        density_fitting=density_fitting,
+        precision=precision,
+        mesh=mesh,  # type: ignore[arg-type]
+        neutralization=neutralization,
     )
 
 
@@ -1217,6 +1485,7 @@ def load_run_spec(path: Path) -> RunSpec:
                 problem_raw,
                 base_dir=resolved_path.parent,
             ),
+            pbc=_parse_pbc(problem_raw),
             qft=_parse_lattice_qed(problem_raw),
             cavity_qed=_parse_cavity_qed(problem_raw),
             point_group=_parse_point_group(problem_raw),

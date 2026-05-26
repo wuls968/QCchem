@@ -117,6 +117,37 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
               "hamiltonian": {
                 "pauli_term_count": 15
               }
+            },
+            "field_evidence": {
+              "available": true,
+              "schema": "qcchem.field_evidence.v1",
+              "active_model_kind": "lattice_qed",
+              "sidecars": {
+                "registry": "/tmp/field_model_registry.json",
+                "hamiltonian": "/tmp/field_hamiltonian.json"
+              },
+              "hamiltonian": {
+                "sector_energy_closure_available": true
+              }
+            },
+            "field_model": {
+              "model_kind": "lattice_qed"
+            },
+            "pbc": {
+              "enabled": true,
+              "status": "metadata_only",
+              "periodicity": "3d",
+              "core_runner_implemented": false,
+              "kpoints": {"mode": "gamma", "grid": [1, 1, 1]}
+            },
+            "pbc_qmmm": {
+              "enabled": true,
+              "status": "metadata_only",
+              "embedding_mode": "electrostatic_periodic_metadata",
+              "core_runner_implemented": false
+            },
+            "qft_model": {
+              "model": "lattice_qed_minimal_coupling"
             }
           }
         }
@@ -142,6 +173,14 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     assert bundle["run"]["mapping"]["num_qubits"] == 4
     assert bundle["run"]["quantum_evidence"]["available"] is True
     assert bundle["run"]["quantum_evidence"]["hamiltonian"]["pauli_term_count"] == 15
+    assert bundle["run"]["field_evidence"]["available"] is True
+    assert bundle["run"]["field_evidence"]["active_model_kind"] == "lattice_qed"
+    assert bundle["run"]["field_model"]["model_kind"] == "lattice_qed"
+    assert bundle["run"]["qft_model"]["model"] == "lattice_qed_minimal_coupling"
+    assert bundle["run"]["pbc"]["periodicity"] == "3d"
+    assert bundle["run"]["pbc_qmmm"]["embedding_mode"] == "electrostatic_periodic_metadata"
+    assert bundle["artifacts"]["pbc"]["present"] is True
+    assert bundle["artifacts"]["pbc_qmmm"]["present"] is True
 
 
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:
@@ -168,6 +207,45 @@ def test_build_qcschema_payload_marks_missing_verification_status_as_unsuccessfu
 
     assert qcschema["extras"]["verification_status"] is None
     assert qcschema["success"] is False
+
+
+def test_build_qcschema_and_view_model_preserve_pbc_metadata() -> None:
+    payload = {
+        "problem": {
+            "molecule_name": "H2-pbc",
+            "basis": "sto3g",
+            "charge": 0,
+            "multiplicity": 1,
+        },
+        "energy": {
+            "total_energy": -1.0,
+            "electronic_energy": -1.7,
+            "nuclear_repulsion_energy": 0.7,
+        },
+        "mapping": {"kind": "jordan_wigner", "num_qubits": 4},
+        "benchmark": {},
+        "pbc": {
+            "enabled": True,
+            "status": "metadata_only",
+            "periodicity": "3d",
+            "kpoints": {"mode": "gamma", "grid": [1, 1, 1]},
+            "core_runner_implemented": False,
+        },
+        "pbc_qmmm": {
+            "enabled": True,
+            "status": "metadata_only",
+            "embedding_mode": "electrostatic_periodic_metadata",
+            "core_runner_implemented": False,
+        },
+    }
+
+    qcschema = build_qcschema_payload(payload)
+    view = build_run_view_model(payload)
+
+    assert qcschema["extras"]["pbc"]["periodicity"] == "3d"
+    assert qcschema["extras"]["pbc_qmmm"]["core_runner_implemented"] is False
+    assert view["pbc"]["kpoints"]["grid"] == [1, 1, 1]
+    assert view["pbc_qmmm"]["embedding_mode"] == "electrostatic_periodic_metadata"
 
 
 def test_build_qcschema_payload_rejects_present_problem_without_molecule_name() -> None:

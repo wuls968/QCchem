@@ -125,6 +125,20 @@ def layout() -> html.Div:
     returned = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)
     deliveries = list_delivery_records(root)
     pending_analysis = [ticket for ticket in inbox if str(ticket.get("task_type", "")).lower() == "analysis"]
+    research_os_actions = {
+        "claim_check",
+        "capsule_validate",
+        "promotion_review",
+        "objective_plan",
+        "objective_status",
+    }
+    all_tickets = [*inbox, *running, *submitted, *completed, *returned]
+    research_os_ticket_count = sum(
+        1
+        for ticket in all_tickets
+        if str(((ticket.get("action_plan") or {}) if isinstance(ticket.get("action_plan"), dict) else {}).get("action_kind"))
+        in research_os_actions
+    )
 
     return html.Div(
         className="qcchem-page qcchem-ai-workspace-page",
@@ -153,6 +167,12 @@ def layout() -> html.Div:
                             metric_card("Pending analysis", str(len(pending_analysis)), "Analysis work still waiting to be framed", tone="compact"),
                             metric_card("Completed", str(len(completed)), "Completed tickets ready for downstream use", tone="compact"),
                             metric_card("Deliveries", str(len(deliveries)), "Persisted outputs and review objects", tone="compact"),
+                            metric_card(
+                                "Research OS actions",
+                                str(research_os_ticket_count),
+                                "claim_check / capsule_validate / promotion_review / objective_plan / objective_status",
+                                tone="compact",
+                            ),
                         ],
                     ),
                 ],

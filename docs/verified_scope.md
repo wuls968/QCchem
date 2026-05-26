@@ -53,6 +53,12 @@ The validated surface currently includes:
 - CLI-first AI agent task interface and JSON summary path.
 - Trust-First release audit through `qcchem release audit` and
   `configs/release/trust_first_audit.yaml`.
+- Research Objective planning/status, Evidence Capsule validation, Claim
+  Compiler review, and Promotion Gate review as local analysis-only workflow
+  surfaces.
+- Gamma-only PBC and PBC-QM/MM Ewald execution through reports, QCSchema extras,
+  artifact index, workbench data/view models, and
+  `qcchem validation pbc-qmmm`.
 
 ## Hardware-Verified Boundary
 
@@ -99,9 +105,48 @@ QFT assets include:
 - sparse projected physical-sector engine for small grids,
 - exact finite-cutoff real-time dynamics curves, and
 - guarded runtime-batch preview metadata.
+- independent field evidence sidecars for registry, Hamiltonian sectors,
+  observables, dynamics, constraints, resources, and error budgets.
 
 Boundary: QFT evidence is finite-cutoff lattice-QED evidence only. It is not a
 continuum chemistry accuracy claim.
+
+### Pauli-Fierz Cavity-QED
+
+Cavity-QED assets include:
+
+- finite photon-cutoff Pauli-Fierz Hamiltonian construction,
+- photon occupation, dipole expectation, electron-photon coupling, dipole self
+  energy, polaritonic composition, and photon-subspace leakage observables,
+- photon-cutoff inputs for convergence campaigns, and
+- independent field evidence sidecars aligned with the QFT artifact family.
+
+Boundary: cavity-QED evidence is exact or variational only for the configured
+electron-photon Hamiltonian and photon cutoff. It is not an external
+cavity-QED benchmark validation.
+
+### Field-Model Placeholders
+
+The scalar-field, fermion-field, and generic gauge-field registry entries are
+schema placeholders. They exist so future field-model plugins can share the same
+artifact contract, but they do not implement Hamiltonian construction or solver
+evidence and must not be used as scientific claims.
+
+### PBC / PBC-QMMM
+
+QCchem v1 supports Gamma-only/supercell periodic electronic structure through
+`qcchem.pbc.pyscf_adapter` and fixed-charge PBC-QM/MM electrostatics through
+`qcchem.pbc.ewald`. The validated slice checks plain PBC, PBC-QM/MM Ewald,
+non-Gamma k-point rejection, VQE/twolocal, active-space, compression, LR-ACE,
+TC-QSCI routing, reports, QCSchema/HDF5 exports, artifact indexing, and
+workbench models.
+
+Boundary: non-Gamma k-point mapped quantum algorithms, forces, stress, cell
+optimization, PME dynamics, polarization, MM relaxation, and covalent PBC-QM/MM
+boundary embedding are not claimed in v1. The implementation also rejects mixed
+molecule/cell units, reduced-dimensional PBC flags, open-shell/UHF mapping,
+runtime submission, charged full QM/MM cells, and uniform-background
+neutralization.
 
 ### LR-ACE
 
@@ -169,8 +214,13 @@ artifacts. It performs no runtime submission. The default manifest verifies:
 - required Evidence Summary fields in curated artifacts,
 - conservative runtime/hardware boundary language,
 - QFT, LR-ACE, and TC-QSCI exploratory boundary classification, and
-- required release terms in README, verified scope, release showcase, and release
-  audit docs.
+- required release terms in README, verified scope, release showcase, release
+  audit docs, and Research OS docs.
+
+The Research OS checks are deliberately local: evidence capsule, claim compiler,
+promotion gate, and research objective artifacts may be reviewed by the audit,
+but the audit does not run calculations, submit hardware, or rewrite curated
+artifacts.
 
 Run:
 

@@ -48,11 +48,54 @@ FIELD_MODEL_REGISTRY: dict[str, FieldModelAdapter] = {
             "electron_photon_coupling_energy",
             "dipole_self_energy",
             "polaritonic_state_composition",
+            "photon_physical_subspace_leakage",
             "photon_cutoff_convergence",
         ],
         risk_notes=[
             "Pauli-Fierz cavity-QED evidence is exact or variational only for the configured photon cutoff.",
             "External cavity-QED benchmark validation is outside this first QCchem milestone.",
+        ],
+    ),
+    "scalar_field_placeholder": FieldModelAdapter(
+        model_kind="scalar_field_placeholder",
+        registry_name="finite_cutoff_scalar_field_placeholder",
+        capability_tier="placeholder",
+        observables=[
+            "field_amplitude",
+            "conjugate_momentum",
+            "mass_gap_proxy",
+        ],
+        risk_notes=[
+            "Scalar-field support is a registry/schema placeholder only; no QCchem scalar-field Hamiltonian solver is implemented.",
+            "Placeholder field-model entries must not be used as scientific evidence.",
+        ],
+    ),
+    "fermion_field_placeholder": FieldModelAdapter(
+        model_kind="fermion_field_placeholder",
+        registry_name="finite_cutoff_fermion_field_placeholder",
+        capability_tier="placeholder",
+        observables=[
+            "fermion_density",
+            "current_density",
+            "mode_occupation",
+        ],
+        risk_notes=[
+            "Fermion-field support is a registry/schema placeholder only; no standalone QCchem fermion-field solver is implemented.",
+            "Placeholder field-model entries must not be used as scientific evidence.",
+        ],
+    ),
+    "gauge_field_placeholder": FieldModelAdapter(
+        model_kind="gauge_field_placeholder",
+        registry_name="finite_cutoff_gauge_field_placeholder",
+        capability_tier="placeholder",
+        observables=[
+            "electric_flux",
+            "magnetic_plaquette",
+            "gauss_law",
+        ],
+        risk_notes=[
+            "Generic gauge-field support is a registry/schema placeholder only; validated execution currently lives in lattice_qed.",
+            "Placeholder field-model entries must not be used as scientific evidence.",
         ],
     ),
 }
@@ -88,5 +131,13 @@ def build_field_model_summary(
         observables=list(adapter.observables),
         resource_estimate=inferred_resource or {},
         error_budget=inferred_error or {},
-        risk_notes=[*adapter.risk_notes, *(risk_notes or [])],
+        risk_notes=(
+            [
+                *adapter.risk_notes,
+                "implementation_status=placeholder",
+            ]
+            if adapter.capability_tier == "placeholder"
+            else list(adapter.risk_notes)
+        )
+        + list(risk_notes or []),
     )

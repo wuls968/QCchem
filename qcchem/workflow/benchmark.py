@@ -33,7 +33,7 @@ from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report, write_hardware_calibration_report
 from qcchem.solvers import ExactDiagonalizationSolver
-from qcchem.validation import run_qmmm_embedding_validation
+from qcchem.validation import run_pbc_qmmm_validation, run_qmmm_embedding_validation
 from qcchem.core.evidence import (
     build_benchmark_case_evidence_summary,
     build_benchmark_suite_evidence_summary,
@@ -607,6 +607,74 @@ def _qmmm_validation_case(case, case_root: Path) -> BenchmarkCaseResult:
     return outcome
 
 
+def _pbc_qmmm_validation_case_metrics(summary: dict[str, Any], *, profile: str) -> dict[str, Any]:
+    metrics = list(summary.get("metrics") or [])
+    artifacts = dict(summary.get("artifacts") or {})
+    failed_cases = [item.get("case") for item in metrics if not item.get("passed")]
+    return {
+        "comparison_target": "pbc_qmmm_validation",
+        "pbc_qmmm_validation_profile": profile,
+        "pbc_qmmm_validation_overall_status": summary.get("overall_status"),
+        "pbc_qmmm_validation_case_count": summary.get("case_count"),
+        "pbc_qmmm_validation_passed_cases": summary.get("passed_cases"),
+        "pbc_qmmm_validation_failed_cases": failed_cases,
+        "pbc_qmmm_validation_artifacts": artifacts,
+        "pbc_qmmm_validation_json": artifacts.get("json"),
+        "pbc_qmmm_validation_markdown": artifacts.get("markdown"),
+        "pbc_qmmm_validation_csv": artifacts.get("csv"),
+        "pbc_qmmm_gamma_cases": sum(
+            1 for item in metrics if item.get("kpoint_grid") == [1, 1, 1]
+        ),
+        "pbc_qmmm_ewald_cases": sum(
+            1 for item in metrics if item.get("embedding_mode") == "ewald"
+        ),
+        "pbc_qmmm_rejected_cases": sum(
+            1 for item in metrics if item.get("status") == "rejected"
+        ),
+    }
+
+
+def _pbc_qmmm_validation_case(case, case_root: Path) -> BenchmarkCaseResult:
+    profile = (case.profile or "smoke").strip().lower()
+    summary = run_pbc_qmmm_validation(case_root, profile=profile)
+    status = "validated" if summary.get("overall_status") == "passed" else "failed"
+    metrics = _pbc_qmmm_validation_case_metrics(summary, profile=profile)
+    evidence_summary = build_benchmark_case_evidence_summary(
+        {
+            "name": case.name,
+            "kind": case.kind,
+            "status": status,
+            "expected_status": case.expected_status,
+            "metrics": metrics,
+        }
+    )
+    outcome = BenchmarkCaseResult(
+        name=case.name,
+        kind=case.kind,
+        status=status,
+        expected_status=case.expected_status,
+        artifact_root=case_root,
+        metrics=metrics,
+        evidence_summary=evidence_summary,
+    )
+    write_result_json(
+        {
+            "schema_version": "qcchem.pbc_qmmm_validation_benchmark_case.v1",
+            "run_id": case.name,
+            "kind": case.kind,
+            "verification_status": status,
+            "expected_status": case.expected_status,
+            "profile": profile,
+            "artifact_root": str(case_root),
+            "metrics": metrics,
+            "pbc_qmmm_validation": summary,
+            "evidence_summary": to_primitive(evidence_summary),
+        },
+        case_root / "result.json",
+    )
+    return outcome
+
+
 def _noise_comparison_case(case, case_root: Path) -> BenchmarkCaseResult:
     spec = load_run_spec(case.config)
     noisy_result = run_spec(spec, source_config=str(case.config), output_dir=case_root / "noisy")
@@ -704,6 +772,8 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
             outcome = _noise_comparison_case(case, case_root)
         elif case.kind == "qmmm_validation":
             outcome = _qmmm_validation_case(case, case_root)
+        elif case.kind == "pbc_qmmm_validation":
+            outcome = _pbc_qmmm_validation_case(case, case_root)
         else:
             raise ValueError(f"Unsupported benchmark case kind: {case.kind}")
         case_results.append(outcome)

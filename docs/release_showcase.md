@@ -36,7 +36,8 @@ runtime submission.
 3. Benchmarks
 4. Hardware Campaign
 5. AI Workspace
-6. Exploratory Appendix
+6. Research OS Artifacts
+7. Exploratory Appendix
 
 ## 1. Overview
 
@@ -107,7 +108,34 @@ Use this page to answer:
 The default AI role is conservative evidence interpretation. It should explain
 boundaries before proposing execution.
 
-## 6. Exploratory Appendix
+## 6. Research OS Artifacts
+
+Run the Research Objective, Evidence Capsule, Claim Compiler, and Promotion Gate
+surfaces as local evidence checks:
+
+```bash
+qcchem objective plan \
+  -c configs/objectives/h2_local_validation.yaml \
+  -o artifacts/objectives/h2_local_validation_plan
+
+qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2
+
+qcchem claim check \
+  --claim-file examples/claims/hardware_overclaim.txt \
+  --target artifacts/hardware_calibration_suite_v1 \
+  -o artifacts/claim_reviews/hardware_overclaim
+
+qcchem promote exploratory \
+  --artifact artifacts/h2_lr_ace/result.json \
+  --target validated_algorithm_candidate \
+  -o artifacts/promotion/h2_lr_ace
+```
+
+These outputs connect best evidence, trust tier, baseline strength, chemical
+accuracy status, runtime evidence status, hardware verification boundary,
+exploratory boundary, and recommended next action before release audit.
+
+## 7. Exploratory Appendix
 
 The appendix is optional and must not promote exploratory research assets into
 the validated release path.
@@ -157,6 +185,9 @@ The release-grade artifact set is:
 - `artifacts/h2_short_scan/scan_result.json`
 - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json`
 - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
+- `configs/objectives/h2_local_validation.yaml`
+- `configs/objectives/lih_compression_trust_loop.yaml`
+- `examples/claims/hardware_overclaim.txt`
 
 Generated local demo outputs should go under a separate output directory and
 should not overwrite curated artifacts during testing.
@@ -175,3 +206,7 @@ handoff notes:
 - `hardware verification boundary`
 - `exploratory boundary`
 - `release audit`
+- `research objective`
+- `evidence capsule`
+- `claim compiler`
+- `promotion gate`

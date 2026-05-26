@@ -103,6 +103,10 @@ The Trust-First profile verifies:
 - QFT language remains finite-cutoff lattice-QED / sparse projected
   physical-sector evidence, not continuum chemistry accuracy.
 - Required docs contain the release language needed for the Trust-First Release.
+- Research OS docs and examples exist for research objective, evidence capsule,
+  claim compiler, and promotion gate workflows.
+- Optional Research OS checks confirm new CLI workflow functions are importable
+  and the promotion gate blocks direct exploratory promotion by default.
 
 ## JSON Contract
 
@@ -127,6 +131,9 @@ for release review and handoff.
 - Do not let release audit regenerate curated artifacts.
 - Do not promote QFT, LR-ACE, or TC-QSCI from exploratory to validated through a
   documentation-only change.
+- Do not treat an Evidence Capsule or Claim Compiler pass as a replacement for
+  a validated baseline, chemical accuracy status, runtime evidence status, or
+  release audit.
 - Keep release terms consistent across README, verified scope, release showcase,
   and reports.
 - If full pytest runs before the audit, confirm it did not rewrite tracked

@@ -1,0 +1,160 @@
+{
+  "claim_text": "hardware_verified proves publication-grade chemical accuracy",
+  "evidence_graph": {
+    "best_chemistry_evidence": {
+      "artifact_kind": "hardware_campaign",
+      "artifact_path": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json",
+      "artifact_root": "artifacts/hardware_calibration_suite_v1",
+      "chemical_accuracy_status": "not_met",
+      "hardware_evidence_tier": null,
+      "hardware_verified": true,
+      "output_links": {
+        "hardware_calibration_report.md": "artifacts/hardware_calibration_suite_v1/hardware_calibration_report.md",
+        "hardware_calibration_summary.json": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json"
+      },
+      "path_hash": "2165c4ec626be312ecc4e799cdcad74306ec3ef821b37b24c18aa65a7bac110b",
+      "payload_hash": "ea8ad41f19e4c48dbc87b7410da5af040ecae4369297513147e809577582e5e2",
+      "primary_baseline": {
+        "baseline_kind": "hardware_probe_reference",
+        "baseline_scope": "hardware_campaign",
+        "baseline_source": "h2_runtime_hardware_probe_puccd_layout",
+        "baseline_strength": "medium"
+      },
+      "primary_error_metric": {
+        "metric_kind": "achieved_error_hartree",
+        "threshold": 0.0016,
+        "units": "Hartree",
+        "value": 0.013673650274335092
+      },
+      "primary_scientific_claim": "Hardware campaign hardware_calibration_suite_v1 currently provides retrieved_result runtime-backed evidence, with best achieved error 0.013673650274335092 Hartree.",
+      "recommended_action": "worth_one_more_controlled_attempt",
+      "runtime_evidence_status": "retrieved_result",
+      "source_id": "hardware_campaign-2165c4ec626b",
+      "trust_tier": "hardware_verified",
+      "verification_status": null,
+      "warnings": [
+        "hardware_verified means a runtime result was retrieved; it is not publication-grade chemistry validation.",
+        "Chemical accuracy is not met for this evidence source."
+      ]
+    },
+    "best_runtime_evidence": {
+      "artifact_kind": "hardware_campaign",
+      "artifact_path": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json",
+      "artifact_root": "artifacts/hardware_calibration_suite_v1",
+      "chemical_accuracy_status": "not_met",
+      "hardware_evidence_tier": null,
+      "hardware_verified": true,
+      "output_links": {
+        "hardware_calibration_report.md": "artifacts/hardware_calibration_suite_v1/hardware_calibration_report.md",
+        "hardware_calibration_summary.json": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json"
+      },
+      "path_hash": "2165c4ec626be312ecc4e799cdcad74306ec3ef821b37b24c18aa65a7bac110b",
+      "payload_hash": "ea8ad41f19e4c48dbc87b7410da5af040ecae4369297513147e809577582e5e2",
+      "primary_baseline": {
+        "baseline_kind": "hardware_probe_reference",
+        "baseline_scope": "hardware_campaign",
+        "baseline_source": "h2_runtime_hardware_probe_puccd_layout",
+        "baseline_strength": "medium"
+      },
+      "primary_error_metric": {
+        "metric_kind": "achieved_error_hartree",
+        "threshold": 0.0016,
+        "units": "Hartree",
+        "value": 0.013673650274335092
+      },
+      "primary_scientific_claim": "Hardware campaign hardware_calibration_suite_v1 currently provides retrieved_result runtime-backed evidence, with best achieved error 0.013673650274335092 Hartree.",
+      "recommended_action": "worth_one_more_controlled_attempt",
+      "runtime_evidence_status": "retrieved_result",
+      "source_id": "hardware_campaign-2165c4ec626b",
+      "trust_tier": "hardware_verified",
+      "verification_status": null,
+      "warnings": [
+        "hardware_verified means a runtime result was retrieved; it is not publication-grade chemistry validation.",
+        "Chemical accuracy is not met for this evidence source."
+      ]
+    },
+    "boundary_notes": [
+      "LLM output is not authoritative for trust tier, hardware boundary, budget permission, or validated/exploratory promotion.",
+      "hardware_verified means a runtime result was retrieved; it is not publication-grade chemistry validation.",
+      "Chemical accuracy is not met for this evidence source."
+    ],
+    "graph_id": "evidence-363bef3b14",
+    "open_questions": [
+      "hardware_campaign-2165c4ec626b: chemical accuracy is not_met."
+    ],
+    "recommended_action": "review_runtime_gap",
+    "sources": [
+      {
+        "artifact_kind": "hardware_campaign",
+        "artifact_path": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json",
+        "artifact_root": "artifacts/hardware_calibration_suite_v1",
+        "chemical_accuracy_status": "not_met",
+        "hardware_evidence_tier": null,
+        "hardware_verified": true,
+        "output_links": {
+          "hardware_calibration_report.md": "artifacts/hardware_calibration_suite_v1/hardware_calibration_report.md",
+          "hardware_calibration_summary.json": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json"
+        },
+        "path_hash": "2165c4ec626be312ecc4e799cdcad74306ec3ef821b37b24c18aa65a7bac110b",
+        "payload_hash": "ea8ad41f19e4c48dbc87b7410da5af040ecae4369297513147e809577582e5e2",
+        "primary_baseline": {
+          "baseline_kind": "hardware_probe_reference",
+          "baseline_scope": "hardware_campaign",
+          "baseline_source": "h2_runtime_hardware_probe_puccd_layout",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "achieved_error_hartree",
+          "threshold": 0.0016,
+          "units": "Hartree",
+          "value": 0.013673650274335092
+        },
+        "primary_scientific_claim": "Hardware campaign hardware_calibration_suite_v1 currently provides retrieved_result runtime-backed evidence, with best achieved error 0.013673650274335092 Hartree.",
+        "recommended_action": "worth_one_more_controlled_attempt",
+        "runtime_evidence_status": "retrieved_result",
+        "source_id": "hardware_campaign-2165c4ec626b",
+        "trust_tier": "hardware_verified",
+        "verification_status": null,
+        "warnings": [
+          "hardware_verified means a runtime result was retrieved; it is not publication-grade chemistry validation.",
+          "Chemical accuracy is not met for this evidence source."
+        ]
+      }
+    ],
+    "trust_gap": [],
+    "trust_tier": "hardware_verified"
+  },
+  "overclaim_findings": [
+    {
+      "finding_id": "hardware-boundary-hardware_campaign-2165c4ec626b",
+      "message": "hardware_verified is runtime retrieval evidence, not publication-grade chemistry validation.",
+      "recommended_fix": "Separate runtime retrieval from chemical-accuracy validation.",
+      "severity": "high",
+      "source_id": "hardware_campaign-2165c4ec626b"
+    },
+    {
+      "finding_id": "accuracy-gap-hardware_campaign-2165c4ec626b",
+      "message": "The claim mentions chemical accuracy, but the linked evidence does not meet it.",
+      "recommended_fix": "Report the gap against 0.0016 Hartree instead.",
+      "severity": "medium",
+      "source_id": "hardware_campaign-2165c4ec626b"
+    }
+  ],
+  "recommended_action": "rewrite_claim_with_hardware_boundary",
+  "required_next_evidence": [
+    "Provide a strong exact or accepted benchmark baseline before publication-grade language.",
+    "Show runtime-derived chemical accuracy against the stated baseline before hardware chemistry claims.",
+    "hardware_campaign-2165c4ec626b: chemical accuracy is not_met."
+  ],
+  "safe_rewrite": "The artifact verifies runtime submission and retrieval, but the hardware-derived chemistry estimate remains exploratory until runtime chemical accuracy is met against the stated baseline.",
+  "schema_version": "qcchem.claim_compiler.v0.1-alpha",
+  "status": "failed",
+  "support_level": "overclaimed",
+  "supported_points": [
+    "Best chemistry evidence: trust_tier=hardware_verified, chemical_accuracy_status=not_met.",
+    "Best runtime evidence: runtime_evidence_status=retrieved_result, hardware_verified=True."
+  ],
+  "unsupported_points": [
+    "hardware_campaign-2165c4ec626b: chemical accuracy is not_met."
+  ]
+}

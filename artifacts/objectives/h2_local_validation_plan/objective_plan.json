@@ -1,0 +1,276 @@
+{
+  "available_evidence": [
+    "compressed_vs_uncompressed_error",
+    "measurement_cost_summary"
+  ],
+  "capsules": [
+    {
+      "artifact_kind": "run",
+      "artifact_root": "artifacts/h2",
+      "blocking_issues": [
+        "Missing result payload fields: evidence_summary.",
+        "evidence_summary is missing: missing result_identity, primary_scientific_claim, primary_baseline, primary_error_metric, chemical_accuracy_status, runtime_evidence_status, trust_tier, recommended_action."
+      ],
+      "boundary_warnings": [],
+      "capsule_status": "partial",
+      "evidence_summary": {},
+      "evidence_summary_missing_fields": [
+        "result_identity",
+        "primary_scientific_claim",
+        "primary_baseline",
+        "primary_error_metric",
+        "chemical_accuracy_status",
+        "runtime_evidence_status",
+        "trust_tier",
+        "recommended_action"
+      ],
+      "evidence_summary_status": "missing",
+      "missing_recommended_files": [
+        "quantum_evidence.json",
+        "runtime_submission.json",
+        "calibration.json",
+        "qcschema.json",
+        "result.h5"
+      ],
+      "missing_required_files": [],
+      "optional_files": {
+        "calibration.json": {
+          "path": "artifacts/h2/calibration.json",
+          "present": false
+        },
+        "exact_result.json": {
+          "path": "artifacts/h2/exact_result.json",
+          "present": true
+        },
+        "qcschema.json": {
+          "path": "artifacts/h2/qcschema.json",
+          "present": false
+        },
+        "quantum_evidence.json": {
+          "path": "artifacts/h2/quantum_evidence.json",
+          "present": false
+        },
+        "result.h5": {
+          "path": "artifacts/h2/result.h5",
+          "present": false
+        },
+        "runtime_submission.json": {
+          "path": "artifacts/h2/runtime_submission.json",
+          "present": false
+        }
+      },
+      "outputs": {
+        "capsule_json": "artifacts/objectives/h2_local_validation_plan/capsules/h2/evidence_capsule.json",
+        "capsule_markdown": "artifacts/objectives/h2_local_validation_plan/capsules/h2/evidence_capsule.md"
+      },
+      "payload_missing_fields": [
+        "evidence_summary"
+      ],
+      "provenance_status": "complete",
+      "recommended_action": "review_evidence_boundary",
+      "required_files": {
+        "report.md": {
+          "path": "artifacts/h2/report.md",
+          "present": true
+        },
+        "resolved_config.yaml": {
+          "path": "artifacts/h2/resolved_config.yaml",
+          "present": true
+        },
+        "result.json": {
+          "path": "artifacts/h2/result.json",
+          "present": true
+        },
+        "run.log": {
+          "path": "artifacts/h2/run.log",
+          "present": true
+        }
+      },
+      "result_json": "artifacts/h2/result.json",
+      "schema_version": "qcchem.evidence_capsule.v0.1-alpha",
+      "trust_tier": "unknown"
+    }
+  ],
+  "claim": "H2 local workflow stays inside chemical accuracy against an exact baseline.",
+  "claim_review": null,
+  "evidence_graph": {
+    "best_chemistry_evidence": {
+      "artifact_kind": "run",
+      "artifact_path": "artifacts/h2/result.json",
+      "artifact_root": "artifacts/h2",
+      "chemical_accuracy_status": "unavailable",
+      "hardware_evidence_tier": null,
+      "hardware_verified": false,
+      "output_links": {
+        "report.md": "artifacts/h2/report.md",
+        "result.json": "artifacts/h2/result.json"
+      },
+      "path_hash": "b2d9ccb53d46f9e1b0f80540422d8fb2a32936a12c36c3ae61aa954c2890d3d7",
+      "payload_hash": "74d2c2a3227aaa469f9e4744d3f440b53aa88b4524d4089d6babb9f97017061d",
+      "primary_baseline": {
+        "baseline_kind": "none",
+        "baseline_scope": "single_run",
+        "baseline_source": "unavailable",
+        "baseline_strength": "weak"
+      },
+      "primary_error_metric": {
+        "comparison_target": "exact diagonalization",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 1e-06,
+        "units": "Hartree",
+        "value": 1.1223968421347763e-09
+      },
+      "primary_scientific_claim": "H2 total energy -1.137306034631007 Hartree from statevector compared against exact diagonalization.",
+      "recommended_action": "collect_stronger_baseline",
+      "runtime_evidence_status": "none",
+      "source_id": "run-b2d9ccb53d46",
+      "trust_tier": "exploratory",
+      "verification_status": null,
+      "warnings": [
+        "Exploratory evidence cannot be promoted to validated without a stronger baseline gate.",
+        "Primary baseline is weak or missing."
+      ]
+    },
+    "best_runtime_evidence": {
+      "artifact_kind": "run",
+      "artifact_path": "artifacts/h2/result.json",
+      "artifact_root": "artifacts/h2",
+      "chemical_accuracy_status": "unavailable",
+      "hardware_evidence_tier": null,
+      "hardware_verified": false,
+      "output_links": {
+        "report.md": "artifacts/h2/report.md",
+        "result.json": "artifacts/h2/result.json"
+      },
+      "path_hash": "b2d9ccb53d46f9e1b0f80540422d8fb2a32936a12c36c3ae61aa954c2890d3d7",
+      "payload_hash": "74d2c2a3227aaa469f9e4744d3f440b53aa88b4524d4089d6babb9f97017061d",
+      "primary_baseline": {
+        "baseline_kind": "none",
+        "baseline_scope": "single_run",
+        "baseline_source": "unavailable",
+        "baseline_strength": "weak"
+      },
+      "primary_error_metric": {
+        "comparison_target": "exact diagonalization",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 1e-06,
+        "units": "Hartree",
+        "value": 1.1223968421347763e-09
+      },
+      "primary_scientific_claim": "H2 total energy -1.137306034631007 Hartree from statevector compared against exact diagonalization.",
+      "recommended_action": "collect_stronger_baseline",
+      "runtime_evidence_status": "none",
+      "source_id": "run-b2d9ccb53d46",
+      "trust_tier": "exploratory",
+      "verification_status": null,
+      "warnings": [
+        "Exploratory evidence cannot be promoted to validated without a stronger baseline gate.",
+        "Primary baseline is weak or missing."
+      ]
+    },
+    "boundary_notes": [
+      "LLM output is not authoritative for trust tier, hardware boundary, budget permission, or validated/exploratory promotion.",
+      "Exploratory evidence cannot be promoted to validated without a stronger baseline gate.",
+      "Primary baseline is weak or missing."
+    ],
+    "graph_id": "evidence-39a97f910c",
+    "open_questions": [
+      "run-b2d9ccb53d46: chemical accuracy is unavailable.",
+      "run-b2d9ccb53d46: primary baseline is weak."
+    ],
+    "recommended_action": "compare_against_best_evidence",
+    "sources": [
+      {
+        "artifact_kind": "run",
+        "artifact_path": "artifacts/h2/result.json",
+        "artifact_root": "artifacts/h2",
+        "chemical_accuracy_status": "unavailable",
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "output_links": {
+          "report.md": "artifacts/h2/report.md",
+          "result.json": "artifacts/h2/result.json"
+        },
+        "path_hash": "b2d9ccb53d46f9e1b0f80540422d8fb2a32936a12c36c3ae61aa954c2890d3d7",
+        "payload_hash": "74d2c2a3227aaa469f9e4744d3f440b53aa88b4524d4089d6babb9f97017061d",
+        "primary_baseline": {
+          "baseline_kind": "none",
+          "baseline_scope": "single_run",
+          "baseline_source": "unavailable",
+          "baseline_strength": "weak"
+        },
+        "primary_error_metric": {
+          "comparison_target": "exact diagonalization",
+          "metric_kind": "absolute_error_hartree",
+          "threshold": 1e-06,
+          "units": "Hartree",
+          "value": 1.1223968421347763e-09
+        },
+        "primary_scientific_claim": "H2 total energy -1.137306034631007 Hartree from statevector compared against exact diagonalization.",
+        "recommended_action": "collect_stronger_baseline",
+        "runtime_evidence_status": "none",
+        "source_id": "run-b2d9ccb53d46",
+        "trust_tier": "exploratory",
+        "verification_status": null,
+        "warnings": [
+          "Exploratory evidence cannot be promoted to validated without a stronger baseline gate.",
+          "Primary baseline is weak or missing."
+        ]
+      }
+    ],
+    "trust_gap": [
+      "run-b2d9ccb53d46: exploratory evidence needs a stronger baseline."
+    ],
+    "trust_tier": "exploratory"
+  },
+  "linked_artifacts": [
+    "artifacts/h2"
+  ],
+  "missing_candidate_configs": [],
+  "missing_evidence": [
+    "exact_active_space_baseline",
+    "benchmark_acceptance",
+    "evidence_summary_complete"
+  ],
+  "objective_name": "h2_local_validation",
+  "recommended_action": "collect_missing_evidence",
+  "required_evidence": [
+    "exact_active_space_baseline",
+    "benchmark_acceptance",
+    "evidence_summary_complete"
+  ],
+  "run_graph": [
+    {
+      "exists": true,
+      "kind": "candidate_config",
+      "node_id": "config:configs/h2.yaml",
+      "path": "configs/h2.yaml",
+      "recommended_command": "qcchem run -c configs/h2.yaml -o <artifact_root>",
+      "resolved_path": "configs/h2.yaml"
+    },
+    {
+      "exists": true,
+      "kind": "candidate_config",
+      "node_id": "config:configs/h2_exact.yaml",
+      "path": "configs/h2_exact.yaml",
+      "recommended_command": "qcchem run -c configs/h2_exact.yaml -o <artifact_root>",
+      "resolved_path": "configs/h2_exact.yaml"
+    },
+    {
+      "exists": true,
+      "kind": "optional_config",
+      "node_id": "optional_config:configs/h2_hardware_precision_push.yaml",
+      "path": "configs/h2_hardware_precision_push.yaml",
+      "recommended_command": "qcchem run -c configs/h2_hardware_precision_push.yaml -o <artifact_root>",
+      "resolved_path": "configs/h2_hardware_precision_push.yaml"
+    }
+  ],
+  "schema_version": "qcchem.objective.v0.1-alpha",
+  "status": "planned",
+  "title": "H2 local validation trust loop",
+  "trust_boundary": {
+    "exploratory_boundary": "Exploratory artifacts require promotion gate review before candidate language.",
+    "hardware_scope": "preview_only",
+    "hardware_verification_boundary": "Runtime evidence must not be described as chemistry validation unless runtime chemical accuracy is met."
+  }
+}

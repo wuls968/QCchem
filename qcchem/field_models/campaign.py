@@ -210,6 +210,7 @@ def extract_field_model_case_metrics(result: Any) -> dict[str, Any]:
     cavity_model = _attr(result, "cavity_qed_model")
     qft_dynamics = _attr(result, "qft_dynamics")
     mapping = _attr(result, "mapping")
+    field_evidence = _attr(result, "field_evidence")
     model_kind = _attr(field_model, "model_kind")
     if model_kind is None and qft_model is not None:
         model_kind = "lattice_qed"
@@ -225,6 +226,11 @@ def extract_field_model_case_metrics(result: Any) -> dict[str, Any]:
             },
         }
 
+    field_hamiltonian = dict(_attr(field_evidence, "hamiltonian", {}) or {})
+    field_observables = dict(_attr(field_evidence, "observables", {}) or {})
+    field_constraints = dict(_attr(field_evidence, "constraints", {}) or {})
+    field_resources = dict(_attr(field_evidence, "resources", {}) or {})
+    field_error_budget = dict(_attr(field_evidence, "error_budget", {}) or {})
     resource_estimate = dict(_attr(field_model, "resource_estimate", {}) or {})
     error_budget = dict(_attr(field_model, "error_budget", {}) or {})
     if model_kind == "lattice_qed":
@@ -247,6 +253,14 @@ def extract_field_model_case_metrics(result: Any) -> dict[str, Any]:
         "field_model_observables": list(_attr(field_model, "observables", []) or []),
         "field_model_resource_estimate": resource_estimate,
         "field_model_error_budget": error_budget,
+        "field_evidence": _primitive(field_evidence),
+        "field_hamiltonian_summary": field_hamiltonian,
+        "field_observables_summary": field_observables,
+        "field_constraints_summary": field_constraints,
+        "field_resources_summary": field_resources,
+        "field_error_budget_summary": field_error_budget,
+        "field_sector_energy_closure_available": field_hamiltonian.get("sector_energy_closure_available"),
+        "field_sector_energy_closure_error": field_hamiltonian.get("sector_energy_closure_error"),
         "field_model_risk_notes": list(_attr(field_model, "risk_notes", []) or []),
         "local_exact_baseline_available": bool(_attr(_attr(result, "exact_baseline"), "available", False)),
         "benchmark_absolute_error": _attr(_attr(result, "benchmark"), "absolute_error"),
@@ -272,6 +286,7 @@ def extract_field_model_case_metrics(result: Any) -> dict[str, Any]:
                 "physical_sector_dimension": (
                     dict(_attr(qft_model, "physical_sector", {}) or {}).get("basis_index_count")
                 ),
+                "field_physical_sector": field_constraints.get("physical_sector"),
                 "engine_representation": engine.get("actual_representation"),
                 "pauli_materialization": engine.get("pauli_materialization"),
                 **trotter,
@@ -279,6 +294,8 @@ def extract_field_model_case_metrics(result: Any) -> dict[str, Any]:
         )
     elif model_kind == "pauli_fierz_cavity_qed":
         metrics.update(_cavity_observable_metrics(cavity_model))
+        if field_observables.get("cutoff_sensitivity_inputs") is not None:
+            metrics["cutoff_sensitivity_inputs"] = field_observables.get("cutoff_sensitivity_inputs")
         metrics["photon_cutoff_max_occupation"] = max(
             [int(mode.get("max_occupation", 0)) for mode in (_attr(cavity_model, "modes", []) or [])],
             default=None,

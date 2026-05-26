@@ -6,10 +6,16 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
 from typing import Callable
 
 from qcchem.core import AtomSpec
+from qcchem.pbc.geometry import (
+    cell_from_lengths_angles,
+    normalized_periodic_payload,
+    periodic_fingerprint,
+)
 
 SUPPORTED_STRUCTURE_FORMATS = {"xyz", "pdb", "mol", "sdf", "mol2"}
 
@@ -118,6 +124,8 @@ class StructureParseResult:
 
     atoms: list[AtomSpec]
     provenance: dict[str, object]
+    periodic: dict[str, object] | None = None
+    warnings: list[str] = field(default_factory=list)
 
 
 def infer_structure_format(path: Path, explicit_format: str | None = None) -> str:
@@ -139,20 +147,32 @@ def infer_structure_format(path: Path, explicit_format: str | None = None) -> st
     return _EXTENSION_FORMATS[suffix]
 
 
-def normalized_geometry_sha256(atoms: list[AtomSpec]) -> str:
+def normalized_geometry_sha256(
+    atoms: list[AtomSpec],
+    *,
+    periodic: dict[str, object] | None = None,
+) -> str:
     """Hash a normalized geometry payload independent of input-file formatting."""
-    payload = [
-        {
-            "symbol": atom.symbol,
-            "coords": [round(float(value), 12) for value in atom.coords],
-        }
-        for atom in atoms
-    ]
+    payload = {
+        "atoms": [
+            {
+                "symbol": atom.symbol,
+                "coords": [round(float(value), 12) for value in atom.coords],
+            }
+            for atom in atoms
+        ],
+        "periodic": periodic or {"enabled": False},
+    }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 
-def build_inline_geometry_provenance(atoms: list[AtomSpec], *, unit: str) -> dict[str, object]:
+def build_inline_geometry_provenance(
+    atoms: list[AtomSpec],
+    *,
+    unit: str,
+    periodic: dict[str, object] | None = None,
+) -> dict[str, object]:
     """Build a provenance record for existing inline YAML geometry inputs."""
     return {
         "kind": "inline_geometry",
@@ -160,7 +180,12 @@ def build_inline_geometry_provenance(atoms: list[AtomSpec], *, unit: str) -> dic
         "parser": "qcchem.io.config:_parse_atoms",
         "atom_count": len(atoms),
         "unit": unit,
-        "normalized_geometry_sha256": normalized_geometry_sha256(atoms),
+        "periodic": periodic or {"enabled": False},
+        "periodic_fingerprint": periodic_fingerprint(periodic or {"enabled": False}),
+        "normalized_geometry_sha256": normalized_geometry_sha256(
+            atoms,
+            periodic=periodic,
+        ),
     }
 
 
@@ -180,7 +205,7 @@ def load_structure_file(
     text = raw_bytes.decode("utf-8")
     fmt = infer_structure_format(resolved_path, structure_format)
     parser = _PARSERS[fmt]
-    atoms, selection = parser(text)
+    atoms, selection, periodic = parser(text)
     _validate_atoms(atoms, fmt)
     provenance: dict[str, object] = {
         "kind": "structure_file",
@@ -190,12 +215,22 @@ def load_structure_file(
         "resolved_path": str(resolved_path),
         "file_name": resolved_path.name,
         "file_sha256": hashlib.sha256(raw_bytes).hexdigest(),
-        "normalized_geometry_sha256": normalized_geometry_sha256(atoms),
+        "periodic": periodic or {"enabled": False},
+        "periodic_fingerprint": periodic_fingerprint(periodic or {"enabled": False}),
+        "normalized_geometry_sha256": normalized_geometry_sha256(
+            atoms,
+            periodic=periodic,
+        ),
         "atom_count": len(atoms),
         "unit": "angstrom",
         "record_selection": selection,
     }
-    return StructureParseResult(atoms=atoms, provenance=provenance)
+    return StructureParseResult(
+        atoms=atoms,
+        provenance=provenance,
+        periodic=periodic,
+        warnings=[],
+    )
 
 
 def _validate_atoms(atoms: list[AtomSpec], fmt: str) -> None:
@@ -228,7 +263,7 @@ def _float_triplet(values: list[str], *, context: str) -> tuple[float, float, fl
         raise ValueError(f"{context} contains a non-numeric coordinate.") from exc
 
 
-def _parse_xyz(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
+def _parse_xyz(text: str) -> tuple[list[AtomSpec], dict[str, object], dict[str, object] | None]:
     lines = text.splitlines()
     if len(lines) < 2:
         raise ValueError("XYZ file must contain an atom-count line and a comment line.")
@@ -252,14 +287,38 @@ def _parse_xyz(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
                 coords=_float_triplet(parts[1:4], context=f"XYZ atom line {index}"),
             )
         )
-    return atoms, {"record_index": 1, "policy": "first_xyz_frame"}
+    return atoms, {"record_index": 1, "policy": "first_xyz_frame"}, None
 
 
-def _parse_pdb(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
+def _parse_pdb(text: str) -> tuple[list[AtomSpec], dict[str, object], dict[str, object] | None]:
     atoms: list[AtomSpec] = []
     saw_model = False
     in_first_model = False
+    periodic: dict[str, object] | None = None
     for line in text.splitlines():
+        if line.startswith("CRYST1"):
+            parts = line.split()
+            if len(parts) >= 7:
+                try:
+                    lengths = (float(parts[1]), float(parts[2]), float(parts[3]))
+                    angles = (float(parts[4]), float(parts[5]), float(parts[6]))
+                    vectors = cell_from_lengths_angles(
+                        *lengths,
+                        *angles,
+                    )
+                except ValueError as exc:
+                    raise ValueError(f"Invalid PDB CRYST1 cell: {exc}") from exc
+                periodic = normalized_periodic_payload(
+                    enabled=True,
+                    vectors=vectors,
+                    lengths=lengths,
+                    angles=angles,
+                    pbc=(True, True, True),
+                    unit="angstrom",
+                    coordinate_mode="cartesian",
+                    wrap_policy="preserve",
+                    source="pdb_cryst1",
+                )
         record = line[:6].strip().upper()
         if record == "MODEL":
             if saw_model:
@@ -283,7 +342,7 @@ def _parse_pdb(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
         atoms.append(AtomSpec(symbol=_normalize_symbol(symbol), coords=coords))
     if not atoms:
         raise ValueError("PDB file contains no ATOM/HETATM records.")
-    return atoms, {"model_index": 1 if saw_model else None, "policy": "first_pdb_model"}
+    return atoms, {"model_index": 1 if saw_model else None, "policy": "first_pdb_model"}, periodic
 
 
 def _first_sdf_record(text: str) -> str:
@@ -293,7 +352,7 @@ def _first_sdf_record(text: str) -> str:
     return text
 
 
-def _parse_mol_or_sdf(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
+def _parse_mol_or_sdf(text: str) -> tuple[list[AtomSpec], dict[str, object], dict[str, object] | None]:
     record = _first_sdf_record(text)
     lines = record.splitlines()
     if len(lines) < 4:
@@ -321,10 +380,10 @@ def _parse_mol_or_sdf(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
                 coords=_float_triplet(parts[0:3], context=f"MOL/SDF atom line {index}"),
             )
         )
-    return atoms, {"record_index": 1, "policy": "first_sdf_record"}
+    return atoms, {"record_index": 1, "policy": "first_sdf_record"}, None
 
 
-def _parse_mol2(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
+def _parse_mol2(text: str) -> tuple[list[AtomSpec], dict[str, object], dict[str, object] | None]:
     atoms: list[AtomSpec] = []
     in_atom_section = False
     for line in text.splitlines():
@@ -354,10 +413,10 @@ def _parse_mol2(text: str) -> tuple[list[AtomSpec], dict[str, object]]:
         )
     if not atoms:
         raise ValueError("MOL2 file contains no @<TRIPOS>ATOM records.")
-    return atoms, {"record_index": 1, "policy": "first_mol2_molecule"}
+    return atoms, {"record_index": 1, "policy": "first_mol2_molecule"}, None
 
 
-_PARSERS: dict[str, Callable[[str], tuple[list[AtomSpec], dict[str, object]]]] = {
+_PARSERS: dict[str, Callable[[str], tuple[list[AtomSpec], dict[str, object], dict[str, object] | None]]] = {
     "xyz": _parse_xyz,
     "pdb": _parse_pdb,
     "mol": _parse_mol_or_sdf,

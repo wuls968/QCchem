@@ -1,0 +1,32 @@
+research_objective:
+  name: h2_local_validation
+  title: H2 local validation trust loop
+  claim: "H2 local workflow stays inside chemical accuracy against an exact baseline."
+  system_scope:
+    molecule: H2
+    basis: sto3g
+    hardware_scope: preview_only
+  required_evidence:
+    - exact_active_space_baseline
+    - benchmark_acceptance
+    - evidence_summary_complete
+  candidate_configs:
+    - configs/h2.yaml
+    - configs/h2_exact.yaml
+  optional_configs:
+    - configs/h2_hardware_precision_push.yaml
+  linked_artifacts:
+    - artifacts/h2
+  promotion_policy:
+    local_validated_requires:
+      chemical_accuracy_status: met
+      baseline_strength: strong
+    hardware_claim_requires:
+      runtime_evidence_status: retrieved_result
+      runtime_chemical_accuracy_status: met
+    exploratory_promotion_requires:
+      cross_molecule_coverage: true
+      exact_baseline: true
+      ablation: true
+  outputs:
+    artifact_root: artifacts/objectives/h2_local_validation

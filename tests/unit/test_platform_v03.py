@@ -44,6 +44,8 @@ def test_artifact_indexer_discovers_result_artifacts(tmp_path: Path) -> None:
     first.mkdir(parents=True)
     (first / "result.json").write_text("{}", encoding="utf-8")
     (first / "report.md").write_text("# report", encoding="utf-8")
+    (first / "field_model_registry.json").write_text("{}", encoding="utf-8")
+    (first / "field_hamiltonian.json").write_text("{}", encoding="utf-8")
 
     second = tmp_path / "artifacts" / "lih_run"
     second.mkdir(parents=True)
@@ -57,3 +59,7 @@ def test_artifact_indexer_discovers_result_artifacts(tmp_path: Path) -> None:
         str(second),
     }
     assert index["artifacts"][0]["has_result_json"] is True
+    indexed = {Path(str(item["artifact_root"])).name: item for item in index["artifacts"]}
+    assert indexed["h2_run"]["has_field_evidence"] is True
+    assert indexed["h2_run"]["field_sidecar_count"] == 2
+    assert indexed["lih_run"]["has_field_evidence"] is False

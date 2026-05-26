@@ -125,6 +125,23 @@ The v1 action route allows local `run_config`, `benchmark_suite`, `study`,
 from this route; runtime collection requires an existing `runtime_submission.json`
 with `job_id` plus explicit high-risk confirmation.
 
+The Research OS action route adds local, analysis-only actions:
+
+- `claim_check`: runs the claim compiler and writes `claim_review.json/md`.
+- `capsule_validate`: validates an evidence capsule and writes
+  `evidence_capsule.json/md`.
+- `promotion_review`: runs the promotion gate and writes
+  `promotion_review.json/md`; the risk tier is high when validated language is
+  requested.
+- `objective_plan`: plans a research objective without running calculations.
+- `objective_status`: summarizes objective status using linked artifacts,
+  evidence capsule validation, and claim compiler output.
+
+These actions keep `best evidence`, `trust tier`, `baseline strength`,
+`chemical accuracy status`, `runtime evidence status`, `recommended next
+action`, `hardware verification boundary`, and `exploratory boundary` visible in
+the ticket delivery. They do not submit runtime jobs or read secrets.
+
 ## Notes
 
 - The floating preview is intentionally lightweight and mirrors the current typed request, plus linked artifact evidence when available.

@@ -410,6 +410,82 @@ def _environment_embedding_lines(data: dict[str, Any], units: str) -> list[str]:
     ]
 
 
+def _pbc_qmmm_lines(data: dict[str, Any]) -> list[str]:
+    pbc = data.get("periodic_boundary") or data.get("pbc") or {}
+    pbc_qmmm = data.get("pbc_qmmm") or {}
+    if not pbc and not pbc_qmmm:
+        return []
+    if "cell_vectors" in pbc:
+        cell = {
+            "units": pbc.get("cell_unit"),
+            "vectors": pbc.get("cell_vectors", []),
+            "volume": pbc.get("volume"),
+            "fingerprint": pbc.get("fingerprint"),
+        }
+        kpoints = {"mode": "gamma", "grid": pbc.get("kpoint_mesh", [1, 1, 1])}
+        pbc_status = "executed_gamma_supercell" if pbc.get("enabled") else None
+        periodicity = "3d" if pbc.get("pbc") == [True, True, True] else "mixed"
+        boundary_conditions = pbc.get("pbc")
+        pbc_core_runner_implemented = True
+    else:
+        cell = pbc.get("cell", {}) if isinstance(pbc.get("cell"), dict) else {}
+        kpoints = pbc.get("kpoints", {}) if isinstance(pbc.get("kpoints"), dict) else {}
+        pbc_status = pbc.get("status")
+        periodicity = pbc.get("periodicity")
+        boundary_conditions = pbc.get("boundary_conditions")
+        pbc_core_runner_implemented = pbc.get("core_runner_implemented")
+    if "one_body_environment" in pbc_qmmm:
+        pbc_qmmm_status = "executed_ewald" if pbc_qmmm.get("enabled") else None
+        embedding_mode = pbc_qmmm.get("mode")
+        qm_region = pbc_qmmm.get("provenance", {}).get("qm_region", {})
+        mm_region = {
+            "charge_count": pbc_qmmm.get("charge_count"),
+            "total_charge": pbc_qmmm.get("total_mm_charge"),
+        }
+        boundary = {
+            "neutralization": pbc_qmmm.get("neutralization"),
+            "background_energy": pbc_qmmm.get("background_energy"),
+        }
+        pbc_qmmm_core_runner_implemented = True
+    else:
+        pbc_qmmm_status = pbc_qmmm.get("status")
+        embedding_mode = pbc_qmmm.get("embedding_mode")
+        qm_region = (
+            pbc_qmmm.get("qm_region", {}) if isinstance(pbc_qmmm.get("qm_region"), dict) else {}
+        )
+        mm_region = (
+            pbc_qmmm.get("mm_region", {}) if isinstance(pbc_qmmm.get("mm_region"), dict) else {}
+        )
+        boundary = (
+            pbc_qmmm.get("boundary", {}) if isinstance(pbc_qmmm.get("boundary"), dict) else {}
+        )
+        pbc_qmmm_core_runner_implemented = pbc_qmmm.get("core_runner_implemented")
+    return [
+        "## PBC / PBC-QMMM",
+        "",
+        "> Periodic boundary and periodic-QM/MM execution metadata. Gamma-only supercell PBC is supported in v1; non-Gamma k-point meshes are parsed and rejected.",
+        "",
+        f"- pbc_enabled: `{pbc.get('enabled')}`",
+        f"- pbc_status: `{pbc_status}`",
+        f"- periodicity: `{periodicity}`",
+        f"- boundary_conditions: `{boundary_conditions}`",
+        f"- cell_units: `{cell.get('units')}`",
+        f"- cell_vectors: `{cell.get('vectors', [])}`",
+        f"- kpoint_mode: `{kpoints.get('mode')}`",
+        f"- kpoint_grid: `{kpoints.get('grid')}`",
+        f"- pbc_core_runner_implemented: `{pbc_core_runner_implemented}`",
+        f"- pbc_qmmm_enabled: `{pbc_qmmm.get('enabled')}`",
+        f"- pbc_qmmm_status: `{pbc_qmmm_status}`",
+        f"- embedding_mode: `{embedding_mode}`",
+        f"- qm_region: `{qm_region}`",
+        f"- mm_region: `{mm_region}`",
+        f"- boundary: `{boundary}`",
+        f"- pbc_qmmm_core_runner_implemented: `{pbc_qmmm_core_runner_implemented}`",
+        f"- notes: `{pbc_qmmm.get('notes', [])}`",
+        "",
+    ]
+
+
 def _cavity_qed_model_lines(data: dict[str, Any]) -> list[str]:
     cavity = data.get("cavity_qed_model") or {}
     observables = cavity.get("observables", {}) if isinstance(cavity.get("observables"), dict) else {}
@@ -502,6 +578,40 @@ def _quantum_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- qft_constraints: `{symmetry.get('qft_constraints')}`",
         f"- resources: `{resources}`",
         f"- error_budget: `{error_budget}`",
+        f"- notes: `{evidence.get('notes', [])}`",
+        "",
+    ]
+
+
+def _field_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
+    evidence = data.get("field_evidence") or {}
+    if not evidence:
+        return []
+    sidecars = evidence.get("sidecars") or {}
+    hashes = evidence.get("sidecar_sha256") or {}
+    hamiltonian = evidence.get("hamiltonian") or {}
+    observables = evidence.get("observables") or {}
+    dynamics = evidence.get("dynamics") or {}
+    constraints = evidence.get("constraints") or {}
+    resources = evidence.get("resources") or {}
+    error_budget = evidence.get("error_budget") or {}
+    return [
+        "## Field Evidence Artifacts",
+        "",
+        "> Field-model sidecars are the authoritative QFT/cavity evidence files; quantum_evidence.json remains focused on Pauli execution, measurement, state, and error-budget traces.",
+        "",
+        f"- available: `{evidence.get('available')}`",
+        f"- schema: `{evidence.get('schema')}`",
+        f"- active_model_kind: `{evidence.get('active_model_kind')}`",
+        f"- sidecars: `{sidecars}`",
+        f"- sidecar_sha256: `{hashes}`",
+        f"- sector_energy_closure_available: `{hamiltonian.get('sector_energy_closure_available')}`",
+        f"- sector_energy_closure_error: {_fmt_energy(hamiltonian.get('sector_energy_closure_error'), units)}",
+        f"- observable_summary: `{observables}`",
+        f"- dynamics_summary: `{dynamics}`",
+        f"- constraints_summary: `{constraints}`",
+        f"- resources_summary: `{resources}`",
+        f"- field_error_budget: `{error_budget}`",
         f"- notes: `{evidence.get('notes', [])}`",
         "",
     ]
@@ -602,6 +712,7 @@ def render_markdown_report(result: Any) -> str:
     noise_model = data.get("noise_model")
     measurement = data.get("measurement")
     quantum_evidence = data.get("quantum_evidence")
+    field_evidence = data.get("field_evidence")
     runtime_options = data.get("runtime_options")
     chemical_accuracy = data.get("chemical_accuracy")
     runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")
@@ -700,6 +811,7 @@ def render_markdown_report(result: Any) -> str:
         f"- meets_threshold: `{benchmark.get('meets_threshold')}`",
         "",
         *_quantum_evidence_lines(data, units),
+        *_field_evidence_lines(data, units),
         "## Problem Summary",
         "",
         f"- Basis: `{problem['basis']}`",
@@ -715,6 +827,7 @@ def render_markdown_report(result: Any) -> str:
         "",
         *_external_point_charge_lines(data, units),
         *_environment_embedding_lines(data, units),
+        *_pbc_qmmm_lines(data),
         "## Mapping",
         "",
         f"- Mapping kind: `{mapping['kind']}`",
@@ -1169,6 +1282,19 @@ def render_markdown_report(result: Any) -> str:
             f"- calibration_report.md: `{data['artifacts'].get('calibration_report_markdown')}`",
             f"- runtime_submission.json: `{data['artifacts'].get('runtime_submission_json')}`",
             f"- quantum_evidence.json: `{data['artifacts'].get('quantum_evidence_json')}`",
+            *(
+                [
+                    f"- field_model_registry.json: `{(data['artifacts'].get('field_evidence') or {}).get('registry_json')}`",
+                    f"- field_hamiltonian.json: `{(data['artifacts'].get('field_evidence') or {}).get('hamiltonian_json')}`",
+                    f"- field_observables.json: `{(data['artifacts'].get('field_evidence') or {}).get('observables_json')}`",
+                    f"- field_dynamics.json: `{(data['artifacts'].get('field_evidence') or {}).get('dynamics_json')}`",
+                    f"- field_constraints.json: `{(data['artifacts'].get('field_evidence') or {}).get('constraints_json')}`",
+                    f"- field_resources.json: `{(data['artifacts'].get('field_evidence') or {}).get('resources_json')}`",
+                    f"- field_error_budget.json: `{(data['artifacts'].get('field_evidence') or {}).get('error_budget_json')}`",
+                ]
+                if data.get("field_evidence")
+                else []
+            ),
             f"- qcschema.json: `{data['artifacts'].get('qcschema_json')}`",
             f"- result.h5: `{data['artifacts'].get('hdf5_file')}`",
             "",

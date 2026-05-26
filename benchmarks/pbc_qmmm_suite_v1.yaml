@@ -1,0 +1,16 @@
+benchmark_suite:
+  name: pbc_qmmm_suite_v1
+  description: Executable Gamma-only PBC/PBC-QMMM validation suite.
+  registry_name: pbc_qmmm_suite_v1
+  tags: [benchmark, pbc, pbc_qmmm, validation, gamma_only]
+  cases:
+    - name: pbc_qmmm_smoke
+      kind: pbc_qmmm_validation
+      profile: smoke
+      expected_status: validated
+      tags: [pbc, pbc_qmmm, smoke, gamma_only]
+    - name: pbc_qmmm_full
+      kind: pbc_qmmm_validation
+      profile: full
+      expected_status: validated
+      tags: [pbc, pbc_qmmm, full, gamma_only]

@@ -1,0 +1,85 @@
+molecule:
+  name: H2-pbc-qmmm-ewald
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+  periodic:
+    enabled: true
+    cell:
+      vectors:
+        - [8.0, 0.0, 0.0]
+        - [0.0, 8.0, 0.0]
+        - [0.0, 0.0, 8.0]
+      unit: angstrom
+      source: config
+    pbc: [true, true, true]
+    coordinate_mode: cartesian
+    wrap_policy: preserve
+    source: config
+
+problem:
+  active_space: null
+  pbc:
+    enabled: true
+    driver: pyscf_pbc
+    mode: gamma_supercell
+    kpoint_mesh: [1, 1, 1]
+    density_fitting: fftdf
+    precision: 1.0e-8
+    neutralization: reject
+  environment_embedding:
+    enabled: true
+    mode: effective_hamiltonian
+    point_charges:
+      enabled: true
+      unit: angstrom
+      charges:
+        - label: mm-a
+          coords: [3.0, 3.0, 3.0]
+          charge: 0.5
+        - label: mm-b
+          coords: [5.0, 5.0, 5.0]
+          charge: -0.5
+      min_distance_to_qm_atoms: 1.0e-6
+      damping:
+        kind: none
+    boundary:
+      enabled: false
+    cache:
+      enabled: false
+    periodic_policy:
+      mode: ewald
+      require_charge_neutrality: true
+      neutralization: reject
+      ewald_precision: 1.0e-8
+      real_space_cutoff: 4.0
+      reciprocal_cutoff: 8.0
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-8
+  relative_error_threshold: 1.0e-8
+
+run:
+  seed: 7
+  output_dir: artifacts/pbc_h2_qmmm
+  overwrite: true
+  exports:
+    qcschema_json: true
+    hdf5: true

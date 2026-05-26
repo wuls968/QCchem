@@ -51,6 +51,11 @@ LOCAL_ACTION_KINDS = {
     "report",
     "compare_artifacts",
     "review_claims",
+    "claim_check",
+    "capsule_validate",
+    "promotion_review",
+    "objective_plan",
+    "objective_status",
 }
 
 BLOCKED_ACTION_KINDS = {
@@ -138,6 +143,9 @@ def _runtime_sidecar_evidence(payload: dict[str, Any]) -> dict[str, Any]:
 def _evidence_from_payload(kind: str, payload: dict[str, Any]) -> dict[str, Any]:
     if kind == "runtime_submission":
         return _runtime_sidecar_evidence(payload)
+    existing = payload.get("evidence_summary")
+    if isinstance(existing, dict) and existing.get("trust_tier") and existing.get("recommended_action"):
+        return existing
     normalized = summarize_artifact_payload(payload, artifact_kind=kind)
     evidence = normalized.get("evidence_summary")
     if not isinstance(evidence, dict):
@@ -344,6 +352,16 @@ def summarize_evidence_artifacts(
 
 def _infer_action_kind(task_type: str, request_text: str, linked_artifacts: list[str]) -> str:
     lowered = request_text.lower()
+    if "claim" in lowered:
+        return "claim_check"
+    if "capsule" in lowered or "evidence capsule" in lowered:
+        return "capsule_validate"
+    if "promotion" in lowered or "promote" in lowered:
+        return "promotion_review"
+    if "objective status" in lowered or ("objective" in lowered and "status" in lowered):
+        return "objective_status"
+    if "objective" in lowered or "plan objective" in lowered:
+        return "objective_plan"
     if task_type == "analysis":
         return "compare_artifacts" if linked_artifacts else "review_claims"
     if "runtime collect" in lowered or "collect runtime" in lowered:
@@ -383,14 +401,24 @@ def build_action_proposal(
         blocked_reason = f"Unsupported research action kind: {selected_kind}."
 
     risk_tier = "high" if selected_kind in {"runtime_collect", "hardware_optimize_preview"} else "standard"
+    if selected_kind == "promotion_review":
+        target = str((inputs or {}).get("target") or request_text).lower()
+        if "validated" in target:
+            risk_tier = "high"
     if evidence_graph.get("trust_tier") in {"unstable", "hardware_verified"}:
         risk_tier = "high"
+    action_inputs = inputs or ({"artifacts": linked_artifacts} if linked_artifacts else {})
+    if selected_kind == "promotion_review" and "target" not in action_inputs:
+        if "validated_algorithm_candidate" in request_text:
+            action_inputs = {**action_inputs, "target": "validated_algorithm_candidate"}
+        elif "validated" in request_text:
+            action_inputs = {**action_inputs, "target": "validated"}
     return ResearchActionProposal(
         action_id=f"action-{uuid.uuid4().hex[:10]}",
         action_kind=selected_kind,
         title=f"{selected_kind.replace('_', ' ').title()}",
         rationale="Grounded in linked QCchem artifact evidence and local trust/budget rules.",
-        inputs=inputs or ({"artifacts": linked_artifacts} if linked_artifacts else {}),
+        inputs=action_inputs,
         outputs={},
         requires_confirmation=True,
         risk_tier=risk_tier,
@@ -418,6 +446,12 @@ def build_cost_estimate(action: dict[str, Any], evidence_graph: dict[str, Any]) 
             "cost_tier": "local_preview",
             "budget_boundary": "Preview only; real hardware submit is blocked in the v1 AI route.",
         }
+    if action_kind in {"claim_check", "capsule_validate", "promotion_review", "objective_plan", "objective_status"}:
+        return {
+            "cost_tier": "analysis_only",
+            "budget_boundary": "Local Trust-First analysis only; no chemistry run and no hardware submission.",
+            "evidence_trust_tier": evidence_graph.get("trust_tier"),
+        }
     return {
         "cost_tier": "analysis_only",
         "budget_boundary": "No calculation or hardware budget is spent.",
@@ -431,6 +465,12 @@ def classify_research_risk(action: dict[str, Any], evidence_graph: dict[str, Any
     action_kind = str(action.get("action_kind") or "")
     if action_kind in {"runtime_collect", "hardware_optimize_preview"}:
         reasons.append(f"{action_kind} touches runtime or hardware-facing workflow state.")
+    if str(action.get("risk_tier") or "") == "high":
+        reasons.append(f"{action_kind} is marked high risk by local action rules.")
+    if action_kind == "promotion_review":
+        target = str((action.get("inputs") or {}).get("target") or action.get("title") or "").lower()
+        if "validated" in target:
+            reasons.append("promotion_review targets validated language and requires a high-risk trust-boundary review.")
     if action_kind in BLOCKED_ACTION_KINDS or action.get("allowed") is False:
         reasons.append(str(action.get("blocked_reason") or "action is blocked by local policy"))
     if evidence_graph.get("trust_tier") == "unstable":

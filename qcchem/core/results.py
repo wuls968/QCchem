@@ -180,6 +180,9 @@ class ProblemSummary:
     hamiltonian_constants: dict[str, float] = field(default_factory=dict)
     electronic_constant_correction: float = 0.0
     point_group_metadata: dict[str, Any] = field(default_factory=dict)
+    pbc_metadata: dict[str, Any] = field(default_factory=dict)
+    periodic_boundary: "PeriodicBoundarySummary | None" = None
+    pbc_qmmm: "PBCQMMMSummary | None" = None
 
 
 @dataclass(slots=True)
@@ -206,6 +209,8 @@ class ReductionAuditSummary:
     total_constant_correction: float = 0.0
     energy_formula: str = ""
     point_group_metadata: dict[str, Any] = field(default_factory=dict)
+    periodic_boundary: "PeriodicBoundarySummary | None" = None
+    pbc_qmmm: "PBCQMMMSummary | None" = None
 
 
 @dataclass(slots=True)
@@ -291,6 +296,37 @@ class QuantumEvidenceSummary:
     sampling: dict[str, Any] = field(default_factory=dict)
     state: dict[str, Any] = field(default_factory=dict)
     symmetry_checks: dict[str, Any] = field(default_factory=dict)
+    resources: dict[str, Any] = field(default_factory=dict)
+    error_budget: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class FieldArtifactPaths:
+    """Sidecar paths for field-model evidence artifacts."""
+
+    registry_json: Path
+    hamiltonian_json: Path
+    observables_json: Path
+    dynamics_json: Path
+    constraints_json: Path
+    resources_json: Path
+    error_budget_json: Path
+
+
+@dataclass(slots=True)
+class FieldEvidenceSummary:
+    """Compact pointer and summary for field-model evidence sidecars."""
+
+    available: bool
+    schema: str
+    active_model_kind: str | None
+    sidecars: dict[str, str] = field(default_factory=dict)
+    sidecar_sha256: dict[str, str] = field(default_factory=dict)
+    hamiltonian: dict[str, Any] = field(default_factory=dict)
+    observables: dict[str, Any] = field(default_factory=dict)
+    dynamics: dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
     resources: dict[str, Any] = field(default_factory=dict)
     error_budget: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
@@ -505,6 +541,45 @@ class EffectiveHamiltonianSummary:
 
 
 @dataclass(slots=True)
+class PeriodicBoundarySummary:
+    """Audit summary for periodic boundary condition inputs and execution."""
+
+    enabled: bool
+    cell_vectors: list[list[float]] = field(default_factory=list)
+    cell_unit: str = "angstrom"
+    pbc: list[bool] = field(default_factory=lambda: [False, False, False])
+    coordinate_mode: str = "cartesian"
+    wrap_policy: str = "preserve"
+    volume: float | None = None
+    kpoint_mesh: list[int] = field(default_factory=lambda: [1, 1, 1])
+    driver: str = "pyscf_pbc"
+    mode: str = "gamma_supercell"
+    density_fitting: str = "fftdf"
+    precision: float | None = None
+    fingerprint: str | None = None
+    provenance: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class PBCQMMMSummary:
+    """Audit summary for periodic QM/MM electrostatic embedding."""
+
+    enabled: bool
+    mode: str
+    neutralization: str
+    require_charge_neutrality: bool
+    ewald_precision: float
+    charge_count: int = 0
+    total_mm_charge: float = 0.0
+    nuclear_interaction_energy: float = 0.0
+    background_energy: float = 0.0
+    one_body_environment: dict[str, Any] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
+    risk_notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class BackendCapabilitySummary:
     """Backend capability snapshot persisted with artifacts."""
 
@@ -713,6 +788,7 @@ class ArtifactPaths:
     calibration_report_markdown: Path | None = None
     runtime_submission_json: Path | None = None
     quantum_evidence_json: Path | None = None
+    field_evidence: FieldArtifactPaths | None = None
     qcschema_json: Path | None = None
     hdf5_file: Path | None = None
 
@@ -757,6 +833,7 @@ class RunResult:
     environment_embedding: EffectiveHamiltonianSummary | None
     hardware_error_diagnostic: dict[str, Any] | None
     quantum_evidence: QuantumEvidenceSummary | None
+    field_evidence: FieldEvidenceSummary | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
     artifacts: ArtifactPaths
@@ -780,6 +857,8 @@ class RunResult:
     qft_model: QFTModelSummary | None = None
     qft_dynamics: dict[str, Any] | None = None
     cavity_qed_model: CavityQEDModelSummary | None = None
+    periodic_boundary: PeriodicBoundarySummary | None = None
+    pbc_qmmm: PBCQMMMSummary | None = None
 
 
 @dataclass(slots=True)

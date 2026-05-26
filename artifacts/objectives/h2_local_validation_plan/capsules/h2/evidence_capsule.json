@@ -1,0 +1,82 @@
+{
+  "artifact_kind": "run",
+  "artifact_root": "artifacts/h2",
+  "blocking_issues": [
+    "Missing result payload fields: evidence_summary.",
+    "evidence_summary is missing: missing result_identity, primary_scientific_claim, primary_baseline, primary_error_metric, chemical_accuracy_status, runtime_evidence_status, trust_tier, recommended_action."
+  ],
+  "boundary_warnings": [],
+  "capsule_status": "partial",
+  "evidence_summary": {},
+  "evidence_summary_missing_fields": [
+    "result_identity",
+    "primary_scientific_claim",
+    "primary_baseline",
+    "primary_error_metric",
+    "chemical_accuracy_status",
+    "runtime_evidence_status",
+    "trust_tier",
+    "recommended_action"
+  ],
+  "evidence_summary_status": "missing",
+  "missing_recommended_files": [
+    "quantum_evidence.json",
+    "runtime_submission.json",
+    "calibration.json",
+    "qcschema.json",
+    "result.h5"
+  ],
+  "missing_required_files": [],
+  "optional_files": {
+    "calibration.json": {
+      "path": "artifacts/h2/calibration.json",
+      "present": false
+    },
+    "exact_result.json": {
+      "path": "artifacts/h2/exact_result.json",
+      "present": true
+    },
+    "qcschema.json": {
+      "path": "artifacts/h2/qcschema.json",
+      "present": false
+    },
+    "quantum_evidence.json": {
+      "path": "artifacts/h2/quantum_evidence.json",
+      "present": false
+    },
+    "result.h5": {
+      "path": "artifacts/h2/result.h5",
+      "present": false
+    },
+    "runtime_submission.json": {
+      "path": "artifacts/h2/runtime_submission.json",
+      "present": false
+    }
+  },
+  "payload_missing_fields": [
+    "evidence_summary"
+  ],
+  "provenance_status": "complete",
+  "recommended_action": "review_evidence_boundary",
+  "required_files": {
+    "report.md": {
+      "path": "artifacts/h2/report.md",
+      "present": true
+    },
+    "resolved_config.yaml": {
+      "path": "artifacts/h2/resolved_config.yaml",
+      "present": true
+    },
+    "result.json": {
+      "path": "artifacts/h2/result.json",
+      "present": true
+    },
+    "run.log": {
+      "path": "artifacts/h2/run.log",
+      "present": true
+    }
+  },
+  "result_json": "artifacts/h2/result.json",
+  "schema_version": "qcchem.evidence_capsule.v0.1-alpha",
+  "trust_tier": "unknown"
+}

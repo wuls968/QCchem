@@ -22,6 +22,8 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 - `h2_optimizer_stability`
 - `qmmm_environment_embedding_smoke`
 - `qmmm_environment_embedding_full`
+- `pbc_qmmm_smoke`
+- `pbc_qmmm_full`
 
 ## case kind
 
@@ -37,6 +39,8 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
   - 比较 exact、ideal、noisy 三条路径
 - `qmmm_validation`
   - 运行 `qcchem.validation.run_qmmm_embedding_validation`，把 smoke/full 环境嵌入验证闭环映射为 benchmark case
+- `pbc_qmmm_validation`
+  - 运行 `qcchem.validation.run_pbc_qmmm_validation`，把 smoke/full Gamma-only PBC 与 PBC-QM/MM Ewald 验证映射为 benchmark case
 
 ## status 语义
 
@@ -53,7 +57,7 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 
 当前 suite artifact：
 
-- `artifact`: `/Users/a0000/QCchem/artifacts/benchmark_suite_v1`
+- `artifact`: `artifacts/benchmark_suite_v1`
 - `total_cases`: `10`
 - `status_counts`: `{'validated': 6, 'unstable': 4}`
 
@@ -96,12 +100,37 @@ symmetry-reduction status、cache reload error、environment qubit growth。
 MM environment 不被量子化；这些指标只描述嵌入后的 QM Hamiltonian 映射与
 Z2 tapering 验证。
 
+## PBC/PBC-QMMM suite
+
+`benchmarks/pbc_qmmm_suite_v1.yaml` 是可执行的 Gamma-only PBC/PBC-QMMM
+suite manifest。它包含两个 `pbc_qmmm_validation` case：
+
+- `pbc_qmmm_smoke`: 运行 plain Gamma-only PBC、PBC-QM/MM Ewald，以及非
+  Gamma k-point rejection。
+- `pbc_qmmm_full`: 在 smoke 基础上增加 VQE/twolocal、active-space、
+  compression、LR-ACE 和 TC-QSCI routing。
+
+该 suite 的核心边界是：v1 只声明 Gamma-only/supercell PBC 和固定电荷
+PBC-QM/MM Ewald；非 Gamma k-point mapped algorithms、forces/stress、
+cell optimization、PME dynamics、polarization 和 MM relaxation 不在当前范围内。
+同时要求 closed-shell RHF、fully periodic 3D cell、molecule/cell unit 一致、
+full QM/MM cell 中性，并拒绝 uniform background、open-shell/UHF、runtime
+submission 和 reduced-dimensional PBC flags。
+可直接运行 `qcchem validation pbc-qmmm --profile smoke|full`，也可以通过
+`qcchem benchmark run -c benchmarks/pbc_qmmm_suite_v1.yaml` 进入 benchmark
+acceptance。
+
 ## 设计原则
 
 - benchmark case 必须落 artifact
 - case status 必须诚实反映当前能力
 - aggregate report 必须能从 JSON 再生成
 - exploratory 或 unstable case 也必须有正式 schema，而不是临时脚本输出
+- field-model case 必须保留 `field_model_registry.json`、
+  `field_hamiltonian.json`、`field_observables.json`、`field_dynamics.json`、
+  `field_constraints.json`、`field_resources.json`、`field_error_budget.json`
+  这些 sidecar 指针；aggregate metrics 可以读取 compact summary，但不能丢失
+  原始场模型证据文件。
 
 ## Acceptance Policy
 

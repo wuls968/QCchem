@@ -43,6 +43,9 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         "benchmark": extras.get("benchmark"),
         "reduction_audit": reduction_audit,
         "runtime_submission": extras.get("runtime_submission"),
+        "periodic_boundary": extras.get("periodic_boundary") or extras.get("pbc"),
+        "pbc": extras.get("pbc") or extras.get("periodic_boundary"),
+        "pbc_qmmm": extras.get("pbc_qmmm"),
         "compression_result": extras.get("compression_result"),
         "verification_status": verification_status,
         "success": success,
@@ -56,6 +59,11 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         "perturbative_correction_result": extras.get("perturbative_correction_result"),
         "evidence_summary": extras.get("evidence_summary"),
         "quantum_evidence": extras.get("quantum_evidence"),
+        "field_evidence": extras.get("field_evidence"),
+        "field_model": extras.get("field_model"),
+        "qft_model": extras.get("qft_model"),
+        "qft_dynamics": extras.get("qft_dynamics"),
+        "cavity_qed_model": extras.get("cavity_qed_model"),
         "provenance": qcschema.get("provenance"),
         "schema_version": qcschema.get("schema_version"),
         "run_id": extras.get("qcchem_run_id"),
@@ -66,6 +74,15 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
     result_path = root / "result.json"
     qcschema_path = root / "qcschema.json"
     hdf5_path = root / "result.h5"
+    field_sidecars = {
+        "field_model_registry": root / "field_model_registry.json",
+        "field_hamiltonian": root / "field_hamiltonian.json",
+        "field_observables": root / "field_observables.json",
+        "field_dynamics": root / "field_dynamics.json",
+        "field_constraints": root / "field_constraints.json",
+        "field_resources": root / "field_resources.json",
+        "field_error_budget": root / "field_error_budget.json",
+    }
     result = _load_json(result_path)
     qcschema = _load_json(qcschema_path)
     preferred_source = "result" if result is not None else "qcschema" if qcschema is not None else None
@@ -92,6 +109,24 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
                 "source": "result.h5",
                 "path": str(hdf5_path),
                 "present": hdf5_path.exists(),
+            },
+            "field_evidence": {
+                name: {
+                    "source": f"{name}.json",
+                    "path": str(path),
+                    "present": path.exists(),
+                }
+                for name, path in field_sidecars.items()
+            },
+            "pbc": {
+                "source": "result.json/qcschema extras",
+                "present": bool((run or {}).get("periodic_boundary") or (run or {}).get("pbc"))
+                if isinstance(run, dict)
+                else False,
+            },
+            "pbc_qmmm": {
+                "source": "result.json/qcschema extras",
+                "present": bool((run or {}).get("pbc_qmmm")) if isinstance(run, dict) else False,
             },
         },
     }
@@ -161,3 +196,34 @@ def load_featured_hardware_campaign_model(artifact_root: Path | None = None) -> 
     summary = build_hardware_campaign_summary(payload)
     summary["artifact_index_entry"] = entry
     return summary
+
+
+def _latest_json(root: Path, pattern: str) -> dict[str, Any] | None:
+    candidates = [path for path in root.glob(pattern) if path.is_file()]
+    if not candidates:
+        return None
+    latest = max(candidates, key=lambda path: path.stat().st_mtime)
+    payload = _load_json(latest)
+    if isinstance(payload, dict):
+        payload["source_path"] = str(latest)
+        return payload
+    return None
+
+
+def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, Any]:
+    """Load latest Research OS review artifacts for workbench summaries."""
+    root = artifact_root or _repo_artifact_root()
+    objective_status = _latest_json(root, "objectives/**/objective_status.json")
+    objective_plan = _latest_json(root, "objectives/**/objective_plan.json")
+    claim_review = _latest_json(root, "claim_reviews/**/claim_review.json")
+    promotion_review = _latest_json(root, "promotion/**/promotion_review.json")
+    capsule = _latest_json(root, "**/evidence_capsule.json")
+    objective = objective_status or objective_plan or {}
+    missing_evidence = objective.get("missing_evidence") if isinstance(objective, dict) else []
+    return {
+        "objective": objective,
+        "claim_review": claim_review or {},
+        "promotion_review": promotion_review or {},
+        "capsule": capsule or {},
+        "open_evidence_gaps": missing_evidence if isinstance(missing_evidence, list) else [],
+    }

@@ -494,6 +494,7 @@ def build_and_write_quantum_evidence(
     qft_dynamics: dict[str, Any] | None,
     cavity_qed_model: Any | None,
     field_model: Any | None,
+    field_evidence: Any | None,
     environment_embedding: Any | None,
     external_point_charges: Any | None,
     existing_error_budget: dict[str, Any] | None = None,
@@ -548,17 +549,35 @@ def build_and_write_quantum_evidence(
     )
     field_payload = {
         "field_model": to_primitive(field_model),
-        "qft_model": to_primitive(qft_model),
-        "qft_dynamics": to_primitive(qft_dynamics),
-        "cavity_qed_model": to_primitive(cavity_qed_model),
+        "field_evidence": to_primitive(field_evidence),
+        "qft_model_reference": {
+            "available": qft_model is not None,
+            "model": getattr(qft_model, "model", None) if qft_model is not None else None,
+            "total_qubits": getattr(qft_model, "total_qubits", None) if qft_model is not None else None,
+        },
+        "qft_dynamics_reference": {
+            "available": qft_dynamics is not None,
+            "sidecar": (to_primitive(field_evidence) or {}).get("sidecars", {}).get("dynamics")
+            if field_evidence is not None
+            else None,
+        },
+        "cavity_qed_model_reference": {
+            "available": cavity_qed_model is not None,
+            "model": getattr(cavity_qed_model, "model", None) if cavity_qed_model is not None else None,
+            "total_qubits": getattr(cavity_qed_model, "total_qubits", None) if cavity_qed_model is not None else None,
+        },
         "environment_embedding": to_primitive(environment_embedding),
         "external_point_charges": to_primitive(external_point_charges),
+        "periodic_boundary": to_primitive(getattr(problem, "periodic_boundary", None)),
+        "pbc_qmmm": to_primitive(getattr(problem, "pbc_qmmm", None)),
     }
     sidecar = {
         "schema": SCHEMA,
         "run_id": run_id,
         "hamiltonian": {
             **hamiltonian_summary,
+            "periodic_boundary": to_primitive(getattr(problem, "periodic_boundary", None)),
+            "pbc_qmmm": to_primitive(getattr(problem, "pbc_qmmm", None)),
             "pauli_terms": pauli_terms,
         },
         "measurement": {
@@ -593,7 +612,11 @@ def build_and_write_quantum_evidence(
         schema=SCHEMA,
         sidecar_path=sidecar_ref,
         sidecar_sha256=sidecar_sha,
-        hamiltonian={key: value for key, value in hamiltonian_summary.items() if key != "pauli_terms"},
+        hamiltonian={
+            **{key: value for key, value in hamiltonian_summary.items() if key != "pauli_terms"},
+            "periodic_boundary": to_primitive(getattr(problem, "periodic_boundary", None)),
+            "pbc_qmmm": to_primitive(getattr(problem, "pbc_qmmm", None)),
+        },
         measurement=measurement_summary,
         sampling=sampling_summary,
         state=state_summary,

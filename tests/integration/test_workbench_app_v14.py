@@ -159,6 +159,7 @@ def test_page_modules_expose_model_driven_builders() -> None:
 
     confidence_page = importlib.import_module("qcchem.workbench.pages.result_confidence").build_result_confidence_page(model)
     confidence_text = _collect_text(confidence_page)
+    assert "Evidence Capsule status" in confidence_text
     assert "Chemical accuracy False" in confidence_text
     assert "Runtime evidence available True" in confidence_text
     assert "Runtime chemical accuracy False" in confidence_text
@@ -166,6 +167,10 @@ def test_page_modules_expose_model_driven_builders() -> None:
 
     overview_module = importlib.import_module("qcchem.workbench.pages.overview")
     overview_page = overview_module.build_overview_page(model)
+    overview_text = _collect_text(overview_page)
+    assert "Research Objective" in overview_text
+    assert "Claim compiler" in overview_text
+    assert "Promotion gate" in overview_text
     overview_graph = next(component for component in _walk_components(overview_page) if component.__class__.__name__ == "Graph")
     assert len(overview_graph.figure.data) == 2
     assert tuple(overview_graph.figure.data[0].y) == pytest.approx((-9.8765,))

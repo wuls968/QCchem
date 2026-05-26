@@ -407,6 +407,120 @@ def _audit_docs(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[st
         )
 
 
+def _audit_research_os_extensions(*, repo_root: Path, checks: list[dict[str, Any]], evidence_matrix: list[dict[str, Any]]) -> None:
+    examples = [
+        repo_root / "configs" / "objectives" / "h2_local_validation.yaml",
+        repo_root / "configs" / "objectives" / "lih_compression_trust_loop.yaml",
+        repo_root / "examples" / "claims" / "hardware_overclaim.txt",
+        repo_root / "examples" / "claims" / "local_validated_claim.txt",
+        repo_root / "examples" / "claims" / "exploratory_lr_ace_claim.txt",
+    ]
+    missing_examples = [str(path.relative_to(repo_root)) for path in examples if not path.exists()]
+    _check(
+        checks,
+        check_id="research_os:examples_exist",
+        label="Research OS objective and claim examples exist",
+        passed=not missing_examples,
+        required=False,
+        summary="Research OS examples are present." if not missing_examples else "Some Research OS examples are missing.",
+        details={"missing_examples": missing_examples},
+    )
+
+    try:
+        from qcchem.workflow.claim_compiler import compile_claim_review
+        from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
+        from qcchem.workflow.objective import plan_research_objective
+        from qcchem.workflow.promotion import review_exploratory_promotion
+
+        importable = all([compile_claim_review, build_and_write_evidence_capsule, plan_research_objective, review_exploratory_promotion])
+    except Exception as exc:
+        importable = False
+        import_error = f"{type(exc).__name__}: {exc}"
+    else:
+        import_error = ""
+    _check(
+        checks,
+        check_id="research_os:cli_commands_importable",
+        label="Research OS CLI workflow functions are importable",
+        passed=importable,
+        required=False,
+        summary="Research OS workflow functions are importable." if importable else "Research OS workflow functions failed import.",
+        details={"error": import_error},
+    )
+
+    curated_incomplete = [
+        entry.get("name")
+        for entry in evidence_matrix
+        if not all(
+            entry.get(key) is not None
+            for key in ("trust_tier", "recommended_action")
+        )
+    ]
+    _check(
+        checks,
+        check_id="research_os:curated_evidence_summary_complete",
+        label="Curated artifacts expose release-readable evidence summaries",
+        passed=not curated_incomplete,
+        required=False,
+        summary="Curated evidence summaries are release-readable." if not curated_incomplete else "Some curated artifacts still rely on derived release evidence.",
+        details={"incomplete": curated_incomplete},
+    )
+
+    docs_to_scan = [
+        repo_root / "README.md",
+        repo_root / "docs" / "verified_scope.md",
+        repo_root / "docs" / "release_showcase.md",
+        repo_root / "docs" / "release_audit.md",
+    ]
+    forbidden_patterns = [
+        "hardware_verified proves publication-grade chemical accuracy",
+        "hardware_verified proves chemistry",
+        "exploratory is validated",
+    ]
+    overclaim_hits: list[str] = []
+    for path in docs_to_scan:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lower()
+        for pattern in forbidden_patterns:
+            if pattern in text:
+                overclaim_hits.append(f"{path.relative_to(repo_root)}:{pattern}")
+    _check(
+        checks,
+        check_id="research_os:no_overclaim_language",
+        label="Release docs avoid forbidden overclaim language",
+        passed=not overclaim_hits,
+        required=False,
+        summary="No forbidden overclaim phrases found." if not overclaim_hits else "Forbidden overclaim phrases found.",
+        details={"hits": overclaim_hits},
+    )
+
+    promotion_artifact = repo_root / "artifacts" / "h2_lr_ace" / "result.json"
+    if promotion_artifact.exists() and importable:
+        from qcchem.workflow.promotion import review_exploratory_promotion
+
+        review = review_exploratory_promotion(
+            artifact=promotion_artifact,
+            target="validated_algorithm_candidate",
+        )
+        _check(
+            checks,
+            check_id="research_os:promotion_gate_blocks_exploratory",
+            label="Promotion gate blocks direct exploratory promotion",
+            passed=review.get("status") == "blocked",
+            required=False,
+            summary=f"Promotion review status={review.get('status')}",
+            details={"artifact": str(promotion_artifact), "blocking_gaps": review.get("blocking_gaps")},
+        )
+    else:
+        _skipped(
+            checks,
+            check_id="research_os:promotion_gate_blocks_exploratory",
+            label="Promotion gate blocks direct exploratory promotion",
+            summary="No h2_lr_ace artifact was available for optional promotion-gate smoke.",
+        )
+
+
 def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# QCchem Release Readiness Audit",
@@ -485,6 +599,7 @@ def run_release_audit(
         _audit_exploratory_asset(asset, repo_root=resolved_repo_root, checks=checks, evidence_matrix=evidence_matrix)
 
     _audit_docs(spec, repo_root=resolved_repo_root, checks=checks)
+    _audit_research_os_extensions(repo_root=resolved_repo_root, checks=checks, evidence_matrix=evidence_matrix)
 
     required_pass_count = sum(1 for check in checks if check["required"] and check["status"] == "passed")
     required_fail_count = sum(1 for check in checks if check["required"] and check["status"] == "failed")

@@ -1,0 +1,36 @@
+research_objective:
+  name: lih_compression_trust_loop
+  title: LiH active-space compression trust loop
+  claim: "LiH active-space compressed workflow preserves local chemical accuracy against an exact active-space baseline."
+  system_scope:
+    molecule: LiH
+    basis: sto3g
+    active_space: active_space
+    hardware_scope: preview_only
+  required_evidence:
+    - exact_active_space_baseline
+    - compressed_vs_uncompressed_error
+    - benchmark_acceptance
+    - measurement_cost_summary
+    - evidence_summary_complete
+  candidate_configs:
+    - configs/lih_active_exact_compressed_cholesky.yaml
+    - configs/lih_active_vqe.yaml
+  optional_configs:
+    - configs/h2_hardware_precision_push.yaml
+  linked_artifacts:
+    - artifacts/lih_active_exact_compressed_cholesky
+    - artifacts/lih_active_vqe
+  promotion_policy:
+    local_validated_requires:
+      chemical_accuracy_status: met
+      baseline_strength: strong
+    hardware_claim_requires:
+      runtime_evidence_status: retrieved_result
+      runtime_chemical_accuracy_status: met
+    exploratory_promotion_requires:
+      cross_molecule_coverage: true
+      exact_baseline: true
+      ablation: true
+  outputs:
+    artifact_root: artifacts/objectives/lih_compression_trust_loop

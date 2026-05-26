@@ -475,3 +475,112 @@ solver:
 
     with pytest.raises(ValueError, match="cannot both be set"):
         load_run_spec(config_path)
+
+
+def test_load_run_spec_parses_inline_molecule_periodic_and_problem_pbc(tmp_path: Path) -> None:
+    config_path = tmp_path / "pbc_inline.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-periodic
+  geometry:
+    - symbol: H
+      coords: [0.1, 0.2, 0.3]
+    - symbol: H
+      coords: [0.9, 0.2, 0.3]
+  periodic:
+    cell:
+      vectors:
+        - [10.0, 0.0, 0.0]
+        - [0.0, 10.0, 0.0]
+        - [0.0, 0.0, 10.0]
+    pbc: [true, false, true]
+    coordinate_mode: fractional
+    wrap_policy: wrap
+    source: inline_test
+problem:
+  pbc:
+    enabled: true
+    wrap_policy: preserve
+    source: user
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.molecule.periodic is not None
+    assert spec.molecule.periodic.cell is not None
+    assert spec.molecule.periodic.cell.vectors[0] == (10.0, 0.0, 0.0)
+    assert spec.molecule.periodic.pbc == (True, False, True)
+    assert spec.molecule.periodic.coordinate_mode == "fractional"
+    assert spec.molecule.periodic.wrap_policy == "wrap"
+    assert spec.molecule.periodic.source == "inline_test"
+    assert spec.problem.pbc.enabled is True
+    assert spec.problem.pbc.wrap_policy == "preserve"
+    assert spec.molecule.input_provenance["periodic"]["pbc"] == (True, False, True)
+    assert spec.molecule.input_provenance["normalized_geometry_sha256"]
+
+
+def test_load_run_spec_uses_pdb_cryst1_periodic_when_not_overridden(tmp_path: Path) -> None:
+    pdb_path = tmp_path / "water.pdb"
+    pdb_path.write_text(
+        """CRYST1   10.000   11.000   12.000  90.00  90.00  90.00 P 1           1
+HETATM    1  O   HOH A   1       1.000   2.000   3.000  1.00  0.00           O
+END
+""",
+        encoding="utf-8",
+    )
+    config_path = tmp_path / "from_pdb.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: water-pbc
+  structure_file: water.pdb
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.molecule.periodic is not None
+    assert spec.molecule.periodic.cell is not None
+    assert spec.molecule.periodic.cell.lengths == pytest.approx((10.0, 11.0, 12.0))
+    assert spec.molecule.periodic.pbc == (True, True, True)
+    assert spec.molecule.input_provenance["periodic"]["source"] == "pdb_cryst1"
+
+
+def test_load_run_spec_rejects_pbc_cell_unit_mismatch(tmp_path: Path) -> None:
+    config_path = tmp_path / "pbc_unit_mismatch.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-periodic-unit-mismatch
+  unit: bohr
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.4]
+  periodic:
+    cell:
+      unit: angstrom
+      vectors:
+        - [8.0, 0.0, 0.0]
+        - [0.0, 8.0, 0.0]
+        - [0.0, 0.0, 8.0]
+problem:
+  pbc:
+    enabled: true
+solver:
+  kind: exact
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="cell.unit to match molecule.unit"):
+        load_run_spec(config_path)

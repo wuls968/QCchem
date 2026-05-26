@@ -1,0 +1,33 @@
+{
+  "allowed_target": "validated_algorithm_candidate",
+  "artifact": "artifacts/h2_lr_ace/result.json",
+  "blocking_gaps": [
+    "Exploratory or unstable artifact cannot be directly promoted to validated.",
+    "Missing required studies: multiple molecules, active-space coverage, ansatz limitation analysis, failure cases."
+  ],
+  "missing_required_studies": [
+    "multiple molecules",
+    "active-space coverage",
+    "ansatz limitation analysis",
+    "failure cases"
+  ],
+  "module_origin": "lr_ace",
+  "recommended_action": "collect_stronger_baseline",
+  "required_studies": [
+    "exact baseline",
+    "multiple molecules",
+    "active-space coverage",
+    "compression-vs-uncompressed comparison",
+    "ansatz limitation analysis",
+    "failure cases"
+  ],
+  "safe_claim": "lr_ace evidence may be discussed as bounded exploratory algorithm evidence; broader validated or publication-grade claims require the promotion gate studies first.",
+  "schema_version": "qcchem.promotion_gate.v0.1-alpha",
+  "source_trust_tier": "exploratory",
+  "status": "blocked",
+  "suggested_configs": [
+    "configs/exploratory/h2_lr_ace.yaml",
+    "configs/exploratory/lih_active_lr_ace.yaml"
+  ],
+  "target": "validated_algorithm_candidate"
+}

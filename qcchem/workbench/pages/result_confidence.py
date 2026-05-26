@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from dash import dcc, html
 import plotly.graph_objects as go
 
+from qcchem.core.evidence_capsule import validate_evidence_capsule
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import add_chart_note, add_threshold_line, apply_chart_theme
 from qcchem.workbench.data import load_featured_run_view_model
@@ -62,6 +65,14 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
     comparison_target = confidence.get("comparison_target") or confidence.get("boundary", {}).get(
         "comparison_target", "exact diagonalization"
     )
+    artifact_entry = model.get("artifact_index_entry") if isinstance(model.get("artifact_index_entry"), dict) else {}
+    capsule: dict[str, object] = {}
+    artifact_root = artifact_entry.get("artifact_root") if artifact_entry else None
+    if artifact_root:
+        try:
+            capsule = validate_evidence_capsule(Path(str(artifact_root)))
+        except Exception:
+            capsule = {}
 
     def _tone_for_accuracy(value: object) -> str:
         if value is True:
@@ -118,6 +129,17 @@ def build_result_confidence_page(model: dict[str, object]) -> html.Div:
             html.Div(
                 className="qcchem-page__detail-grid",
                 children=[
+                    detail_card(
+                        "Evidence Capsule status",
+                        [
+                            ("Capsule status", str(capsule.get("capsule_status", "not available"))),
+                            ("Evidence Summary", str(capsule.get("evidence_summary_status", "not available"))),
+                            ("Provenance", str(capsule.get("provenance_status", "not available"))),
+                            ("Missing required files", str(capsule.get("missing_required_files", []))),
+                            ("Boundary warnings", str(capsule.get("boundary_warnings", []))),
+                        ],
+                        eyebrow="Evidence Capsule",
+                    ),
                     detail_card(
                         "Evidence checklist",
                         [

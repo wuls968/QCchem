@@ -43,6 +43,7 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
     success = data.get("success")
     if success is None:
         success = verification_status not in (None, "failed", False)
+    periodic_boundary = data.get("periodic_boundary") or data.get("pbc")
     return {
         "schema_name": "qcschema_output",
         "schema_version": 1,
@@ -88,12 +89,17 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "runtime_chemical_accuracy": data.get("runtime_chemical_accuracy"),
             "runtime_options": data.get("runtime_options"),
             "runtime_submission": data.get("runtime_submission"),
+            "evidence_summary": data.get("evidence_summary"),
             "input_provenance": input_sources,
             "compression_result": data.get("compression_result"),
             "perturbative_correction_result": data.get("perturbative_correction_result"),
             "external_point_charges": data.get("external_point_charges"),
             "environment_embedding": data.get("environment_embedding"),
+            "periodic_boundary": periodic_boundary,
+            "pbc": periodic_boundary,
+            "pbc_qmmm": data.get("pbc_qmmm"),
             "quantum_evidence": data.get("quantum_evidence"),
+            "field_evidence": data.get("field_evidence"),
             "tc_qsci_result": data.get("tc_qsci_result"),
             "determinant_selection": data.get("determinant_selection"),
             "symmetry_sector": data.get("symmetry_sector"),

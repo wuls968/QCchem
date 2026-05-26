@@ -1,0 +1,52 @@
+molecule:
+  name: H2-pbc-non-gamma-reject
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+  periodic:
+    enabled: true
+    cell:
+      vectors:
+        - [8.0, 0.0, 0.0]
+        - [0.0, 8.0, 0.0]
+        - [0.0, 0.0, 8.0]
+      unit: angstrom
+      source: config
+    pbc: [true, true, true]
+    coordinate_mode: cartesian
+    wrap_policy: preserve
+    source: config
+
+problem:
+  active_space: null
+  pbc:
+    enabled: true
+    driver: pyscf_pbc
+    mode: gamma_supercell
+    kpoint_mesh: [2, 1, 1]
+    density_fitting: fftdf
+    precision: 1.0e-8
+    neutralization: reject
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+benchmark:
+  enabled: false
+
+run:
+  seed: 7
+  output_dir: artifacts/pbc_h2_non_gamma_reject
+  overwrite: true

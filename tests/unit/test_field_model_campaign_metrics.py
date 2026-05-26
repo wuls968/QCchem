@@ -65,6 +65,16 @@ def test_extract_lattice_field_model_metrics_and_preview_gate() -> None:
                 "transpiled_pub_resources": [],
             },
         },
+        field_evidence=SimpleNamespace(
+            hamiltonian={
+                "sector_energy_closure_available": True,
+                "sector_energy_closure_error": 0.0,
+            },
+            observables={"ground_state_expectations_available": True},
+            constraints={"physical_sector": {"basis_index_count": 3}},
+            resources={"num_qubits": 4},
+            error_budget={"finite_cutoff_boundary": True},
+        ),
         cavity_qed_model=None,
         mapping=SimpleNamespace(num_qubits=4, qubit_term_count=12),
         exact_baseline=SimpleNamespace(available=True),
@@ -77,6 +87,8 @@ def test_extract_lattice_field_model_metrics_and_preview_gate() -> None:
 
     assert metrics["field_model_kind"] == "lattice_qed"
     assert metrics["projected_dimension"] == 3
+    assert metrics["field_sector_energy_closure_available"] is True
+    assert metrics["field_physical_sector"]["basis_index_count"] == 3
     assert metrics["max_trotter_observable_error"] == 5.0e-3
     assert metrics["runtime_preview_available"] is True
     assert metrics["field_model_decision"]["hardware_candidate"] is True

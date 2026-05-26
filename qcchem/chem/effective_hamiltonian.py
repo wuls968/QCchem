@@ -157,7 +157,9 @@ def _physics_fingerprint(
                 "compatibility_mode": point_charges.compatibility_mode,
             },
             "boundary": to_primitive(env.boundary) if env.enabled else {"enabled": False},
+            "periodic_policy": to_primitive(env.periodic_policy),
         },
+        "pbc": to_primitive(spec.problem.pbc),
         "active_space_projection": active_space_projection,
         "matrix_shape": matrix_shape,
     }

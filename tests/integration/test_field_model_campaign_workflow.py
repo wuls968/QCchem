@@ -72,11 +72,20 @@ benchmark_suite:
 
     cases = {case["name"]: case for case in payload["cases"]}
     assert cases["lattice_exact"]["metrics"]["field_model_kind"] == "lattice_qed"
+    lattice_root = Path(cases["lattice_exact"]["artifact_root"])
+    assert (lattice_root / "field_hamiltonian.json").exists()
+    assert (lattice_root / "field_constraints.json").exists()
+    assert cases["lattice_exact"]["metrics"]["field_sector_energy_closure_available"] is True
     cavity_metrics = cases["cavity_cutoff_1"]["metrics"]
+    cavity_root = Path(cases["cavity_cutoff_1"]["artifact_root"])
+    assert (cavity_root / "field_model_registry.json").exists()
+    assert (cavity_root / "field_observables.json").exists()
     assert cavity_metrics["field_model_kind"] == "pauli_fierz_cavity_qed"
     assert cavity_metrics["photon_occupation"]
     assert cavity_metrics["photon_physical_subspace_leakage"] is not None
     assert cavity_metrics["photon_cutoff_delta_hartree"] is not None
+    assert cavity_metrics["field_sector_energy_closure_available"] is True
+    assert cavity_metrics["cutoff_sensitivity_inputs"]["max_occupation_by_mode"] == [1]
 
     report = result.artifacts.report_markdown.read_text(encoding="utf-8")
     assert "Field-Model Campaign" in report

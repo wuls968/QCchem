@@ -27,6 +27,8 @@ from qcchem.workflow.ai_assistant import draft_analysis_ticket
 from qcchem.workflow.ai_store import workspace_root, write_delivery_record, write_ticket_record
 from qcchem.workflow.agent import run_analysis_ticket
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
+from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
+from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
 from qcchem.workflow.evidence_agent import (
     append_ai_provenance_event,
     build_action_proposal,
@@ -38,6 +40,8 @@ from qcchem.workflow.evidence_agent import (
     write_review_outputs,
 )
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
+from qcchem.workflow.objective import plan_research_objective, status_research_objective
+from qcchem.workflow.promotion import review_exploratory_promotion, write_promotion_outputs
 from qcchem.workflow.runtime_collect import collect_runtime_artifact
 from qcchem.workflow.runner import run_from_config
 from qcchem.workflow.scan import run_scan_from_config
@@ -91,7 +95,14 @@ def _delivery_outputs_from_result(result: dict[str, Any]) -> list[str]:
         "report_markdown",
         "review_findings_json",
         "review_findings_markdown",
+        "claim_review_json",
+        "claim_review_markdown",
+        "capsule_json",
+        "capsule_markdown",
+        "promotion_review_json",
+        "promotion_review_markdown",
         "plan_json",
+        "status_json",
     ):
         output = result.get(key)
         if isinstance(output, str) and output:
@@ -297,6 +308,85 @@ def _run_action_ticket(ticket: AITaskTicket, path: Path) -> dict[str, Any]:
             "review": review,
             "linked_outputs": list(outputs.values()),
             **outputs,
+        }
+    elif action_kind == "claim_check":
+        targets = [str(item) for item in inputs.get("targets") or inputs.get("artifacts") or ticket.linked_artifacts]
+        claim_text = str(inputs.get("claim_text") or ticket.request_text)
+        review = compile_claim_review(
+            claim_text=claim_text,
+            targets=targets,
+            workspace_base=base_dir,
+        )
+        outputs = write_claim_review_outputs(review, output_root)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "claim_review": review,
+            "evidence_summary": review,
+            "linked_outputs": list(outputs.values()),
+            **outputs,
+        }
+    elif action_kind == "capsule_validate":
+        artifact_root = inputs.get("artifact_root") or inputs.get("artifact") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        root = resolve_user_path(base_dir, str(artifact_root))
+        capsule = build_and_write_evidence_capsule(root, output_root)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "evidence_capsule": capsule,
+            "evidence_summary": capsule,
+            "linked_outputs": list((capsule.get("outputs") or {}).values()),
+            **dict(capsule.get("outputs") or {}),
+        }
+    elif action_kind == "promotion_review":
+        artifact = inputs.get("artifact") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        target = str(inputs.get("target") or "validated_algorithm_candidate")
+        review = review_exploratory_promotion(
+            artifact=resolve_user_path(base_dir, str(artifact)),
+            target=target,
+        )
+        outputs = write_promotion_outputs(review, output_root)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "promotion_review": review,
+            "evidence_summary": review,
+            "linked_outputs": list(outputs.values()),
+            **outputs,
+        }
+    elif action_kind == "objective_plan":
+        config = inputs.get("config") or inputs.get("objective") or inputs.get("objective_config") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        plan = plan_research_objective(resolve_user_path(base_dir, str(config)), output_root)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "objective_plan": plan,
+            "evidence_summary": plan,
+            "linked_outputs": list((plan.get("outputs") or {}).values()),
+            "plan_json": (plan.get("outputs") or {}).get("json"),
+            "report_markdown": (plan.get("outputs") or {}).get("markdown"),
+        }
+    elif action_kind == "objective_status":
+        config = inputs.get("config") or inputs.get("objective") or inputs.get("objective_config") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        status = status_research_objective(resolve_user_path(base_dir, str(config)), output_root)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "objective_status": status,
+            "evidence_summary": status,
+            "linked_outputs": list((status.get("outputs") or {}).values()),
+            "status_json": (status.get("outputs") or {}).get("json"),
+            "report_markdown": (status.get("outputs") or {}).get("markdown"),
         }
     else:
         raise ValueError(f"Unsupported AI action kind: {action_kind}")
@@ -508,7 +598,14 @@ def classify_execution_risk(payload: dict[str, Any]) -> dict[str, Any]:
     task_type = str(payload.get("task_type", "")).strip().lower()
     action_plan = payload.get("action_plan") if isinstance(payload.get("action_plan"), dict) else {}
     action_kind = str((action_plan or {}).get("action_kind") or "").strip()
-    if task_type != "execution" and action_kind not in {"runtime_collect", "hardware_optimize_preview"}:
+    if (
+        task_type != "execution"
+        and action_kind not in {"runtime_collect", "hardware_optimize_preview"}
+        and not (
+            action_kind == "promotion_review"
+            and "validated" in str((action_plan or {}).get("inputs", {}).get("target") or payload.get("request_text") or "").lower()
+        )
+    ):
         return {
             "is_high_risk": False,
             "risk_tier": "standard",
@@ -540,6 +637,8 @@ def classify_execution_risk(payload: dict[str, Any]) -> dict[str, Any]:
         "execute": "explicitly requests execution",
         "run": "explicitly requests a run",
         "queue": "references a queued execution path",
+        "promotion": "requests a trust-tier promotion review",
+        "validated": "mentions validated evidence language",
     }
     if action_plan.get("allowed") is False:
         reasons.append(str(action_plan.get("blocked_reason") or "action is blocked by local policy"))

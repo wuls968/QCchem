@@ -35,6 +35,8 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
     artifact_root = result_path.parent
     payload = _safe_read_json(result_path)
     evidence = payload.get("evidence_summary") if isinstance(payload.get("evidence_summary"), dict) else {}
+    capsule_path = artifact_root / "evidence_capsule.json"
+    capsule = _safe_read_json(capsule_path) if capsule_path.exists() else {}
     runtime_submission = (
         _safe_read_json(artifact_root / "runtime_submission.json")
         if (artifact_root / "runtime_submission.json").exists()
@@ -60,6 +62,30 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "verification_status": payload.get("verification_status") or evidence.get("trust_tier"),
         "trust_tier": evidence.get("trust_tier") or payload.get("verification_status"),
         "recommended_action": evidence.get("recommended_action"),
+        "capsule_status": capsule.get("capsule_status"),
+        "evidence_summary_complete": (
+            capsule.get("evidence_summary_status") == "complete"
+            if capsule
+            else all(
+                evidence.get(key) is not None and evidence.get(key) != "" and evidence.get(key) != {}
+                for key in (
+                    "result_identity",
+                    "primary_scientific_claim",
+                    "primary_baseline",
+                    "primary_error_metric",
+                    "chemical_accuracy_status",
+                    "runtime_evidence_status",
+                    "trust_tier",
+                    "recommended_action",
+                )
+            )
+        ),
+        "provenance_complete": (
+            capsule.get("provenance_status") == "complete"
+            if capsule
+            else isinstance(payload.get("provenance"), dict) and bool(payload.get("provenance"))
+        ),
+        "capsule_json": str(capsule_path) if capsule_path.exists() else None,
         "runtime_evidence_status": evidence.get("runtime_evidence_status")
         or ("retrieved_result" if runtime_submission.get("submitted") and runtime_submission.get("succeeded") else None),
         "hardware_verified": bool(payload.get("hardware_verified") or runtime_submission.get("succeeded")),
@@ -77,6 +103,35 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or (artifact_root / "campaign_report.md").exists(),
         "has_resolved_config": (artifact_root / "resolved_config.yaml").exists(),
         "has_runtime_submission": (artifact_root / "runtime_submission.json").exists(),
+        "has_quantum_evidence": (artifact_root / "quantum_evidence.json").exists(),
+        "has_pbc_metadata": isinstance(payload.get("periodic_boundary"), dict)
+        or isinstance(payload.get("pbc"), dict),
+        "has_pbc_qmmm_metadata": isinstance(payload.get("pbc_qmmm"), dict),
+        "has_field_evidence": any(
+            (artifact_root / name).exists()
+            for name in (
+                "field_model_registry.json",
+                "field_hamiltonian.json",
+                "field_observables.json",
+                "field_dynamics.json",
+                "field_constraints.json",
+                "field_resources.json",
+                "field_error_budget.json",
+            )
+        ),
+        "field_sidecar_count": sum(
+            1
+            for name in (
+                "field_model_registry.json",
+                "field_hamiltonian.json",
+                "field_observables.json",
+                "field_dynamics.json",
+                "field_constraints.json",
+                "field_resources.json",
+                "field_error_budget.json",
+            )
+            if (artifact_root / name).exists()
+        ),
         "has_acceptance_summary": (artifact_root / "acceptance_summary.json").exists(),
         "has_hardware_error_diagnostic": isinstance(payload.get("hardware_error_diagnostic"), dict),
         "mtime": mtime,

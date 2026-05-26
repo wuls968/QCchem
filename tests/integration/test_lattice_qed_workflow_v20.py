@@ -10,6 +10,23 @@ from qcchem.workflow.runner import run_from_config
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _load_field_sidecars(result) -> dict[str, dict]:
+    paths = result.artifacts.field_evidence
+    assert paths is not None
+    sidecars = {
+        "registry": paths.registry_json,
+        "hamiltonian": paths.hamiltonian_json,
+        "observables": paths.observables_json,
+        "dynamics": paths.dynamics_json,
+        "constraints": paths.constraints_json,
+        "resources": paths.resources_json,
+        "error_budget": paths.error_budget_json,
+    }
+    for path in sidecars.values():
+        assert path.exists()
+    return {name: json.loads(path.read_text(encoding="utf-8")) for name, path in sidecars.items()}
+
+
 @pytest.mark.integration
 def test_h2_lattice_qed_exact_generates_exploratory_artifact(tmp_path: Path) -> None:
     result = run_from_config(
@@ -29,10 +46,24 @@ def test_h2_lattice_qed_exact_generates_exploratory_artifact(tmp_path: Path) -> 
     payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
     assert payload["qft_model"]["gauge_group"] == "u1"
     assert payload["qft_model"]["term_counts_by_sector"]["electric"] > 0
+    assert payload["field_evidence"]["active_model_kind"] == "lattice_qed"
     assert payload["quantum_evidence"]["symmetry_checks"]["qft_constraints"]["available"] is True
     assert payload["quantum_evidence"]["error_budget"]["field_model"]["finite_cutoff_boundary"] is True
-    assert "Lattice QED Field Model" in result.artifacts.report_markdown.read_text(encoding="utf-8")
-    assert "Quantum Evidence" in result.artifacts.report_markdown.read_text(encoding="utf-8")
+    sidecars = _load_field_sidecars(result)
+    assert sidecars["registry"]["model_kind"] == "lattice_qed"
+    assert sidecars["registry"]["registry_name"] == "finite_cutoff_lattice_qed"
+    assert sidecars["hamiltonian"]["term_counts_by_sector"]["electric"] > 0
+    assert sidecars["hamiltonian"]["sector_energy_closure_available"] is True
+    assert sidecars["hamiltonian"]["sector_energy_closure_error"] == pytest.approx(0.0, abs=1.0e-8)
+    assert sidecars["constraints"]["gauss_law"]["gauss_law_generators"]
+    assert sidecars["constraints"]["physical_sector"]
+    assert sidecars["resources"]["lattice_qed"]["total_qubits"] == result.qft_model.total_qubits
+    assert sidecars["error_budget"]["finite_cutoff"]["finite_cutoff_boundary"] is True
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Lattice QED Field Model" in report
+    assert "Quantum Evidence" in report
+    assert "Field Evidence Artifacts" in report
+    assert "field_hamiltonian.json" in report
 
 
 @pytest.mark.integration
@@ -150,6 +181,9 @@ def test_h2_lattice_qed_sector_audit_writes_physical_sector(tmp_path: Path) -> N
 
     payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
     assert payload["qft_model"]["physical_sector"]["target_charge_sector"] == "neutral"
+    sidecars = _load_field_sidecars(result)
+    assert sidecars["constraints"]["physical_sector"]["target_charge_sector"] == "neutral"
+    assert sidecars["constraints"]["physical_sector"]["basis_index_count"] > 0
     assert "Gauge Constraint Audit" in result.artifacts.report_markdown.read_text(encoding="utf-8")
 
 
