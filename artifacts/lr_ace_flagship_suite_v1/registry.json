@@ -1,0 +1,88 @@
+[
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship",
+    "created_at": "2026-05-17T10:49:33.084239+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lr_ace_flagship",
+    "source": "configs/lr_ace/h2_flagship.yaml",
+    "status": "validated",
+    "tags": [
+      "lr_ace",
+      "flagship",
+      "fast",
+      "h2"
+    ]
+  },
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/lih_active_lr_ace_flagship",
+    "created_at": "2026-05-17T10:49:33.334995+00:00",
+    "kind": "benchmark:run",
+    "name": "lih_active_lr_ace_flagship",
+    "source": "configs/lr_ace/lih_active_flagship.yaml",
+    "status": "validated",
+    "tags": [
+      "lr_ace",
+      "flagship",
+      "fast",
+      "lih",
+      "active_space"
+    ]
+  },
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+    "created_at": "2026-05-17T10:50:40.840251+00:00",
+    "kind": "benchmark:run",
+    "name": "h2o_active_lr_ace_adaptive",
+    "source": "configs/lr_ace/h2o_active_adaptive.yaml",
+    "status": "validated",
+    "tags": [
+      "lr_ace",
+      "flagship",
+      "slow",
+      "h2o",
+      "active_space"
+    ]
+  },
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive",
+    "created_at": "2026-05-17T10:50:41.772400+00:00",
+    "kind": "benchmark:run",
+    "name": "h3plus_lr_ace_adaptive",
+    "source": "configs/lr_ace/h3plus_adaptive.yaml",
+    "status": "validated",
+    "tags": [
+      "lr_ace",
+      "flagship",
+      "slow",
+      "h3plus"
+    ]
+  },
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h4_chain_lr_ace_adaptive",
+    "created_at": "2026-05-17T10:51:44.330452+00:00",
+    "kind": "benchmark:run",
+    "name": "h4_chain_lr_ace_adaptive",
+    "source": "configs/lr_ace/h4_chain_adaptive.yaml",
+    "status": "validated",
+    "tags": [
+      "lr_ace",
+      "flagship",
+      "slow",
+      "h4_chain"
+    ]
+  },
+  {
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1",
+    "created_at": "2026-05-17T10:51:44.330486+00:00",
+    "kind": "benchmark_suite",
+    "name": "lr_ace_flagship_suite_v1",
+    "source": "benchmarks/lr_ace_flagship_suite_v1.yaml",
+    "status": "validated",
+    "tags": [
+      "benchmark",
+      "lr_ace",
+      "flagship",
+      "trust_first"
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+2026-05-17 18:49:33,416 INFO Loading config from configs/lr_ace/h2o_active_adaptive.yaml
+2026-05-17 18:49:33,416 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=3, sha256=1ae8907340ba
+2026-05-17 18:49:33,421 INFO Building electronic structure problem
+2026-05-17 18:49:33,451 INFO Applying mapping: parity_two_qubit_reduction
+2026-05-17 18:49:33,513 INFO Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads.
+2026-05-17 18:49:33,576 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-05-17 18:49:33,576 INFO Computed compression audit: modified_cholesky
+2026-05-17 18:49:33,578 INFO Prepared measurement plan: groups=7, cost=70000
+2026-05-17 18:49:33,578 INFO Preparing backend: statevector
+2026-05-17 18:49:33,578 INFO Running solver: lr_ace
+2026-05-17 18:50:08,842 INFO Computing exact spectrum for 1 states
+2026-05-17 18:50:08,843 INFO Writing exact baseline artifact to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/exact_result.json
+2026-05-17 18:50:40,810 INFO Computed compressed-vs-uncompressed execution comparison
+2026-05-17 18:50:40,812 INFO Computed empirical calibration: wall_time=35.264s, measured_cost=None
+2026-05-17 18:50:40,820 INFO Writing JSON result to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/result.json
+2026-05-17 18:50:40,823 INFO Writing Markdown report to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/report.md
+2026-05-17 18:50:40,825 INFO Run completed

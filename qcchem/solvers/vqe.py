@@ -261,6 +261,16 @@ def build_solver(
             mapper=mapper,
             field_model_context=field_model_context,
         )
+    if normalized == "lr_ace":
+        from qcchem.solvers.lr_ace import build_solver as build_lr_ace_solver
+
+        return build_lr_ace_solver(
+            spec,
+            backend,
+            seed,
+            problem_summary=problem_summary,
+            mapper=mapper,
+        )
     if normalized in {"exact", "reference"}:
         return ExactDiagonalizationSolver()
     raise ValueError(f"Unsupported solver kind: {spec.kind}")

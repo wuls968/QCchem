@@ -1,0 +1,192 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 1.3086143280105489e-08,
+      "available": true,
+      "estimated_measurement_cost": 20000.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.009407709003426135,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.01,
+      "reference_target": "variational_result"
+    },
+    "cast_hamiltonian": null,
+    "cavity_qed_model": null,
+    "chemical_accuracy": {
+      "absolute_error_hartree": 1.3086143280105489e-08,
+      "absolute_error_kcal_mol": 8.211678886387629e-06,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.1372838214023577,
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.137283834488501,
+      "relative_error": 1.1506488427307195e-08,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "determinant_selection": null,
+    "environment_embedding": null,
+    "error_budget": null,
+    "external_point_charges": null,
+    "field_model": null,
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "input_provenance": [
+      {
+        "atom_count": 2,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "0c68621f7ed95dc12a831da68f2cf64c633e30d000afab6f1e2b6e032cf439da",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "unit": "angstrom"
+      }
+    ],
+    "low_rank_resource_estimate": null,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "parity_two_qubit_reduction",
+      "num_qubits": 2,
+      "qubit_term_count": 5,
+      "raw_num_qubits": 2,
+      "raw_qubit_term_count": 5,
+      "symmetry_reduction_notes": [
+        "Z2 tapering disabled by mapping.symmetry_reduction.z2.",
+        "Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads."
+      ],
+      "symmetry_reduction_status": "disabled",
+      "symmetry_reduction_validation": {},
+      "symmetry_tapered_qubits": 0,
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    },
+    "measurement": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "low_rank_factor_aware",
+      "low_rank_aware": false,
+      "notes": [
+        "Measurement groups estimated with strategy 'low_rank_lr_ace_local'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "runtime_precision_target": 0.01,
+      "strategy": "low_rank_lr_ace_local",
+      "term_count": 5,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "perturbative_correction_result": null,
+    "qcchem_run_id": "h2_lr_ace_flagship",
+    "qft_dynamics": null,
+    "qft_model": null,
+    "qpe_resource_estimate": null,
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7151043390810812
+      },
+      "nuclear_repulsion_energy": 0.7151043390810812,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "point_group_metadata": {
+        "active_irreps": [],
+        "enabled": true,
+        "group": "Dooh",
+        "irrep_ids": [
+          0,
+          5
+        ],
+        "irrep_names": [
+          "A1g",
+          "A1u"
+        ],
+        "notes": [],
+        "orbital_energies": [
+          -0.5785538598315291,
+          0.6711434919142523
+        ],
+        "orbital_irreps": [
+          "A1g",
+          "A1u"
+        ],
+        "orbital_occupations": [
+          2.0,
+          0.0
+        ],
+        "reduction_mode": "audit",
+        "remove_irreps": [],
+        "requested_mode": "auto",
+        "requested_subgroup": "auto",
+        "status": "available",
+        "topgroup": "Dooh"
+      },
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7151043390810812,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "symmetry_sector": null,
+    "tc_qsci_result": null,
+    "verification_status": "validated"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-LR-ACE-flagship"
+  },
+  "properties": {
+    "boundary_embedding_constant_energy": 0.0,
+    "electronic_energy": -1.852388160483439,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "nuclear_repulsion_energy": 0.7151043390810812,
+    "return_energy": -1.1372838214023577
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "codex/lr-ace-flagship",
+    "git_commit": "a7c0893f8c2b2a07e7c911c49536761ba5ebb250",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "c0363161a73053013d5eda305c18cee4b4514c05dcdb7120174d27439e834048"
+  },
+  "return_result": -1.1372838214023577,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

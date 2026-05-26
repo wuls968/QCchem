@@ -326,16 +326,30 @@ audit. They do not claim continuum-limit chemistry accuracy.
 
 ### LR-ACE
 
-LR-ACE, the Low-Rank Adaptive Chemistry Eigensolver prototype, builds compact
-Pauli-evolution ansatz metadata from low-rank/compressed Hamiltonian structure.
+LR-ACE, the Low-Rank Adaptive Chemistry Eigensolver, is QCchem's flagship
+low-rank-factor-informed variational method. Use the core LR-ACE configs for
+trust-first local runs whose artifacts can be promoted only when exact-baseline,
+local accuracy, and compression gates pass.
+
+```bash
+qcchem run -c configs/lr_ace/h2_flagship.yaml
+qcchem run -c configs/lr_ace/lih_active_flagship.yaml
+qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1
+```
+
+LR-ACE flagship artifacts record `method_role`, `profile`, and
+`validation_gate` under `variational_result.ansatz.lr_ace`, plus
+`lr_ace_trust_label` in Evidence Summary. Legacy exploratory LR-ACE configs
+remain available for boundary-preserving probes:
 
 ```bash
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
 qcchem exploratory run -c configs/exploratory/lih_active_lr_ace.yaml
 ```
 
-Boundary: local exact-baseline gates are useful evidence for H2 and LiH active
-space examples. They do not make LR-ACE a publication-validated general method.
+Boundary: LR-ACE flagship means default recommended method surface, not a blanket
+publication-grade claim. Each run must still pass the trust-first validation
+gate before it is reported as validated chemistry.
 
 ### TC-QSCI
 

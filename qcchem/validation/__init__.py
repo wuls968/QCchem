@@ -13,6 +13,7 @@ __all__ = [
     "default_pbc_qmmm_validation_cases",
     "run_pbc_qmmm_validation",
     "QMMMValidationCase",
+    "classify_lr_ace_validation_gate",
     "default_qmmm_validation_cases",
     "run_qmmm_embedding_validation",
 ]
@@ -35,4 +36,8 @@ def __getattr__(name: str) -> Any:
         from . import pbc_qmmm
 
         return getattr(pbc_qmmm, name)
+    if name == "classify_lr_ace_validation_gate":
+        from .lr_ace import classify_lr_ace_validation_gate
+
+        return classify_lr_ace_validation_gate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

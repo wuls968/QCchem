@@ -199,6 +199,35 @@ study:
 
 
 @pytest.mark.integration
+def test_study_continuity_reuses_lr_ace_previous_run_when_enabled(tmp_path: Path) -> None:
+    study_config = tmp_path / "h2_lr_ace_study_continuity.yaml"
+    study_config.write_text(
+        """
+study:
+  name: h2_lr_ace_study_continuity
+  continuity:
+    enabled: true
+  runs:
+    - name: h2_lr_ace_first
+      config: configs/lr_ace/h2_flagship.yaml
+    - name: h2_lr_ace_second
+      config: configs/lr_ace/h2_flagship.yaml
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    result = run_study_from_config(study_config, output_dir=tmp_path / "study-lr-ace-continuity")
+
+    assert len(result.run_records) == 2
+    assert result.run_records[0].initial_point_reused is False
+    assert result.run_records[1].initial_point_reused is True
+    assert result.run_records[1].initial_point_source == "h2_lr_ace_first"
+    second_payload = json.loads((result.run_records[1].artifact_root / "result.json").read_text(encoding="utf-8"))
+    assert second_payload["variational_result"]["initial_point_strategy"] == "previous_optimal"
+    assert second_payload["variational_result"]["initial_point_provenance"]["candidate_source"] == "h2_lr_ace_first"
+
+
+@pytest.mark.integration
 def test_study_continuity_falls_back_on_parameter_count_mismatch(tmp_path: Path) -> None:
     study_config = tmp_path / "h2_study_continuity_mismatch.yaml"
     study_config.write_text(

@@ -115,12 +115,20 @@ def ensure_pages_registered() -> None:
         order=5,
     )
     _register_page(
+        "qcchem.workbench.pages.lr_ace_method",
+        path="/lr-ace-method",
+        name="LR-ACE",
+        title="LR-ACE Method",
+        summary="Flagship LR-ACE generator plan, adaptive provenance, and trust-first validation gate.",
+        order=6,
+    )
+    _register_page(
         "qcchem.workbench.pages.studies",
         path="/studies",
         name="Studies",
         title="Studies",
         summary="Aggregate study comparisons across defended runs, exploratory probes, and campaign axes.",
-        order=6,
+        order=7,
     )
     _register_page(
         "qcchem.workbench.pages.benchmarks",
@@ -128,7 +136,7 @@ def ensure_pages_registered() -> None:
         name="Benchmarks",
         title="Benchmarks",
         summary="Benchmark suite control surface with status bands, defended scope, and exploratory separation.",
-        order=7,
+        order=8,
     )
     _register_page(
         "qcchem.workbench.pages.scans",
@@ -136,7 +144,7 @@ def ensure_pages_registered() -> None:
         name="Scans",
         title="Scans",
         summary="Aggregate parameter-scan view across validated-like and exploratory sweep points.",
-        order=8,
+        order=9,
     )
     _register_page(
         "qcchem.workbench.pages.hardware_campaign",
@@ -144,7 +152,7 @@ def ensure_pages_registered() -> None:
         name="Hardware Campaign",
         title="Hardware Campaign",
         summary="Hardware runtime campaign ranking, best-case evidence, and runtime status posture.",
-        order=9,
+        order=10,
     )
     _register_page(
         "qcchem.workbench.pages.ai_workspace",

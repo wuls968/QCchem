@@ -1,0 +1,14 @@
+2026-05-17 18:49:32,941 INFO Loading config from configs/lr_ace/h2_flagship.yaml
+2026-05-17 18:49:32,941 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=0c68621f7ed9
+2026-05-17 18:49:32,946 INFO Building electronic structure problem
+2026-05-17 18:49:32,967 INFO Applying mapping: parity_two_qubit_reduction
+2026-05-17 18:49:32,976 INFO Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads.
+2026-05-17 18:49:32,977 INFO Prepared measurement plan: groups=2, cost=20000
+2026-05-17 18:49:32,977 INFO Preparing backend: statevector
+2026-05-17 18:49:32,977 INFO Running solver: lr_ace
+2026-05-17 18:49:32,986 INFO Computing exact spectrum for 1 states
+2026-05-17 18:49:32,987 INFO Writing exact baseline artifact to artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship/exact_result.json
+2026-05-17 18:49:32,987 INFO Computed empirical calibration: wall_time=0.009s, measured_cost=None
+2026-05-17 18:49:32,995 INFO Writing JSON result to artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship/result.json
+2026-05-17 18:49:32,997 INFO Writing Markdown report to artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship/report.md
+2026-05-17 18:49:32,998 INFO Run completed

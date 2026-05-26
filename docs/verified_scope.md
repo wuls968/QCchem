@@ -154,7 +154,7 @@ neutralization.
 
 ### LR-ACE
 
-LR-ACE assets include:
+LR-ACE flagship assets include:
 
 - H2 local exact-baseline gate with 2 qubits and 1 parameter,
 - LiH active-space local exact-baseline gate with 2 qubits and compact
@@ -163,8 +163,10 @@ LR-ACE assets include:
 - retrieved H2 Runtime probes with best runtime error near, but above, the
   chemical-accuracy threshold.
 
-Boundary: these validate local artifact gates and runtime plumbing for the
-prototype. They do not validate LR-ACE as a general publication-grade algorithm.
+Boundary: LR-ACE flagship is the recommended QCchem method surface when its
+trust-first validation gate passes. Legacy exploratory LR-ACE assets remain
+inside the exploratory boundary, and runtime retrieval alone does not validate
+LR-ACE as a general publication-grade algorithm.
 
 ### TC-QSCI
 

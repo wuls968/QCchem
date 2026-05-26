@@ -109,6 +109,19 @@ def page_focus(pathname: str | None) -> dict[str, object]:
                 ("Conclude", "Validated / exploratory / unstable"),
             ],
         },
+        "/lr-ace-method": {
+            "route_label": "LR-ACE Method",
+            "summary": "Flagship method view for generator selection, adaptive provenance, and trust-first validation gates.",
+            "rail_title": "Make the main method inspectable",
+            "rail_note": "LR-ACE should be easy to promote only when its exact-reference and compression evidence stay visible.",
+            "callout_title": "A flagship method still needs gates",
+            "callout_body": "Use this page to inspect generator count, profile, local exact status, and adaptive expansion evidence before treating LR-ACE as defended.",
+            "checklist": [
+                ("Inspect", "Generator plan and profile"),
+                ("Check", "Local exact and compression gates"),
+                ("Decide", "Validated, exploratory, or limited"),
+            ],
+        },
         "/studies": {
             "route_label": "Studies",
             "summary": "A research project view: compare run records, preserve axes, and keep the campaign readable as a coherent experiment.",

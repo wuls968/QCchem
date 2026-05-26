@@ -23,6 +23,10 @@ release_audit:
     - name: hardware_calibration_suite_v1
       path: artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json
       required: true
+    - name: lr_ace_flagship_suite_v1
+      path: artifacts/lr_ace_flagship_suite_v1/benchmark_result.json
+      required: true
+      acceptance_required: true
   exploratory_assets:
     - name: qft_sparse_projected_engine
       kind: qft
@@ -48,13 +52,13 @@ release_audit:
       required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_audit.md
       terms: [release audit, release_readiness.json, release_readiness.md, no runtime submission]
@@ -79,3 +83,4 @@ release_audit:
     - python -m pytest tests/integration/test_trust_first_release_v16.py -q
     - python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
     - python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py tests/integration/test_h2_workflow.py -q
+    - qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1

@@ -7,11 +7,34 @@ import pytest
 from qiskit.quantum_info import SparsePauliOp
 
 from qcchem.backends import StatevectorBackend
-from qcchem.core import BackendSpec, CompressionSpec
+from qcchem.core import (
+    AnsatzSpec,
+    BackendSpec,
+    CompressionSpec,
+    InitialPointCandidate,
+    OptimizerSpec,
+    SolverSpec,
+)
 from qcchem.io.config import load_run_spec
-from qcchem.exploratory.solvers.lr_ace import build_low_rank_generator_plan
-from qcchem.exploratory.solvers.lr_ace import build_solver as build_lr_ace_solver
+from qcchem.solvers.lr_ace import LRACESolver, build_low_rank_generator_plan
+from qcchem.solvers.lr_ace import build_solver as build_lr_ace_solver
+from qcchem.validation.lr_ace import classify_lr_ace_validation_gate
 from qcchem.workflow.runner import _classify_lr_ace_adaptive_trust, _compression_post_term_limit
+
+
+def test_lr_ace_core_solver_is_importable_from_core_registry() -> None:
+    spec = SolverSpec(
+        kind="lr_ace",
+        ansatz=AnsatzSpec(kind="lr_ace", reps=1),
+        optimizer=OptimizerSpec(kind="COBYLA", maxiter=3),
+    )
+    solver = build_lr_ace_solver(
+        spec,
+        StatevectorBackend(BackendSpec(kind="statevector", seed=123)),
+        seed=123,
+    )
+
+    assert isinstance(solver, LRACESolver)
 
 
 def test_lr_ace_turns_dominant_x_factor_into_real_mixing_generator() -> None:
@@ -153,6 +176,170 @@ run:
     assert spec.problem.compression.rank_schedule == [4, 8]
     assert spec.problem.compression.compression_error_budget_hartree == pytest.approx(7.0e-4)
     assert spec.problem.compression.allow_pauli_truncation is True
+
+
+def test_lr_ace_profile_config_supplies_flagship_defaults(tmp_path: Path) -> None:
+    config_path = tmp_path / "lr_ace_profile.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-profile
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+
+solver:
+  kind: lr_ace
+  lr_ace:
+    profile: flagship_adaptive
+
+run:
+  output_dir: artifacts/lr-ace-profile
+""",
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.solver.experimental is False
+    assert spec.solver.ansatz.kind == "lr_ace"
+    assert spec.solver.lr_ace.profile == "flagship_adaptive"
+    assert spec.solver.lr_ace.validation_mode == "trust_first"
+    assert spec.solver.lr_ace.uncompressed_reference == "auto"
+    assert spec.solver.lr_ace_adaptive.enabled is True
+    assert spec.solver.lr_ace_adaptive.candidate_pool_policy == "residual_guided"
+
+
+def test_lr_ace_profile_keeps_explicit_yaml_overrides(tmp_path: Path) -> None:
+    config_path = tmp_path / "lr_ace_profile_override.yaml"
+    config_path.write_text(
+        """
+molecule:
+  name: H2-profile-override
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.74]
+
+solver:
+  kind: lr_ace
+  lr_ace:
+    profile: flagship_adaptive
+  ansatz:
+    kind: lr_ace
+    reps: 3
+  lr_ace_adaptive:
+    enabled: false
+
+run:
+  output_dir: artifacts/lr-ace-profile-override
+""",
+        encoding="utf-8",
+    )
+
+    spec = load_run_spec(config_path)
+
+    assert spec.solver.ansatz.reps == 3
+    assert spec.solver.lr_ace_adaptive.enabled is False
+
+
+def test_lr_ace_validation_gate_classifies_passed_exact_reference() -> None:
+    gate = classify_lr_ace_validation_gate(
+        target_error_hartree=1.6e-3,
+        exact_available=True,
+        local_exact_error_hartree=1.0e-5,
+        compression_enabled=False,
+    )
+
+    assert gate["trust_label"] == "passed_exact_reference"
+    assert gate["verification_status"] == "validated"
+    assert gate["validated"] is True
+
+
+def test_lr_ace_validation_gate_classifies_compression_ansatz_and_runtime_limits() -> None:
+    compression_gate = classify_lr_ace_validation_gate(
+        target_error_hartree=1.6e-3,
+        exact_available=True,
+        local_exact_error_hartree=1.0e-5,
+        compression_enabled=True,
+        compressed_solver_energy=-1.00,
+        uncompressed_solver_energy=-1.004,
+        uncompressed_exact_solver_energy=-1.00401,
+    )
+    ansatz_gate = classify_lr_ace_validation_gate(
+        target_error_hartree=1.6e-3,
+        exact_available=True,
+        local_exact_error_hartree=4.0e-3,
+        compression_enabled=False,
+    )
+    runtime_gate = classify_lr_ace_validation_gate(
+        target_error_hartree=1.6e-3,
+        exact_available=True,
+        local_exact_error_hartree=1.0e-5,
+        compression_enabled=False,
+        runtime_attempted=True,
+        runtime_accuracy_met=False,
+    )
+
+    assert compression_gate["trust_label"] == "compression_limited"
+    assert compression_gate["verification_status"] == "exploratory"
+    assert ansatz_gate["trust_label"] == "ansatz_limited"
+    assert runtime_gate["trust_label"] == "runtime_gap"
+    assert runtime_gate["verification_status"] == "hardware_verified"
+
+
+def test_lr_ace_reuses_matching_initial_point_candidate() -> None:
+    spec = SolverSpec(
+        kind="lr_ace",
+        ansatz=AnsatzSpec(kind="lr_ace", reps=1),
+        initial_point="zeros",
+        initial_point_candidate=InitialPointCandidate(
+            values=[0.1, -0.2],
+            source="point_00_0.500",
+            source_run_id="point_00_0.500",
+            source_parameter_count=2,
+        ),
+    )
+    solver = build_lr_ace_solver(
+        spec,
+        StatevectorBackend(BackendSpec(kind="statevector", seed=123)),
+        seed=123,
+    )
+
+    initial_point, provenance = solver._initial_point_with_provenance(2)
+
+    assert initial_point.tolist() == pytest.approx([0.1, -0.2])
+    assert provenance["reused"] is True
+    assert provenance["effective_strategy"] == "previous_optimal"
+    assert provenance["candidate_source"] == "point_00_0.500"
+
+
+def test_lr_ace_falls_back_when_initial_point_candidate_mismatches() -> None:
+    spec = SolverSpec(
+        kind="lr_ace",
+        ansatz=AnsatzSpec(kind="lr_ace", reps=1),
+        initial_point="zeros",
+        initial_point_candidate=InitialPointCandidate(
+            values=[0.1],
+            source="point_00_0.500",
+            source_parameter_count=1,
+        ),
+    )
+    solver = build_lr_ace_solver(
+        spec,
+        StatevectorBackend(BackendSpec(kind="statevector", seed=123)),
+        seed=123,
+    )
+
+    initial_point, provenance = solver._initial_point_with_provenance(2)
+
+    assert initial_point.tolist() == pytest.approx([0.0, 0.0])
+    assert provenance["reused"] is False
+    assert provenance["effective_strategy"] == "zeros"
+    assert "does not match" in str(provenance["fallback_reason"])
 
 
 def test_lr_ace_adaptive_solver_runs_schedule_and_records_provenance() -> None:

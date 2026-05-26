@@ -1,0 +1,3758 @@
+{
+  "acceptance_summary": null,
+  "artifact_index_entry": {
+    "artifact_kind": "run",
+    "artifact_name": "h2o_active_lr_ace_adaptive",
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+    "hardware_verified": false,
+    "has_acceptance_summary": false,
+    "has_hardware_error_diagnostic": true,
+    "has_report_markdown": true,
+    "has_resolved_config": true,
+    "has_result_json": true,
+    "has_runtime_submission": false,
+    "mtime": 1779015040.832051,
+    "recommended_action": "promote_validated_result",
+    "result_json": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/result.json",
+    "runtime_evidence_status": "none",
+    "runtime_submission_status": null,
+    "schema_version": "qcchem.result.v0.8-alpha",
+    "trust_tier": "validated",
+    "verification_status": "validated"
+  },
+  "artifacts": {
+    "calibration_json": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/calibration.json",
+    "calibration_report_markdown": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/calibration_report.md",
+    "exact_result_json": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/exact_result.json",
+    "hdf5_file": null,
+    "log_file": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/run.log",
+    "qcschema_json": null,
+    "report_markdown": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/report.md",
+    "resolved_config": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/resolved_config.yaml",
+    "result_json": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/result.json",
+    "root": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+    "runtime_submission_json": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/runtime_submission.json"
+  },
+  "backend": {
+    "abelian_grouping": true,
+    "kind": "statevector",
+    "noise_enabled": false,
+    "precision": null,
+    "repetitions": 1,
+    "runtime_enabled": false,
+    "seed": 2053,
+    "shots": null
+  },
+  "backend_capability": {
+    "backend_kind": "statevector",
+    "batch_ready": false,
+    "exact_baseline": true,
+    "mitigation_ready": false,
+    "noise_model_ready": false,
+    "runtime_ready": false,
+    "session_ready": false,
+    "shot_based": false,
+    "statevector": true,
+    "supports_confidence_metrics": false,
+    "supports_grouping": false,
+    "supports_repetitions": false
+  },
+  "benchmark": {
+    "absolute_error": 7.580214354163672e-05,
+    "absolute_error_threshold": 0.0016,
+    "comparison_target": "compressed_vs_uncompressed",
+    "compressed_vs_uncompressed": {
+      "absolute_error": 7.580214354163672e-05,
+      "available": true,
+      "compressed_solve_wall_time_seconds": 35.263980165997054,
+      "compressed_solver_energy": -6.1620590784684515,
+      "compressed_total_energy": -74.97024873352467,
+      "method": "modified_cholesky",
+      "post_term_count": 95,
+      "pre_term_count": 95,
+      "rank": 10,
+      "relative_error": 1.011097354824259e-06,
+      "threshold": 1e-10,
+      "uncompressed_solve_wall_time_seconds": 31.965455540979747,
+      "uncompressed_solver_energy": -6.161983276324899,
+      "uncompressed_total_energy": -74.97017293138113
+    },
+    "exact_available": true,
+    "exact_electronic_energy": -84.15876148448444,
+    "exact_total_energy": -74.97050306673833,
+    "meets_threshold": true,
+    "relative_error": 1.011097354824259e-06,
+    "relative_error_threshold": 0.0016,
+    "statistical_error": null,
+    "within_uncertainty": null
+  },
+  "calibration": {
+    "achieved_error": 7.580214354163672e-05,
+    "available": true,
+    "estimated_measurement_cost": 70000.0,
+    "estimated_vs_measured_cost": null,
+    "measured_shot_usage": null,
+    "measured_wall_time_seconds": 35.263980165997054,
+    "notes": [
+      "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+      "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+    ],
+    "precision_target": 0.01,
+    "reference_target": "compressed_vs_uncompressed"
+  },
+  "capability_tier": "flagship",
+  "cast_hamiltonian": null,
+  "cavity_qed_model": null,
+  "chemical_accuracy": {
+    "absolute_error_hartree": 0.0002543332136610843,
+    "absolute_error_kcal_mol": 0.1595965011251966,
+    "assessment_target": "local_execution",
+    "available": true,
+    "computed_energy": -74.97024873352467,
+    "meets_chemical_accuracy": true,
+    "notes": [
+      "Meets chemical accuracy threshold."
+    ],
+    "reference_energy": -74.97050306673833,
+    "relative_error": 3.392443737968228e-06,
+    "statistical_error": null,
+    "status": "validated",
+    "threshold_hartree": 0.0016,
+    "threshold_kcal_mol": 1.0040151583999999
+  },
+  "compression_result": {
+    "apply_to_solver": true,
+    "compressed_num_qubits": 6,
+    "compressed_term_count_estimate": 95,
+    "enabled": true,
+    "execution_enabled": true,
+    "max_rank": 14,
+    "method": "modified_cholesky",
+    "notes": [
+      "Modified-Cholesky compression reconstructed the two-electron pair matrix for execution."
+    ],
+    "original_fermionic_term_count": 300,
+    "original_num_qubits": 6,
+    "original_qubit_term_count": 95,
+    "post_term_count": 95,
+    "pre_term_count": 95,
+    "primary_rank": 10,
+    "rank": 10,
+    "reconstruction_error": 1.6711069443220838e-16,
+    "reconstruction_error_frobenius": 1.6711069443220838e-16,
+    "secondary_rank": null,
+    "threshold": 1e-10,
+    "verification_status": "validated"
+  },
+  "determinant_selection": null,
+  "embedding_result": null,
+  "energy": {
+    "boundary_embedding_constant_energy": 0.0,
+    "constant_energy_correction": -77.99644807280234,
+    "correlation_energy": -0.007185603797012163,
+    "electronic_energy": -84.15850715127078,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "energy_units": "Hartree",
+    "exact_ground_energy": -6.162313411682104,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "hf_reference_energy": -74.96306312972766,
+    "nuclear_repulsion_energy": 9.188258417746113,
+    "solver_energy": -6.1620590784684515,
+    "total_energy": -74.97024873352467
+  },
+  "environment_embedding": null,
+  "error_budget": null,
+  "evidence_summary": {
+    "chemical_accuracy_status": "met",
+    "comparison_evidence": {
+      "absolute_error": 7.580214354163672e-05,
+      "baseline_strength": "strong",
+      "comparison_target": "compressed_vs_uncompressed",
+      "compressed_vs_uncompressed": {
+        "absolute_error": 7.580214354163672e-05,
+        "available": true,
+        "compressed_solve_wall_time_seconds": 35.263980165997054,
+        "compressed_solver_energy": -6.1620590784684515,
+        "compressed_total_energy": -74.97024873352467,
+        "method": "modified_cholesky",
+        "post_term_count": 95,
+        "pre_term_count": 95,
+        "rank": 10,
+        "relative_error": 1.011097354824259e-06,
+        "threshold": 1e-10,
+        "uncompressed_solve_wall_time_seconds": 31.965455540979747,
+        "uncompressed_solver_energy": -6.161983276324899,
+        "uncompressed_total_energy": -74.97017293138113
+      },
+      "relative_error": 1.011097354824259e-06,
+      "statistical_error": null
+    },
+    "decision_worthiness": {
+      "blocking_issues": [
+        "LR-ACE adaptive scheduling is flagship-local and gated by exact-reference evidence.",
+        "Adaptive generator and optimizer budgets do not imply general publication-validated scaling."
+      ],
+      "compression_context": {
+        "method": "modified_cholesky",
+        "verification_status": "validated"
+      },
+      "recommended_action": "promote_validated_result",
+      "reduction_context": {
+        "selection_mode": "manual",
+        "transformers_applied": [
+          "ActiveSpaceTransformer"
+        ]
+      },
+      "why": [
+        "trust_tier=validated",
+        "chemical_accuracy_status=met",
+        "runtime_evidence_status=none",
+        "runtime_accuracy_status=unavailable"
+      ]
+    },
+    "energy_evidence": {
+      "constant_energy_correction": -77.99644807280234,
+      "electronic_energy": -84.15850715127078,
+      "perturbative_correction": null,
+      "solver_energy": -6.1620590784684515,
+      "total_energy": -74.97024873352467
+    },
+    "execution_evidence": {
+      "field_model_kind": null,
+      "measured_shot_usage": null,
+      "measurement_group_count": 7,
+      "measurement_strategy": "low_rank_lr_ace_adaptive_local",
+      "runtime_backend": null,
+      "runtime_job_id": null,
+      "shots": null,
+      "wall_time_seconds": 67.47925066697644
+    },
+    "primary_baseline": {
+      "baseline_kind": "exact",
+      "baseline_scope": "single_run",
+      "baseline_source": "exact_diagonalization",
+      "baseline_strength": "strong"
+    },
+    "primary_error_metric": {
+      "comparison_target": "compressed_vs_uncompressed",
+      "metric_kind": "absolute_error_hartree",
+      "threshold": 0.0016,
+      "units": "Hartree",
+      "value": 7.580214354163672e-05
+    },
+    "primary_scientific_claim": "H2O-active-LR-ACE-flagship-adaptive stays within chemical accuracy against compressed_vs_uncompressed for the defended local execution path.",
+    "recommended_action": "promote_validated_result",
+    "result_identity": {
+      "artifact_kind": "run",
+      "artifact_name": "h2o_active_lr_ace_adaptive",
+      "backend_kind": "statevector",
+      "basis": "sto3g",
+      "field_model_kind": null,
+      "mapping_kind": "parity_two_qubit_reduction",
+      "molecule_name": "H2O-active-LR-ACE-flagship-adaptive"
+    },
+    "runtime_derived_accuracy": {
+      "absolute_error_hartree": null,
+      "assessment_target": null,
+      "meets_chemical_accuracy": null,
+      "status": "unavailable",
+      "threshold_hartree": null
+    },
+    "runtime_evidence_status": "none",
+    "scientific_accuracy": {
+      "absolute_error_hartree": 0.0002543332136610843,
+      "assessment_target": "local_execution",
+      "meets_chemical_accuracy": true,
+      "status": "met",
+      "threshold_hartree": 0.0016
+    },
+    "trust_judgment": {
+      "hardware_evidence_tier": null,
+      "hardware_verified": false,
+      "lr_ace_trust_label": "passed_exact_reference",
+      "lr_ace_validation_gate": {
+        "blocking_reason": null,
+        "compressed_solver_energy": -6.1620590784684515,
+        "compression_enabled": true,
+        "exact_available": true,
+        "local_exact_error_hartree": 0.000254333213649538,
+        "runtime_accuracy_met": null,
+        "runtime_attempted": false,
+        "target_error_hartree": 0.0016,
+        "trust_label": "passed_exact_reference",
+        "uncompressed_exact_solver_energy": -6.162313411682108,
+        "uncompressed_solver_energy": -6.161983276324899,
+        "validated": true,
+        "verification_status": "validated"
+      },
+      "module_origin": "core",
+      "scientific_risk_notes": [
+        "LR-ACE adaptive scheduling is flagship-local and gated by exact-reference evidence.",
+        "Adaptive generator and optimizer budgets do not imply general publication-validated scaling."
+      ],
+      "verification_notes": [
+        "validation_scope=lr_ace adaptive local exact-baseline gate"
+      ],
+      "verification_status": "validated"
+    },
+    "trust_tier": "validated"
+  },
+  "exact_baseline": {
+    "available": true,
+    "electronic_energy": -84.15876148448444,
+    "energy_units": "Hartree",
+    "solver_hamiltonian_energy": -6.162313411682104,
+    "source": "exact_diagonalization",
+    "total_energy": -74.97050306673833
+  },
+  "excited_state_result": null,
+  "execution_policy": {
+    "batch_ready_expected": false,
+    "confidence_rule": "require exact baseline when available; use repeated sampling for shot backends",
+    "default_repetitions": 5,
+    "default_shots": null,
+    "exact_baseline_required": true,
+    "mitigation_posture": "symmetry-check preferred",
+    "name": "benchmark",
+    "noise_ready_expected": false,
+    "runtime_ready_expected": false,
+    "session_ready_expected": false
+  },
+  "external_point_charges": null,
+  "field_model": null,
+  "geometry_optimization_result": null,
+  "gradient_result": null,
+  "hardware_error_diagnostic": {
+    "available": true,
+    "backend_name": null,
+    "diagnostic_label": "missing_runtime_result",
+    "job_id": null,
+    "layout_strategy": null,
+    "local_error_hartree": 0.0002543332136610843,
+    "mitigation_flags": {
+      "applied_methods": [],
+      "dynamical_decoupling_enabled": false,
+      "measure_mitigation_enabled": false,
+      "pec_enabled": false,
+      "readout_mitigation_enabled": false,
+      "runtime_estimator_options": {},
+      "runtime_resilience_level": null,
+      "symmetry_check_enabled": false,
+      "twirling_enabled": false,
+      "zne_enabled": false
+    },
+    "next_measurement": "collect_runtime_result",
+    "runtime_error_hartree": null,
+    "runtime_submitted": false,
+    "runtime_succeeded": false,
+    "selected_layout": null,
+    "shots": null,
+    "simulator_runtime_gap_hartree": null,
+    "source": "result_json",
+    "statistical_error_hartree": null,
+    "threshold_hartree": 0.0016,
+    "transpiled_depth": null,
+    "transpiled_two_qubit_gate_count": null
+  },
+  "hardware_evidence_tier": null,
+  "hardware_verified": false,
+  "log_summary": {
+    "events": [
+      "Loading config from configs/lr_ace/h2o_active_adaptive.yaml",
+      "Resolved molecular input: kind=inline_geometry, format=inline, atoms=3, sha256=1ae8907340ba",
+      "Building electronic structure problem",
+      "Applying mapping: parity_two_qubit_reduction",
+      "Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads.",
+      "Constructed compressed mapped Hamiltonian via modified_cholesky",
+      "Computed compression audit: modified_cholesky",
+      "Prepared measurement plan: groups=7, cost=70000",
+      "Preparing backend: statevector",
+      "Running solver: lr_ace",
+      "Computing exact spectrum for 1 states",
+      "Writing exact baseline artifact to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/exact_result.json",
+      "Computed compressed-vs-uncompressed execution comparison",
+      "Computed empirical calibration: wall_time=35.264s, measured_cost=None",
+      "Writing JSON result to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/result.json",
+      "Writing Markdown report to artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive/report.md",
+      "Run completed"
+    ]
+  },
+  "low_rank_resource_estimate": null,
+  "mapping": {
+    "fermionic_term_count": 300,
+    "kind": "parity_two_qubit_reduction",
+    "num_qubits": 6,
+    "qubit_term_count": 95,
+    "raw_num_qubits": 6,
+    "raw_qubit_term_count": 95,
+    "symmetry_reduction_notes": [
+      "Z2 tapering disabled by mapping.symmetry_reduction.z2.",
+      "Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads."
+    ],
+    "symmetry_reduction_status": "disabled",
+    "symmetry_reduction_validation": {},
+    "symmetry_tapered_qubits": 0,
+    "z2_symmetry_count": 0,
+    "z2_tapering_values": null
+  },
+  "measurement": {
+    "cost_reduction_ratio": 0.2916666666666667,
+    "estimated_shot_cost": 70000.0,
+    "execution_mode": "estimator",
+    "group_count": 7,
+    "grouping_policy": "low_rank_factor_aware",
+    "low_rank_aware": true,
+    "notes": [
+      "Measurement groups estimated with strategy 'low_rank_lr_ace_adaptive_local'.",
+      "Per-group shot estimate derived from precision target 0.01.",
+      "Compressed Hamiltonian enabled low-rank-aware grouping and cost estimation."
+    ],
+    "runtime_precision_target": 0.01,
+    "strategy": "low_rank_lr_ace_adaptive_local",
+    "term_count": 95,
+    "uncompressed_estimated_shot_cost": 240000.0,
+    "uncompressed_group_count": 24
+  },
+  "mitigation": {
+    "applied_methods": [],
+    "pec": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "readout_mitigation": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    },
+    "symmetry_check": {
+      "performed": false,
+      "requested": true,
+      "status": "hook_available_not_implemented",
+      "strategy": "parity_placeholder"
+    },
+    "zne": {
+      "method": "placeholder",
+      "performed": false,
+      "requested": false,
+      "status": "placeholder_not_implemented"
+    }
+  },
+  "module_origin": "core",
+  "noise_model": null,
+  "perturbative_correction_result": null,
+  "policy_engine": {
+    "overrides_applied": [
+      "backend.shots"
+    ],
+    "policy_name": "benchmark",
+    "presets_used": [
+      "benchmark"
+    ],
+    "provenance": {
+      "allow_exploratory": false,
+      "source": "qcchem.backends.policy_engine"
+    },
+    "resolved_policy": {
+      "backend": {
+        "abelian_grouping": true,
+        "kind": "statevector",
+        "noise": {
+          "basis_gates": [],
+          "depolarizing_probability_1q": 0.0,
+          "depolarizing_probability_2q": 0.0,
+          "enabled": false,
+          "profile": "none",
+          "readout_error_probability": 0.0
+        },
+        "precision": null,
+        "repetitions": 1,
+        "runtime": {
+          "batch_ready": false,
+          "calibration_strategy": "default",
+          "enabled": false,
+          "grouping_policy": "default",
+          "instance": null,
+          "max_budgeted_shots": null,
+          "max_execution_seconds": null,
+          "options": {},
+          "precision_target": null,
+          "resilience_level": 0,
+          "runtime_ready": false,
+          "service": "local",
+          "session_ready": false
+        },
+        "seed": 2053,
+        "shots": 4096
+      },
+      "benchmark": {
+        "absolute_error_threshold": 0.0016,
+        "enabled": true,
+        "exact_baseline_qubit_limit": 12,
+        "relative_error_threshold": 0.0016
+      },
+      "exploratory": {
+        "enabled": false,
+        "modules": [],
+        "notes": []
+      },
+      "hardware_optimization": {
+        "candidate_strategies": [
+          "jw_puccd_layout_baseline",
+          "parity_puccd_layout",
+          "parity_succd_layout",
+          "parity_uccsd_layout"
+        ],
+        "enabled": false,
+        "max_real_jobs": 3,
+        "max_total_budgeted_shots": 40960,
+        "max_total_estimated_quantum_seconds": 600.0,
+        "profile": "h2_precision_push",
+        "requires_confirmation": true,
+        "selection_metric": "accuracy_then_cost",
+        "stop_if_error_below": 0.0016
+      },
+      "mapping": {
+        "kind": "parity_two_qubit_reduction",
+        "symmetry_reduction": {
+          "point_group": "auto",
+          "strict": false,
+          "z2": "auto"
+        }
+      },
+      "mitigation": {
+        "experimental": false,
+        "pec": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "readout": {
+          "enabled": false,
+          "method": "placeholder"
+        },
+        "symmetry_check": {
+          "enabled": true,
+          "strategy": "parity_placeholder"
+        },
+        "zne": {
+          "enabled": false,
+          "method": "placeholder"
+        }
+      },
+      "molecule": {
+        "basis": "sto3g",
+        "charge": 0,
+        "geometry": [
+          {
+            "coords": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "symbol": "O"
+          },
+          {
+            "coords": [
+              0.0,
+              0.757,
+              0.587
+            ],
+            "symbol": "H"
+          },
+          {
+            "coords": [
+              0.0,
+              -0.757,
+              0.587
+            ],
+            "symbol": "H"
+          }
+        ],
+        "input_provenance": {
+          "atom_count": 3,
+          "format": "inline",
+          "kind": "inline_geometry",
+          "normalized_geometry_sha256": "1ae8907340ba8d816fb82128babda180b37922603c43108f116133a65cc34bf0",
+          "parser": "qcchem.io.config:_parse_atoms",
+          "unit": "angstrom"
+        },
+        "multiplicity": 1,
+        "name": "H2O-active-LR-ACE-flagship-adaptive",
+        "unit": "angstrom"
+      },
+      "policy": {
+        "allow_exploratory": false,
+        "name": "benchmark"
+      },
+      "problem": {
+        "active_space": {
+          "active_orbitals": null,
+          "auto": {
+            "enabled": false,
+            "num_occupied": 1,
+            "num_virtual": 1,
+            "strategy": "frontier_orbitals"
+          },
+          "num_electrons": 4,
+          "num_spatial_orbitals": 4,
+          "selection_mode": "manual"
+        },
+        "cavity_qed": {
+          "enabled": false,
+          "include_dipole_self_energy": true,
+          "model": "pauli_fierz_cavity_qed",
+          "modes": [
+            {
+              "coupling_strength": 0.05,
+              "frequency": 0.4,
+              "max_occupation": 1,
+              "polarization": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ],
+          "photon_encoding": "linear",
+          "photon_physical_subspace_penalty": 25.0
+        },
+        "compression": {
+          "allow_pauli_truncation": false,
+          "apply_to_solver": true,
+          "compression_error_budget_hartree": 0.0008,
+          "enabled": true,
+          "execution_enabled": true,
+          "max_rank": 10,
+          "method": "modified_cholesky",
+          "rank_schedule": [
+            10,
+            14
+          ],
+          "runtime_term_budget": null,
+          "term_budget_policy": "precision_first",
+          "threshold": 1e-10
+        },
+        "embedding": {
+          "bath_threshold": 0.05,
+          "enabled": false,
+          "execution": {
+            "enabled": false,
+            "plugin": "pyscf_rhf_fragment",
+            "validate_against_full_system": true
+          },
+          "fragments": [],
+          "method": "dmet_skeleton",
+          "solver_plugin": "placeholder_fragment_solver"
+        },
+        "environment_embedding": {
+          "boundary": {
+            "cut_bonds": [],
+            "enabled": false,
+            "leakage_threshold": 0.05,
+            "localization": "iao_lowdin",
+            "method": "localized_orbital_freeze_project_downfold",
+            "strict": true
+          },
+          "cache": {
+            "directory": "artifacts/effective_hamiltonians",
+            "enabled": true,
+            "refresh": false
+          },
+          "enabled": false,
+          "mode": "effective_hamiltonian",
+          "point_charges": {
+            "charges": [],
+            "damping": {
+              "default_radius": 0.4,
+              "kind": "gaussian",
+              "min_radius": 0.15,
+              "overpolarization_warning_potential_au": 2.0,
+              "radius_unit": "angstrom"
+            },
+            "enabled": false,
+            "min_distance_to_qm_atoms": 1e-06,
+            "source_file": null,
+            "unit": null
+          }
+        },
+        "external_point_charges": {
+          "charges": [],
+          "enabled": false,
+          "min_distance_to_qm_atoms": 1e-06,
+          "source_file": null,
+          "unit": null
+        },
+        "freeze_core": false,
+        "measurement": {
+          "execution_mode": "estimator",
+          "grouping_policy": "low_rank_factor_aware",
+          "runtime_precision_target": null,
+          "strategy": "low_rank_lr_ace_adaptive_local"
+        },
+        "point_group": {
+          "active_irreps": [],
+          "reduction_mode": "audit",
+          "remove_irreps": [],
+          "subgroup": "auto"
+        },
+        "qft": {
+          "ansatz": {
+            "generator_policy": "gauge_invariant_hopping"
+          },
+          "constraints": {
+            "enforce_physical_sector": false,
+            "gauss_law_penalty": 10.0,
+            "gauss_law_tolerance": 1e-08,
+            "max_sector_enumeration_qubits": 10,
+            "padding_penalty": 50.0,
+            "particle_number_penalty": 10.0,
+            "target_charge_sector": "neutral"
+          },
+          "dimensions": 1,
+          "dynamics": {
+            "enabled": false,
+            "evolution": {
+              "exact_enabled": true,
+              "exact_qubit_limit": 12,
+              "trotter_enabled": true,
+              "trotter_order": 1,
+              "trotter_step": 0.05
+            },
+            "initial_state": {
+              "base": "physical_reference",
+              "kind": "local_hopping_pulse",
+              "link_index": 0,
+              "pulse_strength": 1.0,
+              "pulse_time": 0.05
+            },
+            "method": "real_time_quench",
+            "runtime": {
+              "enabled": false,
+              "runtime_observables": "aggregate_gauge"
+            },
+            "time_grid": {
+              "num_points": 41,
+              "start": 0.0,
+              "stop": 2.0
+            }
+          },
+          "enabled": false,
+          "engine": {
+            "auto_project_physical_sector": true,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "projector_tolerance": 1e-08,
+            "representation": "auto",
+            "store_basis_indices": "preview"
+          },
+          "gauge": {
+            "coupling": 1.0,
+            "electric_cutoff": 1,
+            "group": "u1",
+            "include_magnetic_plaquettes": true
+          },
+          "grid": {
+            "axes": "principal",
+            "boundary": "open",
+            "origin": "molecule_center",
+            "shape": [
+              2
+            ],
+            "softening": 0.35,
+            "spacing": [
+              1.0
+            ]
+          },
+          "matter": {
+            "include_soft_coulomb_density": false,
+            "spin_components": 2,
+            "target_electrons": "auto"
+          },
+          "model": "lattice_qed_minimal_coupling"
+        },
+        "remove_orbitals": []
+      },
+      "run": {
+        "exports": {
+          "hdf5": false,
+          "qcschema_json": false
+        },
+        "output_dir": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+        "overwrite": true,
+        "seed": 2053
+      },
+      "solver": {
+        "ansatz": {
+          "entanglement": "full",
+          "entanglement_blocks": "cz",
+          "kind": "lr_ace",
+          "reps": 24,
+          "rotation_blocks": [
+            "ry",
+            "rz"
+          ],
+          "skip_final_rotation_layer": false
+        },
+        "experimental": false,
+        "initial_point": "random",
+        "initial_point_candidate": null,
+        "kind": "lr_ace",
+        "lr_ace": {
+          "profile": "stress_local",
+          "uncompressed_reference": "auto",
+          "validation_mode": "trust_first"
+        },
+        "lr_ace_adaptive": {
+          "candidate_pool_policy": "residual_guided",
+          "candidate_scan_limit": 64,
+          "enabled": true,
+          "generator_schedule": [
+            16,
+            24
+          ],
+          "initial_point_strategies": [
+            "zeros",
+            "random"
+          ],
+          "max_adaptive_expansions": 3,
+          "max_wall_time_seconds": 1200.0,
+          "min_energy_improvement_hartree": 0.0002,
+          "optimizer_maxiter_schedule": [
+            1400,
+            5000
+          ],
+          "random_restarts": 1,
+          "residual_batch_size": 8,
+          "residual_scan_angles": [
+            -0.15,
+            -0.05,
+            0.05,
+            0.15
+          ],
+          "target_error_hartree": 0.0016,
+          "uncompressed_check_qubit_limit": 12
+        },
+        "optimizer": {
+          "kind": "COBYLA",
+          "maxiter": 5000,
+          "tol": null
+        }
+      },
+      "tasks": {
+        "excited_state": {
+          "enabled": false,
+          "method": "exact_spectrum",
+          "num_states": 2,
+          "state_indices": [
+            1
+          ]
+        },
+        "geometry_optimization": {
+          "enabled": false,
+          "gradient_tolerance": 0.0003,
+          "max_steps": 50,
+          "method": "pyscf_rhf"
+        },
+        "gradient": {
+          "enabled": false,
+          "method": "pyscf_rhf",
+          "state_index": 0
+        },
+        "perturbative_correction": {
+          "enabled": false,
+          "method": "nevpt2",
+          "plugin": "pyscf",
+          "root": 0
+        },
+        "properties": [],
+        "response_properties": {
+          "enabled": false,
+          "finite_field_step": 0.001,
+          "method": "finite_field_rhf",
+          "properties": [
+            "static_polarizability"
+          ]
+        }
+      },
+      "tc_qsci": {
+        "cast_model": {
+          "kind": "identity",
+          "npz_path": null
+        },
+        "enabled": false,
+        "initial_state": {
+          "determinants": [],
+          "kind": "hf",
+          "max_determinants": null
+        },
+        "kick": {
+          "num_kicks": 1,
+          "pauli_term_budget": null,
+          "shots": 1024,
+          "time": 0.05
+        },
+        "resource_estimation": {
+          "enabled": true,
+          "target_precision": 0.001
+        },
+        "resource_estimation_only": false,
+        "selection": {
+          "max_determinants": 64,
+          "min_count": 1,
+          "symmetry_postselect": true
+        }
+      }
+    }
+  },
+  "problem": {
+    "active_space_metadata": {
+      "active_orbitals": [],
+      "active_orbitals_original": [],
+      "num_electrons": 4,
+      "num_spatial_orbitals": 4
+    },
+    "basis": "sto3g",
+    "charge": 0,
+    "electronic_constant_correction": -77.99644807280234,
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": -77.99644807280234,
+      "nuclear_repulsion_energy": 9.188258417746113
+    },
+    "molecule_name": "H2O-active-LR-ACE-flagship-adaptive",
+    "multiplicity": 1,
+    "num_particles": [
+      2,
+      2
+    ],
+    "num_spatial_orbitals": 4,
+    "point_group_metadata": {
+      "active_irreps": [],
+      "enabled": true,
+      "group": "C2v",
+      "irrep_ids": [
+        0,
+        2,
+        3
+      ],
+      "irrep_names": [
+        "A1",
+        "B1",
+        "B2"
+      ],
+      "notes": [],
+      "orbital_energies": [
+        -20.241966064509008,
+        -1.2681606230956235,
+        -0.6173850403696934,
+        -0.45315324271107893,
+        -0.39127369022463837,
+        0.6051359341448305,
+        0.7412414607056362
+      ],
+      "orbital_irreps": [
+        "A1",
+        "A1",
+        "B2",
+        "A1",
+        "B1",
+        "A1",
+        "B2"
+      ],
+      "orbital_occupations": [
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        0.0,
+        0.0
+      ],
+      "reduction_mode": "audit",
+      "remove_irreps": [],
+      "requested_mode": "auto",
+      "requested_subgroup": "auto",
+      "status": "available",
+      "topgroup": "C2v"
+    },
+    "transformers_applied": [
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "property_result": null,
+  "provenance": {
+    "dependency_versions": {
+      "numpy": "1.26.4",
+      "pyscf": "2.8.0",
+      "python": "3.12.2",
+      "qiskit": "1.4.0",
+      "qiskit_aer": "0.16.1",
+      "qiskit_nature": "0.7.2",
+      "scipy": "1.13.1"
+    },
+    "git_branch": "codex/lr-ace-flagship",
+    "git_commit": "a7c0893f8c2b2a07e7c911c49536761ba5ebb250",
+    "git_commit_short": "a7c0893f8c2b",
+    "git_describe": "a7c0893-dirty",
+    "git_remote_origin": "https://github.com/wuls968/QCchem.git",
+    "git_status_summary": {
+      "staged": 0,
+      "unstaged": 22,
+      "untracked": 6
+    },
+    "input_sources": [
+      {
+        "atom_count": 3,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "1ae8907340ba8d816fb82128babda180b37922603c43108f116133a65cc34bf0",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "unit": "angstrom"
+      }
+    ],
+    "repo_root": ".",
+    "seed": 2053,
+    "source_config": "configs/lr_ace/h2o_active_adaptive.yaml",
+    "timestamp": "2026-05-17T10:50:40.812847+00:00",
+    "wall_time_seconds": 67.47925066697644,
+    "workspace_dirty": true,
+    "workspace_fingerprint": "161e20072f34839117ae6ceaf097ebccc9547a1b8bcfce4a9d1a36393ba4e10c"
+  },
+  "qft_dynamics": null,
+  "qft_model": null,
+  "qpe_resource_estimate": null,
+  "reduction_audit": {
+    "active_space_metadata": {
+      "active_orbitals": [],
+      "active_orbitals_original": [],
+      "num_electrons": 4,
+      "num_spatial_orbitals": 4
+    },
+    "boundary_embedding_constant_energy": 0.0,
+    "constant_energy_correction": -77.99644807280234,
+    "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "frozen_core_orbitals": [],
+    "hamiltonian_constants": {
+      "ActiveSpaceTransformer": -77.99644807280234,
+      "nuclear_repulsion_energy": 9.188258417746113
+    },
+    "nuclear_repulsion_energy": 9.188258417746113,
+    "original_num_particles": [
+      5,
+      5
+    ],
+    "original_num_spatial_orbitals": 7,
+    "point_group_metadata": {
+      "active_irreps": [],
+      "enabled": true,
+      "group": "C2v",
+      "irrep_ids": [
+        0,
+        2,
+        3
+      ],
+      "irrep_names": [
+        "A1",
+        "B1",
+        "B2"
+      ],
+      "notes": [],
+      "orbital_energies": [
+        -20.241966064509008,
+        -1.2681606230956235,
+        -0.6173850403696934,
+        -0.45315324271107893,
+        -0.39127369022463837,
+        0.6051359341448305,
+        0.7412414607056362
+      ],
+      "orbital_irreps": [
+        "A1",
+        "A1",
+        "B2",
+        "A1",
+        "B1",
+        "A1",
+        "B2"
+      ],
+      "orbital_occupations": [
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        0.0,
+        0.0
+      ],
+      "reduction_mode": "audit",
+      "remove_irreps": [],
+      "requested_mode": "auto",
+      "requested_subgroup": "auto",
+      "status": "available",
+      "topgroup": "C2v"
+    },
+    "reduced_num_particles": [
+      2,
+      2
+    ],
+    "reduced_num_spatial_orbitals": 4,
+    "removed_orbitals": [],
+    "selected_active_orbitals": [],
+    "selected_active_orbitals_original": [],
+    "selection_mode": "manual",
+    "selection_reason": "Manual active-space selection from user-provided electron/orbital counts; Qiskit Nature chooses the orbital window.",
+    "total_constant_correction": -68.80818965505622,
+    "transformers_applied": [
+      "ActiveSpaceTransformer"
+    ]
+  },
+  "reduction_plan": {
+    "enabled": true,
+    "mode": "manual",
+    "notes": [
+      "Manual active-space reduction is configured."
+    ],
+    "provenance": {
+      "policy_name": "benchmark",
+      "source": "qcchem.chem.reduction_planner"
+    },
+    "recommended_changes": {
+      "active_space": {
+        "active_orbitals": null,
+        "num_electrons": 4,
+        "num_spatial_orbitals": 4
+      }
+    },
+    "reduction_audit": {
+      "active_space_metadata": {
+        "active_orbitals": [],
+        "active_orbitals_original": [],
+        "num_electrons": 4,
+        "num_spatial_orbitals": 4
+      },
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": -77.99644807280234,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "ActiveSpaceTransformer": -77.99644807280234,
+        "nuclear_repulsion_energy": 9.188258417746113
+      },
+      "nuclear_repulsion_energy": 9.188258417746113,
+      "original_num_particles": [
+        5,
+        5
+      ],
+      "original_num_spatial_orbitals": 7,
+      "point_group_metadata": {
+        "active_irreps": [],
+        "enabled": true,
+        "group": "C2v",
+        "irrep_ids": [
+          0,
+          2,
+          3
+        ],
+        "irrep_names": [
+          "A1",
+          "B1",
+          "B2"
+        ],
+        "notes": [],
+        "orbital_energies": [
+          -20.241966064509008,
+          -1.2681606230956235,
+          -0.6173850403696934,
+          -0.45315324271107893,
+          -0.39127369022463837,
+          0.6051359341448305,
+          0.7412414607056362
+        ],
+        "orbital_irreps": [
+          "A1",
+          "A1",
+          "B2",
+          "A1",
+          "B1",
+          "A1",
+          "B2"
+        ],
+        "orbital_occupations": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          0.0,
+          0.0
+        ],
+        "reduction_mode": "audit",
+        "remove_irreps": [],
+        "requested_mode": "auto",
+        "requested_subgroup": "auto",
+        "status": "available",
+        "topgroup": "C2v"
+      },
+      "reduced_num_particles": [
+        2,
+        2
+      ],
+      "reduced_num_spatial_orbitals": 4,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "manual",
+      "selection_reason": "Manual active-space selection from user-provided electron/orbital counts; Qiskit Nature chooses the orbital window.",
+      "total_constant_correction": -68.80818965505622,
+      "transformers_applied": [
+        "ActiveSpaceTransformer"
+      ]
+    },
+    "strategy": "manual_active_space"
+  },
+  "response_property_result": null,
+  "run_id": "h2o_active_lr_ace_adaptive",
+  "runtime_chemical_accuracy": null,
+  "runtime_options": null,
+  "runtime_submission": null,
+  "sampled_result": null,
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "scientific_risk_notes": [
+    "LR-ACE adaptive scheduling is flagship-local and gated by exact-reference evidence.",
+    "Adaptive generator and optimizer budgets do not imply general publication-validated scaling."
+  ],
+  "symmetry_sector": null,
+  "tc_qsci_result": null,
+  "variational_result": {
+    "ansatz": {
+      "entanglement": "full",
+      "entanglement_blocks": "cz",
+      "kind": "lr_ace",
+      "lr_ace": {
+        "adaptive": {
+          "best_energy": -6.1620590784684515,
+          "best_exact_error_hartree": 0.000254333213649538,
+          "best_stage_index": 2,
+          "candidate_pool_policy": "residual_guided",
+          "candidate_scan_limit": 64,
+          "combined_error_vs_uncompressed_exact_hartree": 0.0002543332136566434,
+          "compression_proxy_error_hartree": 7.580214354163672e-05,
+          "enabled": true,
+          "exact_reference_available": true,
+          "exact_solver_energy": -6.162313411682101,
+          "expansions": [],
+          "max_adaptive_expansions": 3,
+          "max_wall_time_seconds": 1200.0,
+          "min_energy_improvement_hartree": 0.0002,
+          "original_generator_schedule_length": 2,
+          "residual_batch_size": 8,
+          "residual_scan_angles": [
+            -0.15,
+            -0.05,
+            0.05,
+            0.15
+          ],
+          "scheduled_generator_counts": [
+            16,
+            24
+          ],
+          "stages": [
+            {
+              "converged": false,
+              "energy": -6.15894844164044,
+              "evaluations": 1400,
+              "exact_error_hartree": 0.0033649700416606976,
+              "generator_count": 16,
+              "initial_point_strategy": "zeros",
+              "iterations": 1400,
+              "optimizer_maxiter": 1400,
+              "optimizer_message": "Maximum number of function evaluations has been exceeded.",
+              "parameter_count": 16,
+              "restart_index": 0,
+              "schedule_index": 0,
+              "stage_index": 0
+            },
+            {
+              "converged": false,
+              "energy": -6.160181057636623,
+              "evaluations": 1400,
+              "exact_error_hartree": 0.0021323540454778467,
+              "generator_count": 16,
+              "initial_point_strategy": "random",
+              "iterations": 1400,
+              "optimizer_maxiter": 1400,
+              "optimizer_message": "Maximum number of function evaluations has been exceeded.",
+              "parameter_count": 16,
+              "restart_index": 0,
+              "schedule_index": 0,
+              "stage_index": 1
+            },
+            {
+              "converged": false,
+              "energy": -6.1620590784684515,
+              "evaluations": 5000,
+              "exact_error_hartree": 0.000254333213649538,
+              "generator_count": 24,
+              "initial_point_strategy": "zeros",
+              "iterations": 5000,
+              "optimizer_maxiter": 5000,
+              "optimizer_message": "Maximum number of function evaluations has been exceeded.",
+              "parameter_count": 24,
+              "restart_index": 0,
+              "schedule_index": 1,
+              "stage_index": 2
+            }
+          ],
+          "target_error_hartree": 0.0016,
+          "trust_label": "passed_exact_reference",
+          "uncompressed_check_triggered": true,
+          "uncompressed_exact_solver_energy": -6.162313411682108,
+          "uncompressed_lr_ace_error_hartree": 0.0003301353572089383
+        },
+        "algorithm_name": "LR-ACE",
+        "ansatz_parameter_count": 24,
+        "candidate_generators": [
+          {
+            "adaptive_score": 0.04257416357122505,
+            "candidate_index": 0,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 2,
+            "pauli": "IXYIII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.04257416357122505,
+            "candidate_index": 1,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 2,
+            "pauli": "IYXIII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.042574163571225024,
+            "candidate_index": 2,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 2,
+            "pauli": "IIIIXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIIIYY",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.042574163571225024,
+            "candidate_index": 3,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 2,
+            "pauli": "IIIIYX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIIIYY",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.028818367374474366,
+            "candidate_index": 4,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 2,
+            "pauli": "YIIXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.028818367374474366,
+            "candidate_index": 5,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 2,
+            "pauli": "XIIYII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.023652313095125027,
+            "candidate_index": 6,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 3,
+            "pauli": "ZYXIII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.023652313095125027,
+            "candidate_index": 7,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 3,
+            "pauli": "ZXYIII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.023652313095125013,
+            "candidate_index": 8,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 3,
+            "pauli": "IIIZYX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIIZXX",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.023652313095125013,
+            "candidate_index": 9,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 3,
+            "pauli": "IIIZXY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIIZXX",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "candidate_index": 10,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IIZIXY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIZIYY",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "candidate_index": 11,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IIZIYX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIZIYY",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "candidate_index": 12,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IXYIIZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IYYIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "candidate_index": 13,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IYXIIZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IYYIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "candidate_index": 14,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "YIIXZI",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XIIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "candidate_index": 15,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "XIIYZI",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XIIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "candidate_index": 16,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "YZIXII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XZIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "candidate_index": 17,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "XZIYII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XZIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.01397767483519557,
+            "candidate_index": 18,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "locality": 2,
+            "pauli": "IIYIIX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.01397767483519557,
+            "candidate_index": 19,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "locality": 2,
+            "pauli": "IIXIIY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "candidate_index": 20,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "IIZZYX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IIZZXX",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "candidate_index": 21,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "IIZZXY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IIZZXX",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "candidate_index": 22,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "ZYXIIZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXXIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "candidate_index": 23,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "ZXYIIZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXXIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "candidate_index": 24,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IXYIZZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IYYIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "candidate_index": 25,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IYXIZZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IYYIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "candidate_index": 26,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IZZIXY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IZZIYY",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "candidate_index": 27,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IZZIYX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IZZIYY",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.010806887765427887,
+            "candidate_index": 28,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 4,
+            "pauli": "YZIXZI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "XZIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.010806887765427887,
+            "candidate_index": 29,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 4,
+            "pauli": "XZIYZI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "XZIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.009645890324507576,
+            "candidate_index": 30,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "locality": 2,
+            "pauli": "IYIIXI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IXIIXI",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.009645890324507576,
+            "candidate_index": 31,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "locality": 2,
+            "pauli": "IXIIYI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IXIIXI",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.008601171379278242,
+            "candidate_index": 32,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 4,
+            "pauli": "IXYIYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.008601171379278242,
+            "candidate_index": 33,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 4,
+            "pauli": "IYXIYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.008601171379278242,
+            "candidate_index": 34,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 4,
+            "pauli": "IYYIXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.008601171379278242,
+            "candidate_index": 35,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 4,
+            "pauli": "IYYIYX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "candidate_index": 36,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "IZZZYX",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "IZZZXX",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "candidate_index": 37,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "IZZZXY",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "IZZZXX",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "candidate_index": 38,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "ZYXIZZ",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXXIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "candidate_index": 39,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "ZXYIZZ",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXXIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "candidate_index": 40,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IIYIZX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIXIZX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "candidate_index": 41,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IIXIZY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIXIZX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "candidate_index": 42,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IZYIIX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IZXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "candidate_index": 43,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IZXIIY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IZXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 44,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YIIXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 45,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XIIYXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 46,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XIIXYX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 47,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XIIXXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 48,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YIIYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIYXY",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 49,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XIIYYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIYXY",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 50,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YXXXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 51,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XYXXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 52,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XXYXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 53,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "XXXYII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 54,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YYYXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "candidate_index": 55,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YXYYII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXII",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 56,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "IXYZXX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "IYYZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 57,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "IYXZXX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "IYYZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 58,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "IYYZYX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "IYYZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 59,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "IYYZXY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "IYYZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 60,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "ZYXIYY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "ZXXIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 61,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "ZXYIYY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "ZXXIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 62,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "ZXXIXY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "ZXXIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.006192843393080334,
+            "candidate_index": 63,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 5,
+            "pauli": "ZXXIYX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "ZXXIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.005770544737318366,
+            "candidate_index": 64,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 3,
+            "pauli": "IXYZII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IYYZII",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.005770544737318366,
+            "candidate_index": 65,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 3,
+            "pauli": "IYXZII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IYYZII",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.005770544737318366,
+            "candidate_index": 66,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 3,
+            "pauli": "ZIIIXY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZIIIYY",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.005770544737318366,
+            "candidate_index": 67,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 3,
+            "pauli": "ZIIIYX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZIIIYY",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 68,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXXXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 69,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XYXXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 70,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXYXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 71,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXXYXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 72,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXXXYX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 73,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXXXXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 74,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXXYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 75,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XYXYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 76,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXYYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 77,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "XXXYYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 78,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YYYXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 79,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXYYXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 80,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXYXYX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 81,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXYXXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYXXX",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 82,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YYYYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005750277461613784,
+            "candidate_index": 83,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "locality": 6,
+            "pauli": "YXYYYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YXYYXY",
+            "source_weight": 0.017250832384841354
+          },
+          {
+            "adaptive_score": 0.005241628063198339,
+            "candidate_index": 84,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "locality": 4,
+            "pauli": "IZYIZX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IZXIZX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.005241628063198339,
+            "candidate_index": 85,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "locality": 4,
+            "pauli": "IZXIZY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IZXIZX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 86,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "YXXXZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXXXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 87,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XYXXZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXXXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 88,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XXYXZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXXXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 89,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XXXYZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXXXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 90,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "YZIXXX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 91,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XZIYXX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 92,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XZIXYX",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 93,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XZIXXY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 94,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "YZIYXY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIYXY",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 95,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "XZIYYY",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XZIYXY",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 96,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "YYYXZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YXYXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.005213716975154074,
+            "candidate_index": 97,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "locality": 5,
+            "pauli": "YXYYZI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YXYXZI",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.004778428544043467,
+            "candidate_index": 98,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 6,
+            "pauli": "ZYXZXX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.004778428544043467,
+            "candidate_index": 99,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 6,
+            "pauli": "ZXYZXX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.004778428544043467,
+            "candidate_index": 100,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 6,
+            "pauli": "ZXXZYX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.004778428544043467,
+            "candidate_index": 101,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 6,
+            "pauli": "ZXXZXY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXZXX",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.004182275583188746,
+            "candidate_index": 102,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 4,
+            "pauli": "IXYZZI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IYYZZI",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.004182275583188746,
+            "candidate_index": 103,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 4,
+            "pauli": "IYXZZI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IYYZZI",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.004182275583188746,
+            "candidate_index": 104,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 4,
+            "pauli": "ZZIIXY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZZIIYY",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.004182275583188746,
+            "candidate_index": 105,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 4,
+            "pauli": "ZZIIYX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZZIIYY",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.003895117697689898,
+            "candidate_index": 106,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 4,
+            "pauli": "ZIIZYX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZIIZXX",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.003895117697689898,
+            "candidate_index": 107,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 4,
+            "pauli": "ZIIZXY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZIIZXX",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.003895117697689898,
+            "candidate_index": 108,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 4,
+            "pauli": "ZYXZII",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXXZII",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.003895117697689898,
+            "candidate_index": 109,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "locality": 4,
+            "pauli": "ZXYZII",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXXZII",
+            "source_weight": 0.010386980527173061
+          },
+          {
+            "adaptive_score": 0.003617208871690341,
+            "candidate_index": 110,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "locality": 4,
+            "pauli": "IYIZXZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IXIZXZ",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.003617208871690341,
+            "candidate_index": 111,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "locality": 4,
+            "pauli": "IXIZYZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IXIZXZ",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.003617208871690341,
+            "candidate_index": 112,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "locality": 4,
+            "pauli": "ZYZIXI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXZIXI",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.003617208871690341,
+            "candidate_index": 113,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "locality": 4,
+            "pauli": "ZXZIYI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXZIXI",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.00312276576878093,
+            "candidate_index": 114,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 5,
+            "pauli": "ZYXZZI",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXXZZI",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.00312276576878093,
+            "candidate_index": 115,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 5,
+            "pauli": "ZXYZZI",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXXZZI",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.00312276576878093,
+            "candidate_index": 116,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 5,
+            "pauli": "ZZIZYX",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZZIZXX",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.00312276576878093,
+            "candidate_index": 117,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "locality": 5,
+            "pauli": "ZZIZXY",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZZIZXX",
+            "source_weight": 0.011152734888503322
+          },
+          {
+            "adaptive_score": 0.003043371165787781,
+            "candidate_index": 118,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 4,
+            "pauli": "XYIYYI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YYIYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.003043371165787781,
+            "candidate_index": 119,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 4,
+            "pauli": "YXIYYI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YYIYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.003043371165787781,
+            "candidate_index": 120,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 4,
+            "pauli": "YYIXYI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YYIYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.003043371165787781,
+            "candidate_index": 121,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 4,
+            "pauli": "YYIYXI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "YYIYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 122,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "YXZYYI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXZYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 123,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "XYZYYI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXZYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 124,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "XXZXYI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXZYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 125,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "XXZYXI",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "XXZYYI",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 126,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "XYIXXZ",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YYIXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 127,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "YXIXXZ",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YYIXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 128,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "YYIYXZ",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YYIXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0021912272393672027,
+            "candidate_index": 129,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 5,
+            "pauli": "YYIXYZ",
+            "reference_mixing_relevance": 0.8,
+            "source_pauli": "YYIXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.002143531183223906,
+            "candidate_index": 130,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "locality": 6,
+            "pauli": "ZYZZXZ",
+            "reference_mixing_relevance": 0.3333333333333333,
+            "source_pauli": "ZXZZXZ",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.002143531183223906,
+            "candidate_index": 131,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "locality": 6,
+            "pauli": "ZXZZYZ",
+            "reference_mixing_relevance": 0.3333333333333333,
+            "source_pauli": "ZXZZXZ",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.0016907617587709894,
+            "candidate_index": 132,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 6,
+            "pauli": "YXZXXZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XXZXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0016907617587709894,
+            "candidate_index": 133,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 6,
+            "pauli": "XYZXXZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XXZXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0016907617587709894,
+            "candidate_index": 134,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 6,
+            "pauli": "XXZYXZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XXZXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.0016907617587709894,
+            "candidate_index": 135,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "locality": 6,
+            "pauli": "XXZXYZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XXZXXZ",
+            "source_weight": 0.006086742331575562
+          },
+          {
+            "adaptive_score": 0.00043277665207360004,
+            "candidate_index": 136,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 2,
+            "pauli": "IIYIXI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIXIXI",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00043277665207360004,
+            "candidate_index": 137,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 2,
+            "pauli": "IIXIYI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIXIXI",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00043277665207360004,
+            "candidate_index": 138,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 2,
+            "pauli": "IYIIIX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IXIIIX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00043277665207360004,
+            "candidate_index": 139,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 2,
+            "pauli": "IXIIIY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IXIIIX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00024043147337422222,
+            "candidate_index": 140,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 3,
+            "pauli": "IYIIZX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IXIIZX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00024043147337422222,
+            "candidate_index": 141,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 3,
+            "pauli": "IXIIZY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IXIIZX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00024043147337422222,
+            "candidate_index": 142,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 3,
+            "pauli": "IZYIXI",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IZXIXI",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.00024043147337422222,
+            "candidate_index": 143,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 3,
+            "pauli": "IZXIYI",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IZXIXI",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.0001622912445276,
+            "candidate_index": 144,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 4,
+            "pauli": "IIYZXZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IIXZXZ",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.0001622912445276,
+            "candidate_index": 145,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 4,
+            "pauli": "IIXZYZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IIXZXZ",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.0001622912445276,
+            "candidate_index": 146,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 4,
+            "pauli": "ZYZIIX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXZIIX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.0001622912445276,
+            "candidate_index": 147,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "locality": 4,
+            "pauli": "ZXZIIY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXZIIX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.000121177462580608,
+            "candidate_index": 148,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 5,
+            "pauli": "IZYZXZ",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "IZXZXZ",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.000121177462580608,
+            "candidate_index": 149,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 5,
+            "pauli": "IZXZYZ",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "IZXZXZ",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.000121177462580608,
+            "candidate_index": 150,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 5,
+            "pauli": "ZYZIZX",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXZIZX",
+            "source_weight": 0.00043277665207360004
+          },
+          {
+            "adaptive_score": 0.000121177462580608,
+            "candidate_index": 151,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "locality": 5,
+            "pauli": "ZXZIZY",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXZIZX",
+            "source_weight": 0.00043277665207360004
+          }
+        ],
+        "compression_reconstruction_error": 1.6711069443220838e-16,
+        "compression_threshold": 1e-10,
+        "factor_rank": 10,
+        "local_accuracy_gate": {
+          "absolute_error_hartree": 0.0002543332136522025,
+          "passed": true,
+          "threshold_hartree": 0.0016
+        },
+        "low_rank_aware": true,
+        "low_rank_method": "modified_cholesky",
+        "method_role": "flagship",
+        "optimized_parameters": [
+          -0.16022023227551208,
+          0.13134066348456447,
+          -0.14151308034588758,
+          0.14951940958007984,
+          -0.026808643221786575,
+          0.12964998108833814,
+          0.1714340047902032,
+          -0.02724396747166184,
+          0.024397693927878817,
+          0.040874576952026696,
+          -0.10117434618342659,
+          0.021927209694753633,
+          -0.18008450592281627,
+          -0.0529256077243314,
+          -0.005707970448558122,
+          -0.04338954781681217,
+          0.04640698536694959,
+          -0.11945539266145999,
+          -0.032186963783528186,
+          -0.09529893779069536,
+          0.029030823341289386,
+          0.051549307993121414,
+          -0.05266755164298733,
+          0.030444815597317425
+        ],
+        "post_term_count": 95,
+        "pre_term_count": 95,
+        "profile": "stress_local",
+        "selected_factor_count": 24,
+        "selected_generators": [
+          {
+            "adaptive_score": 0.04257416357122505,
+            "batch_index": 0,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 2,
+            "pauli": "IXYIII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.042574163571225024,
+            "batch_index": 1,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 2,
+            "pauli": "IIIIXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIIIYY",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.028818367374474366,
+            "batch_index": 2,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 2,
+            "pauli": "YIIXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.023652313095125027,
+            "batch_index": 3,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "locality": 3,
+            "pauli": "ZYXIII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "ZXXIII",
+            "source_weight": 0.04257416357122505
+          },
+          {
+            "adaptive_score": 0.023652313095125013,
+            "batch_index": 4,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "locality": 3,
+            "pauli": "IIIZYX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIIZXX",
+            "source_weight": 0.042574163571225024
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "batch_index": 5,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IIZIXY",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIZIYY",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016867294056597256,
+            "batch_index": 6,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 3,
+            "pauli": "IXYIIZ",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IYYIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "batch_index": 7,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "YIIXZI",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XIIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.016010204096930204,
+            "batch_index": 8,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "locality": 3,
+            "pauli": "YZIXII",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "XZIXII",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.01397767483519557,
+            "batch_index": 9,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "locality": 2,
+            "pauli": "IIYIIX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IIXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "batch_index": 10,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "IIZZYX",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IIZZXX",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.011385423488203148,
+            "batch_index": 11,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "locality": 4,
+            "pauli": "ZYXIIZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "ZXXIIZ",
+            "source_weight": 0.030361129301875064
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "batch_index": 12,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IXYIZZ",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IYYIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0109105859555228,
+            "batch_index": 13,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 4,
+            "pauli": "IZZIXY",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "IZZIYY",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.010806887765427887,
+            "batch_index": 14,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "locality": 4,
+            "pauli": "YZIXZI",
+            "reference_mixing_relevance": 0.5,
+            "source_pauli": "XZIXZI",
+            "source_weight": 0.028818367374474366
+          },
+          {
+            "adaptive_score": 0.009645890324507576,
+            "batch_index": 15,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "locality": 2,
+            "pauli": "IYIIXI",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IXIIXI",
+            "source_weight": 0.009645890324507576
+          },
+          {
+            "adaptive_score": 0.008601171379278242,
+            "batch_index": 16,
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "locality": 4,
+            "pauli": "IXYIYY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "IYYIYY",
+            "source_weight": 0.017202342758556484
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "batch_index": 17,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "IZZZYX",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "IZZZXX",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.008146570846790357,
+            "batch_index": 18,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "locality": 5,
+            "pauli": "ZYXIZZ",
+            "reference_mixing_relevance": 0.4,
+            "source_pauli": "ZXXIZZ",
+            "source_weight": 0.029094895881394134
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "batch_index": 19,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IIYIZX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IIXIZX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0077653749084419825,
+            "batch_index": 20,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "locality": 3,
+            "pauli": "IZYIIX",
+            "reference_mixing_relevance": 0.6666666666666666,
+            "source_pauli": "IZXIIX",
+            "source_weight": 0.01397767483519557
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "batch_index": 21,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YIIXXX",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIXXX",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "batch_index": 22,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YIIYXY",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XIIYXY",
+            "source_weight": 0.014482547153205759
+          },
+          {
+            "adaptive_score": 0.0072412735766028795,
+            "batch_index": 23,
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "locality": 4,
+            "pauli": "YXXXII",
+            "reference_mixing_relevance": 1.0,
+            "source_pauli": "XXXXII",
+            "source_weight": 0.014482547153205759
+          }
+        ],
+        "selection_rule": "adaptive_score_weight_locality_reference_mixing",
+        "source_terms": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "pauli": "IYYIII",
+            "weight": 0.04257416357122505
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.04257416357122505,
+            "pauli": "ZXXIII",
+            "weight": 0.04257416357122505
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "pauli": "IIIIYY",
+            "weight": 0.042574163571225024
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.042574163571225024,
+            "pauli": "IIIZXX",
+            "weight": 0.042574163571225024
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "pauli": "IIZIYY",
+            "weight": 0.030361129301875064
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "pauli": "IIZZXX",
+            "weight": 0.030361129301875064
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "pauli": "IYYIIZ",
+            "weight": 0.030361129301875064
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.030361129301875064,
+            "pauli": "ZXXIIZ",
+            "weight": 0.030361129301875064
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "pauli": "IYYIZZ",
+            "weight": 0.029094895881394134
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "pauli": "IZZIYY",
+            "weight": 0.029094895881394134
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "pauli": "IZZZXX",
+            "weight": 0.029094895881394134
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.029094895881394134,
+            "pauli": "ZXXIZZ",
+            "weight": 0.029094895881394134
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "pauli": "XIIXII",
+            "weight": 0.028818367374474366
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "pauli": "XIIXZI",
+            "weight": 0.028818367374474366
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.028818367374474366,
+            "pauli": "XZIXII",
+            "weight": 0.028818367374474366
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.028818367374474366,
+            "pauli": "XZIXZI",
+            "weight": 0.028818367374474366
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "pauli": "XXXXXX",
+            "weight": 0.017250832384841354
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "pauli": "XXXYXY",
+            "weight": 0.017250832384841354
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "pauli": "YXYXXX",
+            "weight": 0.017250832384841354
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017250832384841354,
+            "pauli": "YXYYXY",
+            "weight": 0.017250832384841354
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "pauli": "IYYIYY",
+            "weight": 0.017202342758556484
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "pauli": "IYYZXX",
+            "weight": 0.017202342758556484
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "pauli": "ZXXIYY",
+            "weight": 0.017202342758556484
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.017202342758556484,
+            "pauli": "ZXXZXX",
+            "weight": 0.017202342758556484
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "pauli": "XIIXXX",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "pauli": "XIIYXY",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "pauli": "XXXXII",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "pauli": "XXXXZI",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "pauli": "XZIXXX",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "pauli": "XZIYXY",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.014482547153205759,
+            "pauli": "YXYXII",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.014482547153205759,
+            "pauli": "YXYXZI",
+            "weight": 0.014482547153205759
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "pauli": "IIXIIX",
+            "weight": 0.01397767483519557
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "pauli": "IIXIZX",
+            "weight": 0.01397767483519557
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.01397767483519557,
+            "pauli": "IZXIIX",
+            "weight": 0.01397767483519557
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.01397767483519557,
+            "pauli": "IZXIZX",
+            "weight": 0.01397767483519557
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "pauli": "IYYZZI",
+            "weight": 0.011152734888503322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "pauli": "ZXXZZI",
+            "weight": 0.011152734888503322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "pauli": "ZZIIYY",
+            "weight": 0.011152734888503322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.011152734888503322,
+            "pauli": "ZZIZXX",
+            "weight": 0.011152734888503322
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "pauli": "IYYZII",
+            "weight": 0.010386980527173061
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "pauli": "ZIIIYY",
+            "weight": 0.010386980527173061
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "pauli": "ZIIZXX",
+            "weight": 0.010386980527173061
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.010386980527173061,
+            "pauli": "ZXXZII",
+            "weight": 0.010386980527173061
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "pauli": "IXIIXI",
+            "weight": 0.009645890324507576
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "pauli": "IXIZXZ",
+            "weight": 0.009645890324507576
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.009645890324507576,
+            "pauli": "ZXZIXI",
+            "weight": 0.009645890324507576
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.009645890324507576,
+            "pauli": "ZXZZXZ",
+            "weight": 0.009645890324507576
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "pauli": "XXZXXZ",
+            "weight": 0.006086742331575562
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "pauli": "XXZYYI",
+            "weight": 0.006086742331575562
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "pauli": "YYIXXZ",
+            "weight": 0.006086742331575562
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.006086742331575562,
+            "pauli": "YYIYYI",
+            "weight": 0.006086742331575562
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.004658144853088915,
+            "pauli": "IIIIXX",
+            "weight": 0.004658144853088915
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.004658144853088915,
+            "pauli": "IIIZYY",
+            "weight": 0.004658144853088915
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.004658144853088915,
+            "pauli": "IXXIII",
+            "weight": 0.004658144853088915
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.004658144853088915,
+            "pauli": "ZYYIII",
+            "weight": 0.004658144853088915
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "pauli": "IIXIXI",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "pauli": "IIXZXZ",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "pauli": "IXIIIX",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "pauli": "IXIIZX",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "pauli": "IZXIXI",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "pauli": "IZXZXZ",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.00043277665207360004,
+            "pauli": "ZXZIIX",
+            "weight": 0.00043277665207360004
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.00043277665207360004,
+            "pauli": "ZXZIZX",
+            "weight": 0.00043277665207360004
+          }
+        ],
+        "validation_gate": {
+          "blocking_reason": null,
+          "compressed_solver_energy": -6.1620590784684515,
+          "compression_enabled": true,
+          "exact_available": true,
+          "local_exact_error_hartree": 0.000254333213649538,
+          "runtime_accuracy_met": null,
+          "runtime_attempted": false,
+          "target_error_hartree": 0.0016,
+          "trust_label": "passed_exact_reference",
+          "uncompressed_exact_solver_energy": -6.162313411682108,
+          "uncompressed_solver_energy": -6.161983276324899,
+          "validated": true,
+          "verification_status": "validated"
+        },
+        "validation_mode": "trust_first"
+      },
+      "reps": 24,
+      "rotation_blocks": [
+        "ry",
+        "rz"
+      ]
+    },
+    "available": true,
+    "converged": false,
+    "evaluations": 7800,
+    "final_objective_energy": -6.1620590784684515,
+    "initial_point_provenance": {
+      "effective_strategy": "adaptive_schedule",
+      "reused": false
+    },
+    "initial_point_strategy": "adaptive_schedule",
+    "iterations": 5000,
+    "optimal_parameters": [
+      -0.16022023227551208,
+      0.13134066348456447,
+      -0.14151308034588758,
+      0.14951940958007984,
+      -0.026808643221786575,
+      0.12964998108833814,
+      0.1714340047902032,
+      -0.02724396747166184,
+      0.024397693927878817,
+      0.040874576952026696,
+      -0.10117434618342659,
+      0.021927209694753633,
+      -0.18008450592281627,
+      -0.0529256077243314,
+      -0.005707970448558122,
+      -0.04338954781681217,
+      0.04640698536694959,
+      -0.11945539266145999,
+      -0.032186963783528186,
+      -0.09529893779069536,
+      0.029030823341289386,
+      0.051549307993121414,
+      -0.05266755164298733,
+      0.030444815597317425
+    ],
+    "optimizer": {
+      "kind": "COBYLA",
+      "maxiter": 5000,
+      "tol": null
+    },
+    "optimizer_message": "Maximum number of function evaluations has been exceeded.",
+    "parameter_count": 24,
+    "solver_kind": "lr_ace"
+  },
+  "verification_notes": [
+    "validation_scope=lr_ace adaptive local exact-baseline gate"
+  ],
+  "verification_status": "validated"
+}

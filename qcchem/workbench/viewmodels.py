@@ -116,6 +116,9 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     field_evidence = payload.get("field_evidence") or {}
     pbc = _normalized_pbc_model(payload.get("periodic_boundary") or payload.get("pbc"))
     pbc_qmmm = _normalized_pbc_qmmm_model(payload.get("pbc_qmmm"))
+    variational = _safe_dict(payload.get("variational_result"))
+    ansatz = _safe_dict(variational.get("ansatz"))
+    lr_ace = _safe_dict(ansatz.get("lr_ace"))
 
     view_model = {
         "hero": {
@@ -181,6 +184,7 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "core_runner_implemented": pbc_qmmm.get("core_runner_implemented"),
             "notes": pbc_qmmm.get("notes", []),
         },
+        "lr_ace": lr_ace,
         "evidence_summary": evidence_summary,
         "field_evidence": {
             "available": field_evidence.get("available"),

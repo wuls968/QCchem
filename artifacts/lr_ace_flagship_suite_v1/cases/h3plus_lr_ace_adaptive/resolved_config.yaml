@@ -1,0 +1,353 @@
+molecule:
+  name: H3plus-LR-ACE-flagship-adaptive
+  geometry:
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.0
+  - symbol: H
+    coords:
+    - 0.0
+    - 0.0
+    - 0.9
+  - symbol: H
+    coords:
+    - 0.7794
+    - 0.0
+    - 0.45
+  charge: 1
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+  input_provenance:
+    kind: inline_geometry
+    format: inline
+    parser: qcchem.io.config:_parse_atoms
+    atom_count: 3
+    unit: angstrom
+    normalized_geometry_sha256: 0b4d09ceda090567c315ec27a02c8da5ceaf27962b9459064a6344f41ccfd3da
+problem:
+  active_space: null
+  freeze_core: false
+  remove_orbitals: []
+  compression:
+    enabled: true
+    method: modified_cholesky
+    threshold: 1.0e-10
+    max_rank: 6
+    rank_schedule:
+    - 6
+    - 9
+    term_budget_policy: precision_first
+    compression_error_budget_hartree: 0.0008
+    allow_pauli_truncation: false
+    runtime_term_budget: null
+    apply_to_solver: true
+    execution_enabled: true
+  measurement:
+    strategy: low_rank_lr_ace_adaptive_local
+    runtime_precision_target: null
+    execution_mode: estimator
+    grouping_policy: low_rank_factor_aware
+  embedding:
+    enabled: false
+    method: dmet_skeleton
+    bath_threshold: 0.05
+    solver_plugin: placeholder_fragment_solver
+    fragments: []
+    execution:
+      enabled: false
+      plugin: pyscf_rhf_fragment
+      validate_against_full_system: true
+  external_point_charges:
+    enabled: false
+    unit: null
+    source_file: null
+    charges: []
+    min_distance_to_qm_atoms: 1.0e-06
+  environment_embedding:
+    enabled: false
+    mode: effective_hamiltonian
+    point_charges:
+      enabled: false
+      unit: null
+      source_file: null
+      charges: []
+      min_distance_to_qm_atoms: 1.0e-06
+      damping:
+        kind: gaussian
+        default_radius: 0.4
+        radius_unit: angstrom
+        min_radius: 0.15
+        overpolarization_warning_potential_au: 2.0
+    boundary:
+      enabled: false
+      method: localized_orbital_freeze_project_downfold
+      localization: iao_lowdin
+      cut_bonds: []
+      leakage_threshold: 0.05
+      strict: true
+    cache:
+      enabled: true
+      directory: artifacts/effective_hamiltonians
+      refresh: false
+  qft:
+    enabled: false
+    model: lattice_qed_minimal_coupling
+    dimensions: 1
+    grid:
+      shape:
+      - 2
+      spacing:
+      - 1.0
+      origin: molecule_center
+      axes: principal
+      boundary: open
+      softening: 0.35
+    matter:
+      spin_components: 2
+      target_electrons: auto
+      include_soft_coulomb_density: false
+    gauge:
+      group: u1
+      electric_cutoff: 1
+      coupling: 1.0
+      include_magnetic_plaquettes: true
+    constraints:
+      gauss_law_penalty: 10.0
+      particle_number_penalty: 10.0
+      padding_penalty: 50.0
+      enforce_physical_sector: false
+      target_charge_sector: neutral
+      gauss_law_tolerance: 1.0e-08
+      max_sector_enumeration_qubits: 10
+    ansatz:
+      generator_policy: gauge_invariant_hopping
+    engine:
+      representation: auto
+      auto_project_physical_sector: true
+      max_projected_dimension: 4096
+      max_full_qubits_for_dense: 10
+      materialize_pauli: auto
+      store_basis_indices: preview
+      projector_tolerance: 1.0e-08
+    dynamics:
+      enabled: false
+      method: real_time_quench
+      initial_state:
+        kind: local_hopping_pulse
+        base: physical_reference
+        link_index: 0
+        pulse_time: 0.05
+        pulse_strength: 1.0
+      time_grid:
+        start: 0.0
+        stop: 2.0
+        num_points: 41
+      evolution:
+        exact_enabled: true
+        exact_qubit_limit: 12
+        trotter_enabled: true
+        trotter_step: 0.05
+        trotter_order: 1
+      runtime:
+        enabled: false
+        runtime_observables: aggregate_gauge
+  cavity_qed:
+    enabled: false
+    model: pauli_fierz_cavity_qed
+    photon_encoding: linear
+    include_dipole_self_energy: true
+    photon_physical_subspace_penalty: 25.0
+    modes:
+    - frequency: 0.4
+      coupling_strength: 0.05
+      polarization:
+      - 0.0
+      - 0.0
+      - 1.0
+      max_occupation: 1
+  point_group:
+    subgroup: auto
+    reduction_mode: audit
+    active_irreps: []
+    remove_irreps: []
+mapping:
+  kind: parity_two_qubit_reduction
+  symmetry_reduction:
+    z2: auto
+    point_group: auto
+    strict: false
+backend:
+  kind: statevector
+  shots: null
+  precision: null
+  seed: 2051
+  repetitions: 1
+  abelian_grouping: true
+  noise:
+    enabled: false
+    profile: none
+    depolarizing_probability_1q: 0.0
+    depolarizing_probability_2q: 0.0
+    readout_error_probability: 0.0
+    basis_gates: []
+  runtime:
+    enabled: false
+    service: local
+    instance: null
+    runtime_ready: false
+    session_ready: false
+    batch_ready: false
+    precision_target: null
+    max_budgeted_shots: null
+    max_execution_seconds: null
+    calibration_strategy: default
+    resilience_level: 0
+    grouping_policy: default
+    options: {}
+solver:
+  kind: lr_ace
+  optimizer:
+    kind: COBYLA
+    maxiter: 3000
+    tol: null
+  ansatz:
+    kind: lr_ace
+    rotation_blocks:
+    - ry
+    - rz
+    entanglement_blocks: cz
+    entanglement: full
+    reps: 16
+    skip_final_rotation_layer: false
+  initial_point: random
+  initial_point_candidate: null
+  experimental: false
+  lr_ace:
+    profile: flagship_adaptive
+    validation_mode: trust_first
+    uncompressed_reference: auto
+  lr_ace_adaptive:
+    enabled: true
+    generator_schedule:
+    - 12
+    - 16
+    optimizer_maxiter_schedule:
+    - 1500
+    - 3000
+    initial_point_strategies:
+    - zeros
+    - random
+    random_restarts: 1
+    target_error_hartree: 0.0016
+    max_wall_time_seconds: 1200.0
+    uncompressed_check_qubit_limit: 12
+    candidate_pool_policy: residual_guided
+    candidate_scan_limit: 64
+    residual_batch_size: 8
+    residual_scan_angles:
+    - -0.15
+    - -0.05
+    - 0.05
+    - 0.15
+    min_energy_improvement_hartree: 0.0002
+    max_adaptive_expansions: 3
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 0.0016
+  relative_error_threshold: 0.0016
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: parity_placeholder
+  readout:
+    enabled: false
+    method: placeholder
+  zne:
+    enabled: false
+    method: placeholder
+  pec:
+    enabled: false
+    method: placeholder
+  experimental: false
+policy:
+  name: benchmark
+  allow_exploratory: false
+exploratory:
+  enabled: false
+  modules: []
+  notes: []
+tasks:
+  excited_state:
+    enabled: false
+    method: exact_spectrum
+    num_states: 2
+    state_indices:
+    - 1
+  properties: []
+  perturbative_correction:
+    enabled: false
+    method: nevpt2
+    plugin: pyscf
+    root: 0
+  geometry_optimization:
+    enabled: false
+    method: pyscf_rhf
+    max_steps: 50
+    gradient_tolerance: 0.0003
+  gradient:
+    enabled: false
+    method: pyscf_rhf
+    state_index: 0
+  response_properties:
+    enabled: false
+    properties:
+    - static_polarizability
+    method: finite_field_rhf
+    finite_field_step: 0.001
+tc_qsci:
+  enabled: false
+  resource_estimation_only: false
+  cast_model:
+    kind: identity
+    npz_path: null
+  initial_state:
+    kind: hf
+    max_determinants: null
+    determinants: []
+  kick:
+    time: 0.05
+    num_kicks: 1
+    pauli_term_budget: null
+    shots: 1024
+  selection:
+    max_determinants: 64
+    min_count: 1
+    symmetry_postselect: true
+  resource_estimation:
+    enabled: true
+    target_precision: 0.001
+hardware_optimization:
+  enabled: false
+  profile: h2_precision_push
+  max_real_jobs: 3
+  max_total_budgeted_shots: 40960
+  max_total_estimated_quantum_seconds: 600.0
+  stop_if_error_below: 0.0016
+  candidate_strategies:
+  - jw_puccd_layout_baseline
+  - parity_puccd_layout
+  - parity_succd_layout
+  - parity_uccsd_layout
+  selection_metric: accuracy_then_cost
+  requires_confirmation: true
+run:
+  seed: 2051
+  output_dir: artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive
+  overwrite: true
+  exports:
+    qcschema_json: false
+    hdf5: false

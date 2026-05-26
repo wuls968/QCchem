@@ -22,7 +22,7 @@ class ContinuityRecord:
 
 def supports_initial_point_continuity(spec: RunSpec) -> bool:
     """Return whether a run spec can accept a previous VQE optimum."""
-    return str(spec.solver.kind).strip().lower() == "vqe"
+    return str(spec.solver.kind).strip().lower() in {"vqe", "lr_ace"}
 
 
 def attach_initial_point_candidate(spec: RunSpec, candidate: InitialPointCandidate | None) -> None:
@@ -161,7 +161,7 @@ def build_initial_point_candidate(
     *,
     target_parameter_value: float | None = None,
 ) -> InitialPointCandidate | None:
-    """Build a warm-start candidate from previous VQE records."""
+    """Build a warm-start candidate from previous variational records."""
     if not continuity.enabled:
         return None
     mode = str(continuity.mode).strip().lower()
@@ -195,7 +195,7 @@ def build_continuity_record(
     variational = result.variational_result
     if variational is None:
         return None
-    if str(variational.solver_kind).strip().lower() != "vqe":
+    if str(variational.solver_kind).strip().lower() not in {"vqe", "lr_ace"}:
         return None
     if not variational.optimal_parameters:
         return None

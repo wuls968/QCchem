@@ -1,0 +1,17 @@
+2026-05-17 18:50:40,912 INFO Loading config from configs/lr_ace/h3plus_adaptive.yaml
+2026-05-17 18:50:40,912 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=3, sha256=0b4d09ceda09
+2026-05-17 18:50:40,917 INFO Building electronic structure problem
+2026-05-17 18:50:40,933 INFO Applying mapping: parity_two_qubit_reduction
+2026-05-17 18:50:40,970 INFO Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads.
+2026-05-17 18:50:41,008 INFO Constructed compressed mapped Hamiltonian via modified_cholesky
+2026-05-17 18:50:41,008 INFO Computed compression audit: modified_cholesky
+2026-05-17 18:50:41,009 INFO Prepared measurement plan: groups=7, cost=70000
+2026-05-17 18:50:41,009 INFO Preparing backend: statevector
+2026-05-17 18:50:41,009 INFO Running solver: lr_ace
+2026-05-17 18:50:41,408 INFO Computing exact spectrum for 1 states
+2026-05-17 18:50:41,409 INFO Writing exact baseline artifact to artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive/exact_result.json
+2026-05-17 18:50:41,753 INFO Computed compressed-vs-uncompressed execution comparison
+2026-05-17 18:50:41,753 INFO Computed empirical calibration: wall_time=0.399s, measured_cost=None
+2026-05-17 18:50:41,758 INFO Writing JSON result to artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive/result.json
+2026-05-17 18:50:41,760 INFO Writing Markdown report to artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive/report.md
+2026-05-17 18:50:41,763 INFO Run completed

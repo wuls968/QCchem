@@ -158,3 +158,25 @@ benchmark_suite:
     assert case.metrics["environment_hcore_delta_frobenius_norm"] > 0.0
     assert case.metrics["environment_qubit_growth"] == 0
     assert case.metrics["environment_mapping_tapered_qubit_delta"] == 0
+
+
+@pytest.mark.integration
+def test_lr_ace_flagship_benchmark_suite_accepts_fast_gates(tmp_path: Path) -> None:
+    result = run_benchmark_suite_from_config(
+        Path("benchmarks/lr_ace_flagship_suite_v1.yaml"),
+        output_dir=tmp_path / "lr-ace-flagship-suite",
+    )
+
+    assert result.summary.status_counts["validated"] >= 2
+    assert result.acceptance_summary is not None
+    assert result.acceptance_summary["accepted"] is True
+    fast_cases = [
+        case
+        for case in result.cases
+        if case.name in {"h2_lr_ace_flagship", "lih_active_lr_ace_flagship"}
+    ]
+    assert {case.name for case in fast_cases} >= {
+        "h2_lr_ace_flagship",
+        "lih_active_lr_ace_flagship",
+    }
+    assert all(case.status == "validated" for case in fast_cases)

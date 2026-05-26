@@ -1,0 +1,33 @@
+benchmark_suite:
+  name: lr_ace_flagship_suite_v1
+  description: >
+    Trust-first LR-ACE flagship suite covering fast H2/LiH gates and slower
+    adaptive active-space and strong-correlation diagnostics.
+  registry_name: lr_ace_flagship_suite_v1
+  tags: [benchmark, lr_ace, flagship, trust_first]
+  cases:
+    - name: h2_lr_ace_flagship
+      kind: run
+      config: configs/lr_ace/h2_flagship.yaml
+      expected_status: validated
+      tags: [lr_ace, flagship, fast, h2]
+    - name: lih_active_lr_ace_flagship
+      kind: run
+      config: configs/lr_ace/lih_active_flagship.yaml
+      expected_status: validated
+      tags: [lr_ace, flagship, fast, lih, active_space]
+    - name: h2o_active_lr_ace_adaptive
+      kind: run
+      config: configs/lr_ace/h2o_active_adaptive.yaml
+      expected_status: validated
+      tags: [lr_ace, flagship, slow, h2o, active_space]
+    - name: h3plus_lr_ace_adaptive
+      kind: run
+      config: configs/lr_ace/h3plus_adaptive.yaml
+      expected_status: validated
+      tags: [lr_ace, flagship, slow, h3plus]
+    - name: h4_chain_lr_ace_adaptive
+      kind: run
+      config: configs/lr_ace/h4_chain_adaptive.yaml
+      expected_status: validated
+      tags: [lr_ace, flagship, slow, h4_chain]

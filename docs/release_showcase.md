@@ -153,15 +153,21 @@ qcchem exploratory run \
 Boundary: sparse projected physical-sector, Gauss-law, and finite-cutoff audit
 evidence only. No continuum chemistry claim.
 
-LR-ACE:
+LR-ACE flagship:
 
 ```bash
+qcchem run -c configs/lr_ace/h2_flagship.yaml
+qcchem run -c configs/lr_ace/lih_active_flagship.yaml
+qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1
+
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
 qcchem exploratory run -c configs/exploratory/lih_active_lr_ace.yaml
 ```
 
-Boundary: local exact-baseline gates and runtime probes are exploratory algorithm
-evidence, not publication-grade method validation.
+Boundary: LR-ACE flagship artifacts may be validated only through the
+trust-first validation gate. Legacy exploratory LR-ACE local gates and runtime
+probes remain exploratory algorithm evidence, not publication-grade method
+validation.
 
 TC-QSCI:
 
