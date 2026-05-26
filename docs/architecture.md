@@ -391,7 +391,7 @@ QCchem 当前没有单独起一个 HTTP 服务，而是在已有 CLI 和 artifac
 - `freeze_core`
 - `remove_orbitals`
 - `active_space.selection_mode = manual | auto`
-- `active_space.auto.strategy = frontier_orbitals`
+- `active_space.auto.strategy = frontier_orbitals | trusted_orbital_score`
 
 artifact 会记录：
 

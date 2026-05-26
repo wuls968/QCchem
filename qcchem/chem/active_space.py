@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from qcchem.core import ActiveSpaceSpec
+from qcchem.chem.active_space_recommender import (
+    build_orbital_diagnostics_from_pyscf_driver,
+    recommend_trusted_active_space,
+)
 
 
 @dataclass(slots=True)
@@ -17,6 +22,7 @@ class ResolvedActiveSpace:
     active_orbitals_original: list[int]
     selection_mode: str
     selection_reason: str
+    recommendation_metadata: dict[str, Any] | None = None
 
 
 def infer_frozen_core_orbitals(
@@ -62,6 +68,7 @@ def resolve_active_space(
     num_particles: tuple[int, int],
     num_spatial_orbitals: int,
     available_original: list[int],
+    pyscf_driver: Any | None = None,
 ) -> ResolvedActiveSpace | None:
     """Resolve manual or automatic active-space selection."""
     if spec is None:
@@ -69,6 +76,35 @@ def resolve_active_space(
 
     selection_mode = spec.selection_mode.strip().lower()
     if selection_mode == "auto":
+        strategy = spec.auto.strategy.strip().lower()
+        if strategy == "trusted_orbital_score":
+            diagnostics = build_orbital_diagnostics_from_pyscf_driver(
+                pyscf_driver,
+                num_spatial_orbitals=num_spatial_orbitals,
+                num_particles=num_particles,
+                available_original=available_original,
+                natural_occupation_source=spec.auto.natural_occupation_source,
+            )
+            recommendation = recommend_trusted_active_space(
+                diagnostics,
+                spec.auto,
+                num_particles=num_particles,
+                available_original=available_original,
+            )
+            return ResolvedActiveSpace(
+                num_electrons=recommendation.num_electrons,
+                num_spatial_orbitals=recommendation.num_spatial_orbitals,
+                active_orbitals_current=recommendation.selected_current,
+                active_orbitals_original=recommendation.selected_original,
+                selection_mode="auto",
+                selection_reason=(
+                    "Trusted orbital score selected an auditable active-space window "
+                    f"with confidence {recommendation.recommendation['confidence']}."
+                ),
+                recommendation_metadata=recommendation.recommendation,
+            )
+        if strategy != "frontier_orbitals":
+            raise ValueError(f"Unsupported active-space auto strategy: {spec.auto.strategy}")
         if spec.num_spatial_orbitals is None:
             desired_size = max(spec.auto.num_occupied + spec.auto.num_virtual, 2)
         else:

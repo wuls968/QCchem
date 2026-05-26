@@ -242,6 +242,7 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
         num_particles=tuple(int(value) for value in problem.num_particles),
         num_spatial_orbitals=int(problem.num_spatial_orbitals),
         available_original=available_original,
+        pyscf_driver=driver,
     )
 
     if resolved_active_space is not None:
@@ -281,6 +282,8 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             "active_orbitals": resolved_active_space.active_orbitals_current,
             "active_orbitals_original": resolved_active_space.active_orbitals_original,
         }
+        if resolved_active_space.recommendation_metadata is not None:
+            active_space_summary["recommendation"] = resolved_active_space.recommendation_metadata
         if point_group_filter_metadata is not None:
             active_space_summary["point_group_filter"] = point_group_filter_metadata
 

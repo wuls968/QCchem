@@ -830,6 +830,31 @@ def render_markdown_report(result: Any) -> str:
                 "",
             ]
         )
+        active_space_metadata = reduction.get("active_space_metadata")
+        recommendation = (
+            active_space_metadata.get("recommendation")
+            if isinstance(active_space_metadata, dict)
+            else None
+        )
+        if isinstance(recommendation, dict):
+            selected = recommendation.get("selected") if isinstance(recommendation.get("selected"), dict) else {}
+            lines.extend(
+                [
+                    "## Active-Space Recommendation",
+                    "",
+                    f"- strategy: `{recommendation.get('strategy')}`",
+                    f"- confidence: `{recommendation.get('confidence')}`",
+                    f"- selected_active_orbitals_original: `{selected.get('active_orbitals_original', [])}`",
+                    f"- selected_num_electrons: `{selected.get('num_electrons')}`",
+                    f"- selected_num_spatial_orbitals: `{selected.get('num_spatial_orbitals')}`",
+                    f"- selected_num_qubits: `{selected.get('num_qubits')}`",
+                    f"- candidate_count: `{len(recommendation.get('candidates', []))}`",
+                    f"- rejected_candidate_count: `{len(recommendation.get('rejected_candidates', []))}`",
+                    f"- warnings: `{recommendation.get('warnings', [])}`",
+                    f"- provenance: `{recommendation.get('provenance', {})}`",
+                    "",
+                ]
+            )
 
     if reduction_plan is not None:
         lines.extend(

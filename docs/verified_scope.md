@@ -34,6 +34,10 @@ The validated surface currently includes:
 - H2O active-space exact workflow.
 - Active-space, freeze-core, remove-virtual, and active-space auto
   recommendation provenance.
+- Trusted active-space recommendation preview with PySCF orbital diagnostics,
+  rule-scored candidates, confidence, warnings, resource-budget rejections, and
+  reportable provenance. This is a classical preprocessing aid, not a
+  standalone chemistry validation claim.
 - Reduction audit fields: original/reduced system size, transformer list,
   selected/frozen/removed orbitals, Hamiltonian constants, and energy formula.
 - Modified-Cholesky compression-aware execution.

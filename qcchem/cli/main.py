@@ -7,6 +7,10 @@ import importlib
 import json
 from pathlib import Path
 
+import yaml
+
+from qcchem.chem import build_electronic_structure_context
+from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 from qcchem.io.agent_config import load_agent_task_spec
 from qcchem.io.artifact_index import build_artifact_index
 from qcchem.io.config import load_run_spec
@@ -44,6 +48,16 @@ def _build_parser() -> argparse.ArgumentParser:
 
     inspect_parser = subparsers.add_parser("inspect", help="Inspect a config and print a summary.")
     inspect_parser.add_argument("-c", "--config", type=Path, required=True, help="Path to YAML config.")
+
+    active_space_parser = subparsers.add_parser("active-space", help="Active-space recommendation commands.")
+    active_space_subparsers = active_space_parser.add_subparsers(dest="active_space_command", required=True)
+    active_space_recommend = active_space_subparsers.add_parser(
+        "recommend",
+        help="Preview an auditable active-space recommendation without running the quantum solver.",
+    )
+    active_space_recommend.add_argument("-c", "--config", type=Path, required=True)
+    active_space_recommend.add_argument("-o", "--output", type=Path)
+    active_space_recommend.add_argument("--emit-yaml-patch", action="store_true")
 
     study_parser = subparsers.add_parser("study", help="Study workflow commands.")
     study_subparsers = study_parser.add_subparsers(dest="study_command", required=True)
@@ -232,6 +246,68 @@ def _run_workbench_command(host: str, port: int, debug: bool) -> int:
     return 0
 
 
+def _ensure_active_space_recommendation_spec(spec) -> None:
+    active_space = spec.problem.active_space
+    if active_space is None or active_space.selection_mode.strip().lower() != "auto":
+        spec.problem.active_space = ActiveSpaceSpec(
+            num_spatial_orbitals=(active_space.num_spatial_orbitals if active_space is not None else None),
+            selection_mode="auto",
+            auto=AutoActiveSpaceSpec(enabled=True, strategy="trusted_orbital_score"),
+        )
+        return
+    if active_space.auto.strategy.strip().lower() == "frontier_orbitals":
+        active_space.auto.strategy = "trusted_orbital_score"
+    active_space.auto.enabled = True
+
+
+def _active_space_yaml_patch(recommendation: dict[str, object]) -> dict[str, object]:
+    selected = recommendation.get("selected") if isinstance(recommendation, dict) else {}
+    if not isinstance(selected, dict):
+        selected = {}
+    return {
+        "problem": {
+            "active_space": {
+                "selection_mode": "auto",
+                "num_electrons": selected.get("num_electrons"),
+                "num_spatial_orbitals": selected.get("num_spatial_orbitals"),
+                "active_orbitals": selected.get("active_orbitals_original"),
+                "auto": {
+                    "enabled": True,
+                    "strategy": "trusted_orbital_score",
+                },
+            }
+        }
+    }
+
+
+def recommend_active_space_from_config(config: Path) -> dict[str, object]:
+    """Build a classical active-space recommendation preview from a run config."""
+    spec = load_run_spec(config)
+    _ensure_active_space_recommendation_spec(spec)
+    chemistry = build_electronic_structure_context(spec)
+    active_space_metadata = chemistry.summary.active_space_metadata or {}
+    recommendation = active_space_metadata.get("recommendation")
+    if not isinstance(recommendation, dict):
+        selected = {
+            "num_electrons": list(active_space_metadata.get("num_electrons", [])),
+            "num_spatial_orbitals": active_space_metadata.get("num_spatial_orbitals"),
+            "active_orbitals": active_space_metadata.get("active_orbitals", []),
+            "active_orbitals_original": active_space_metadata.get("active_orbitals_original", []),
+        }
+        recommendation = {
+            "strategy": chemistry.reduction_audit.selection_mode,
+            "confidence": None,
+            "selected": selected,
+            "candidates": [selected],
+            "warnings": ["No trusted-score recommendation metadata was produced."],
+            "provenance": {"source": "qcchem.cli.active_space_recommend"},
+        }
+    payload = dict(recommendation)
+    payload["yaml_patch"] = _active_space_yaml_patch(payload)
+    payload["reduction_audit"] = to_primitive(chemistry.reduction_audit)
+    return to_primitive(payload)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the QCchem CLI."""
     parser = _build_parser()
@@ -340,6 +416,23 @@ def main(argv: list[str] | None = None) -> int:
         spec = load_run_spec(args.config)
         print(json.dumps(to_primitive(spec), indent=2, sort_keys=True))
         return 0
+
+    if args.command == "active-space":
+        if args.active_space_command == "recommend":
+            try:
+                payload = recommend_active_space_from_config(args.config)
+            except ValueError as exc:
+                print(f"Active-space recommendation rejected: {exc}")
+                return 2
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+                print(f"Active-space recommendation written to {args.output}")
+            else:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            if args.emit_yaml_patch:
+                print(yaml.safe_dump(payload.get("yaml_patch", {}), sort_keys=False).strip())
+            return 0
 
     if args.command == "study":
         if args.study_command == "run":

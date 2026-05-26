@@ -25,6 +25,26 @@ def test_auto_active_space_and_freeze_core_are_audited(tmp_path: Path) -> None:
 
 
 @pytest.mark.integration
+def test_trusted_score_active_space_recommendation_is_audited(tmp_path: Path) -> None:
+    result = run_from_config(
+        Path("configs/lih_active_space_trusted_score.yaml"),
+        output_dir=tmp_path / "lih-trusted-score",
+    )
+
+    assert result.reduction_audit is not None
+    assert result.reduction_audit.selection_mode == "auto"
+    assert result.problem.active_space_metadata is not None
+    recommendation = result.problem.active_space_metadata["recommendation"]
+    assert recommendation["strategy"] == "trusted_orbital_score"
+    assert recommendation["selected"]["active_orbitals_original"]
+    assert recommendation["candidates"]
+    assert "trusted orbital score" in result.reduction_audit.selection_reason.lower()
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Active-Space Recommendation" in report
+    assert "trusted_orbital_score" in report
+
+
+@pytest.mark.integration
 @pytest.mark.parametrize(
     ("config_name", "expected_method"),
     [

@@ -48,6 +48,13 @@ class AutoActiveSpaceSpec:
     strategy: str = "frontier_orbitals"
     num_occupied: int = 1
     num_virtual: int = 1
+    min_spatial_orbitals: int = 2
+    max_spatial_orbitals: int | None = None
+    max_qubits: int | None = None
+    energy_window_hartree: float = 0.25
+    occupation_tolerance: float = 0.02
+    max_candidates: int = 5
+    natural_occupation_source: str = "mp2"
 
 
 @dataclass(slots=True)
