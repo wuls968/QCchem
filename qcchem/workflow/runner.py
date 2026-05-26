@@ -47,6 +47,7 @@ from qcchem.core import (
     CompressedExecutionComparisonSummary,
     EnergyResult,
     ExactBaselineSummary,
+    FieldArtifactPaths,
     LogSummary,
     MappingSummary,
     MappingSymmetryReductionSpec,
@@ -85,6 +86,7 @@ from qcchem.workflow.tasks import (
 )
 from qcchem.workflow.calibration import build_calibration_summary
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
+from qcchem.workflow.field_evidence import build_and_write_field_evidence
 from qcchem.workflow.quantum_evidence import build_and_write_quantum_evidence
 from qcchem.core.evidence import build_run_evidence_summary
 
@@ -124,6 +126,15 @@ def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool,
         calibration_report_markdown=resolved_root / "calibration_report.md",
         runtime_submission_json=resolved_root / "runtime_submission.json",
         quantum_evidence_json=resolved_root / "quantum_evidence.json",
+        field_evidence=FieldArtifactPaths(
+            registry_json=resolved_root / "field_model_registry.json",
+            hamiltonian_json=resolved_root / "field_hamiltonian.json",
+            observables_json=resolved_root / "field_observables.json",
+            dynamics_json=resolved_root / "field_dynamics.json",
+            constraints_json=resolved_root / "field_constraints.json",
+            resources_json=resolved_root / "field_resources.json",
+            error_budget_json=resolved_root / "field_error_budget.json",
+        ),
         qcschema_json=(resolved_root / "qcschema.json") if qcschema_json else None,
         hdf5_file=(resolved_root / "result.h5") if hdf5 else None,
     )
@@ -1515,6 +1526,19 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         noise_enabled=spec.backend.noise.enabled,
         runtime_enabled=spec.backend.runtime.enabled,
     )
+    field_evidence = build_and_write_field_evidence(
+        run_id=run_id,
+        sidecar_paths=artifacts.field_evidence,
+        mapping=mapping,
+        solver_outcome=solver_outcome,
+        solver_energy=solver_energy,
+        spectrum=spectrum,
+        benchmark=benchmark,
+        qft_context=qft_context,
+        qft_dynamics=qft_dynamics,
+        cavity_context=cavity_context,
+        field_model=field_model,
+    )
     quantum_evidence = build_and_write_quantum_evidence(
         run_id=run_id,
         sidecar_path=artifacts.quantum_evidence_json,
@@ -1533,6 +1557,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         qft_dynamics=qft_dynamics,
         cavity_qed_model=(cavity_context.summary if cavity_context is not None else None),
         field_model=field_model,
+        field_evidence=field_evidence,
         environment_embedding=chemistry.environment_embedding,
         external_point_charges=chemistry.external_point_charges,
         existing_error_budget=(
@@ -1605,6 +1630,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         environment_embedding=chemistry.environment_embedding,
         hardware_error_diagnostic=None,
         quantum_evidence=quantum_evidence,
+        field_evidence=field_evidence,
         tc_qsci_result=(
             tc_qsci_payload.get("tc_qsci_result") if tc_qsci_payload is not None else None
         ),

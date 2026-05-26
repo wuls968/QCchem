@@ -117,6 +117,24 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
               "hamiltonian": {
                 "pauli_term_count": 15
               }
+            },
+            "field_evidence": {
+              "available": true,
+              "schema": "qcchem.field_evidence.v1",
+              "active_model_kind": "lattice_qed",
+              "sidecars": {
+                "registry": "/tmp/field_model_registry.json",
+                "hamiltonian": "/tmp/field_hamiltonian.json"
+              },
+              "hamiltonian": {
+                "sector_energy_closure_available": true
+              }
+            },
+            "field_model": {
+              "model_kind": "lattice_qed"
+            },
+            "qft_model": {
+              "model": "lattice_qed_minimal_coupling"
             }
           }
         }
@@ -142,6 +160,10 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     assert bundle["run"]["mapping"]["num_qubits"] == 4
     assert bundle["run"]["quantum_evidence"]["available"] is True
     assert bundle["run"]["quantum_evidence"]["hamiltonian"]["pauli_term_count"] == 15
+    assert bundle["run"]["field_evidence"]["available"] is True
+    assert bundle["run"]["field_evidence"]["active_model_kind"] == "lattice_qed"
+    assert bundle["run"]["field_model"]["model_kind"] == "lattice_qed"
+    assert bundle["run"]["qft_model"]["model"] == "lattice_qed_minimal_coupling"
 
 
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:

@@ -67,6 +67,7 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     reduction = payload.get("reduction_audit") or {}
     compression = payload.get("compression_result") or {}
     evidence_summary = payload.get("evidence_summary") or {}
+    field_evidence = payload.get("field_evidence") or {}
 
     view_model = {
         "hero": {
@@ -114,6 +115,19 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
         "reduction": reduction,
         "compression": compression,
         "evidence_summary": evidence_summary,
+        "field_evidence": {
+            "available": field_evidence.get("available"),
+            "schema": field_evidence.get("schema"),
+            "active_model_kind": field_evidence.get("active_model_kind"),
+            "sidecars": field_evidence.get("sidecars", {}),
+            "sidecar_sha256": field_evidence.get("sidecar_sha256", {}),
+            "hamiltonian": field_evidence.get("hamiltonian", {}),
+            "observables": field_evidence.get("observables", {}),
+            "dynamics": field_evidence.get("dynamics", {}),
+            "constraints": field_evidence.get("constraints", {}),
+            "resources": field_evidence.get("resources", {}),
+            "error_budget": field_evidence.get("error_budget", {}),
+        },
         "confidence": {
             "verification_status": payload.get("verification_status"),
             "hardware_verified": payload.get("hardware_verified"),

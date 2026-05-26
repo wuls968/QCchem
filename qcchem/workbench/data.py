@@ -56,6 +56,11 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         "perturbative_correction_result": extras.get("perturbative_correction_result"),
         "evidence_summary": extras.get("evidence_summary"),
         "quantum_evidence": extras.get("quantum_evidence"),
+        "field_evidence": extras.get("field_evidence"),
+        "field_model": extras.get("field_model"),
+        "qft_model": extras.get("qft_model"),
+        "qft_dynamics": extras.get("qft_dynamics"),
+        "cavity_qed_model": extras.get("cavity_qed_model"),
         "provenance": qcschema.get("provenance"),
         "schema_version": qcschema.get("schema_version"),
         "run_id": extras.get("qcchem_run_id"),
@@ -66,6 +71,15 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
     result_path = root / "result.json"
     qcschema_path = root / "qcschema.json"
     hdf5_path = root / "result.h5"
+    field_sidecars = {
+        "field_model_registry": root / "field_model_registry.json",
+        "field_hamiltonian": root / "field_hamiltonian.json",
+        "field_observables": root / "field_observables.json",
+        "field_dynamics": root / "field_dynamics.json",
+        "field_constraints": root / "field_constraints.json",
+        "field_resources": root / "field_resources.json",
+        "field_error_budget": root / "field_error_budget.json",
+    }
     result = _load_json(result_path)
     qcschema = _load_json(qcschema_path)
     preferred_source = "result" if result is not None else "qcschema" if qcschema is not None else None
@@ -92,6 +106,14 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
                 "source": "result.h5",
                 "path": str(hdf5_path),
                 "present": hdf5_path.exists(),
+            },
+            "field_evidence": {
+                name: {
+                    "source": f"{name}.json",
+                    "path": str(path),
+                    "present": path.exists(),
+                }
+                for name, path in field_sidecars.items()
             },
         },
     }

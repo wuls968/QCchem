@@ -297,6 +297,37 @@ class QuantumEvidenceSummary:
 
 
 @dataclass(slots=True)
+class FieldArtifactPaths:
+    """Sidecar paths for field-model evidence artifacts."""
+
+    registry_json: Path
+    hamiltonian_json: Path
+    observables_json: Path
+    dynamics_json: Path
+    constraints_json: Path
+    resources_json: Path
+    error_budget_json: Path
+
+
+@dataclass(slots=True)
+class FieldEvidenceSummary:
+    """Compact pointer and summary for field-model evidence sidecars."""
+
+    available: bool
+    schema: str
+    active_model_kind: str | None
+    sidecars: dict[str, str] = field(default_factory=dict)
+    sidecar_sha256: dict[str, str] = field(default_factory=dict)
+    hamiltonian: dict[str, Any] = field(default_factory=dict)
+    observables: dict[str, Any] = field(default_factory=dict)
+    dynamics: dict[str, Any] = field(default_factory=dict)
+    constraints: dict[str, Any] = field(default_factory=dict)
+    resources: dict[str, Any] = field(default_factory=dict)
+    error_budget: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
 class ChemicalAccuracySummary:
     """Chemical-accuracy comparison summary."""
 
@@ -713,6 +744,7 @@ class ArtifactPaths:
     calibration_report_markdown: Path | None = None
     runtime_submission_json: Path | None = None
     quantum_evidence_json: Path | None = None
+    field_evidence: FieldArtifactPaths | None = None
     qcschema_json: Path | None = None
     hdf5_file: Path | None = None
 
@@ -757,6 +789,7 @@ class RunResult:
     environment_embedding: EffectiveHamiltonianSummary | None
     hardware_error_diagnostic: dict[str, Any] | None
     quantum_evidence: QuantumEvidenceSummary | None
+    field_evidence: FieldEvidenceSummary | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
     artifacts: ArtifactPaths

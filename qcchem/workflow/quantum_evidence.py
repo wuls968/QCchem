@@ -494,6 +494,7 @@ def build_and_write_quantum_evidence(
     qft_dynamics: dict[str, Any] | None,
     cavity_qed_model: Any | None,
     field_model: Any | None,
+    field_evidence: Any | None,
     environment_embedding: Any | None,
     external_point_charges: Any | None,
     existing_error_budget: dict[str, Any] | None = None,
@@ -548,9 +549,23 @@ def build_and_write_quantum_evidence(
     )
     field_payload = {
         "field_model": to_primitive(field_model),
-        "qft_model": to_primitive(qft_model),
-        "qft_dynamics": to_primitive(qft_dynamics),
-        "cavity_qed_model": to_primitive(cavity_qed_model),
+        "field_evidence": to_primitive(field_evidence),
+        "qft_model_reference": {
+            "available": qft_model is not None,
+            "model": getattr(qft_model, "model", None) if qft_model is not None else None,
+            "total_qubits": getattr(qft_model, "total_qubits", None) if qft_model is not None else None,
+        },
+        "qft_dynamics_reference": {
+            "available": qft_dynamics is not None,
+            "sidecar": (to_primitive(field_evidence) or {}).get("sidecars", {}).get("dynamics")
+            if field_evidence is not None
+            else None,
+        },
+        "cavity_qed_model_reference": {
+            "available": cavity_qed_model is not None,
+            "model": getattr(cavity_qed_model, "model", None) if cavity_qed_model is not None else None,
+            "total_qubits": getattr(cavity_qed_model, "total_qubits", None) if cavity_qed_model is not None else None,
+        },
         "environment_embedding": to_primitive(environment_embedding),
         "external_point_charges": to_primitive(external_point_charges),
     }

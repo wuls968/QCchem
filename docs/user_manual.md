@@ -73,6 +73,19 @@ Expected run outputs:
 - `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms,
   measurement groups, counts, trajectory, state diagnostics, resource metrics,
   and error budgets.
+- `field_model_registry.json`: field-model registry sidecar for implemented and
+  placeholder model families.
+- `field_hamiltonian.json`: sector-level field Hamiltonian terms, energy
+  contributions, and closure checks.
+- `field_observables.json`: lattice-QED or cavity-QED observable payloads.
+- `field_dynamics.json`: finite-cutoff dynamics curves and exact-vs-Trotter
+  observable error matrix when dynamics are enabled.
+- `field_constraints.json`: Gauss-law, physical-sector, photon-subspace, and
+  cutoff constraint evidence.
+- `field_resources.json`: field-model qubit, Pauli-term, dynamics-circuit, and
+  runtime-preview resources.
+- `field_error_budget.json`: finite-cutoff, Trotter, ansatz, photon-cutoff, and
+  placeholder-boundary error budget.
 - `runtime_submission.json`: runtime sidecar when runtime submission is attempted.
 - `calibration.json` and `calibration_report.md`: empirical execution calibration
   when available.
@@ -196,6 +209,7 @@ Start with:
 - `runtime_chemical_accuracy`
 - `evidence_summary`
 - `quantum_evidence`
+- `field_evidence`
 
 For Trust-First review, the most important fields are:
 
@@ -214,6 +228,18 @@ summarizes the detailed evidence layer. Use the sidecar when you need to audit:
 - Hamiltonian variance, particle/spin/Z2/QFT constraint checks.
 - Circuit resources, measurement cost, and ansatz/shot/compression/hardware
   error budget.
+
+The compact `field_evidence` field points to the field-model sidecars. Use
+those files for finite-cutoff QFT/cavity evidence:
+
+- Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law generators,
+  physical-sector hash, Wilson/electric observables, and Trotter diagnostics.
+- Pauli-Fierz cavity-QED photon occupation, dipole expectation,
+  electron-photon coupling, dipole self energy, polaritonic composition, photon
+  leakage, and photon-cutoff inputs.
+- Sector-level field-Hamiltonian energy closure against the solver Hamiltonian.
+- Scalar, fermion, and generic gauge-field placeholder entries are registry
+  schema only and are not scientific evidence.
 
 Mapping resources now separate the executed Hamiltonian from its untapered
 baseline:

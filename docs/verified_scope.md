@@ -99,9 +99,32 @@ QFT assets include:
 - sparse projected physical-sector engine for small grids,
 - exact finite-cutoff real-time dynamics curves, and
 - guarded runtime-batch preview metadata.
+- independent field evidence sidecars for registry, Hamiltonian sectors,
+  observables, dynamics, constraints, resources, and error budgets.
 
 Boundary: QFT evidence is finite-cutoff lattice-QED evidence only. It is not a
 continuum chemistry accuracy claim.
+
+### Pauli-Fierz Cavity-QED
+
+Cavity-QED assets include:
+
+- finite photon-cutoff Pauli-Fierz Hamiltonian construction,
+- photon occupation, dipole expectation, electron-photon coupling, dipole self
+  energy, polaritonic composition, and photon-subspace leakage observables,
+- photon-cutoff inputs for convergence campaigns, and
+- independent field evidence sidecars aligned with the QFT artifact family.
+
+Boundary: cavity-QED evidence is exact or variational only for the configured
+electron-photon Hamiltonian and photon cutoff. It is not an external
+cavity-QED benchmark validation.
+
+### Field-Model Placeholders
+
+The scalar-field, fermion-field, and generic gauge-field registry entries are
+schema placeholders. They exist so future field-model plugins can share the same
+artifact contract, but they do not implement Hamiltonian construction or solver
+evidence and must not be used as scientific claims.
 
 ### LR-ACE
 

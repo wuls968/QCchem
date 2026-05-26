@@ -77,6 +77,32 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or (artifact_root / "campaign_report.md").exists(),
         "has_resolved_config": (artifact_root / "resolved_config.yaml").exists(),
         "has_runtime_submission": (artifact_root / "runtime_submission.json").exists(),
+        "has_quantum_evidence": (artifact_root / "quantum_evidence.json").exists(),
+        "has_field_evidence": any(
+            (artifact_root / name).exists()
+            for name in (
+                "field_model_registry.json",
+                "field_hamiltonian.json",
+                "field_observables.json",
+                "field_dynamics.json",
+                "field_constraints.json",
+                "field_resources.json",
+                "field_error_budget.json",
+            )
+        ),
+        "field_sidecar_count": sum(
+            1
+            for name in (
+                "field_model_registry.json",
+                "field_hamiltonian.json",
+                "field_observables.json",
+                "field_dynamics.json",
+                "field_constraints.json",
+                "field_resources.json",
+                "field_error_budget.json",
+            )
+            if (artifact_root / name).exists()
+        ),
         "has_acceptance_summary": (artifact_root / "acceptance_summary.json").exists(),
         "has_hardware_error_diagnostic": isinstance(payload.get("hardware_error_diagnostic"), dict),
         "mtime": mtime,

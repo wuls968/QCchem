@@ -53,7 +53,7 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 
 当前 suite artifact：
 
-- `artifact`: `/Users/a0000/QCchem/artifacts/benchmark_suite_v1`
+- `artifact`: `artifacts/benchmark_suite_v1`
 - `total_cases`: `10`
 - `status_counts`: `{'validated': 6, 'unstable': 4}`
 
@@ -102,6 +102,11 @@ Z2 tapering 验证。
 - case status 必须诚实反映当前能力
 - aggregate report 必须能从 JSON 再生成
 - exploratory 或 unstable case 也必须有正式 schema，而不是临时脚本输出
+- field-model case 必须保留 `field_model_registry.json`、
+  `field_hamiltonian.json`、`field_observables.json`、`field_dynamics.json`、
+  `field_constraints.json`、`field_resources.json`、`field_error_budget.json`
+  这些 sidecar 指针；aggregate metrics 可以读取 compact summary，但不能丢失
+  原始场模型证据文件。
 
 ## Acceptance Policy
 

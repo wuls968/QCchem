@@ -152,6 +152,20 @@ Every release-facing run or aggregate artifact should expose an
 This summary is the first object consumed by reports, the workbench, release
 audit, and AI tooling.
 
+### Quantum And Field Evidence
+
+Every run writes `quantum_evidence.json` for Pauli execution evidence. Field
+model runs additionally write a separate field-evidence artifact family:
+`field_model_registry.json`, `field_hamiltonian.json`,
+`field_observables.json`, `field_dynamics.json`, `field_constraints.json`,
+`field_resources.json`, and `field_error_budget.json`.
+
+These field sidecars are authoritative for finite-cutoff lattice-QED and
+Pauli-Fierz cavity-QED observables, constraints, cutoff metadata, sector energy
+closure, and field-model error budgets. Placeholder registry entries for scalar,
+fermion, and generic gauge fields are schema-only and must not be used as
+scientific evidence.
+
 ### Trust Tiers
 
 QCchem uses strict categories instead of a single blended score:
@@ -184,6 +198,7 @@ qcchem report artifacts/h2/result.json
 
 Single-run artifacts include `result.json`, `report.md`,
 `resolved_config.yaml`, `run.log`, and usually `exact_result.json`.
+Field-model runs add the seven `field_*.json` sidecars listed above.
 Runtime-facing runs also carry `hardware_error_diagnostic`, which separates
 local solver error from runtime-derived error and names the next measurement.
 
