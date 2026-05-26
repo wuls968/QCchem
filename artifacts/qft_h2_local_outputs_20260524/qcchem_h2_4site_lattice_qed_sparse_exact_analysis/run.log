@@ -1,0 +1,13 @@
+2026-05-24 10:36:54,218 INFO Loading config from configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
+2026-05-24 10:36:54,218 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=0c68621f7ed9
+2026-05-24 10:36:54,223 INFO Building exploratory lattice-QED field Hamiltonian
+2026-05-24 10:36:54,230 INFO Constructed lattice-QED Hamiltonian: sites=4, links=3, qubits=10
+2026-05-24 10:36:54,231 INFO Prepared measurement plan: groups=1, cost=10000
+2026-05-24 10:36:54,231 INFO Skipping backend construction for solver: lattice_qed_sparse_exact
+2026-05-24 10:36:54,231 INFO Running solver: lattice_qed_sparse_exact
+2026-05-24 10:36:54,233 INFO Using sparse lattice-QED exact solver as the finite-cutoff exact baseline
+2026-05-24 10:36:54,233 INFO Writing exact baseline artifact to /tmp/qcchem_h2_4site_lattice_qed_sparse_exact_analysis/exact_result.json
+2026-05-24 10:36:54,234 INFO Computed empirical calibration: wall_time=0.001s, measured_cost=None
+2026-05-24 10:36:54,241 INFO Writing JSON result to /tmp/qcchem_h2_4site_lattice_qed_sparse_exact_analysis/result.json
+2026-05-24 10:36:54,242 INFO Writing Markdown report to /tmp/qcchem_h2_4site_lattice_qed_sparse_exact_analysis/report.md
+2026-05-24 10:36:54,243 INFO Run completed

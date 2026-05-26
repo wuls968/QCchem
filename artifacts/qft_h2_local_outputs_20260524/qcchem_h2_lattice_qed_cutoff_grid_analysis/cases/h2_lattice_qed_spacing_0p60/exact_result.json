@@ -1,0 +1,9 @@
+{
+  "available": true,
+  "electronic_energy": -10.788140692460477,
+  "energy_units": "Hartree",
+  "schema_version": "qcchem.result.v0.8-alpha",
+  "solver_hamiltonian_energy": -10.788140692460477,
+  "source": "exact_diagonalization",
+  "total_energy": -9.566537409920091
+}

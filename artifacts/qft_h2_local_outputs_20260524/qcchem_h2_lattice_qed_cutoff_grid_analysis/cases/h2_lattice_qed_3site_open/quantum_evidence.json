@@ -1,0 +1,1730 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 0.0,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": true,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_model": {
+      "capability_tier": "exploratory",
+      "error_budget": {},
+      "model_kind": "lattice_qed",
+      "observables": [
+        "gauss_law",
+        "physical_sector",
+        "electric_flux",
+        "electric_energy",
+        "wilson_loop",
+        "real_time_dynamics",
+        "trotter_resource_estimate",
+        "qpe_resource_estimate"
+      ],
+      "registry_name": "finite_cutoff_lattice_qed",
+      "resource_estimate": {},
+      "risk_notes": [
+        "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+      ]
+    },
+    "qft_dynamics": null,
+    "qft_model": {
+      "boundary": "open",
+      "constraint_expectations": {
+        "available": true,
+        "gauss_law_tolerance": 1e-08,
+        "reference_basis_index": 86,
+        "reference_state_gauss_law_residuals": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "reference_state_max_abs_gauss_law": 0.0,
+        "target_charge_sector": "neutral"
+      },
+      "constraint_residuals": {
+        "gauss_law_penalty": 10.0,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "reference_state_max_abs_gauss_law": 0.0
+      },
+      "constraints": {
+        "enforce_physical_sector": false,
+        "gauss_law_penalty": 10.0,
+        "gauss_law_tolerance": 1e-08,
+        "max_sector_enumeration_qubits": 10,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "target_charge_sector": "neutral"
+      },
+      "dimensions": 1,
+      "enabled": true,
+      "engine": {
+        "actual_representation": "dense_full",
+        "auto_project_physical_sector": true,
+        "build_mode": "dense_full",
+        "dense_full_matrix_materialized": true,
+        "full_dimension": 1024,
+        "full_hamiltonian_nnz": 2048,
+        "full_to_projected_reduction": null,
+        "materialize_pauli": "auto",
+        "max_full_qubits_for_dense": 10,
+        "max_projected_dimension": 4096,
+        "operator_representation": "dense_full",
+        "pauli_materialization": "materialized",
+        "peak_matrix_dimension": 1024,
+        "projected_builder": "auto",
+        "projected_builder_fallback_reason": null,
+        "projected_dimension": null,
+        "projection_skipped_reason": "dense_full_representation",
+        "projector_tolerance": 1e-08,
+        "requested_representation": "auto",
+        "sector_nnz": {
+          "density_coulomb": 0,
+          "electric": 768,
+          "external_point_charge": 0,
+          "gauss_law_penalty": 1000,
+          "hopping": 1024,
+          "magnetic_plaquette": 0,
+          "onsite": 1008,
+          "padding_penalty": 448,
+          "particle_number_penalty": 784
+        },
+        "store_basis_indices": "preview"
+      },
+      "external_point_charges": {},
+      "gauge_coupling": 1.0,
+      "gauge_electric_cutoff": 1,
+      "gauge_group": "u1",
+      "gauge_invariant_ansatz": {
+        "commutator_checks": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 64,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ],
+        "generator_policy": "gauge_invariant_hopping",
+        "kind": "gauss_law_preserving",
+        "selected_generator_count": 1,
+        "selected_generators": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 64,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ]
+      },
+      "gauge_qubits": 4,
+      "gauss_law_generators": [
+        {
+          "diagonal_max": 3.0,
+          "diagonal_min": -1.0,
+          "frobenius_norm": 45.254833995939045,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 5,
+          "site_index": 0,
+          "target_charge": 0.0
+        },
+        {
+          "diagonal_max": 2.0,
+          "diagonal_min": -4.0,
+          "frobenius_norm": 50.59644256269407,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 7,
+          "site_index": 1,
+          "target_charge": 0.0
+        },
+        {
+          "diagonal_max": 3.0,
+          "diagonal_min": -1.0,
+          "frobenius_norm": 45.254833995939045,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 5,
+          "site_index": 2,
+          "target_charge": 0.0
+        }
+      ],
+      "grid_axes": "principal",
+      "grid_origin": "molecule_center",
+      "grid_shape": [
+        3
+      ],
+      "grid_spacing": [
+        0.75
+      ],
+      "hamiltonian_gauge_commutator_norms": [
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 0,
+          "skipped_reason": null,
+          "within_tolerance": true
+        },
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 1,
+          "skipped_reason": null,
+          "within_tolerance": true
+        },
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 2,
+          "skipped_reason": null,
+          "within_tolerance": true
+        }
+      ],
+      "link_count": 2,
+      "matter_mode_count": 6,
+      "matter_qubits": 6,
+      "model": "lattice_qed_minimal_coupling",
+      "notes": [
+        "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+        "Exact baselines compare against this discretized Hamiltonian, not continuum chemistry.",
+        "Gauge links use binary padding with encoded dimension 4.",
+        "Pauli decomposition was materialized for this finite Hamiltonian."
+      ],
+      "nuclear_charge_by_site": [
+        0.0,
+        2.0,
+        0.0
+      ],
+      "physical_sector": {
+        "basis_hash": "6c64958370e6921828ad1cedc3a5d19f0c74db9930099b604d3fc0e03732f12b",
+        "basis_index_count": 13,
+        "basis_indices": [
+          86,
+          102,
+          150,
+          166,
+          197,
+          274,
+          290,
+          321,
+          385,
+          530,
+          546,
+          577,
+          641
+        ],
+        "basis_indices_preview": [
+          86,
+          102,
+          150,
+          166,
+          197,
+          274,
+          290,
+          321,
+          385,
+          530,
+          546,
+          577,
+          641
+        ],
+        "enumerated": true,
+        "estimated_full_dimension": 1024,
+        "max_sector_enumeration_qubits": 10,
+        "padding_state_rejection_count": 448,
+        "physical_sector_dimension": 13,
+        "reference_basis_index": 86,
+        "skipped_reason": null,
+        "target_charge_sector": "neutral",
+        "tolerance": 1e-08
+      },
+      "plaquette_count": 0,
+      "site_count": 3,
+      "softening": 0.35,
+      "target_electrons": 2,
+      "term_counts_by_sector": {
+        "density_coulomb": 0,
+        "electric": 3,
+        "external_point_charge": 0,
+        "gauss_law_penalty": 36,
+        "hopping": 64,
+        "magnetic_plaquette": 0,
+        "onsite": 7,
+        "padding_penalty": 7,
+        "particle_number_penalty": 22
+      },
+      "total_qubits": 10
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 465.9596739923942,
+    "energy_contribution_sum": null,
+    "expectations_available": false,
+    "measurement_group_count": 25,
+    "pauli_term_count": 112,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 105.99742513277818,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "IIIIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -2.25,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 1,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIIIIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 7.5,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 2,
+        "measurement_group_id": 16,
+        "pauli": "IIIIIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 32.5,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 3,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -2.25,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 4,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIIZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -32.5,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 5,
+        "measurement_group_id": 16,
+        "pauli": "IIIIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 6,
+        "measurement_group_id": 16,
+        "pauli": "IIIIIIZIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 7,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIZIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -7.5,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 8,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 9,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIZZZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 10,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIZZZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -18.606070360160373,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 11,
+        "measurement_group_id": 0,
+        "pauli": "IIIIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 12,
+        "measurement_group_id": 16,
+        "pauli": "IIIIIZIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 13,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIZIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -18.606070360160373,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 14,
+        "measurement_group_id": 4,
+        "pauli": "IIIIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 15,
+        "measurement_group_id": 20,
+        "pauli": "IIIIZIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 16,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 17,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 18,
+        "measurement_group_id": 12,
+        "pauli": "IIIXZXIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 19,
+        "measurement_group_id": 12,
+        "pauli": "IIIXZXIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 20,
+        "measurement_group_id": 4,
+        "pauli": "IIIXZXIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 21,
+        "measurement_group_id": 20,
+        "pauli": "IIIXZXIIZX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 22,
+        "measurement_group_id": 14,
+        "pauli": "IIIXZYIIIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 23,
+        "measurement_group_id": 14,
+        "pauli": "IIIXZYIIXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 24,
+        "measurement_group_id": 6,
+        "pauli": "IIIXZYIIYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 25,
+        "measurement_group_id": 22,
+        "pauli": "IIIXZYIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 26,
+        "measurement_group_id": 13,
+        "pauli": "IIIYZXIIIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 27,
+        "measurement_group_id": 13,
+        "pauli": "IIIYZXIIXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 28,
+        "measurement_group_id": 5,
+        "pauli": "IIIYZXIIYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 29,
+        "measurement_group_id": 21,
+        "pauli": "IIIYZXIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 30,
+        "measurement_group_id": 15,
+        "pauli": "IIIYZYIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 31,
+        "measurement_group_id": 15,
+        "pauli": "IIIYZYIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 32,
+        "measurement_group_id": 7,
+        "pauli": "IIIYZYIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 33,
+        "measurement_group_id": 23,
+        "pauli": "IIIYZYIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 1.9634281539316605,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 34,
+        "measurement_group_id": 0,
+        "pauli": "IIIZIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 35,
+        "measurement_group_id": 16,
+        "pauli": "IIIZIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999998,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 36,
+        "measurement_group_id": 24,
+        "pauli": "IIIZIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -4.999999999999999,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 37,
+        "measurement_group_id": 16,
+        "pauli": "IIIZIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 38,
+        "measurement_group_id": 24,
+        "pauli": "IIIZIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 39,
+        "measurement_group_id": 0,
+        "pauli": "IIIZIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 40,
+        "measurement_group_id": 24,
+        "pauli": "IIIZZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 41,
+        "measurement_group_id": 8,
+        "pauli": "IIXZXIIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 42,
+        "measurement_group_id": 8,
+        "pauli": "IIXZXIIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 43,
+        "measurement_group_id": 0,
+        "pauli": "IIXZXIIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 44,
+        "measurement_group_id": 16,
+        "pauli": "IIXZXIIIZX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 45,
+        "measurement_group_id": 9,
+        "pauli": "IIXZYIIIIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 46,
+        "measurement_group_id": 9,
+        "pauli": "IIXZYIIIXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 47,
+        "measurement_group_id": 1,
+        "pauli": "IIXZYIIIYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 48,
+        "measurement_group_id": 17,
+        "pauli": "IIXZYIIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 49,
+        "measurement_group_id": 10,
+        "pauli": "IIYZXIIIIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 50,
+        "measurement_group_id": 10,
+        "pauli": "IIYZXIIIXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 51,
+        "measurement_group_id": 2,
+        "pauli": "IIYZXIIIYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 52,
+        "measurement_group_id": 18,
+        "pauli": "IIYZXIIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 53,
+        "measurement_group_id": 11,
+        "pauli": "IIYZYIIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 54,
+        "measurement_group_id": 11,
+        "pauli": "IIYZYIIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 55,
+        "measurement_group_id": 3,
+        "pauli": "IIYZYIIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 56,
+        "measurement_group_id": 19,
+        "pauli": "IIYZYIIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 1.9634281539316607,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 57,
+        "measurement_group_id": 4,
+        "pauli": "IIZIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 58,
+        "measurement_group_id": 20,
+        "pauli": "IIZIIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999998,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 59,
+        "measurement_group_id": 24,
+        "pauli": "IIZIIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -4.999999999999998,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 60,
+        "measurement_group_id": 20,
+        "pauli": "IIZIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 61,
+        "measurement_group_id": 24,
+        "pauli": "IIZIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 62,
+        "measurement_group_id": 24,
+        "pauli": "IIZIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 63,
+        "measurement_group_id": 4,
+        "pauli": "IIZIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 64,
+        "measurement_group_id": 24,
+        "pauli": "IIZZIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 65,
+        "measurement_group_id": 12,
+        "pauli": "IXZXIIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 66,
+        "measurement_group_id": 12,
+        "pauli": "IXZXIIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 67,
+        "measurement_group_id": 4,
+        "pauli": "IXZXIIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 68,
+        "measurement_group_id": 20,
+        "pauli": "IXZXIIZXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 69,
+        "measurement_group_id": 13,
+        "pauli": "IXZYIIIYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 70,
+        "measurement_group_id": 13,
+        "pauli": "IXZYIIXYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 71,
+        "measurement_group_id": 5,
+        "pauli": "IXZYIIYXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 72,
+        "measurement_group_id": 21,
+        "pauli": "IXZYIIZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 73,
+        "measurement_group_id": 14,
+        "pauli": "IYZXIIIYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 74,
+        "measurement_group_id": 14,
+        "pauli": "IYZXIIXYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 75,
+        "measurement_group_id": 6,
+        "pauli": "IYZXIIYXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 76,
+        "measurement_group_id": 22,
+        "pauli": "IYZXIIZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 77,
+        "measurement_group_id": 15,
+        "pauli": "IYZYIIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 78,
+        "measurement_group_id": 15,
+        "pauli": "IYZYIIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 79,
+        "measurement_group_id": 7,
+        "pauli": "IYZYIIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 80,
+        "measurement_group_id": 23,
+        "pauli": "IYZYIIZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -18.606070360160373,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 81,
+        "measurement_group_id": 0,
+        "pauli": "IZIIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999999,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 82,
+        "measurement_group_id": 16,
+        "pauli": "IZIIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 83,
+        "measurement_group_id": 24,
+        "pauli": "IZIIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999999,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 84,
+        "measurement_group_id": 0,
+        "pauli": "IZIIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999998,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 85,
+        "measurement_group_id": 24,
+        "pauli": "IZIIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 86,
+        "measurement_group_id": 0,
+        "pauli": "IZIZIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 87,
+        "measurement_group_id": 24,
+        "pauli": "IZZIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 88,
+        "measurement_group_id": 8,
+        "pauli": "XZXIIIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 89,
+        "measurement_group_id": 8,
+        "pauli": "XZXIIIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 90,
+        "measurement_group_id": 0,
+        "pauli": "XZXIIIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 91,
+        "measurement_group_id": 16,
+        "pauli": "XZXIIIZXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 92,
+        "measurement_group_id": 10,
+        "pauli": "XZYIIIIYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 93,
+        "measurement_group_id": 10,
+        "pauli": "XZYIIIXYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 94,
+        "measurement_group_id": 2,
+        "pauli": "XZYIIIYXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 95,
+        "measurement_group_id": 18,
+        "pauli": "XZYIIIZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 96,
+        "measurement_group_id": 9,
+        "pauli": "YZXIIIIYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 97,
+        "measurement_group_id": 9,
+        "pauli": "YZXIIIXYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 98,
+        "measurement_group_id": 1,
+        "pauli": "YZXIIIYXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 99,
+        "measurement_group_id": 17,
+        "pauli": "YZXIIIZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 100,
+        "measurement_group_id": 11,
+        "pauli": "YZYIIIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 101,
+        "measurement_group_id": 11,
+        "pauli": "YZYIIIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 102,
+        "measurement_group_id": 3,
+        "pauli": "YZYIIIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 103,
+        "measurement_group_id": 19,
+        "pauli": "YZYIIIZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -18.606070360160373,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 104,
+        "measurement_group_id": 4,
+        "pauli": "ZIIIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 105,
+        "measurement_group_id": 20,
+        "pauli": "ZIIIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 106,
+        "measurement_group_id": 24,
+        "pauli": "ZIIIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 107,
+        "measurement_group_id": 24,
+        "pauli": "ZIIIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 108,
+        "measurement_group_id": 4,
+        "pauli": "ZIIIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 109,
+        "measurement_group_id": 24,
+        "pauli": "ZIIZIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 110,
+        "measurement_group_id": 4,
+        "pauli": "ZIZIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": null,
+        "expectation_value": null,
+        "index": 111,
+        "measurement_group_id": 24,
+        "pauli": "ZZIIIIIIII"
+      }
+    ]
+  },
+  "measurement": {
+    "counts_shots_per_group": 4096,
+    "estimated_measurement_cost": 250000.0,
+    "groups": [
+      {
+        "basis": "XZXZXZYYYY",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "IIXZXIIIYY",
+          "XZXIIIYYII",
+          "IIIZIIIIII",
+          "IIIZIZIIII",
+          "IZIIIZIIII",
+          "IZIZIIIIII",
+          "IIIIIZIIII",
+          "IZIIIIIIII",
+          "IIIIIIIIII"
+        ],
+        "term_count": 9
+      },
+      {
+        "basis": "YZXZYZYXYX",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "IIXZYIIIYX",
+          "YZXIIIYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZYZXZYXYX",
+        "basis_conflicts": [],
+        "group_id": 2,
+        "pauli_labels": [
+          "IIYZXIIIYX",
+          "XZYIIIYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZYZYZYYYY",
+        "basis_conflicts": [],
+        "group_id": 3,
+        "pauli_labels": [
+          "IIYZYIIIYY",
+          "YZYIIIYYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZXZXZXYYYY",
+        "basis_conflicts": [],
+        "group_id": 4,
+        "pauli_labels": [
+          "IXZXIIYYII",
+          "IIIXZXIIYY",
+          "IIZIIIIIII",
+          "IIZIZIIIII",
+          "ZIIIZIIIII",
+          "ZIZIIIIIII",
+          "IIIIZIIIII",
+          "ZIIIIIIIII"
+        ],
+        "term_count": 8
+      },
+      {
+        "basis": "ZXZYZXYXYX",
+        "basis_conflicts": [],
+        "group_id": 5,
+        "pauli_labels": [
+          "IXZYIIYXII",
+          "IIIYZXIIYX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZXZYYXYX",
+        "basis_conflicts": [],
+        "group_id": 6,
+        "pauli_labels": [
+          "IYZXIIYXII",
+          "IIIXZYIIYX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZYZYYYYY",
+        "basis_conflicts": [],
+        "group_id": 7,
+        "pauli_labels": [
+          "IYZYIIYYII",
+          "IIIYZYIIYY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZXZXZXXXX",
+        "basis_conflicts": [],
+        "group_id": 8,
+        "pauli_labels": [
+          "IIXZXIIIXX",
+          "IIXZXIIIIX",
+          "XZXIIIXXII",
+          "XZXIIIIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "YZXZYZXYXY",
+        "basis_conflicts": [],
+        "group_id": 9,
+        "pauli_labels": [
+          "IIXZYIIIXY",
+          "IIXZYIIIIY",
+          "YZXIIIXYII",
+          "YZXIIIIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "XZYZXZXYXY",
+        "basis_conflicts": [],
+        "group_id": 10,
+        "pauli_labels": [
+          "IIYZXIIIXY",
+          "IIYZXIIIIY",
+          "XZYIIIXYII",
+          "XZYIIIIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "YZYZYZXXXX",
+        "basis_conflicts": [],
+        "group_id": 11,
+        "pauli_labels": [
+          "IIYZYIIIXX",
+          "IIYZYIIIIX",
+          "YZYIIIXXII",
+          "YZYIIIIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZXZXZXXXXX",
+        "basis_conflicts": [],
+        "group_id": 12,
+        "pauli_labels": [
+          "IXZXIIXXII",
+          "IXZXIIIXII",
+          "IIIXZXIIXX",
+          "IIIXZXIIIX"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZXZYZXXYXY",
+        "basis_conflicts": [],
+        "group_id": 13,
+        "pauli_labels": [
+          "IXZYIIXYII",
+          "IXZYIIIYII",
+          "IIIYZXIIXY",
+          "IIIYZXIIIY"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZYZXZYXYXY",
+        "basis_conflicts": [],
+        "group_id": 14,
+        "pauli_labels": [
+          "IYZXIIXYII",
+          "IYZXIIIYII",
+          "IIIXZYIIXY",
+          "IIIXZYIIIY"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZYZYZYXXXX",
+        "basis_conflicts": [],
+        "group_id": 15,
+        "pauli_labels": [
+          "IYZYIIXXII",
+          "IYZYIIIXII",
+          "IIIYZYIIXX",
+          "IIIYZYIIIX"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "XZXZXZZXZX",
+        "basis_conflicts": [],
+        "group_id": 16,
+        "pauli_labels": [
+          "IIXZXIIIZX",
+          "XZXIIIZXII",
+          "IIIZIIIIZI",
+          "IIIZIIZIII",
+          "IIIIIIZIZI",
+          "IIIIIZIIZI",
+          "IZIIIIZIII",
+          "IIIIIIIIZI",
+          "IIIIIIZIII"
+        ],
+        "term_count": 9
+      },
+      {
+        "basis": "YZXZYZZYZY",
+        "basis_conflicts": [],
+        "group_id": 17,
+        "pauli_labels": [
+          "IIXZYIIIZY",
+          "YZXIIIZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZYZXZZYZY",
+        "basis_conflicts": [],
+        "group_id": 18,
+        "pauli_labels": [
+          "IIYZXIIIZY",
+          "XZYIIIZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZYZYZZXZX",
+        "basis_conflicts": [],
+        "group_id": 19,
+        "pauli_labels": [
+          "IIYZYIIIZX",
+          "YZYIIIZXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZXZXZXZXZX",
+        "basis_conflicts": [],
+        "group_id": 20,
+        "pauli_labels": [
+          "IXZXIIZXII",
+          "IIIXZXIIZX",
+          "IIZIIIIIZI",
+          "IIZIIIZIII",
+          "IIIIZIIIZI",
+          "ZIIIIIZIII"
+        ],
+        "term_count": 6
+      },
+      {
+        "basis": "ZXZYZXZYZY",
+        "basis_conflicts": [],
+        "group_id": 21,
+        "pauli_labels": [
+          "IXZYIIZYII",
+          "IIIYZXIIZY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZXZYZYZY",
+        "basis_conflicts": [],
+        "group_id": 22,
+        "pauli_labels": [
+          "IYZXIIZYII",
+          "IIIXZYIIZY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZYZYZXZX",
+        "basis_conflicts": [],
+        "group_id": 23,
+        "pauli_labels": [
+          "IYZYIIZXII",
+          "IIIYZYIIZX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZZZZZZZZZZ",
+        "basis_conflicts": [],
+        "group_id": 24,
+        "pauli_labels": [
+          "IIIIIIZZZZ",
+          "IIZZIIIIII",
+          "IIIIIIZIZZ",
+          "IIIIIIZZZI",
+          "IIIZIIIIZZ",
+          "IIIZIIZZII",
+          "IIIZZIIIII",
+          "IIZIIIIIZZ",
+          "IIZIIIZZII",
+          "IIZIIZIIII",
+          "IZZIIIIIII",
+          "ZIIZIIIIII",
+          "IIIIIIIIIZ",
+          "IIIIIIIIZZ",
+          "IIIIIIIZII",
+          "IIIIIIZZII",
+          "IIIIIZIIZZ",
+          "IIIIZIIIZZ",
+          "IIIIZZIIII",
+          "IZIIIIZZII",
+          "IZIIZIIIII",
+          "ZIIIIIZZII",
+          "ZIIIIZIIII",
+          "ZZIIIIIIII"
+        ],
+        "term_count": 24
+      }
+    ],
+    "groups_sha256": "daff6fa1e7260ae558ff302ab25b56e3c8038173eae393745bdd7a03f2379f0e",
+    "plan": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 250000.0,
+      "execution_mode": "estimator",
+      "group_count": 25,
+      "grouping_policy": "finite_cutoff_field_terms",
+      "low_rank_aware": false,
+      "notes": [
+        "Measurement groups estimated with strategy 'lattice_qed_exact'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "runtime_precision_target": 0.01,
+      "strategy": "lattice_qed_exact",
+      "term_count": 112,
+      "uncompressed_estimated_shot_cost": 250000.0,
+      "uncompressed_group_count": 25
+    },
+    "qubit_wise_group_count": 25
+  },
+  "notes": [
+    "final_state_not_available"
+  ],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 10,
+    "operation_counts": {},
+    "qubit_term_count": 112,
+    "raw_num_qubits": 10,
+    "raw_qubit_term_count": 112,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "h2_lattice_qed_3site_open",
+  "sampling": {
+    "available": false,
+    "group_counts": [],
+    "reason": "final_state_not_available"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "state": {
+    "available": false,
+    "reason": "final_state_not_available"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": {
+      "available": true,
+      "gauss_law_tolerance": 1e-08,
+      "reference_basis_index": 86,
+      "reference_state_gauss_law_residuals": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reference_state_max_abs_gauss_law": 0.0,
+      "target_charge_sector": "neutral"
+    },
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Molecular Z2 and point-group reduction are skipped for finite-cutoff lattice-QED field models."
+      ],
+      "status": "skipped_unsupported_field_model",
+      "validation": {},
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    }
+  }
+}

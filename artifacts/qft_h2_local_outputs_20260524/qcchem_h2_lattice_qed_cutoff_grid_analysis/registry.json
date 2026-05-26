@@ -1,0 +1,116 @@
+[
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_0",
+    "created_at": "2026-05-24T02:37:15.202985+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_cutoff_0",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "electric_cutoff_scan"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_1",
+    "created_at": "2026-05-24T02:37:15.315010+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_cutoff_1",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "electric_cutoff_scan"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_2",
+    "created_at": "2026-05-24T02:37:15.478142+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_cutoff_2",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "electric_cutoff_scan"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60",
+    "created_at": "2026-05-24T02:37:15.595098+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_spacing_0p60",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "grid_spacing_scan"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_softening_0p25",
+    "created_at": "2026-05-24T02:37:15.725127+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_softening_0p25",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "softening_scan"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_3site_open",
+    "created_at": "2026-05-24T02:37:17.052905+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_3site_open",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "site_count_scan",
+      "open_boundary"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_2site_periodic",
+    "created_at": "2026-05-24T02:37:17.504133+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_2site_periodic",
+    "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "boundary_scan",
+      "periodic_boundary"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_numeric_charge_sector_0",
+    "created_at": "2026-05-24T02:37:17.634873+00:00",
+    "kind": "benchmark:run",
+    "name": "h2_lattice_qed_numeric_charge_sector_0",
+    "source": "./configs/exploratory/h2_lattice_qed_sector_audit.yaml",
+    "status": "exploratory",
+    "tags": [
+      "lattice_qed",
+      "numeric_charge_sector",
+      "sector_audit"
+    ]
+  },
+  {
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis",
+    "created_at": "2026-05-24T02:37:17.634909+00:00",
+    "kind": "benchmark_suite",
+    "name": "field_model_qft_cutoff_grid_convergence_v1",
+    "source": "benchmarks/field_model_qft_cutoff_grid_convergence_v1.yaml",
+    "status": "exploratory",
+    "tags": [
+      "benchmark",
+      "exploratory",
+      "field_model",
+      "lattice_qed",
+      "cutoff_grid_convergence"
+    ]
+  }
+]

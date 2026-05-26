@@ -1,0 +1,6211 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 4.263256414560601e-14,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": true,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_model": {
+      "capability_tier": "exploratory",
+      "error_budget": {},
+      "model_kind": "lattice_qed",
+      "observables": [
+        "gauss_law",
+        "physical_sector",
+        "electric_flux",
+        "electric_energy",
+        "wilson_loop",
+        "real_time_dynamics",
+        "trotter_resource_estimate",
+        "qpe_resource_estimate"
+      ],
+      "registry_name": "finite_cutoff_lattice_qed",
+      "resource_estimate": {},
+      "risk_notes": [
+        "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+      ]
+    },
+    "qft_dynamics": null,
+    "qft_model": {
+      "boundary": "periodic",
+      "constraint_expectations": {
+        "available": true,
+        "gauss_law_tolerance": 1e-08,
+        "reference_basis_index": 52,
+        "reference_state_gauss_law_residuals": [
+          0.0,
+          0.0
+        ],
+        "reference_state_max_abs_gauss_law": 0.0,
+        "target_charge_sector": "neutral"
+      },
+      "constraint_residuals": {
+        "gauss_law_penalty": 10.0,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "reference_state_max_abs_gauss_law": 0.0
+      },
+      "constraints": {
+        "enforce_physical_sector": false,
+        "gauss_law_penalty": 10.0,
+        "gauss_law_tolerance": 1e-08,
+        "max_sector_enumeration_qubits": 10,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "target_charge_sector": "neutral"
+      },
+      "dimensions": 1,
+      "enabled": true,
+      "engine": {
+        "actual_representation": "dense_full",
+        "auto_project_physical_sector": true,
+        "build_mode": "dense_full",
+        "dense_full_matrix_materialized": true,
+        "full_dimension": 256,
+        "full_hamiltonian_nnz": 512,
+        "full_to_projected_reduction": null,
+        "materialize_pauli": "auto",
+        "max_full_qubits_for_dense": 10,
+        "max_projected_dimension": 4096,
+        "operator_representation": "dense_full",
+        "pauli_materialization": "materialized",
+        "peak_matrix_dimension": 256,
+        "projected_builder": "auto",
+        "projected_builder_fallback_reason": null,
+        "projected_dimension": null,
+        "projection_skipped_reason": "dense_full_representation",
+        "projector_tolerance": 1e-08,
+        "requested_representation": "auto",
+        "sector_nnz": {
+          "density_coulomb": 0,
+          "electric": 192,
+          "external_point_charge": 0,
+          "gauss_law_penalty": 224,
+          "hopping": 256,
+          "magnetic_plaquette": 0,
+          "onsite": 240,
+          "padding_penalty": 112,
+          "particle_number_penalty": 160
+        },
+        "store_basis_indices": "preview"
+      },
+      "external_point_charges": {},
+      "gauge_coupling": 1.0,
+      "gauge_electric_cutoff": 1,
+      "gauge_group": "u1",
+      "gauge_invariant_ansatz": {
+        "commutator_checks": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 64,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ],
+        "generator_policy": "gauge_invariant_hopping",
+        "kind": "gauss_law_preserving",
+        "selected_generator_count": 1,
+        "selected_generators": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 64,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ]
+      },
+      "gauge_qubits": 4,
+      "gauss_law_generators": [
+        {
+          "diagonal_max": 3.0,
+          "diagonal_min": -3.0,
+          "frobenius_norm": 19.595917942265423,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 6,
+          "site_index": 0,
+          "target_charge": 0.0
+        },
+        {
+          "diagonal_max": 3.0,
+          "diagonal_min": -3.0,
+          "frobenius_norm": 19.595917942265423,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 6,
+          "site_index": 1,
+          "target_charge": 0.0
+        }
+      ],
+      "grid_axes": "principal",
+      "grid_origin": "molecule_center",
+      "grid_shape": [
+        2
+      ],
+      "grid_spacing": [
+        0.75
+      ],
+      "hamiltonian_gauge_commutator_norms": [
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 0,
+          "skipped_reason": null,
+          "within_tolerance": true
+        },
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 1,
+          "skipped_reason": null,
+          "within_tolerance": true
+        }
+      ],
+      "link_count": 2,
+      "matter_mode_count": 4,
+      "matter_qubits": 4,
+      "model": "lattice_qed_minimal_coupling",
+      "notes": [
+        "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+        "Exact baselines compare against this discretized Hamiltonian, not continuum chemistry.",
+        "Gauge links use binary padding with encoded dimension 4.",
+        "Pauli decomposition was materialized for this finite Hamiltonian."
+      ],
+      "nuclear_charge_by_site": [
+        1.0,
+        1.0
+      ],
+      "physical_sector": {
+        "basis_hash": "8a68bd375cf16b5675cbea3496a7d1e51c608fe8497adfcda6992bd31db929cb",
+        "basis_index_count": 16,
+        "basis_indices": [
+          52,
+          57,
+          80,
+          85,
+          90,
+          96,
+          101,
+          106,
+          144,
+          149,
+          154,
+          160,
+          165,
+          170,
+          193,
+          198
+        ],
+        "basis_indices_preview": [
+          52,
+          57,
+          80,
+          85,
+          90,
+          96,
+          101,
+          106,
+          144,
+          149,
+          154,
+          160,
+          165,
+          170,
+          193,
+          198
+        ],
+        "enumerated": true,
+        "estimated_full_dimension": 256,
+        "max_sector_enumeration_qubits": 10,
+        "padding_state_rejection_count": 112,
+        "physical_sector_dimension": 16,
+        "reference_basis_index": 52,
+        "skipped_reason": null,
+        "target_charge_sector": "neutral",
+        "tolerance": 1e-08
+      },
+      "plaquette_count": 0,
+      "site_count": 2,
+      "softening": 0.35,
+      "target_electrons": 2,
+      "term_counts_by_sector": {
+        "density_coulomb": 0,
+        "electric": 3,
+        "external_point_charge": 0,
+        "gauss_law_penalty": 25,
+        "hopping": 64,
+        "magnetic_plaquette": 0,
+        "onsite": 5,
+        "padding_penalty": 7,
+        "particle_number_penalty": 7
+      },
+      "total_qubits": 8
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 287.11111111111114,
+    "energy_contribution_sum": -10.841242633777874,
+    "expectations_available": true,
+    "measurement_group_count": 25,
+    "pauli_term_count": 101,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 57.35651515945179,
+        "energy_contribution": 57.35651515945179,
+        "expectation_value": 1.0,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "IIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -2.25,
+        "energy_contribution": 0.6830143753715554,
+        "expectation_value": -0.3035619446095802,
+        "index": 1,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -12.5,
+        "energy_contribution": -8.147262153809898,
+        "expectation_value": 0.6517809723047918,
+        "index": 2,
+        "measurement_group_id": 16,
+        "pauli": "IIIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 12.5,
+        "energy_contribution": -8.147262153809855,
+        "expectation_value": -0.6517809723047884,
+        "index": 3,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -2.25,
+        "energy_contribution": 0.6830143753715554,
+        "expectation_value": -0.3035619446095802,
+        "index": 4,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -12.5,
+        "energy_contribution": -8.147262153809907,
+        "expectation_value": 0.6517809723047926,
+        "index": 5,
+        "measurement_group_id": 16,
+        "pauli": "IIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -10.0,
+        "energy_contribution": -5.237324059730469,
+        "expectation_value": 0.5237324059730468,
+        "index": 6,
+        "measurement_group_id": 16,
+        "pauli": "IIIIZIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -10.0,
+        "energy_contribution": 3.0356194460958075,
+        "expectation_value": -0.30356194460958075,
+        "index": 7,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 12.5,
+        "energy_contribution": -8.147262153809848,
+        "expectation_value": -0.6517809723047878,
+        "index": 8,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -10.0,
+        "energy_contribution": 3.0356194460957955,
+        "expectation_value": -0.3035619446095795,
+        "index": 9,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZZZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -10.0,
+        "energy_contribution": -5.237324059730424,
+        "expectation_value": 0.5237324059730424,
+        "index": 10,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZZZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.035871210137055,
+        "energy_contribution": 5.029103181181047e-15,
+        "expectation_value": 2.4702462297909733e-15,
+        "index": 11,
+        "measurement_group_id": 4,
+        "pauli": "IIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999998,
+        "energy_contribution": -1.1906689850673704,
+        "expectation_value": -0.23813379701347417,
+        "index": 12,
+        "measurement_group_id": 20,
+        "pauli": "IIIZIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.000000000000002,
+        "energy_contribution": -1.1906689850674053,
+        "expectation_value": -0.23813379701348097,
+        "index": 13,
+        "measurement_group_id": 24,
+        "pauli": "IIIZIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.000000000000002,
+        "energy_contribution": -1.190668985067396,
+        "expectation_value": 0.2381337970134791,
+        "index": 14,
+        "measurement_group_id": 20,
+        "pauli": "IIIZZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -4.999999999999998,
+        "energy_contribution": -1.1906689850673837,
+        "expectation_value": 0.2381337970134768,
+        "index": 15,
+        "measurement_group_id": 24,
+        "pauli": "IIIZZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.035871210137053,
+        "energy_contribution": -2.5428049792488412e-15,
+        "expectation_value": -1.2490009027033011e-15,
+        "index": 16,
+        "measurement_group_id": 0,
+        "pauli": "IIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -1.1906689850673926,
+        "expectation_value": -0.2381337970134785,
+        "index": 17,
+        "measurement_group_id": 16,
+        "pauli": "IIZIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -1.190668985067387,
+        "expectation_value": -0.23813379701347742,
+        "index": 18,
+        "measurement_group_id": 24,
+        "pauli": "IIZIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.1906689850673737,
+        "expectation_value": 0.23813379701347476,
+        "index": 19,
+        "measurement_group_id": 16,
+        "pauli": "IIZIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.1906689850674024,
+        "expectation_value": 0.23813379701348047,
+        "index": 20,
+        "measurement_group_id": 24,
+        "pauli": "IIZIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": -0.4746481194608901,
+        "expectation_value": -0.04746481194608901,
+        "index": 21,
+        "measurement_group_id": 24,
+        "pauli": "IIZZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695115,
+        "expectation_value": 0.42834049044256034,
+        "index": 22,
+        "measurement_group_id": 8,
+        "pauli": "IXZXIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695066,
+        "expectation_value": 0.42834049044255595,
+        "index": 23,
+        "measurement_group_id": 8,
+        "pauli": "IXZXIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695065,
+        "expectation_value": 0.42834049044255584,
+        "index": 24,
+        "measurement_group_id": 0,
+        "pauli": "IXZXIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695113,
+        "expectation_value": 0.42834049044256023,
+        "index": 25,
+        "measurement_group_id": 16,
+        "pauli": "IXZXIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695102,
+        "expectation_value": 0.42834049044255923,
+        "index": 26,
+        "measurement_group_id": 8,
+        "pauli": "IXZXIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950835,
+        "expectation_value": 0.4283404904425575,
+        "index": 27,
+        "measurement_group_id": 8,
+        "pauli": "IXZXXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950835,
+        "expectation_value": 0.4283404904425575,
+        "index": 28,
+        "measurement_group_id": 0,
+        "pauli": "IXZXYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695102,
+        "expectation_value": 0.42834049044255923,
+        "index": 29,
+        "measurement_group_id": 16,
+        "pauli": "IXZXZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695115,
+        "expectation_value": 0.42834049044256034,
+        "index": 30,
+        "measurement_group_id": 9,
+        "pauli": "IXZYIIIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695066,
+        "expectation_value": -0.42834049044255595,
+        "index": 31,
+        "measurement_group_id": 9,
+        "pauli": "IXZYIIXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695067,
+        "expectation_value": 0.428340490442556,
+        "index": 32,
+        "measurement_group_id": 1,
+        "pauli": "IXZYIIYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695116,
+        "expectation_value": 0.42834049044256045,
+        "index": 33,
+        "measurement_group_id": 17,
+        "pauli": "IXZYIIZY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695103,
+        "expectation_value": -0.4283404904425593,
+        "index": 34,
+        "measurement_group_id": 9,
+        "pauli": "IXZYIYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695084,
+        "expectation_value": 0.4283404904425576,
+        "index": 35,
+        "measurement_group_id": 9,
+        "pauli": "IXZYXYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695084,
+        "expectation_value": -0.4283404904425576,
+        "index": 36,
+        "measurement_group_id": 1,
+        "pauli": "IXZYYXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695103,
+        "expectation_value": -0.4283404904425593,
+        "index": 37,
+        "measurement_group_id": 17,
+        "pauli": "IXZYZYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695115,
+        "expectation_value": -0.42834049044256034,
+        "index": 38,
+        "measurement_group_id": 10,
+        "pauli": "IYZXIIIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695066,
+        "expectation_value": 0.42834049044255595,
+        "index": 39,
+        "measurement_group_id": 10,
+        "pauli": "IYZXIIXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695067,
+        "expectation_value": -0.428340490442556,
+        "index": 40,
+        "measurement_group_id": 2,
+        "pauli": "IYZXIIYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695116,
+        "expectation_value": -0.42834049044256045,
+        "index": 41,
+        "measurement_group_id": 18,
+        "pauli": "IYZXIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695103,
+        "expectation_value": 0.4283404904425593,
+        "index": 42,
+        "measurement_group_id": 10,
+        "pauli": "IYZXIYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695084,
+        "expectation_value": -0.4283404904425576,
+        "index": 43,
+        "measurement_group_id": 10,
+        "pauli": "IYZXXYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695084,
+        "expectation_value": 0.4283404904425576,
+        "index": 44,
+        "measurement_group_id": 2,
+        "pauli": "IYZXYXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695103,
+        "expectation_value": 0.4283404904425593,
+        "index": 45,
+        "measurement_group_id": 18,
+        "pauli": "IYZXZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695115,
+        "expectation_value": 0.42834049044256034,
+        "index": 46,
+        "measurement_group_id": 11,
+        "pauli": "IYZYIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695066,
+        "expectation_value": 0.42834049044255595,
+        "index": 47,
+        "measurement_group_id": 11,
+        "pauli": "IYZYIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695065,
+        "expectation_value": 0.42834049044255584,
+        "index": 48,
+        "measurement_group_id": 3,
+        "pauli": "IYZYIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695113,
+        "expectation_value": 0.42834049044256023,
+        "index": 49,
+        "measurement_group_id": 19,
+        "pauli": "IYZYIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695102,
+        "expectation_value": 0.42834049044255923,
+        "index": 50,
+        "measurement_group_id": 11,
+        "pauli": "IYZYIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950835,
+        "expectation_value": 0.4283404904425575,
+        "index": 51,
+        "measurement_group_id": 11,
+        "pauli": "IYZYXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950835,
+        "expectation_value": 0.4283404904425575,
+        "index": 52,
+        "measurement_group_id": 3,
+        "pauli": "IYZYYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695102,
+        "expectation_value": 0.42834049044255923,
+        "index": 53,
+        "measurement_group_id": 19,
+        "pauli": "IYZYZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.035871210137052,
+        "energy_contribution": -5.029103181181039e-15,
+        "expectation_value": -2.4702462297909733e-15,
+        "index": 54,
+        "measurement_group_id": 4,
+        "pauli": "IZIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.1906689850673708,
+        "expectation_value": 0.23813379701347417,
+        "index": 55,
+        "measurement_group_id": 20,
+        "pauli": "IZIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.1906689850674048,
+        "expectation_value": 0.23813379701348097,
+        "index": 56,
+        "measurement_group_id": 24,
+        "pauli": "IZIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999999,
+        "energy_contribution": -1.1906689850673953,
+        "expectation_value": -0.2381337970134791,
+        "index": 57,
+        "measurement_group_id": 20,
+        "pauli": "IZIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -1.1906689850673842,
+        "expectation_value": -0.2381337970134768,
+        "index": 58,
+        "measurement_group_id": 24,
+        "pauli": "IZIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -5.0,
+        "expectation_value": -1.0,
+        "index": 59,
+        "measurement_group_id": 4,
+        "pauli": "IZIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": 0.23732405973044504,
+        "expectation_value": 0.04746481194608901,
+        "index": 60,
+        "measurement_group_id": 24,
+        "pauli": "IZZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951,
+        "expectation_value": 0.42834049044255906,
+        "index": 61,
+        "measurement_group_id": 12,
+        "pauli": "XZXIIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950856,
+        "expectation_value": 0.42834049044255773,
+        "index": 62,
+        "measurement_group_id": 12,
+        "pauli": "XZXIIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695085,
+        "expectation_value": 0.4283404904425577,
+        "index": 63,
+        "measurement_group_id": 4,
+        "pauli": "XZXIIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950995,
+        "expectation_value": 0.42834049044255895,
+        "index": 64,
+        "measurement_group_id": 20,
+        "pauli": "XZXIIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951175,
+        "expectation_value": 0.4283404904425606,
+        "index": 65,
+        "measurement_group_id": 12,
+        "pauli": "XZXIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 66,
+        "measurement_group_id": 12,
+        "pauli": "XZXIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 67,
+        "measurement_group_id": 4,
+        "pauli": "XZXIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695117,
+        "expectation_value": 0.4283404904425605,
+        "index": 68,
+        "measurement_group_id": 20,
+        "pauli": "XZXIZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950995,
+        "expectation_value": 0.42834049044255895,
+        "index": 69,
+        "measurement_group_id": 13,
+        "pauli": "XZYIIIIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695086,
+        "expectation_value": -0.4283404904425578,
+        "index": 70,
+        "measurement_group_id": 13,
+        "pauli": "XZYIIIXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695087,
+        "expectation_value": 0.42834049044255784,
+        "index": 71,
+        "measurement_group_id": 5,
+        "pauli": "XZYIIIYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951,
+        "expectation_value": 0.42834049044255906,
+        "index": 72,
+        "measurement_group_id": 21,
+        "pauli": "XZYIIIZY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.047593387826951175,
+        "expectation_value": -0.4283404904425606,
+        "index": 73,
+        "measurement_group_id": 13,
+        "pauli": "XZYIIYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 74,
+        "measurement_group_id": 13,
+        "pauli": "XZYIXYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": -0.4283404904425557,
+        "index": 75,
+        "measurement_group_id": 5,
+        "pauli": "XZYIYXII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695119,
+        "expectation_value": -0.42834049044256073,
+        "index": 76,
+        "measurement_group_id": 21,
+        "pauli": "XZYIZYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.047593387826950995,
+        "expectation_value": -0.42834049044255895,
+        "index": 77,
+        "measurement_group_id": 14,
+        "pauli": "YZXIIIIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695086,
+        "expectation_value": 0.4283404904425578,
+        "index": 78,
+        "measurement_group_id": 14,
+        "pauli": "YZXIIIXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695087,
+        "expectation_value": -0.42834049044255784,
+        "index": 79,
+        "measurement_group_id": 6,
+        "pauli": "YZXIIIYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.047593387826951,
+        "expectation_value": -0.42834049044255906,
+        "index": 80,
+        "measurement_group_id": 22,
+        "pauli": "YZXIIIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951175,
+        "expectation_value": 0.4283404904425606,
+        "index": 81,
+        "measurement_group_id": 14,
+        "pauli": "YZXIIYII"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": -0.4283404904425557,
+        "index": 82,
+        "measurement_group_id": 14,
+        "pauli": "YZXIXYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 83,
+        "measurement_group_id": 6,
+        "pauli": "YZXIYXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695119,
+        "expectation_value": 0.42834049044256073,
+        "index": 84,
+        "measurement_group_id": 22,
+        "pauli": "YZXIZYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951,
+        "expectation_value": 0.42834049044255906,
+        "index": 85,
+        "measurement_group_id": 15,
+        "pauli": "YZYIIIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950856,
+        "expectation_value": 0.42834049044255773,
+        "index": 86,
+        "measurement_group_id": 15,
+        "pauli": "YZYIIIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695085,
+        "expectation_value": 0.4283404904425577,
+        "index": 87,
+        "measurement_group_id": 7,
+        "pauli": "YZYIIIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826950995,
+        "expectation_value": 0.42834049044255895,
+        "index": 88,
+        "measurement_group_id": 23,
+        "pauli": "YZYIIIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.047593387826951175,
+        "expectation_value": 0.4283404904425606,
+        "index": 89,
+        "measurement_group_id": 15,
+        "pauli": "YZYIIXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 90,
+        "measurement_group_id": 15,
+        "pauli": "YZYIXXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695063,
+        "expectation_value": 0.4283404904425557,
+        "index": 91,
+        "measurement_group_id": 7,
+        "pauli": "YZYIYYII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1111111111111111,
+        "energy_contribution": -0.04759338782695117,
+        "expectation_value": 0.4283404904425605,
+        "index": 92,
+        "measurement_group_id": 23,
+        "pauli": "YZYIZXII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.035871210137053,
+        "energy_contribution": 2.5428049792488412e-15,
+        "expectation_value": 1.2490009027033011e-15,
+        "index": 93,
+        "measurement_group_id": 0,
+        "pauli": "ZIIIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.1906689850673926,
+        "expectation_value": 0.2381337970134785,
+        "index": 94,
+        "measurement_group_id": 16,
+        "pauli": "ZIIIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -1.190668985067387,
+        "expectation_value": 0.23813379701347742,
+        "index": 95,
+        "measurement_group_id": 24,
+        "pauli": "ZIIIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -1.1906689850673737,
+        "expectation_value": -0.23813379701347476,
+        "index": 96,
+        "measurement_group_id": 16,
+        "pauli": "ZIIIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -1.1906689850674024,
+        "expectation_value": -0.23813379701348047,
+        "index": 97,
+        "measurement_group_id": 24,
+        "pauli": "ZIIIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": 0.23732405973044504,
+        "expectation_value": 0.04746481194608901,
+        "index": 98,
+        "measurement_group_id": 24,
+        "pauli": "ZIIZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -5.0,
+        "expectation_value": -1.0,
+        "index": 99,
+        "measurement_group_id": 0,
+        "pauli": "ZIZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": -0.4746481194608901,
+        "expectation_value": -0.04746481194608901,
+        "index": 100,
+        "measurement_group_id": 24,
+        "pauli": "ZZIIIIII"
+      }
+    ]
+  },
+  "measurement": {
+    "counts_shots_per_group": 4096,
+    "estimated_measurement_cost": 250000.0,
+    "groups": [
+      {
+        "basis": "ZXZXYYYY",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "IXZXIIYY",
+          "IXZXYYII",
+          "IIZIIIII",
+          "ZIIIIIII",
+          "ZIZIIIII",
+          "IIIIIIII"
+        ],
+        "term_count": 6
+      },
+      {
+        "basis": "ZXZYYXYX",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "IXZYIIYX",
+          "IXZYYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZXYXYX",
+        "basis_conflicts": [],
+        "group_id": 2,
+        "pauli_labels": [
+          "IYZXIIYX",
+          "IYZXYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZYYYYY",
+        "basis_conflicts": [],
+        "group_id": 3,
+        "pauli_labels": [
+          "IYZYIIYY",
+          "IYZYYYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZXZYYYY",
+        "basis_conflicts": [],
+        "group_id": 4,
+        "pauli_labels": [
+          "XZXIIIYY",
+          "XZXIYYII",
+          "IIIZIIII",
+          "IZIIIIII",
+          "IZIZIIII"
+        ],
+        "term_count": 5
+      },
+      {
+        "basis": "XZYZYXYX",
+        "basis_conflicts": [],
+        "group_id": 5,
+        "pauli_labels": [
+          "XZYIIIYX",
+          "XZYIYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZXZYXYX",
+        "basis_conflicts": [],
+        "group_id": 6,
+        "pauli_labels": [
+          "YZXIIIYX",
+          "YZXIYXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZYZYYYY",
+        "basis_conflicts": [],
+        "group_id": 7,
+        "pauli_labels": [
+          "YZYIIIYY",
+          "YZYIYYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZXZXXXXX",
+        "basis_conflicts": [],
+        "group_id": 8,
+        "pauli_labels": [
+          "IXZXIIXX",
+          "IXZXXXII",
+          "IXZXIIIX",
+          "IXZXIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZXZYXYXY",
+        "basis_conflicts": [],
+        "group_id": 9,
+        "pauli_labels": [
+          "IXZYIIXY",
+          "IXZYXYII",
+          "IXZYIIIY",
+          "IXZYIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZYZXXYXY",
+        "basis_conflicts": [],
+        "group_id": 10,
+        "pauli_labels": [
+          "IYZXIIXY",
+          "IYZXXYII",
+          "IYZXIIIY",
+          "IYZXIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZYZYXXXX",
+        "basis_conflicts": [],
+        "group_id": 11,
+        "pauli_labels": [
+          "IYZYIIXX",
+          "IYZYXXII",
+          "IYZYIIIX",
+          "IYZYIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "XZXZXXXX",
+        "basis_conflicts": [],
+        "group_id": 12,
+        "pauli_labels": [
+          "XZXIIIXX",
+          "XZXIXXII",
+          "XZXIIIIX",
+          "XZXIIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "XZYZXYXY",
+        "basis_conflicts": [],
+        "group_id": 13,
+        "pauli_labels": [
+          "XZYIIIXY",
+          "XZYIXYII",
+          "XZYIIIIY",
+          "XZYIIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "YZXZXYXY",
+        "basis_conflicts": [],
+        "group_id": 14,
+        "pauli_labels": [
+          "YZXIIIXY",
+          "YZXIXYII",
+          "YZXIIIIY",
+          "YZXIIYII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "YZYZXXXX",
+        "basis_conflicts": [],
+        "group_id": 15,
+        "pauli_labels": [
+          "YZYIIIXX",
+          "YZYIXXII",
+          "YZYIIIIX",
+          "YZYIIXII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZXZXZXZX",
+        "basis_conflicts": [],
+        "group_id": 16,
+        "pauli_labels": [
+          "IXZXIIZX",
+          "IXZXZXII",
+          "IIZIIIZI",
+          "IIZIZIII",
+          "ZIIIIIZI",
+          "ZIIIZIII",
+          "IIIIZIZI",
+          "IIIIIIZI",
+          "IIIIZIII"
+        ],
+        "term_count": 9
+      },
+      {
+        "basis": "ZXZYZYZY",
+        "basis_conflicts": [],
+        "group_id": 17,
+        "pauli_labels": [
+          "IXZYIIZY",
+          "IXZYZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZXZYZY",
+        "basis_conflicts": [],
+        "group_id": 18,
+        "pauli_labels": [
+          "IYZXIIZY",
+          "IYZXZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZYZXZX",
+        "basis_conflicts": [],
+        "group_id": 19,
+        "pauli_labels": [
+          "IYZYIIZX",
+          "IYZYZXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZXZZXZX",
+        "basis_conflicts": [],
+        "group_id": 20,
+        "pauli_labels": [
+          "XZXIIIZX",
+          "XZXIZXII",
+          "IIIZIIZI",
+          "IIIZZIII",
+          "IZIIIIZI",
+          "IZIIZIII"
+        ],
+        "term_count": 6
+      },
+      {
+        "basis": "XZYZZYZY",
+        "basis_conflicts": [],
+        "group_id": 21,
+        "pauli_labels": [
+          "XZYIIIZY",
+          "XZYIZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZXZZYZY",
+        "basis_conflicts": [],
+        "group_id": 22,
+        "pauli_labels": [
+          "YZXIIIZY",
+          "YZXIZYII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZYZZXZX",
+        "basis_conflicts": [],
+        "group_id": 23,
+        "pauli_labels": [
+          "YZYIIIZX",
+          "YZYIZXII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZZZZZZZZ",
+        "basis_conflicts": [],
+        "group_id": 24,
+        "pauli_labels": [
+          "IIIIZZZZ",
+          "IIZZIIII",
+          "IZZIIIII",
+          "ZIIZIIII",
+          "ZZIIIIII",
+          "IIIIZIZZ",
+          "IIIIZZZI",
+          "IIIZIIZZ",
+          "IIIZZZII",
+          "IIZIIIZZ",
+          "IIZIZZII",
+          "IZIIIIZZ",
+          "IZIIZZII",
+          "ZIIIIIZZ",
+          "ZIIIZZII",
+          "IIIIIIIZ",
+          "IIIIIIZZ",
+          "IIIIIZII",
+          "IIIIZZII"
+        ],
+        "term_count": 19
+      }
+    ],
+    "groups_sha256": "f286dfc21fb45c79fbb20acbc8145f6fa3566e6b7f4b7205a378c9f31bc2a707",
+    "plan": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 250000.0,
+      "execution_mode": "estimator",
+      "group_count": 25,
+      "grouping_policy": "finite_cutoff_field_terms",
+      "low_rank_aware": false,
+      "notes": [
+        "Measurement groups estimated with strategy 'lattice_qed_exact'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "runtime_precision_target": 0.01,
+      "strategy": "lattice_qed_exact",
+      "term_count": 101,
+      "uncompressed_estimated_shot_cost": 250000.0,
+      "uncompressed_group_count": 25
+    },
+    "qubit_wise_group_count": 25
+  },
+  "notes": [],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 8,
+    "operation_counts": {},
+    "qubit_term_count": 101,
+    "raw_num_qubits": 8,
+    "raw_qubit_term_count": 101,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "h2_lattice_qed_2site_periodic",
+  "sampling": {
+    "available": true,
+    "counts_sha256": "3df2cd7114bbb70b1f201ba4a304839e5d44cfca7b177a01927eca515189e13b",
+    "group_count": 25,
+    "group_counts": [
+      {
+        "available": true,
+        "basis": "ZXZXYYYY",
+        "counts": {
+          "00100000": 11,
+          "00100001": 9,
+          "00100010": 9,
+          "00100011": 28,
+          "00100100": 45,
+          "00100101": 52,
+          "00100110": 86,
+          "00100111": 18,
+          "00101000": 21,
+          "00101001": 77,
+          "00101010": 53,
+          "00101011": 53,
+          "00101100": 20,
+          "00101101": 12,
+          "00101110": 9,
+          "00101111": 8,
+          "00110000": 40,
+          "00110001": 42,
+          "00110010": 22,
+          "00110011": 78,
+          "00110100": 16,
+          "00110101": 4,
+          "00110110": 18,
+          "00110111": 13,
+          "00111000": 9,
+          "00111001": 21,
+          "00111010": 8,
+          "00111011": 11,
+          "00111100": 107,
+          "00111101": 23,
+          "00111110": 42,
+          "00111111": 45,
+          "01100000": 50,
+          "01100001": 54,
+          "01100010": 15,
+          "01100011": 75,
+          "01100100": 8,
+          "01100101": 10,
+          "01100110": 26,
+          "01100111": 9,
+          "01101000": 9,
+          "01101001": 18,
+          "01101010": 5,
+          "01101011": 10,
+          "01101100": 100,
+          "01101101": 22,
+          "01101110": 60,
+          "01101111": 46,
+          "01110000": 10,
+          "01110001": 11,
+          "01110010": 9,
+          "01110011": 22,
+          "01110100": 47,
+          "01110101": 47,
+          "01110110": 88,
+          "01110111": 28,
+          "01111000": 19,
+          "01111001": 79,
+          "01111010": 50,
+          "01111011": 57,
+          "01111100": 16,
+          "01111101": 13,
+          "01111110": 9,
+          "01111111": 8,
+          "10000000": 46,
+          "10000001": 7,
+          "10000010": 6,
+          "10000011": 86,
+          "10000100": 51,
+          "10000101": 9,
+          "10000110": 28,
+          "10000111": 29,
+          "10001000": 15,
+          "10001001": 25,
+          "10001010": 6,
+          "10001011": 58,
+          "10001100": 87,
+          "10001101": 13,
+          "10001110": 5,
+          "10001111": 46,
+          "10010000": 8,
+          "10010001": 49,
+          "10010010": 20,
+          "10010011": 23,
+          "10010100": 9,
+          "10010101": 45,
+          "10010110": 88,
+          "10010111": 15,
+          "10011000": 15,
+          "10011001": 86,
+          "10011010": 50,
+          "10011011": 3,
+          "10011100": 18,
+          "10011101": 19,
+          "10011110": 62,
+          "10011111": 6,
+          "11000000": 5,
+          "11000001": 61,
+          "11000010": 24,
+          "11000011": 18,
+          "11000100": 13,
+          "11000101": 60,
+          "11000110": 87,
+          "11000111": 11,
+          "11001000": 8,
+          "11001001": 102,
+          "11001010": 33,
+          "11001011": 4,
+          "11001100": 27,
+          "11001101": 37,
+          "11001110": 51,
+          "11001111": 8,
+          "11010000": 44,
+          "11010001": 6,
+          "11010010": 9,
+          "11010011": 87,
+          "11010100": 41,
+          "11010101": 11,
+          "11010110": 24,
+          "11010111": 22,
+          "11011000": 29,
+          "11011001": 17,
+          "11011010": 9,
+          "11011011": 33,
+          "11011100": 80,
+          "11011101": 10,
+          "11011110": 9,
+          "11011111": 43
+        },
+        "group_id": 0,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "00111100",
+            107
+          ],
+          [
+            "11001001",
+            102
+          ],
+          [
+            "01101100",
+            100
+          ],
+          [
+            "01110110",
+            88
+          ],
+          [
+            "10010110",
+            88
+          ],
+          [
+            "10001100",
+            87
+          ],
+          [
+            "11000110",
+            87
+          ],
+          [
+            "11010011",
+            87
+          ],
+          [
+            "00100110",
+            86
+          ],
+          [
+            "10000011",
+            86
+          ],
+          [
+            "10011001",
+            86
+          ],
+          [
+            "11011100",
+            80
+          ],
+          [
+            "01111001",
+            79
+          ],
+          [
+            "00110011",
+            78
+          ],
+          [
+            "00101001",
+            77
+          ],
+          [
+            "01100011",
+            75
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYYXYX",
+        "counts": {
+          "00100000": 49,
+          "00100001": 59,
+          "00100010": 97,
+          "00100011": 18,
+          "00100100": 6,
+          "00100101": 11,
+          "00100110": 7,
+          "00100111": 23,
+          "00101000": 14,
+          "00101001": 10,
+          "00101010": 3,
+          "00101011": 9,
+          "00101100": 19,
+          "00101101": 99,
+          "00101110": 44,
+          "00101111": 48,
+          "00110000": 5,
+          "00110001": 16,
+          "00110010": 16,
+          "00110011": 10,
+          "00110100": 42,
+          "00110101": 42,
+          "00110110": 20,
+          "00110111": 85,
+          "00111000": 82,
+          "00111001": 21,
+          "00111010": 45,
+          "00111011": 54,
+          "00111100": 16,
+          "00111101": 21,
+          "00111110": 5,
+          "00111111": 10,
+          "01100000": 11,
+          "01100001": 7,
+          "01100010": 17,
+          "01100011": 9,
+          "01100100": 40,
+          "01100101": 50,
+          "01100110": 29,
+          "01100111": 91,
+          "01101000": 97,
+          "01101001": 21,
+          "01101010": 51,
+          "01101011": 41,
+          "01101100": 8,
+          "01101101": 23,
+          "01101110": 6,
+          "01101111": 9,
+          "01110000": 48,
+          "01110001": 42,
+          "01110010": 92,
+          "01110011": 16,
+          "01110100": 11,
+          "01110101": 9,
+          "01110110": 16,
+          "01110111": 20,
+          "01111000": 17,
+          "01111001": 7,
+          "01111010": 8,
+          "01111011": 10,
+          "01111100": 11,
+          "01111101": 97,
+          "01111110": 51,
+          "01111111": 38,
+          "10000000": 32,
+          "10000001": 8,
+          "10000010": 16,
+          "10000011": 22,
+          "10000100": 42,
+          "10000101": 3,
+          "10000110": 11,
+          "10000111": 105,
+          "10001000": 80,
+          "10001001": 7,
+          "10001010": 6,
+          "10001011": 48,
+          "10001100": 21,
+          "10001101": 15,
+          "10001110": 8,
+          "10001111": 59,
+          "10010000": 9,
+          "10010001": 46,
+          "10010010": 93,
+          "10010011": 17,
+          "10010100": 15,
+          "10010101": 47,
+          "10010110": 25,
+          "10010111": 26,
+          "10011000": 16,
+          "10011001": 32,
+          "10011010": 57,
+          "10011011": 9,
+          "10011100": 7,
+          "10011101": 97,
+          "10011110": 56,
+          "10011111": 6,
+          "11000000": 10,
+          "11000001": 51,
+          "11000010": 86,
+          "11000011": 10,
+          "11000100": 9,
+          "11000101": 43,
+          "11000110": 19,
+          "11000111": 19,
+          "11001000": 20,
+          "11001001": 23,
+          "11001010": 52,
+          "11001011": 11,
+          "11001100": 10,
+          "11001101": 97,
+          "11001110": 43,
+          "11001111": 11,
+          "11010000": 49,
+          "11010001": 10,
+          "11010010": 27,
+          "11010011": 16,
+          "11010100": 38,
+          "11010101": 9,
+          "11010110": 14,
+          "11010111": 102,
+          "11011000": 102,
+          "11011001": 13,
+          "11011010": 10,
+          "11011011": 46,
+          "11011100": 29,
+          "11011101": 16,
+          "11011110": 6,
+          "11011111": 45
+        },
+        "group_id": 1,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10000111",
+            105
+          ],
+          [
+            "11010111",
+            102
+          ],
+          [
+            "11011000",
+            102
+          ],
+          [
+            "00101101",
+            99
+          ],
+          [
+            "00100010",
+            97
+          ],
+          [
+            "01101000",
+            97
+          ],
+          [
+            "01111101",
+            97
+          ],
+          [
+            "10011101",
+            97
+          ],
+          [
+            "11001101",
+            97
+          ],
+          [
+            "10010010",
+            93
+          ],
+          [
+            "01110010",
+            92
+          ],
+          [
+            "01100111",
+            91
+          ],
+          [
+            "11000010",
+            86
+          ],
+          [
+            "00110111",
+            85
+          ],
+          [
+            "00111000",
+            82
+          ],
+          [
+            "10001000",
+            80
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXYXYX",
+        "counts": {
+          "00100000": 16,
+          "00100001": 3,
+          "00100010": 17,
+          "00100011": 16,
+          "00100100": 65,
+          "00100101": 57,
+          "00100110": 20,
+          "00100111": 98,
+          "00101000": 86,
+          "00101001": 21,
+          "00101010": 34,
+          "00101011": 44,
+          "00101100": 13,
+          "00101101": 19,
+          "00101110": 10,
+          "00101111": 11,
+          "00110000": 55,
+          "00110001": 57,
+          "00110010": 108,
+          "00110011": 19,
+          "00110100": 6,
+          "00110101": 7,
+          "00110110": 11,
+          "00110111": 20,
+          "00111000": 18,
+          "00111001": 6,
+          "00111010": 15,
+          "00111011": 3,
+          "00111100": 28,
+          "00111101": 81,
+          "00111110": 52,
+          "00111111": 35,
+          "01100000": 49,
+          "01100001": 62,
+          "01100010": 81,
+          "01100011": 14,
+          "01100100": 9,
+          "01100101": 13,
+          "01100110": 13,
+          "01100111": 21,
+          "01101000": 20,
+          "01101001": 9,
+          "01101010": 9,
+          "01101011": 10,
+          "01101100": 22,
+          "01101101": 101,
+          "01101110": 46,
+          "01101111": 42,
+          "01110000": 4,
+          "01110001": 8,
+          "01110010": 19,
+          "01110011": 8,
+          "01110100": 49,
+          "01110101": 51,
+          "01110110": 25,
+          "01110111": 97,
+          "01111000": 89,
+          "01111001": 26,
+          "01111010": 46,
+          "01111011": 46,
+          "01111100": 13,
+          "01111101": 23,
+          "01111110": 6,
+          "01111111": 13,
+          "10000000": 6,
+          "10000001": 52,
+          "10000010": 92,
+          "10000011": 11,
+          "10000100": 7,
+          "10000101": 45,
+          "10000110": 20,
+          "10000111": 18,
+          "10001000": 16,
+          "10001001": 14,
+          "10001010": 40,
+          "10001011": 2,
+          "10001100": 12,
+          "10001101": 101,
+          "10001110": 44,
+          "10001111": 12,
+          "10010000": 39,
+          "10010001": 11,
+          "10010010": 12,
+          "10010011": 22,
+          "10010100": 51,
+          "10010101": 9,
+          "10010110": 15,
+          "10010111": 90,
+          "10011000": 89,
+          "10011001": 12,
+          "10011010": 5,
+          "10011011": 42,
+          "10011100": 17,
+          "10011101": 14,
+          "10011110": 9,
+          "10011111": 47,
+          "11000000": 40,
+          "11000001": 7,
+          "11000010": 32,
+          "11000011": 17,
+          "11000100": 46,
+          "11000101": 7,
+          "11000110": 10,
+          "11000111": 93,
+          "11001000": 103,
+          "11001001": 13,
+          "11001010": 7,
+          "11001011": 49,
+          "11001100": 19,
+          "11001101": 20,
+          "11001110": 8,
+          "11001111": 48,
+          "11010000": 6,
+          "11010001": 53,
+          "11010010": 88,
+          "11010011": 17,
+          "11010100": 9,
+          "11010101": 46,
+          "11010110": 17,
+          "11010111": 18,
+          "11011000": 16,
+          "11011001": 29,
+          "11011010": 48,
+          "11011011": 5,
+          "11011100": 9,
+          "11011101": 95,
+          "11011110": 38,
+          "11011111": 12
+        },
+        "group_id": 2,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "00110010",
+            108
+          ],
+          [
+            "11001000",
+            103
+          ],
+          [
+            "01101101",
+            101
+          ],
+          [
+            "10001101",
+            101
+          ],
+          [
+            "00100111",
+            98
+          ],
+          [
+            "01110111",
+            97
+          ],
+          [
+            "11011101",
+            95
+          ],
+          [
+            "11000111",
+            93
+          ],
+          [
+            "10000010",
+            92
+          ],
+          [
+            "10010111",
+            90
+          ],
+          [
+            "01111000",
+            89
+          ],
+          [
+            "10011000",
+            89
+          ],
+          [
+            "11010010",
+            88
+          ],
+          [
+            "00101000",
+            86
+          ],
+          [
+            "00111101",
+            81
+          ],
+          [
+            "01100010",
+            81
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYYYYY",
+        "counts": {
+          "00100000": 13,
+          "00100001": 11,
+          "00100010": 13,
+          "00100011": 15,
+          "00100100": 51,
+          "00100101": 43,
+          "00100110": 78,
+          "00100111": 17,
+          "00101000": 26,
+          "00101001": 77,
+          "00101010": 51,
+          "00101011": 41,
+          "00101100": 28,
+          "00101101": 10,
+          "00101110": 11,
+          "00101111": 6,
+          "00110000": 44,
+          "00110001": 46,
+          "00110010": 13,
+          "00110011": 88,
+          "00110100": 4,
+          "00110101": 10,
+          "00110110": 25,
+          "00110111": 14,
+          "00111000": 7,
+          "00111001": 16,
+          "00111010": 10,
+          "00111011": 7,
+          "00111100": 106,
+          "00111101": 22,
+          "00111110": 40,
+          "00111111": 48,
+          "01100000": 54,
+          "01100001": 54,
+          "01100010": 19,
+          "01100011": 90,
+          "01100100": 11,
+          "01100101": 5,
+          "01100110": 24,
+          "01100111": 6,
+          "01101000": 11,
+          "01101001": 23,
+          "01101010": 7,
+          "01101011": 12,
+          "01101100": 99,
+          "01101101": 23,
+          "01101110": 44,
+          "01101111": 55,
+          "01110000": 8,
+          "01110001": 8,
+          "01110010": 12,
+          "01110011": 22,
+          "01110100": 40,
+          "01110101": 51,
+          "01110110": 85,
+          "01110111": 29,
+          "01111000": 24,
+          "01111001": 90,
+          "01111010": 61,
+          "01111011": 43,
+          "01111100": 22,
+          "01111101": 11,
+          "01111110": 7,
+          "01111111": 6,
+          "10000000": 44,
+          "10000001": 10,
+          "10000010": 10,
+          "10000011": 96,
+          "10000100": 53,
+          "10000101": 10,
+          "10000110": 22,
+          "10000111": 32,
+          "10001000": 23,
+          "10001001": 14,
+          "10001010": 6,
+          "10001011": 46,
+          "10001100": 98,
+          "10001101": 8,
+          "10001110": 4,
+          "10001111": 47,
+          "10010000": 13,
+          "10010001": 46,
+          "10010010": 16,
+          "10010011": 21,
+          "10010100": 8,
+          "10010101": 50,
+          "10010110": 83,
+          "10010111": 11,
+          "10011000": 6,
+          "10011001": 96,
+          "10011010": 54,
+          "10011011": 8,
+          "10011100": 21,
+          "10011101": 20,
+          "10011110": 53,
+          "10011111": 10,
+          "11000000": 9,
+          "11000001": 52,
+          "11000010": 24,
+          "11000011": 14,
+          "11000100": 9,
+          "11000101": 54,
+          "11000110": 86,
+          "11000111": 8,
+          "11001000": 10,
+          "11001001": 88,
+          "11001010": 46,
+          "11001011": 10,
+          "11001100": 20,
+          "11001101": 17,
+          "11001110": 36,
+          "11001111": 5,
+          "11010000": 59,
+          "11010001": 7,
+          "11010010": 11,
+          "11010011": 99,
+          "11010100": 47,
+          "11010101": 7,
+          "11010110": 23,
+          "11010111": 19,
+          "11011000": 22,
+          "11011001": 14,
+          "11011010": 5,
+          "11011011": 49,
+          "11011100": 85,
+          "11011101": 13,
+          "11011110": 14,
+          "11011111": 48
+        },
+        "group_id": 3,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "00111100",
+            106
+          ],
+          [
+            "01101100",
+            99
+          ],
+          [
+            "11010011",
+            99
+          ],
+          [
+            "10001100",
+            98
+          ],
+          [
+            "10000011",
+            96
+          ],
+          [
+            "10011001",
+            96
+          ],
+          [
+            "01100011",
+            90
+          ],
+          [
+            "01111001",
+            90
+          ],
+          [
+            "00110011",
+            88
+          ],
+          [
+            "11001001",
+            88
+          ],
+          [
+            "11000110",
+            86
+          ],
+          [
+            "01110110",
+            85
+          ],
+          [
+            "11011100",
+            85
+          ],
+          [
+            "10010110",
+            83
+          ],
+          [
+            "00100110",
+            78
+          ],
+          [
+            "00101001",
+            77
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZYYYY",
+        "counts": {
+          "00010000": 37,
+          "00010001": 59,
+          "00010010": 32,
+          "00010011": 111,
+          "00010100": 5,
+          "00010101": 13,
+          "00010110": 18,
+          "00010111": 14,
+          "00011000": 20,
+          "00011001": 21,
+          "00011010": 7,
+          "00011011": 9,
+          "00011100": 101,
+          "00011101": 27,
+          "00011110": 46,
+          "00011111": 44,
+          "00110000": 6,
+          "00110001": 5,
+          "00110010": 9,
+          "00110011": 19,
+          "00110100": 38,
+          "00110101": 50,
+          "00110110": 88,
+          "00110111": 20,
+          "00111000": 18,
+          "00111001": 83,
+          "00111010": 53,
+          "00111011": 41,
+          "00111100": 21,
+          "00111101": 16,
+          "00111110": 6,
+          "00111111": 5,
+          "01000000": 12,
+          "01000001": 46,
+          "01000010": 25,
+          "01000011": 17,
+          "01000100": 9,
+          "01000101": 48,
+          "01000110": 97,
+          "01000111": 10,
+          "01001000": 12,
+          "01001001": 88,
+          "01001010": 47,
+          "01001011": 12,
+          "01001100": 21,
+          "01001101": 16,
+          "01001110": 49,
+          "01001111": 7,
+          "01100000": 45,
+          "01100001": 4,
+          "01100010": 10,
+          "01100011": 84,
+          "01100100": 39,
+          "01100101": 12,
+          "01100110": 13,
+          "01100111": 15,
+          "01101000": 21,
+          "01101001": 23,
+          "01101010": 12,
+          "01101011": 37,
+          "01101100": 76,
+          "01101101": 12,
+          "01101110": 5,
+          "01101111": 50,
+          "10010000": 13,
+          "10010001": 7,
+          "10010010": 12,
+          "10010011": 19,
+          "10010100": 53,
+          "10010101": 60,
+          "10010110": 101,
+          "10010111": 21,
+          "10011000": 10,
+          "10011001": 103,
+          "10011010": 56,
+          "10011011": 40,
+          "10011100": 21,
+          "10011101": 10,
+          "10011110": 11,
+          "10011111": 8,
+          "10110000": 50,
+          "10110001": 40,
+          "10110010": 27,
+          "10110011": 99,
+          "10110100": 6,
+          "10110101": 7,
+          "10110110": 18,
+          "10110111": 6,
+          "10111000": 9,
+          "10111001": 13,
+          "10111010": 4,
+          "10111011": 12,
+          "10111100": 88,
+          "10111101": 24,
+          "10111110": 38,
+          "10111111": 50,
+          "11000000": 55,
+          "11000001": 9,
+          "11000010": 9,
+          "11000011": 89,
+          "11000100": 49,
+          "11000101": 7,
+          "11000110": 19,
+          "11000111": 19,
+          "11001000": 25,
+          "11001001": 17,
+          "11001010": 9,
+          "11001011": 51,
+          "11001100": 94,
+          "11001101": 9,
+          "11001110": 10,
+          "11001111": 40,
+          "11100000": 6,
+          "11100001": 51,
+          "11100010": 14,
+          "11100011": 19,
+          "11100100": 7,
+          "11100101": 73,
+          "11100110": 85,
+          "11100111": 10,
+          "11101000": 14,
+          "11101001": 100,
+          "11101010": 45,
+          "11101011": 12,
+          "11101100": 21,
+          "11101101": 23,
+          "11101110": 48,
+          "11101111": 5
+        },
+        "group_id": 4,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "00010011",
+            111
+          ],
+          [
+            "10011001",
+            103
+          ],
+          [
+            "00011100",
+            101
+          ],
+          [
+            "10010110",
+            101
+          ],
+          [
+            "11101001",
+            100
+          ],
+          [
+            "10110011",
+            99
+          ],
+          [
+            "01000110",
+            97
+          ],
+          [
+            "11001100",
+            94
+          ],
+          [
+            "11000011",
+            89
+          ],
+          [
+            "00110110",
+            88
+          ],
+          [
+            "01001001",
+            88
+          ],
+          [
+            "10111100",
+            88
+          ],
+          [
+            "11100110",
+            85
+          ],
+          [
+            "01100011",
+            84
+          ],
+          [
+            "00111001",
+            83
+          ],
+          [
+            "01101100",
+            76
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZYXYX",
+        "counts": {
+          "00010000": 10,
+          "00010001": 6,
+          "00010010": 23,
+          "00010011": 15,
+          "00010100": 46,
+          "00010101": 64,
+          "00010110": 18,
+          "00010111": 94,
+          "00011000": 90,
+          "00011001": 25,
+          "00011010": 43,
+          "00011011": 34,
+          "00011100": 7,
+          "00011101": 21,
+          "00011110": 4,
+          "00011111": 3,
+          "00110000": 45,
+          "00110001": 50,
+          "00110010": 102,
+          "00110011": 23,
+          "00110100": 11,
+          "00110101": 6,
+          "00110110": 13,
+          "00110111": 19,
+          "00111000": 17,
+          "00111001": 11,
+          "00111010": 6,
+          "00111011": 7,
+          "00111100": 26,
+          "00111101": 87,
+          "00111110": 52,
+          "00111111": 57,
+          "01000000": 6,
+          "01000001": 52,
+          "01000010": 92,
+          "01000011": 13,
+          "01000100": 7,
+          "01000101": 62,
+          "01000110": 13,
+          "01000111": 22,
+          "01001000": 16,
+          "01001001": 20,
+          "01001010": 38,
+          "01001011": 12,
+          "01001100": 9,
+          "01001101": 80,
+          "01001110": 48,
+          "01001111": 8,
+          "01100000": 49,
+          "01100001": 7,
+          "01100010": 17,
+          "01100011": 25,
+          "01100100": 51,
+          "01100101": 8,
+          "01100110": 10,
+          "01100111": 86,
+          "01101000": 78,
+          "01101001": 14,
+          "01101010": 9,
+          "01101011": 73,
+          "01101100": 15,
+          "01101101": 27,
+          "01101110": 8,
+          "01101111": 62,
+          "10010000": 53,
+          "10010001": 46,
+          "10010010": 96,
+          "10010011": 26,
+          "10010100": 14,
+          "10010101": 10,
+          "10010110": 15,
+          "10010111": 20,
+          "10011000": 17,
+          "10011001": 14,
+          "10011010": 10,
+          "10011011": 5,
+          "10011100": 31,
+          "10011101": 107,
+          "10011110": 36,
+          "10011111": 39,
+          "10110000": 9,
+          "10110001": 8,
+          "10110010": 18,
+          "10110011": 9,
+          "10110100": 45,
+          "10110101": 52,
+          "10110110": 17,
+          "10110111": 82,
+          "10111000": 94,
+          "10111001": 22,
+          "10111010": 50,
+          "10111011": 47,
+          "10111100": 5,
+          "10111101": 22,
+          "10111110": 10,
+          "10111111": 7,
+          "11000000": 39,
+          "11000001": 9,
+          "11000010": 22,
+          "11000011": 16,
+          "11000100": 44,
+          "11000101": 4,
+          "11000110": 12,
+          "11000111": 90,
+          "11001000": 91,
+          "11001001": 8,
+          "11001010": 8,
+          "11001011": 39,
+          "11001100": 30,
+          "11001101": 24,
+          "11001110": 11,
+          "11001111": 52,
+          "11100000": 10,
+          "11100001": 49,
+          "11100010": 90,
+          "11100011": 12,
+          "11100100": 11,
+          "11100101": 43,
+          "11100110": 23,
+          "11100111": 26,
+          "11101000": 19,
+          "11101001": 20,
+          "11101010": 45,
+          "11101011": 7,
+          "11101100": 5,
+          "11101101": 71,
+          "11101110": 48,
+          "11101111": 10
+        },
+        "group_id": 5,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10011101",
+            107
+          ],
+          [
+            "00110010",
+            102
+          ],
+          [
+            "10010010",
+            96
+          ],
+          [
+            "00010111",
+            94
+          ],
+          [
+            "10111000",
+            94
+          ],
+          [
+            "01000010",
+            92
+          ],
+          [
+            "11001000",
+            91
+          ],
+          [
+            "00011000",
+            90
+          ],
+          [
+            "11000111",
+            90
+          ],
+          [
+            "11100010",
+            90
+          ],
+          [
+            "00111101",
+            87
+          ],
+          [
+            "01100111",
+            86
+          ],
+          [
+            "10110111",
+            82
+          ],
+          [
+            "01001101",
+            80
+          ],
+          [
+            "01101000",
+            78
+          ],
+          [
+            "01101011",
+            73
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZYXYX",
+        "counts": {
+          "00010000": 45,
+          "00010001": 51,
+          "00010010": 91,
+          "00010011": 25,
+          "00010100": 9,
+          "00010101": 8,
+          "00010110": 8,
+          "00010111": 17,
+          "00011000": 23,
+          "00011001": 9,
+          "00011010": 10,
+          "00011011": 5,
+          "00011100": 17,
+          "00011101": 79,
+          "00011110": 35,
+          "00011111": 55,
+          "00110000": 5,
+          "00110001": 10,
+          "00110010": 27,
+          "00110011": 15,
+          "00110100": 59,
+          "00110101": 52,
+          "00110110": 36,
+          "00110111": 90,
+          "00111000": 105,
+          "00111001": 19,
+          "00111010": 67,
+          "00111011": 52,
+          "00111100": 12,
+          "00111101": 14,
+          "00111110": 8,
+          "00111111": 8,
+          "01000000": 47,
+          "01000001": 9,
+          "01000010": 18,
+          "01000011": 18,
+          "01000100": 36,
+          "01000101": 15,
+          "01000110": 8,
+          "01000111": 104,
+          "01001000": 95,
+          "01001001": 14,
+          "01001010": 6,
+          "01001011": 54,
+          "01001100": 19,
+          "01001101": 19,
+          "01001110": 5,
+          "01001111": 46,
+          "01100000": 6,
+          "01100001": 52,
+          "01100010": 86,
+          "01100011": 11,
+          "01100100": 10,
+          "01100101": 49,
+          "01100110": 14,
+          "01100111": 20,
+          "01101000": 20,
+          "01101001": 23,
+          "01101010": 38,
+          "01101011": 5,
+          "01101100": 13,
+          "01101101": 80,
+          "01101110": 43,
+          "01101111": 9,
+          "10010000": 7,
+          "10010001": 6,
+          "10010010": 21,
+          "10010011": 7,
+          "10010100": 51,
+          "10010101": 39,
+          "10010110": 18,
+          "10010111": 87,
+          "10011000": 79,
+          "10011001": 20,
+          "10011010": 46,
+          "10011011": 47,
+          "10011100": 9,
+          "10011101": 19,
+          "10011110": 11,
+          "10011111": 11,
+          "10110000": 54,
+          "10110001": 38,
+          "10110010": 78,
+          "10110011": 27,
+          "10110100": 7,
+          "10110101": 9,
+          "10110110": 6,
+          "10110111": 17,
+          "10111000": 19,
+          "10111001": 11,
+          "10111010": 5,
+          "10111011": 16,
+          "10111100": 29,
+          "10111101": 90,
+          "10111110": 43,
+          "10111111": 45,
+          "11000000": 10,
+          "11000001": 49,
+          "11000010": 96,
+          "11000011": 13,
+          "11000100": 7,
+          "11000101": 56,
+          "11000110": 22,
+          "11000111": 23,
+          "11001000": 27,
+          "11001001": 21,
+          "11001010": 50,
+          "11001011": 7,
+          "11001100": 9,
+          "11001101": 92,
+          "11001110": 66,
+          "11001111": 10,
+          "11100000": 45,
+          "11100001": 7,
+          "11100010": 24,
+          "11100011": 26,
+          "11100100": 45,
+          "11100101": 5,
+          "11100110": 7,
+          "11100111": 82,
+          "11101000": 98,
+          "11101001": 8,
+          "11101010": 4,
+          "11101011": 45,
+          "11101100": 23,
+          "11101101": 18,
+          "11101110": 15,
+          "11101111": 56
+        },
+        "group_id": 6,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "00111000",
+            105
+          ],
+          [
+            "01000111",
+            104
+          ],
+          [
+            "11101000",
+            98
+          ],
+          [
+            "11000010",
+            96
+          ],
+          [
+            "01001000",
+            95
+          ],
+          [
+            "11001101",
+            92
+          ],
+          [
+            "00010010",
+            91
+          ],
+          [
+            "00110111",
+            90
+          ],
+          [
+            "10111101",
+            90
+          ],
+          [
+            "10010111",
+            87
+          ],
+          [
+            "01100010",
+            86
+          ],
+          [
+            "11100111",
+            82
+          ],
+          [
+            "01101101",
+            80
+          ],
+          [
+            "00011101",
+            79
+          ],
+          [
+            "10011000",
+            79
+          ],
+          [
+            "10110010",
+            78
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZYYYY",
+        "counts": {
+          "00010000": 59,
+          "00010001": 50,
+          "00010010": 23,
+          "00010011": 82,
+          "00010100": 9,
+          "00010101": 7,
+          "00010110": 23,
+          "00010111": 10,
+          "00011000": 7,
+          "00011001": 19,
+          "00011010": 5,
+          "00011011": 8,
+          "00011100": 96,
+          "00011101": 17,
+          "00011110": 43,
+          "00011111": 49,
+          "00110000": 8,
+          "00110001": 10,
+          "00110010": 14,
+          "00110011": 22,
+          "00110100": 47,
+          "00110101": 63,
+          "00110110": 88,
+          "00110111": 18,
+          "00111000": 19,
+          "00111001": 87,
+          "00111010": 46,
+          "00111011": 61,
+          "00111100": 27,
+          "00111101": 10,
+          "00111110": 6,
+          "00111111": 9,
+          "01000000": 6,
+          "01000001": 51,
+          "01000010": 25,
+          "01000011": 20,
+          "01000100": 9,
+          "01000101": 43,
+          "01000110": 89,
+          "01000111": 6,
+          "01001000": 10,
+          "01001001": 77,
+          "01001010": 44,
+          "01001011": 9,
+          "01001100": 25,
+          "01001101": 28,
+          "01001110": 45,
+          "01001111": 8,
+          "01100000": 46,
+          "01100001": 10,
+          "01100010": 12,
+          "01100011": 115,
+          "01100100": 67,
+          "01100101": 4,
+          "01100110": 21,
+          "01100111": 19,
+          "01101000": 21,
+          "01101001": 18,
+          "01101010": 6,
+          "01101011": 36,
+          "01101100": 91,
+          "01101101": 13,
+          "01101110": 8,
+          "01101111": 35,
+          "10010000": 10,
+          "10010001": 8,
+          "10010010": 10,
+          "10010011": 21,
+          "10010100": 49,
+          "10010101": 47,
+          "10010110": 98,
+          "10010111": 24,
+          "10011000": 24,
+          "10011001": 91,
+          "10011010": 57,
+          "10011011": 50,
+          "10011100": 21,
+          "10011101": 12,
+          "10011110": 9,
+          "10011111": 12,
+          "10110000": 41,
+          "10110001": 50,
+          "10110010": 17,
+          "10110011": 86,
+          "10110100": 9,
+          "10110101": 10,
+          "10110110": 17,
+          "10110111": 9,
+          "10111000": 10,
+          "10111001": 18,
+          "10111010": 6,
+          "10111011": 9,
+          "10111100": 85,
+          "10111101": 20,
+          "10111110": 36,
+          "10111111": 54,
+          "11000000": 51,
+          "11000001": 5,
+          "11000010": 10,
+          "11000011": 97,
+          "11000100": 51,
+          "11000101": 5,
+          "11000110": 11,
+          "11000111": 16,
+          "11001000": 31,
+          "11001001": 16,
+          "11001010": 7,
+          "11001011": 62,
+          "11001100": 83,
+          "11001101": 8,
+          "11001110": 6,
+          "11001111": 48,
+          "11100000": 8,
+          "11100001": 46,
+          "11100010": 32,
+          "11100011": 19,
+          "11100100": 10,
+          "11100101": 47,
+          "11100110": 88,
+          "11100111": 7,
+          "11101000": 12,
+          "11101001": 92,
+          "11101010": 34,
+          "11101011": 12,
+          "11101100": 24,
+          "11101101": 24,
+          "11101110": 47,
+          "11101111": 8
+        },
+        "group_id": 7,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01100011",
+            115
+          ],
+          [
+            "10010110",
+            98
+          ],
+          [
+            "11000011",
+            97
+          ],
+          [
+            "00011100",
+            96
+          ],
+          [
+            "11101001",
+            92
+          ],
+          [
+            "01101100",
+            91
+          ],
+          [
+            "10011001",
+            91
+          ],
+          [
+            "01000110",
+            89
+          ],
+          [
+            "00110110",
+            88
+          ],
+          [
+            "11100110",
+            88
+          ],
+          [
+            "00111001",
+            87
+          ],
+          [
+            "10110011",
+            86
+          ],
+          [
+            "10111100",
+            85
+          ],
+          [
+            "11001100",
+            83
+          ],
+          [
+            "00010011",
+            82
+          ],
+          [
+            "01001001",
+            77
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZXXXXX",
+        "counts": {
+          "00100001": 1,
+          "00100010": 1,
+          "00100011": 14,
+          "00100100": 1,
+          "00100101": 128,
+          "00100110": 15,
+          "00100111": 92,
+          "00101000": 10,
+          "00101001": 105,
+          "00101010": 43,
+          "00101011": 40,
+          "00101100": 2,
+          "00101101": 15,
+          "00101110": 27,
+          "00101111": 43,
+          "00110000": 139,
+          "00110001": 1,
+          "00110010": 72,
+          "00110011": 14,
+          "00110100": 1,
+          "00110110": 11,
+          "00110111": 2,
+          "00111000": 20,
+          "00111001": 1,
+          "00111010": 39,
+          "00111011": 19,
+          "00111100": 93,
+          "00111101": 15,
+          "00111110": 49,
+          "00111111": 31,
+          "01100000": 140,
+          "01100001": 2,
+          "01100010": 86,
+          "01100011": 9,
+          "01100100": 1,
+          "01100110": 10,
+          "01100111": 7,
+          "01101000": 12,
+          "01101001": 2,
+          "01101010": 39,
+          "01101011": 20,
+          "01101100": 72,
+          "01101101": 19,
+          "01101110": 49,
+          "01101111": 42,
+          "01110001": 2,
+          "01110010": 4,
+          "01110011": 16,
+          "01110100": 4,
+          "01110101": 146,
+          "01110110": 11,
+          "01110111": 70,
+          "01111000": 16,
+          "01111001": 76,
+          "01111010": 31,
+          "01111011": 46,
+          "01111100": 3,
+          "01111101": 9,
+          "01111110": 19,
+          "01111111": 26,
+          "10000000": 138,
+          "10000010": 12,
+          "10000011": 108,
+          "10000100": 2,
+          "10000101": 2,
+          "10000110": 9,
+          "10000111": 3,
+          "10001000": 81,
+          "10001001": 14,
+          "10001010": 36,
+          "10001011": 50,
+          "10001100": 12,
+          "10001101": 2,
+          "10001110": 19,
+          "10001111": 41,
+          "10010000": 1,
+          "10010010": 17,
+          "10010011": 2,
+          "10010101": 136,
+          "10010110": 71,
+          "10010111": 18,
+          "10011000": 4,
+          "10011001": 12,
+          "10011010": 31,
+          "10011011": 23,
+          "10011100": 13,
+          "10011101": 78,
+          "10011110": 48,
+          "10011111": 45,
+          "11000010": 10,
+          "11000011": 3,
+          "11000100": 2,
+          "11000101": 139,
+          "11000110": 82,
+          "11000111": 17,
+          "11001000": 3,
+          "11001001": 16,
+          "11001010": 45,
+          "11001011": 21,
+          "11001100": 10,
+          "11001101": 83,
+          "11001110": 53,
+          "11001111": 32,
+          "11010000": 143,
+          "11010010": 11,
+          "11010011": 96,
+          "11010110": 7,
+          "11010111": 11,
+          "11011000": 84,
+          "11011001": 13,
+          "11011010": 41,
+          "11011011": 34,
+          "11011100": 12,
+          "11011101": 9,
+          "11011110": 21,
+          "11011111": 37
+        },
+        "group_id": 8,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01110101",
+            146
+          ],
+          [
+            "11010000",
+            143
+          ],
+          [
+            "01100000",
+            140
+          ],
+          [
+            "00110000",
+            139
+          ],
+          [
+            "11000101",
+            139
+          ],
+          [
+            "10000000",
+            138
+          ],
+          [
+            "10010101",
+            136
+          ],
+          [
+            "00100101",
+            128
+          ],
+          [
+            "10000011",
+            108
+          ],
+          [
+            "00101001",
+            105
+          ],
+          [
+            "11010011",
+            96
+          ],
+          [
+            "00111100",
+            93
+          ],
+          [
+            "00100111",
+            92
+          ],
+          [
+            "01100010",
+            86
+          ],
+          [
+            "11011000",
+            84
+          ],
+          [
+            "11001101",
+            83
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYXYXY",
+        "counts": {
+          "00100000": 12,
+          "00100001": 36,
+          "00100010": 3,
+          "00100011": 12,
+          "00100100": 40,
+          "00100101": 40,
+          "00100110": 10,
+          "00100111": 83,
+          "00101000": 15,
+          "00101001": 80,
+          "00101010": 1,
+          "00101011": 132,
+          "00101100": 7,
+          "00101101": 11,
+          "00101111": 1,
+          "00110000": 41,
+          "00110001": 43,
+          "00110010": 81,
+          "00110011": 10,
+          "00110100": 48,
+          "00110101": 25,
+          "00110110": 9,
+          "00111000": 9,
+          "00111001": 5,
+          "00111100": 78,
+          "00111101": 13,
+          "00111110": 145,
+          "00111111": 1,
+          "01100000": 37,
+          "01100001": 42,
+          "01100010": 81,
+          "01100011": 20,
+          "01100100": 36,
+          "01100101": 23,
+          "01100110": 18,
+          "01100111": 5,
+          "01101000": 18,
+          "01101001": 5,
+          "01101011": 2,
+          "01101100": 85,
+          "01101101": 14,
+          "01101110": 157,
+          "01101111": 2,
+          "01110000": 23,
+          "01110001": 36,
+          "01110010": 2,
+          "01110011": 13,
+          "01110100": 32,
+          "01110101": 49,
+          "01110110": 16,
+          "01110111": 80,
+          "01111000": 7,
+          "01111001": 86,
+          "01111011": 151,
+          "01111100": 2,
+          "01111101": 14,
+          "01111111": 2,
+          "10000000": 18,
+          "10000001": 39,
+          "10000010": 12,
+          "10000011": 3,
+          "10000100": 38,
+          "10000101": 38,
+          "10000110": 84,
+          "10000111": 16,
+          "10001000": 4,
+          "10001001": 12,
+          "10001010": 1,
+          "10001100": 23,
+          "10001101": 74,
+          "10001110": 133,
+          "10001111": 3,
+          "10010000": 35,
+          "10010001": 33,
+          "10010010": 16,
+          "10010011": 93,
+          "10010100": 32,
+          "10010101": 22,
+          "10010110": 3,
+          "10010111": 5,
+          "10011000": 106,
+          "10011001": 17,
+          "10011010": 1,
+          "10011011": 149,
+          "10011100": 15,
+          "10011101": 2,
+          "10011110": 2,
+          "10011111": 2,
+          "11000000": 38,
+          "11000001": 35,
+          "11000010": 12,
+          "11000011": 81,
+          "11000100": 26,
+          "11000101": 26,
+          "11000110": 3,
+          "11000111": 12,
+          "11001000": 94,
+          "11001001": 11,
+          "11001010": 2,
+          "11001011": 141,
+          "11001100": 15,
+          "11001101": 8,
+          "11001111": 1,
+          "11010000": 32,
+          "11010001": 40,
+          "11010010": 13,
+          "11010011": 1,
+          "11010100": 37,
+          "11010101": 50,
+          "11010110": 88,
+          "11010111": 10,
+          "11011001": 11,
+          "11011100": 13,
+          "11011101": 74,
+          "11011110": 140,
+          "11011111": 2
+        },
+        "group_id": 9,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01101110",
+            157
+          ],
+          [
+            "01111011",
+            151
+          ],
+          [
+            "10011011",
+            149
+          ],
+          [
+            "00111110",
+            145
+          ],
+          [
+            "11001011",
+            141
+          ],
+          [
+            "11011110",
+            140
+          ],
+          [
+            "10001110",
+            133
+          ],
+          [
+            "00101011",
+            132
+          ],
+          [
+            "10011000",
+            106
+          ],
+          [
+            "11001000",
+            94
+          ],
+          [
+            "10010011",
+            93
+          ],
+          [
+            "11010110",
+            88
+          ],
+          [
+            "01111001",
+            86
+          ],
+          [
+            "01101100",
+            85
+          ],
+          [
+            "10000110",
+            84
+          ],
+          [
+            "00100111",
+            83
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXXYXY",
+        "counts": {
+          "00100000": 41,
+          "00100001": 37,
+          "00100010": 82,
+          "00100011": 18,
+          "00100100": 45,
+          "00100101": 24,
+          "00100110": 19,
+          "00100111": 3,
+          "00101000": 14,
+          "00101001": 2,
+          "00101010": 1,
+          "00101100": 74,
+          "00101101": 14,
+          "00101110": 135,
+          "00101111": 2,
+          "00110000": 18,
+          "00110001": 41,
+          "00110010": 2,
+          "00110011": 15,
+          "00110100": 45,
+          "00110101": 50,
+          "00110110": 15,
+          "00110111": 79,
+          "00111000": 14,
+          "00111001": 92,
+          "00111010": 1,
+          "00111011": 132,
+          "00111100": 2,
+          "00111101": 16,
+          "00111111": 1,
+          "01100000": 12,
+          "01100001": 35,
+          "01100011": 19,
+          "01100100": 43,
+          "01100101": 49,
+          "01100110": 17,
+          "01100111": 84,
+          "01101000": 10,
+          "01101001": 88,
+          "01101010": 1,
+          "01101011": 108,
+          "01101100": 3,
+          "01101101": 17,
+          "01101110": 1,
+          "01101111": 1,
+          "01110000": 48,
+          "01110001": 45,
+          "01110010": 79,
+          "01110011": 16,
+          "01110100": 52,
+          "01110101": 21,
+          "01110110": 22,
+          "01110111": 6,
+          "01111000": 13,
+          "01111001": 2,
+          "01111100": 82,
+          "01111101": 13,
+          "01111110": 147,
+          "01111111": 1,
+          "10000000": 39,
+          "10000001": 39,
+          "10000010": 17,
+          "10000011": 91,
+          "10000100": 29,
+          "10000101": 15,
+          "10000110": 6,
+          "10000111": 12,
+          "10001000": 84,
+          "10001001": 12,
+          "10001010": 1,
+          "10001011": 141,
+          "10001100": 8,
+          "10001101": 1,
+          "10001110": 1,
+          "10001111": 1,
+          "10010000": 18,
+          "10010001": 36,
+          "10010010": 15,
+          "10010011": 2,
+          "10010100": 42,
+          "10010101": 43,
+          "10010110": 88,
+          "10010111": 12,
+          "10011000": 5,
+          "10011001": 14,
+          "10011010": 1,
+          "10011011": 1,
+          "10011100": 18,
+          "10011101": 77,
+          "10011110": 147,
+          "10011111": 1,
+          "11000000": 26,
+          "11000001": 40,
+          "11000010": 11,
+          "11000011": 2,
+          "11000100": 36,
+          "11000101": 35,
+          "11000110": 103,
+          "11000111": 16,
+          "11001000": 4,
+          "11001001": 10,
+          "11001010": 1,
+          "11001100": 9,
+          "11001101": 82,
+          "11001110": 133,
+          "11010000": 35,
+          "11010001": 52,
+          "11010010": 11,
+          "11010011": 76,
+          "11010100": 45,
+          "11010101": 28,
+          "11010110": 4,
+          "11010111": 18,
+          "11011000": 74,
+          "11011001": 11,
+          "11011010": 1,
+          "11011011": 131,
+          "11011100": 15,
+          "11011101": 1
+        },
+        "group_id": 10,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01111110",
+            147
+          ],
+          [
+            "10011110",
+            147
+          ],
+          [
+            "10001011",
+            141
+          ],
+          [
+            "00101110",
+            135
+          ],
+          [
+            "11001110",
+            133
+          ],
+          [
+            "00111011",
+            132
+          ],
+          [
+            "11011011",
+            131
+          ],
+          [
+            "01101011",
+            108
+          ],
+          [
+            "11000110",
+            103
+          ],
+          [
+            "00111001",
+            92
+          ],
+          [
+            "10000011",
+            91
+          ],
+          [
+            "01101001",
+            88
+          ],
+          [
+            "10010110",
+            88
+          ],
+          [
+            "01100111",
+            84
+          ],
+          [
+            "10001000",
+            84
+          ],
+          [
+            "00100010",
+            82
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYXXXX",
+        "counts": {
+          "00100010": 5,
+          "00100011": 10,
+          "00100101": 138,
+          "00100110": 19,
+          "00100111": 76,
+          "00101000": 13,
+          "00101001": 91,
+          "00101010": 47,
+          "00101011": 47,
+          "00101100": 5,
+          "00101101": 15,
+          "00101110": 24,
+          "00101111": 35,
+          "00110000": 116,
+          "00110010": 73,
+          "00110011": 19,
+          "00110100": 1,
+          "00110110": 13,
+          "00110111": 2,
+          "00111000": 20,
+          "00111001": 4,
+          "00111010": 36,
+          "00111011": 17,
+          "00111100": 81,
+          "00111101": 13,
+          "00111110": 43,
+          "00111111": 39,
+          "01100000": 142,
+          "01100001": 1,
+          "01100010": 88,
+          "01100011": 23,
+          "01100100": 2,
+          "01100110": 16,
+          "01100111": 2,
+          "01101000": 16,
+          "01101001": 2,
+          "01101010": 40,
+          "01101011": 21,
+          "01101100": 73,
+          "01101101": 16,
+          "01101110": 36,
+          "01101111": 36,
+          "01110001": 1,
+          "01110010": 3,
+          "01110011": 21,
+          "01110100": 2,
+          "01110101": 142,
+          "01110110": 8,
+          "01110111": 92,
+          "01111000": 11,
+          "01111001": 86,
+          "01111010": 44,
+          "01111011": 46,
+          "01111100": 3,
+          "01111101": 20,
+          "01111110": 24,
+          "01111111": 39,
+          "10000000": 137,
+          "10000001": 1,
+          "10000010": 12,
+          "10000011": 90,
+          "10000110": 4,
+          "10000111": 14,
+          "10001000": 117,
+          "10001001": 18,
+          "10001010": 35,
+          "10001011": 45,
+          "10001100": 13,
+          "10001101": 5,
+          "10001110": 24,
+          "10001111": 48,
+          "10010000": 3,
+          "10010010": 11,
+          "10010011": 1,
+          "10010100": 1,
+          "10010101": 140,
+          "10010110": 75,
+          "10010111": 12,
+          "10011001": 9,
+          "10011010": 46,
+          "10011011": 15,
+          "10011100": 12,
+          "10011101": 74,
+          "10011110": 28,
+          "10011111": 31,
+          "11000001": 1,
+          "11000010": 15,
+          "11000011": 6,
+          "11000100": 1,
+          "11000101": 127,
+          "11000110": 70,
+          "11000111": 16,
+          "11001000": 1,
+          "11001001": 9,
+          "11001010": 31,
+          "11001011": 31,
+          "11001100": 15,
+          "11001101": 84,
+          "11001110": 55,
+          "11001111": 42,
+          "11010000": 119,
+          "11010010": 14,
+          "11010011": 83,
+          "11010100": 2,
+          "11010101": 1,
+          "11010110": 4,
+          "11010111": 12,
+          "11011000": 94,
+          "11011001": 17,
+          "11011010": 49,
+          "11011011": 42,
+          "11011100": 12,
+          "11011101": 2,
+          "11011110": 20,
+          "11011111": 42
+        },
+        "group_id": 11,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01100000",
+            142
+          ],
+          [
+            "01110101",
+            142
+          ],
+          [
+            "10010101",
+            140
+          ],
+          [
+            "00100101",
+            138
+          ],
+          [
+            "10000000",
+            137
+          ],
+          [
+            "11000101",
+            127
+          ],
+          [
+            "11010000",
+            119
+          ],
+          [
+            "10001000",
+            117
+          ],
+          [
+            "00110000",
+            116
+          ],
+          [
+            "11011000",
+            94
+          ],
+          [
+            "01110111",
+            92
+          ],
+          [
+            "00101001",
+            91
+          ],
+          [
+            "10000011",
+            90
+          ],
+          [
+            "01100010",
+            88
+          ],
+          [
+            "01111001",
+            86
+          ],
+          [
+            "11001101",
+            84
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZXXXX",
+        "counts": {
+          "00010000": 150,
+          "00010001": 1,
+          "00010010": 97,
+          "00010011": 17,
+          "00010100": 2,
+          "00010110": 13,
+          "00010111": 2,
+          "00011000": 8,
+          "00011001": 1,
+          "00011010": 49,
+          "00011011": 26,
+          "00011100": 84,
+          "00011101": 11,
+          "00011110": 50,
+          "00011111": 47,
+          "00110001": 1,
+          "00110010": 5,
+          "00110011": 7,
+          "00110100": 2,
+          "00110101": 128,
+          "00110110": 14,
+          "00110111": 77,
+          "00111000": 17,
+          "00111001": 89,
+          "00111010": 54,
+          "00111011": 47,
+          "00111100": 3,
+          "00111101": 13,
+          "00111110": 13,
+          "00111111": 38,
+          "01000000": 1,
+          "01000001": 1,
+          "01000010": 11,
+          "01000011": 4,
+          "01000100": 1,
+          "01000101": 126,
+          "01000110": 82,
+          "01000111": 13,
+          "01001000": 1,
+          "01001001": 9,
+          "01001010": 39,
+          "01001011": 23,
+          "01001100": 11,
+          "01001101": 84,
+          "01001110": 41,
+          "01001111": 40,
+          "01100000": 153,
+          "01100001": 1,
+          "01100010": 13,
+          "01100011": 73,
+          "01100101": 1,
+          "01100110": 5,
+          "01100111": 12,
+          "01101000": 78,
+          "01101001": 13,
+          "01101010": 38,
+          "01101011": 51,
+          "01101100": 17,
+          "01101101": 7,
+          "01101110": 20,
+          "01101111": 42,
+          "10010011": 7,
+          "10010100": 1,
+          "10010101": 148,
+          "10010110": 21,
+          "10010111": 65,
+          "10011000": 10,
+          "10011001": 85,
+          "10011010": 37,
+          "10011011": 47,
+          "10011100": 3,
+          "10011101": 17,
+          "10011110": 19,
+          "10011111": 39,
+          "10110000": 143,
+          "10110001": 1,
+          "10110010": 103,
+          "10110011": 11,
+          "10110110": 16,
+          "10110111": 2,
+          "10111000": 13,
+          "10111001": 4,
+          "10111010": 40,
+          "10111011": 20,
+          "10111100": 84,
+          "10111101": 16,
+          "10111110": 41,
+          "10111111": 40,
+          "11000000": 125,
+          "11000010": 14,
+          "11000011": 90,
+          "11000100": 2,
+          "11000110": 7,
+          "11000111": 6,
+          "11001000": 86,
+          "11001001": 14,
+          "11001010": 35,
+          "11001011": 43,
+          "11001100": 8,
+          "11001101": 3,
+          "11001110": 22,
+          "11001111": 37,
+          "11100001": 1,
+          "11100010": 13,
+          "11100011": 2,
+          "11100100": 1,
+          "11100101": 129,
+          "11100110": 84,
+          "11100111": 11,
+          "11101000": 5,
+          "11101001": 18,
+          "11101010": 43,
+          "11101011": 14,
+          "11101100": 14,
+          "11101101": 96,
+          "11101110": 35,
+          "11101111": 28
+        },
+        "group_id": 12,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01100000",
+            153
+          ],
+          [
+            "00010000",
+            150
+          ],
+          [
+            "10010101",
+            148
+          ],
+          [
+            "10110000",
+            143
+          ],
+          [
+            "11100101",
+            129
+          ],
+          [
+            "00110101",
+            128
+          ],
+          [
+            "01000101",
+            126
+          ],
+          [
+            "11000000",
+            125
+          ],
+          [
+            "10110010",
+            103
+          ],
+          [
+            "00010010",
+            97
+          ],
+          [
+            "11101101",
+            96
+          ],
+          [
+            "11000011",
+            90
+          ],
+          [
+            "00111001",
+            89
+          ],
+          [
+            "11001000",
+            86
+          ],
+          [
+            "10011001",
+            85
+          ],
+          [
+            "00011100",
+            84
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZXYXY",
+        "counts": {
+          "00010000": 56,
+          "00010001": 31,
+          "00010010": 100,
+          "00010011": 14,
+          "00010100": 27,
+          "00010101": 27,
+          "00010110": 11,
+          "00010111": 2,
+          "00011000": 17,
+          "00011001": 3,
+          "00011100": 97,
+          "00011101": 13,
+          "00011110": 127,
+          "00011111": 1,
+          "00110000": 19,
+          "00110001": 34,
+          "00110010": 4,
+          "00110011": 10,
+          "00110100": 36,
+          "00110101": 57,
+          "00110110": 16,
+          "00110111": 68,
+          "00111000": 6,
+          "00111001": 69,
+          "00111010": 1,
+          "00111011": 134,
+          "00111100": 3,
+          "00111101": 10,
+          "00111111": 1,
+          "01000000": 34,
+          "01000001": 31,
+          "01000010": 13,
+          "01000011": 84,
+          "01000100": 46,
+          "01000101": 22,
+          "01000110": 4,
+          "01000111": 13,
+          "01001000": 99,
+          "01001001": 16,
+          "01001010": 1,
+          "01001011": 140,
+          "01001100": 14,
+          "01001101": 7,
+          "01001110": 1,
+          "01001111": 2,
+          "01100000": 16,
+          "01100001": 33,
+          "01100010": 7,
+          "01100011": 4,
+          "01100100": 41,
+          "01100101": 39,
+          "01100110": 81,
+          "01100111": 17,
+          "01101000": 4,
+          "01101001": 11,
+          "01101010": 3,
+          "01101011": 1,
+          "01101100": 12,
+          "01101101": 75,
+          "01101110": 158,
+          "10010000": 21,
+          "10010001": 31,
+          "10010010": 2,
+          "10010011": 9,
+          "10010100": 44,
+          "10010101": 40,
+          "10010110": 13,
+          "10010111": 72,
+          "10011000": 20,
+          "10011001": 85,
+          "10011011": 157,
+          "10011100": 6,
+          "10011101": 12,
+          "10011110": 1,
+          "10011111": 1,
+          "10110000": 53,
+          "10110001": 29,
+          "10110010": 84,
+          "10110011": 16,
+          "10110100": 43,
+          "10110101": 23,
+          "10110110": 22,
+          "10110111": 3,
+          "10111000": 15,
+          "10111001": 2,
+          "10111011": 1,
+          "10111100": 85,
+          "10111101": 9,
+          "10111110": 149,
+          "10111111": 1,
+          "11000000": 18,
+          "11000001": 33,
+          "11000010": 18,
+          "11000011": 3,
+          "11000100": 36,
+          "11000101": 50,
+          "11000110": 93,
+          "11000111": 19,
+          "11001000": 1,
+          "11001001": 13,
+          "11001010": 1,
+          "11001011": 1,
+          "11001100": 12,
+          "11001101": 86,
+          "11001110": 137,
+          "11001111": 1,
+          "11100000": 61,
+          "11100001": 21,
+          "11100010": 12,
+          "11100011": 96,
+          "11100100": 46,
+          "11100101": 20,
+          "11100110": 4,
+          "11100111": 13,
+          "11101000": 73,
+          "11101001": 12,
+          "11101011": 129,
+          "11101100": 13,
+          "11101101": 1,
+          "11101111": 1
+        },
+        "group_id": 13,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01101110",
+            158
+          ],
+          [
+            "10011011",
+            157
+          ],
+          [
+            "10111110",
+            149
+          ],
+          [
+            "01001011",
+            140
+          ],
+          [
+            "11001110",
+            137
+          ],
+          [
+            "00111011",
+            134
+          ],
+          [
+            "11101011",
+            129
+          ],
+          [
+            "00011110",
+            127
+          ],
+          [
+            "00010010",
+            100
+          ],
+          [
+            "01001000",
+            99
+          ],
+          [
+            "00011100",
+            97
+          ],
+          [
+            "11100011",
+            96
+          ],
+          [
+            "11000110",
+            93
+          ],
+          [
+            "11001101",
+            86
+          ],
+          [
+            "10011001",
+            85
+          ],
+          [
+            "10111100",
+            85
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZXYXY",
+        "counts": {
+          "00010000": 26,
+          "00010001": 28,
+          "00010011": 20,
+          "00010100": 40,
+          "00010101": 47,
+          "00010110": 13,
+          "00010111": 100,
+          "00011000": 18,
+          "00011001": 101,
+          "00011011": 142,
+          "00011100": 4,
+          "00011101": 18,
+          "00011110": 1,
+          "00011111": 1,
+          "00110000": 48,
+          "00110001": 36,
+          "00110010": 92,
+          "00110011": 12,
+          "00110100": 39,
+          "00110101": 20,
+          "00110110": 15,
+          "00110111": 5,
+          "00111000": 12,
+          "00111001": 1,
+          "00111010": 2,
+          "00111011": 1,
+          "00111100": 84,
+          "00111101": 14,
+          "00111110": 132,
+          "00111111": 2,
+          "01000000": 19,
+          "01000001": 43,
+          "01000010": 23,
+          "01000011": 5,
+          "01000100": 50,
+          "01000101": 34,
+          "01000110": 93,
+          "01000111": 7,
+          "01001000": 3,
+          "01001001": 14,
+          "01001010": 2,
+          "01001011": 1,
+          "01001100": 11,
+          "01001101": 72,
+          "01001110": 133,
+          "01001111": 2,
+          "01100000": 45,
+          "01100001": 53,
+          "01100010": 12,
+          "01100011": 71,
+          "01100100": 51,
+          "01100101": 20,
+          "01100110": 3,
+          "01100111": 18,
+          "01101000": 80,
+          "01101001": 14,
+          "01101011": 127,
+          "01101100": 14,
+          "01101101": 6,
+          "01101111": 3,
+          "10010000": 33,
+          "10010001": 37,
+          "10010010": 72,
+          "10010011": 17,
+          "10010100": 37,
+          "10010101": 22,
+          "10010110": 19,
+          "10010111": 4,
+          "10011000": 13,
+          "10011001": 2,
+          "10011100": 74,
+          "10011101": 17,
+          "10011110": 149,
+          "10011111": 1,
+          "10110000": 22,
+          "10110001": 30,
+          "10110010": 5,
+          "10110011": 8,
+          "10110100": 34,
+          "10110101": 40,
+          "10110110": 14,
+          "10110111": 90,
+          "10111000": 5,
+          "10111001": 86,
+          "10111010": 1,
+          "10111011": 127,
+          "10111100": 1,
+          "10111101": 6,
+          "10111110": 1,
+          "11000000": 44,
+          "11000001": 26,
+          "11000010": 9,
+          "11000011": 95,
+          "11000100": 40,
+          "11000101": 23,
+          "11000110": 4,
+          "11000111": 11,
+          "11001000": 83,
+          "11001001": 17,
+          "11001010": 2,
+          "11001011": 138,
+          "11001100": 17,
+          "11001101": 7,
+          "11100000": 20,
+          "11100001": 42,
+          "11100010": 11,
+          "11100011": 11,
+          "11100100": 40,
+          "11100101": 37,
+          "11100110": 90,
+          "11100111": 16,
+          "11101000": 2,
+          "11101001": 10,
+          "11101010": 1,
+          "11101011": 1,
+          "11101100": 13,
+          "11101101": 81,
+          "11101110": 134,
+          "11101111": 1
+        },
+        "group_id": 14,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10011110",
+            149
+          ],
+          [
+            "00011011",
+            142
+          ],
+          [
+            "11001011",
+            138
+          ],
+          [
+            "11101110",
+            134
+          ],
+          [
+            "01001110",
+            133
+          ],
+          [
+            "00111110",
+            132
+          ],
+          [
+            "01101011",
+            127
+          ],
+          [
+            "10111011",
+            127
+          ],
+          [
+            "00011001",
+            101
+          ],
+          [
+            "00010111",
+            100
+          ],
+          [
+            "11000011",
+            95
+          ],
+          [
+            "01000110",
+            93
+          ],
+          [
+            "00110010",
+            92
+          ],
+          [
+            "10110111",
+            90
+          ],
+          [
+            "11100110",
+            90
+          ],
+          [
+            "10111001",
+            86
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZXXXX",
+        "counts": {
+          "00010000": 152,
+          "00010010": 98,
+          "00010011": 16,
+          "00010100": 1,
+          "00010110": 7,
+          "00010111": 4,
+          "00011000": 15,
+          "00011001": 3,
+          "00011010": 37,
+          "00011011": 17,
+          "00011100": 98,
+          "00011101": 12,
+          "00011110": 46,
+          "00011111": 34,
+          "00110000": 1,
+          "00110001": 1,
+          "00110010": 4,
+          "00110011": 10,
+          "00110100": 1,
+          "00110101": 136,
+          "00110110": 11,
+          "00110111": 83,
+          "00111000": 20,
+          "00111001": 80,
+          "00111010": 32,
+          "00111011": 27,
+          "00111100": 4,
+          "00111101": 18,
+          "00111110": 26,
+          "00111111": 31,
+          "01000010": 10,
+          "01000011": 3,
+          "01000101": 127,
+          "01000110": 75,
+          "01000111": 13,
+          "01001000": 2,
+          "01001001": 17,
+          "01001010": 43,
+          "01001011": 29,
+          "01001100": 12,
+          "01001101": 83,
+          "01001110": 35,
+          "01001111": 34,
+          "01100000": 156,
+          "01100001": 1,
+          "01100010": 16,
+          "01100011": 84,
+          "01100101": 2,
+          "01100110": 3,
+          "01100111": 7,
+          "01101000": 68,
+          "01101001": 16,
+          "01101010": 37,
+          "01101011": 53,
+          "01101100": 17,
+          "01101101": 3,
+          "01101110": 32,
+          "01101111": 37,
+          "10010010": 6,
+          "10010011": 13,
+          "10010100": 3,
+          "10010101": 148,
+          "10010110": 15,
+          "10010111": 84,
+          "10011000": 10,
+          "10011001": 90,
+          "10011010": 36,
+          "10011011": 39,
+          "10011100": 5,
+          "10011101": 15,
+          "10011110": 22,
+          "10011111": 31,
+          "10110000": 156,
+          "10110001": 1,
+          "10110010": 77,
+          "10110011": 11,
+          "10110110": 16,
+          "10110111": 1,
+          "10111000": 11,
+          "10111001": 3,
+          "10111010": 40,
+          "10111011": 19,
+          "10111100": 101,
+          "10111101": 13,
+          "10111110": 53,
+          "10111111": 49,
+          "11000000": 129,
+          "11000010": 23,
+          "11000011": 82,
+          "11000110": 7,
+          "11000111": 16,
+          "11001000": 82,
+          "11001001": 13,
+          "11001010": 36,
+          "11001011": 31,
+          "11001100": 15,
+          "11001101": 6,
+          "11001110": 19,
+          "11001111": 44,
+          "11100000": 1,
+          "11100001": 1,
+          "11100010": 15,
+          "11100011": 3,
+          "11100101": 144,
+          "11100110": 82,
+          "11100111": 16,
+          "11101000": 1,
+          "11101001": 11,
+          "11101010": 38,
+          "11101011": 14,
+          "11101100": 6,
+          "11101101": 79,
+          "11101110": 44,
+          "11101111": 30
+        },
+        "group_id": 15,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01100000",
+            156
+          ],
+          [
+            "10110000",
+            156
+          ],
+          [
+            "00010000",
+            152
+          ],
+          [
+            "10010101",
+            148
+          ],
+          [
+            "11100101",
+            144
+          ],
+          [
+            "00110101",
+            136
+          ],
+          [
+            "11000000",
+            129
+          ],
+          [
+            "01000101",
+            127
+          ],
+          [
+            "10111100",
+            101
+          ],
+          [
+            "00010010",
+            98
+          ],
+          [
+            "00011100",
+            98
+          ],
+          [
+            "10011001",
+            90
+          ],
+          [
+            "01100011",
+            84
+          ],
+          [
+            "10010111",
+            84
+          ],
+          [
+            "00110111",
+            83
+          ],
+          [
+            "01001101",
+            83
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZXZXZX",
+        "counts": {
+          "00100000": 18,
+          "00100001": 97,
+          "00100101": 247,
+          "00101000": 32,
+          "00101001": 36,
+          "00101010": 4,
+          "00101011": 2,
+          "00101100": 25,
+          "00101101": 25,
+          "00101110": 11,
+          "00101111": 7,
+          "00110000": 242,
+          "00110100": 99,
+          "00110101": 17,
+          "00111000": 22,
+          "00111001": 25,
+          "00111010": 4,
+          "00111011": 5,
+          "00111100": 35,
+          "00111101": 32,
+          "00111110": 10,
+          "00111111": 1,
+          "01100000": 243,
+          "01100001": 3,
+          "01100100": 103,
+          "01100101": 25,
+          "01101000": 27,
+          "01101001": 34,
+          "01101010": 3,
+          "01101011": 5,
+          "01101100": 31,
+          "01101101": 28,
+          "01101110": 9,
+          "01101111": 7,
+          "01110000": 18,
+          "01110001": 105,
+          "01110100": 1,
+          "01110101": 253,
+          "01111000": 43,
+          "01111001": 21,
+          "01111010": 7,
+          "01111011": 3,
+          "01111100": 26,
+          "01111101": 34,
+          "01111110": 12,
+          "01111111": 13,
+          "10000000": 235,
+          "10000001": 115,
+          "10000010": 43,
+          "10000011": 31,
+          "10000100": 1,
+          "10000101": 20,
+          "10000110": 38,
+          "10000111": 28,
+          "10001010": 9,
+          "10001011": 9,
+          "10001110": 6,
+          "10001111": 5,
+          "10010000": 20,
+          "10010010": 33,
+          "10010011": 34,
+          "10010100": 85,
+          "10010101": 236,
+          "10010110": 26,
+          "10010111": 26,
+          "10011010": 12,
+          "10011011": 8,
+          "10011110": 11,
+          "10011111": 4,
+          "11000000": 11,
+          "11000001": 1,
+          "11000010": 30,
+          "11000011": 38,
+          "11000100": 93,
+          "11000101": 215,
+          "11000110": 33,
+          "11000111": 30,
+          "11001010": 7,
+          "11001011": 12,
+          "11001110": 6,
+          "11001111": 6,
+          "11010000": 233,
+          "11010001": 111,
+          "11010010": 30,
+          "11010011": 28,
+          "11010100": 1,
+          "11010101": 26,
+          "11010110": 29,
+          "11010111": 42,
+          "11011010": 8,
+          "11011011": 11,
+          "11011110": 6,
+          "11011111": 4
+        },
+        "group_id": 16,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01110101",
+            253
+          ],
+          [
+            "00100101",
+            247
+          ],
+          [
+            "01100000",
+            243
+          ],
+          [
+            "00110000",
+            242
+          ],
+          [
+            "10010101",
+            236
+          ],
+          [
+            "10000000",
+            235
+          ],
+          [
+            "11010000",
+            233
+          ],
+          [
+            "11000101",
+            215
+          ],
+          [
+            "10000001",
+            115
+          ],
+          [
+            "11010001",
+            111
+          ],
+          [
+            "01110001",
+            105
+          ],
+          [
+            "01100100",
+            103
+          ],
+          [
+            "00110100",
+            99
+          ],
+          [
+            "00100001",
+            97
+          ],
+          [
+            "11000100",
+            93
+          ],
+          [
+            "10010100",
+            85
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYZYZY",
+        "counts": {
+          "00100001": 233,
+          "00100100": 17,
+          "00100101": 104,
+          "00101000": 25,
+          "00101001": 33,
+          "00101010": 3,
+          "00101011": 11,
+          "00101100": 23,
+          "00101101": 34,
+          "00101110": 12,
+          "00101111": 8,
+          "00110000": 79,
+          "00110001": 25,
+          "00110100": 223,
+          "00110101": 1,
+          "00111000": 34,
+          "00111001": 24,
+          "00111010": 4,
+          "00111011": 3,
+          "00111100": 36,
+          "00111101": 36,
+          "00111110": 6,
+          "00111111": 9,
+          "01100000": 94,
+          "01100001": 22,
+          "01100100": 226,
+          "01101000": 23,
+          "01101001": 29,
+          "01101010": 7,
+          "01101011": 8,
+          "01101100": 31,
+          "01101101": 22,
+          "01101110": 8,
+          "01101111": 4,
+          "01110000": 1,
+          "01110001": 251,
+          "01110100": 11,
+          "01110101": 116,
+          "01111000": 32,
+          "01111001": 34,
+          "01111010": 7,
+          "01111011": 4,
+          "01111100": 41,
+          "01111101": 29,
+          "01111110": 8,
+          "01111111": 5,
+          "10000000": 1,
+          "10000001": 29,
+          "10000010": 32,
+          "10000011": 43,
+          "10000100": 265,
+          "10000101": 83,
+          "10000110": 29,
+          "10000111": 34,
+          "10001010": 9,
+          "10001011": 5,
+          "10001110": 12,
+          "10001111": 12,
+          "10010000": 104,
+          "10010001": 219,
+          "10010010": 45,
+          "10010011": 43,
+          "10010100": 22,
+          "10010101": 1,
+          "10010110": 31,
+          "10010111": 22,
+          "10011010": 5,
+          "10011011": 6,
+          "10011110": 6,
+          "10011111": 6,
+          "11000000": 107,
+          "11000001": 237,
+          "11000010": 26,
+          "11000011": 40,
+          "11000100": 18,
+          "11000101": 1,
+          "11000110": 35,
+          "11000111": 31,
+          "11001010": 10,
+          "11001011": 7,
+          "11001110": 7,
+          "11001111": 5,
+          "11010000": 2,
+          "11010001": 16,
+          "11010010": 29,
+          "11010011": 33,
+          "11010100": 233,
+          "11010101": 113,
+          "11010110": 29,
+          "11010111": 22,
+          "11011010": 8,
+          "11011011": 7,
+          "11011110": 10,
+          "11011111": 10
+        },
+        "group_id": 17,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10000100",
+            265
+          ],
+          [
+            "01110001",
+            251
+          ],
+          [
+            "11000001",
+            237
+          ],
+          [
+            "00100001",
+            233
+          ],
+          [
+            "11010100",
+            233
+          ],
+          [
+            "01100100",
+            226
+          ],
+          [
+            "00110100",
+            223
+          ],
+          [
+            "10010001",
+            219
+          ],
+          [
+            "01110101",
+            116
+          ],
+          [
+            "11010101",
+            113
+          ],
+          [
+            "11000000",
+            107
+          ],
+          [
+            "00100101",
+            104
+          ],
+          [
+            "10010000",
+            104
+          ],
+          [
+            "01100000",
+            94
+          ],
+          [
+            "10000101",
+            83
+          ],
+          [
+            "00110000",
+            79
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXZYZY",
+        "counts": {
+          "00100000": 117,
+          "00100001": 25,
+          "00100100": 231,
+          "00100101": 1,
+          "00101000": 35,
+          "00101001": 27,
+          "00101010": 10,
+          "00101011": 7,
+          "00101100": 22,
+          "00101101": 26,
+          "00101110": 6,
+          "00101111": 4,
+          "00110001": 222,
+          "00110100": 10,
+          "00110101": 103,
+          "00111000": 30,
+          "00111001": 28,
+          "00111010": 4,
+          "00111011": 7,
+          "00111100": 22,
+          "00111101": 32,
+          "00111110": 7,
+          "00111111": 11,
+          "01100000": 2,
+          "01100001": 248,
+          "01100100": 14,
+          "01100101": 96,
+          "01101000": 37,
+          "01101001": 33,
+          "01101010": 8,
+          "01101011": 7,
+          "01101100": 29,
+          "01101101": 32,
+          "01101110": 6,
+          "01101111": 4,
+          "01110000": 98,
+          "01110001": 18,
+          "01110100": 251,
+          "01110101": 1,
+          "01111000": 26,
+          "01111001": 37,
+          "01111010": 4,
+          "01111011": 11,
+          "01111100": 32,
+          "01111101": 23,
+          "01111110": 8,
+          "01111111": 11,
+          "10000000": 96,
+          "10000001": 260,
+          "10000010": 35,
+          "10000011": 23,
+          "10000100": 21,
+          "10000101": 2,
+          "10000110": 28,
+          "10000111": 28,
+          "10001010": 3,
+          "10001011": 10,
+          "10001110": 6,
+          "10001111": 8,
+          "10010001": 16,
+          "10010010": 36,
+          "10010011": 23,
+          "10010100": 216,
+          "10010101": 106,
+          "10010110": 27,
+          "10010111": 24,
+          "10011010": 4,
+          "10011011": 8,
+          "10011110": 10,
+          "10011111": 9,
+          "11000001": 20,
+          "11000010": 38,
+          "11000011": 34,
+          "11000100": 246,
+          "11000101": 118,
+          "11000110": 35,
+          "11000111": 36,
+          "11001010": 7,
+          "11001011": 4,
+          "11001110": 13,
+          "11001111": 4,
+          "11010000": 112,
+          "11010001": 231,
+          "11010010": 30,
+          "11010011": 31,
+          "11010100": 20,
+          "11010101": 3,
+          "11010110": 31,
+          "11010111": 29,
+          "11011010": 8,
+          "11011011": 14,
+          "11011110": 6,
+          "11011111": 4
+        },
+        "group_id": 18,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10000001",
+            260
+          ],
+          [
+            "01110100",
+            251
+          ],
+          [
+            "01100001",
+            248
+          ],
+          [
+            "11000100",
+            246
+          ],
+          [
+            "00100100",
+            231
+          ],
+          [
+            "11010001",
+            231
+          ],
+          [
+            "00110001",
+            222
+          ],
+          [
+            "10010100",
+            216
+          ],
+          [
+            "11000101",
+            118
+          ],
+          [
+            "00100000",
+            117
+          ],
+          [
+            "11010000",
+            112
+          ],
+          [
+            "10010101",
+            106
+          ],
+          [
+            "00110101",
+            103
+          ],
+          [
+            "01110000",
+            98
+          ],
+          [
+            "01100101",
+            96
+          ],
+          [
+            "10000000",
+            96
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYZXZX",
+        "counts": {
+          "00100000": 19,
+          "00100001": 89,
+          "00100101": 252,
+          "00101000": 17,
+          "00101001": 30,
+          "00101010": 5,
+          "00101011": 10,
+          "00101100": 31,
+          "00101101": 38,
+          "00101110": 1,
+          "00101111": 9,
+          "00110000": 227,
+          "00110001": 2,
+          "00110100": 103,
+          "00110101": 25,
+          "00111000": 43,
+          "00111001": 31,
+          "00111010": 4,
+          "00111011": 7,
+          "00111100": 15,
+          "00111101": 39,
+          "00111110": 8,
+          "00111111": 9,
+          "01100000": 237,
+          "01100001": 1,
+          "01100100": 101,
+          "01100101": 16,
+          "01101000": 27,
+          "01101001": 29,
+          "01101010": 9,
+          "01101011": 6,
+          "01101100": 19,
+          "01101101": 32,
+          "01101110": 5,
+          "01101111": 4,
+          "01110000": 19,
+          "01110001": 122,
+          "01110100": 1,
+          "01110101": 228,
+          "01111000": 20,
+          "01111001": 39,
+          "01111010": 7,
+          "01111011": 4,
+          "01111100": 38,
+          "01111101": 31,
+          "01111110": 11,
+          "01111111": 9,
+          "10000000": 230,
+          "10000001": 104,
+          "10000010": 29,
+          "10000011": 29,
+          "10000101": 20,
+          "10000110": 32,
+          "10000111": 30,
+          "10001010": 13,
+          "10001011": 4,
+          "10001110": 8,
+          "10001111": 10,
+          "10010000": 19,
+          "10010001": 1,
+          "10010010": 24,
+          "10010011": 24,
+          "10010100": 106,
+          "10010101": 234,
+          "10010110": 32,
+          "10010111": 30,
+          "10011010": 5,
+          "10011011": 3,
+          "10011110": 4,
+          "10011111": 5,
+          "11000000": 21,
+          "11000010": 31,
+          "11000011": 28,
+          "11000100": 112,
+          "11000101": 257,
+          "11000110": 28,
+          "11000111": 30,
+          "11001010": 9,
+          "11001011": 7,
+          "11001110": 8,
+          "11001111": 8,
+          "11010000": 235,
+          "11010001": 124,
+          "11010010": 35,
+          "11010011": 31,
+          "11010101": 18,
+          "11010110": 26,
+          "11010111": 34,
+          "11011010": 8,
+          "11011011": 4,
+          "11011110": 8,
+          "11011111": 9
+        },
+        "group_id": 19,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "11000101",
+            257
+          ],
+          [
+            "00100101",
+            252
+          ],
+          [
+            "01100000",
+            237
+          ],
+          [
+            "11010000",
+            235
+          ],
+          [
+            "10010101",
+            234
+          ],
+          [
+            "10000000",
+            230
+          ],
+          [
+            "01110101",
+            228
+          ],
+          [
+            "00110000",
+            227
+          ],
+          [
+            "11010001",
+            124
+          ],
+          [
+            "01110001",
+            122
+          ],
+          [
+            "11000100",
+            112
+          ],
+          [
+            "10010100",
+            106
+          ],
+          [
+            "10000001",
+            104
+          ],
+          [
+            "00110100",
+            103
+          ],
+          [
+            "01100100",
+            101
+          ],
+          [
+            "00100001",
+            89
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZZXZX",
+        "counts": {
+          "00010000": 231,
+          "00010001": 1,
+          "00010100": 109,
+          "00010101": 13,
+          "00011000": 31,
+          "00011001": 31,
+          "00011010": 9,
+          "00011011": 8,
+          "00011100": 30,
+          "00011101": 31,
+          "00011110": 7,
+          "00011111": 6,
+          "00110000": 23,
+          "00110001": 100,
+          "00110101": 235,
+          "00111000": 38,
+          "00111001": 32,
+          "00111010": 7,
+          "00111011": 4,
+          "00111100": 27,
+          "00111101": 36,
+          "00111110": 7,
+          "00111111": 8,
+          "01000000": 15,
+          "01000010": 34,
+          "01000011": 27,
+          "01000100": 105,
+          "01000101": 229,
+          "01000110": 30,
+          "01000111": 28,
+          "01001010": 7,
+          "01001011": 6,
+          "01001110": 7,
+          "01001111": 5,
+          "01100000": 257,
+          "01100001": 99,
+          "01100010": 27,
+          "01100011": 24,
+          "01100100": 1,
+          "01100101": 14,
+          "01100110": 30,
+          "01100111": 45,
+          "01101010": 10,
+          "01101011": 6,
+          "01101110": 6,
+          "01101111": 4,
+          "10010000": 16,
+          "10010001": 104,
+          "10010100": 1,
+          "10010101": 249,
+          "10011000": 31,
+          "10011001": 24,
+          "10011010": 3,
+          "10011011": 7,
+          "10011100": 27,
+          "10011101": 31,
+          "10011110": 11,
+          "10011111": 3,
+          "10110000": 241,
+          "10110001": 2,
+          "10110100": 97,
+          "10110101": 27,
+          "10111000": 41,
+          "10111001": 30,
+          "10111010": 4,
+          "10111011": 10,
+          "10111100": 29,
+          "10111101": 32,
+          "10111110": 6,
+          "10111111": 10,
+          "11000000": 223,
+          "11000001": 108,
+          "11000010": 30,
+          "11000011": 24,
+          "11000101": 13,
+          "11000110": 28,
+          "11000111": 35,
+          "11001010": 11,
+          "11001011": 10,
+          "11001110": 10,
+          "11001111": 4,
+          "11100000": 20,
+          "11100001": 1,
+          "11100010": 23,
+          "11100011": 39,
+          "11100100": 90,
+          "11100101": 255,
+          "11100110": 30,
+          "11100111": 33,
+          "11101010": 7,
+          "11101011": 9,
+          "11101110": 8,
+          "11101111": 9
+        },
+        "group_id": 20,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "01100000",
+            257
+          ],
+          [
+            "11100101",
+            255
+          ],
+          [
+            "10010101",
+            249
+          ],
+          [
+            "10110000",
+            241
+          ],
+          [
+            "00110101",
+            235
+          ],
+          [
+            "00010000",
+            231
+          ],
+          [
+            "01000101",
+            229
+          ],
+          [
+            "11000000",
+            223
+          ],
+          [
+            "00010100",
+            109
+          ],
+          [
+            "11000001",
+            108
+          ],
+          [
+            "01000100",
+            105
+          ],
+          [
+            "10010001",
+            104
+          ],
+          [
+            "00110001",
+            100
+          ],
+          [
+            "01100001",
+            99
+          ],
+          [
+            "10110100",
+            97
+          ],
+          [
+            "11100100",
+            90
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZZYZY",
+        "counts": {
+          "00010000": 91,
+          "00010001": 27,
+          "00010100": 222,
+          "00010101": 1,
+          "00011000": 28,
+          "00011001": 34,
+          "00011010": 4,
+          "00011011": 6,
+          "00011100": 31,
+          "00011101": 28,
+          "00011110": 10,
+          "00011111": 12,
+          "00110000": 2,
+          "00110001": 246,
+          "00110100": 22,
+          "00110101": 105,
+          "00111000": 23,
+          "00111001": 24,
+          "00111010": 7,
+          "00111011": 9,
+          "00111100": 28,
+          "00111101": 38,
+          "00111110": 6,
+          "00111111": 4,
+          "01000000": 105,
+          "01000001": 229,
+          "01000010": 34,
+          "01000011": 27,
+          "01000100": 11,
+          "01000110": 31,
+          "01000111": 32,
+          "01001010": 15,
+          "01001011": 9,
+          "01001110": 10,
+          "01001111": 7,
+          "01100000": 2,
+          "01100001": 18,
+          "01100010": 29,
+          "01100011": 28,
+          "01100100": 221,
+          "01100101": 100,
+          "01100110": 36,
+          "01100111": 32,
+          "01101010": 8,
+          "01101011": 5,
+          "01101110": 5,
+          "01101111": 9,
+          "10010000": 1,
+          "10010001": 253,
+          "10010100": 11,
+          "10010101": 104,
+          "10011000": 29,
+          "10011001": 33,
+          "10011010": 7,
+          "10011011": 9,
+          "10011100": 29,
+          "10011101": 31,
+          "10011110": 13,
+          "10011111": 5,
+          "10110000": 107,
+          "10110001": 27,
+          "10110100": 252,
+          "10111000": 21,
+          "10111001": 40,
+          "10111010": 7,
+          "10111011": 4,
+          "10111100": 33,
+          "10111101": 38,
+          "10111110": 3,
+          "10111111": 7,
+          "11000001": 26,
+          "11000010": 28,
+          "11000011": 21,
+          "11000100": 225,
+          "11000101": 112,
+          "11000110": 29,
+          "11000111": 39,
+          "11001010": 3,
+          "11001011": 7,
+          "11001110": 7,
+          "11001111": 4,
+          "11100000": 96,
+          "11100001": 257,
+          "11100010": 26,
+          "11100011": 30,
+          "11100100": 14,
+          "11100101": 3,
+          "11100110": 27,
+          "11100111": 38,
+          "11101010": 5,
+          "11101011": 9,
+          "11101110": 7,
+          "11101111": 8
+        },
+        "group_id": 21,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "11100001",
+            257
+          ],
+          [
+            "10010001",
+            253
+          ],
+          [
+            "10110100",
+            252
+          ],
+          [
+            "00110001",
+            246
+          ],
+          [
+            "01000001",
+            229
+          ],
+          [
+            "11000100",
+            225
+          ],
+          [
+            "00010100",
+            222
+          ],
+          [
+            "01100100",
+            221
+          ],
+          [
+            "11000101",
+            112
+          ],
+          [
+            "10110000",
+            107
+          ],
+          [
+            "00110101",
+            105
+          ],
+          [
+            "01000000",
+            105
+          ],
+          [
+            "10010101",
+            104
+          ],
+          [
+            "01100101",
+            100
+          ],
+          [
+            "11100000",
+            96
+          ],
+          [
+            "00010000",
+            91
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZZYZY",
+        "counts": {
+          "00010000": 2,
+          "00010001": 221,
+          "00010100": 26,
+          "00010101": 97,
+          "00011000": 33,
+          "00011001": 30,
+          "00011010": 11,
+          "00011011": 6,
+          "00011100": 20,
+          "00011101": 35,
+          "00011110": 5,
+          "00011111": 10,
+          "00110000": 110,
+          "00110001": 17,
+          "00110100": 185,
+          "00111000": 32,
+          "00111001": 26,
+          "00111010": 6,
+          "00111011": 6,
+          "00111100": 30,
+          "00111101": 32,
+          "00111110": 5,
+          "00111111": 10,
+          "01000001": 18,
+          "01000010": 29,
+          "01000011": 28,
+          "01000100": 242,
+          "01000101": 122,
+          "01000110": 35,
+          "01000111": 30,
+          "01001010": 7,
+          "01001011": 3,
+          "01001110": 4,
+          "01001111": 8,
+          "01100000": 110,
+          "01100001": 228,
+          "01100010": 38,
+          "01100011": 23,
+          "01100100": 19,
+          "01100110": 33,
+          "01100111": 28,
+          "01101010": 6,
+          "01101011": 3,
+          "01101110": 7,
+          "01101111": 6,
+          "10010000": 103,
+          "10010001": 26,
+          "10010100": 256,
+          "10010101": 2,
+          "10011000": 22,
+          "10011001": 26,
+          "10011010": 8,
+          "10011011": 2,
+          "10011100": 27,
+          "10011101": 44,
+          "10011110": 10,
+          "10011111": 5,
+          "10110001": 236,
+          "10110100": 27,
+          "10110101": 97,
+          "10111000": 26,
+          "10111001": 35,
+          "10111010": 12,
+          "10111011": 1,
+          "10111100": 35,
+          "10111101": 24,
+          "10111110": 9,
+          "10111111": 5,
+          "11000000": 113,
+          "11000001": 253,
+          "11000010": 28,
+          "11000011": 31,
+          "11000100": 21,
+          "11000101": 1,
+          "11000110": 34,
+          "11000111": 17,
+          "11001010": 8,
+          "11001011": 9,
+          "11001110": 6,
+          "11001111": 10,
+          "11100000": 1,
+          "11100001": 28,
+          "11100010": 28,
+          "11100011": 35,
+          "11100100": 266,
+          "11100101": 109,
+          "11100110": 25,
+          "11100111": 29,
+          "11101010": 4,
+          "11101011": 7,
+          "11101110": 8,
+          "11101111": 5
+        },
+        "group_id": 22,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "11100100",
+            266
+          ],
+          [
+            "10010100",
+            256
+          ],
+          [
+            "11000001",
+            253
+          ],
+          [
+            "01000100",
+            242
+          ],
+          [
+            "10110001",
+            236
+          ],
+          [
+            "01100001",
+            228
+          ],
+          [
+            "00010001",
+            221
+          ],
+          [
+            "00110100",
+            185
+          ],
+          [
+            "01000101",
+            122
+          ],
+          [
+            "11000000",
+            113
+          ],
+          [
+            "00110000",
+            110
+          ],
+          [
+            "01100000",
+            110
+          ],
+          [
+            "11100101",
+            109
+          ],
+          [
+            "10010000",
+            103
+          ],
+          [
+            "00010101",
+            97
+          ],
+          [
+            "10110101",
+            97
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZZXZX",
+        "counts": {
+          "00010000": 238,
+          "00010100": 104,
+          "00010101": 26,
+          "00011000": 33,
+          "00011001": 39,
+          "00011010": 6,
+          "00011011": 9,
+          "00011100": 34,
+          "00011101": 31,
+          "00011110": 3,
+          "00011111": 12,
+          "00110000": 19,
+          "00110001": 91,
+          "00110101": 221,
+          "00111000": 28,
+          "00111001": 29,
+          "00111010": 9,
+          "00111011": 5,
+          "00111100": 34,
+          "00111101": 33,
+          "00111110": 7,
+          "00111111": 7,
+          "01000000": 15,
+          "01000001": 2,
+          "01000010": 35,
+          "01000011": 36,
+          "01000100": 93,
+          "01000101": 230,
+          "01000110": 25,
+          "01000111": 25,
+          "01001010": 5,
+          "01001011": 3,
+          "01001110": 6,
+          "01001111": 5,
+          "01100000": 231,
+          "01100001": 114,
+          "01100010": 35,
+          "01100011": 35,
+          "01100101": 25,
+          "01100110": 32,
+          "01100111": 29,
+          "01101010": 5,
+          "01101011": 10,
+          "01101110": 7,
+          "01101111": 8,
+          "10010000": 17,
+          "10010001": 102,
+          "10010101": 257,
+          "10011000": 31,
+          "10011001": 30,
+          "10011010": 7,
+          "10011011": 11,
+          "10011100": 32,
+          "10011101": 29,
+          "10011110": 8,
+          "10011111": 5,
+          "10110000": 251,
+          "10110100": 102,
+          "10110101": 22,
+          "10111000": 32,
+          "10111001": 30,
+          "10111010": 4,
+          "10111011": 7,
+          "10111100": 25,
+          "10111101": 18,
+          "10111110": 9,
+          "10111111": 3,
+          "11000000": 249,
+          "11000001": 101,
+          "11000010": 32,
+          "11000011": 19,
+          "11000101": 18,
+          "11000110": 22,
+          "11000111": 34,
+          "11001010": 9,
+          "11001011": 8,
+          "11001110": 13,
+          "11001111": 9,
+          "11100000": 16,
+          "11100010": 28,
+          "11100011": 17,
+          "11100100": 117,
+          "11100101": 250,
+          "11100110": 32,
+          "11100111": 33,
+          "11101010": 8,
+          "11101011": 4,
+          "11101110": 10,
+          "11101111": 6
+        },
+        "group_id": 23,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10010101",
+            257
+          ],
+          [
+            "10110000",
+            251
+          ],
+          [
+            "11100101",
+            250
+          ],
+          [
+            "11000000",
+            249
+          ],
+          [
+            "00010000",
+            238
+          ],
+          [
+            "01100000",
+            231
+          ],
+          [
+            "01000101",
+            230
+          ],
+          [
+            "00110101",
+            221
+          ],
+          [
+            "11100100",
+            117
+          ],
+          [
+            "01100001",
+            114
+          ],
+          [
+            "00010100",
+            104
+          ],
+          [
+            "10010001",
+            102
+          ],
+          [
+            "10110100",
+            102
+          ],
+          [
+            "11000001",
+            101
+          ],
+          [
+            "01000100",
+            93
+          ],
+          [
+            "00110001",
+            91
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZZZZZZZZ",
+        "counts": {
+          "00110100": 495,
+          "00111001": 488,
+          "01100000": 113,
+          "01100101": 875,
+          "01101010": 89,
+          "10010000": 86,
+          "10010101": 881,
+          "10011010": 117,
+          "11000001": 456,
+          "11000110": 496
+        },
+        "group_id": 24,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "10010101",
+            881
+          ],
+          [
+            "01100101",
+            875
+          ],
+          [
+            "11000110",
+            496
+          ],
+          [
+            "00110100",
+            495
+          ],
+          [
+            "00111001",
+            488
+          ],
+          [
+            "11000001",
+            456
+          ],
+          [
+            "10011010",
+            117
+          ],
+          [
+            "01100000",
+            113
+          ],
+          [
+            "01101010",
+            89
+          ],
+          [
+            "10010000",
+            86
+          ]
+        ]
+      }
+    ],
+    "shots_per_group": 4096,
+    "source": "statevector_sampler_from_final_state"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "state": {
+    "available": true,
+    "dominant_configurations": [
+      {
+        "bitstring": "01100101",
+        "probability": 0.2068235876456572
+      },
+      {
+        "bitstring": "10010101",
+        "probability": 0.20682358764565523
+      },
+      {
+        "bitstring": "11000001",
+        "probability": 0.11906689850673957
+      },
+      {
+        "bitstring": "00110100",
+        "probability": 0.11906689850673934
+      },
+      {
+        "bitstring": "11000110",
+        "probability": 0.11906689850673846
+      },
+      {
+        "bitstring": "00111001",
+        "probability": 0.11906689850673818
+      },
+      {
+        "bitstring": "01100000",
+        "probability": 0.02752130767043331
+      },
+      {
+        "bitstring": "10010000",
+        "probability": 0.027521307670433245
+      },
+      {
+        "bitstring": "10011010",
+        "probability": 0.027521307670432878
+      },
+      {
+        "bitstring": "01101010",
+        "probability": 0.02752130767043274
+      },
+      {
+        "bitstring": "01010101",
+        "probability": 1.1874970984174394e-30
+      },
+      {
+        "bitstring": "10100101",
+        "probability": 2.2244430801856334e-31
+      },
+      {
+        "bitstring": "10011101",
+        "probability": 1.8827241209525646e-32
+      },
+      {
+        "bitstring": "10100110",
+        "probability": 1.6542885345769935e-32
+      },
+      {
+        "bitstring": "01010000",
+        "probability": 1.3644639686404164e-32
+      },
+      {
+        "bitstring": "01110110",
+        "probability": 1.2987637236997884e-32
+      }
+    ],
+    "ground_state_overlap": 1.0,
+    "hamiltonian_expectation": -10.84124263377786,
+    "hamiltonian_variance": 4.263256414560601e-14,
+    "variance_method": "sparse_matrix_norm"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": {
+      "available": true,
+      "gauss_law_tolerance": 1e-08,
+      "reference_basis_index": 52,
+      "reference_state_gauss_law_residuals": [
+        0.0,
+        0.0
+      ],
+      "reference_state_max_abs_gauss_law": 0.0,
+      "target_charge_sector": "neutral"
+    },
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Molecular Z2 and point-group reduction are skipped for finite-cutoff lattice-QED field models."
+      ],
+      "status": "skipped_unsupported_field_model",
+      "validation": {},
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "accepted": true,
+  "blocking_failures": [],
+  "case_count": 8,
+  "policy": {
+    "fail_on_runtime_accuracy_promotion": true,
+    "require_evidence_summary": true,
+    "require_runtime_sidecar_for_hardware_verified": true,
+    "strict_exit_code": false
+  },
+  "recommended_action": "promote_accepted_benchmark",
+  "required_files": [
+    "result.json"
+  ],
+  "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
+  "suite_name": "field_model_qft_cutoff_grid_convergence_v1",
+  "warnings": []
+}
