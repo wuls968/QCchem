@@ -86,6 +86,7 @@ from qcchem.workflow.tasks import (
 from qcchem.workflow.calibration import build_calibration_summary
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 from qcchem.core.evidence import build_run_evidence_summary
+from qcchem.validation.lr_ace import classify_lr_ace_validation_gate
 
 SCHEMA_VERSION = "qcchem.result.v0.8-alpha"
 ENERGY_UNITS = "Hartree"
@@ -377,8 +378,8 @@ def _electronic_mapping_symmetry_policy(spec) -> tuple[MappingSymmetryReductionS
         reason = "Z2 tapering skipped for hardware optimization previews in auto mode to preserve existing mapping-candidate ranking semantics."
         z2 = "disabled"
         notes.append(reason)
-    elif spec.solver.experimental and spec.solver.kind.strip().lower() in {"lr_ace"} and z2 == "auto":
-        reason = "Z2 tapering skipped for LR-ACE in auto mode because its validated provenance currently targets untapered parity-reduced workloads."
+    elif spec.solver.kind.strip().lower() in {"lr_ace"} and z2 == "auto":
+        reason = "Z2 tapering skipped for LR-ACE in auto mode because its trust-first provenance currently targets untapered parity-reduced workloads."
         z2 = "disabled"
         notes.append(reason)
     return (
@@ -439,22 +440,17 @@ def _classify_lr_ace_adaptive_trust(
     uncompressed_exact_solver_energy: float | None = None,
 ) -> str:
     """Classify adaptive LR-ACE evidence without hiding compression or ansatz limits."""
-    target = float(target_error_hartree)
-    local_passed = local_exact_error_hartree is not None and float(local_exact_error_hartree) <= target
-    if uncompressed_exact_solver_energy is not None and compressed_solver_energy is not None:
-        combined_error = abs(float(compressed_solver_energy) - float(uncompressed_exact_solver_energy))
-        if combined_error <= target:
-            return "passed_exact_reference"
-        if uncompressed_solver_energy is not None:
-            uncompressed_solver_error = abs(
-                float(uncompressed_solver_energy) - float(uncompressed_exact_solver_energy)
-            )
-            if uncompressed_solver_error > target:
-                return "ansatz_limited"
-        return "compression_limited" if local_passed else "ansatz_limited"
-    if local_passed:
-        return "passed_compressed_with_budget" if compression_enabled else "passed_exact_reference"
-    return "ansatz_limited"
+    return str(
+        classify_lr_ace_validation_gate(
+            target_error_hartree=target_error_hartree,
+            exact_available=local_exact_error_hartree is not None,
+            local_exact_error_hartree=local_exact_error_hartree,
+            compression_enabled=compression_enabled,
+            compressed_solver_energy=compressed_solver_energy,
+            uncompressed_solver_energy=uncompressed_solver_energy,
+            uncompressed_exact_solver_energy=uncompressed_exact_solver_energy,
+        )["trust_label"]
+    )
 
 
 def _with_truncated_mapping(mapping: MappedHamiltonian, *, atol: float, max_terms: int | None) -> MappedHamiltonian:
@@ -864,7 +860,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         _record(logger, events, f"Prepared runtime policy snapshot for service={runtime_options.service}")
 
     backend = None
-    backend_required = solver_kind == "vqe" or (
+    backend_required = solver_kind in {"vqe", "lr_ace"} or (
         spec.solver.experimental
         and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum", "lr_ace", "lattice_qed_givqe"}
     )
@@ -897,7 +893,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         compressed_solve_wall_time = 0.0
     else:
         _record(logger, events, f"Running solver: {spec.solver.kind}")
-        core_solver_requested = solver_kind in {"vqe", "exact", "reference"}
+        core_solver_requested = solver_kind in {"vqe", "lr_ace", "exact", "reference"}
         if spec.solver.experimental and not core_solver_requested:
             solver = build_exploratory_solver(
                 spec.solver.kind,
@@ -1113,11 +1109,20 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             uncompressed_mapping.qubit_hamiltonian,
         )
         uncompressed_solver_energy = float(uncompressed_outcome.total_energy)
+        lr_ace_reference_mode = str(
+            getattr(getattr(spec.solver, "lr_ace", None), "uncompressed_reference", "auto")
+        ).strip().lower()
+        lr_ace_reference_limit = int(
+            getattr(
+                getattr(spec.solver, "lr_ace_adaptive", None),
+                "uncompressed_check_qubit_limit",
+                spec.benchmark.exact_baseline_qubit_limit,
+            )
+        )
         if (
             solver_kind == "lr_ace"
-            and bool(getattr(getattr(spec.solver, "lr_ace_adaptive", None), "enabled", False))
-            and uncompressed_mapping.summary.num_qubits
-            <= int(spec.solver.lr_ace_adaptive.uncompressed_check_qubit_limit)
+            and lr_ace_reference_mode != "disabled"
+            and uncompressed_mapping.summary.num_qubits <= lr_ace_reference_limit
         ):
             adaptive_uncompressed_check_triggered = True
             adaptive_uncompressed_exact_solver_energy = float(
@@ -1422,6 +1427,53 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_status = "exploratory"
     if tc_qsci_payload is not None and verification_status == "validated":
         verification_status = "exploratory"
+    if variational_result is not None and solver_kind == "lr_ace":
+        lr_ace_payload = variational_result.ansatz.get("lr_ace")
+        if isinstance(lr_ace_payload, dict):
+            local_gate = lr_ace_payload.get("local_accuracy_gate") or {}
+            local_error = (
+                local_gate.get("absolute_error_hartree")
+                if isinstance(local_gate, dict)
+                else benchmark.absolute_error
+            )
+            adaptive_payload = lr_ace_payload.get("adaptive")
+            target_error = spec.benchmark.absolute_error_threshold
+            if isinstance(adaptive_payload, dict):
+                target_error = float(adaptive_payload.get("target_error_hartree", target_error))
+                local_error = adaptive_payload.get("best_exact_error_hartree", local_error)
+            validation_gate = classify_lr_ace_validation_gate(
+                target_error_hartree=target_error,
+                exact_available=bool(benchmark.exact_available),
+                local_exact_error_hartree=(None if local_error is None else float(local_error)),
+                compression_enabled=bool(
+                    compression_result is not None and compression_result.execution_enabled
+                ),
+                compressed_solver_energy=solver_energy,
+                uncompressed_solver_energy=(
+                    None
+                    if compressed_comparison is None
+                    else compressed_comparison.uncompressed_solver_energy
+                ),
+                uncompressed_exact_solver_energy=adaptive_uncompressed_exact_solver_energy,
+                runtime_attempted=bool(runtime_submission is not None and runtime_submission.attempted),
+                runtime_accuracy_met=(
+                    None
+                    if runtime_chemical_accuracy is None or not runtime_chemical_accuracy.available
+                    else bool(runtime_chemical_accuracy.meets_chemical_accuracy)
+                ),
+            )
+            if spec.solver.experimental and validation_gate["verification_status"] == "validated":
+                validation_gate = {
+                    **validation_gate,
+                    "verification_status": "exploratory",
+                    "validated": False,
+                    "blocking_reason": "legacy_exploratory_boundary",
+                }
+            lr_ace_payload["validation_gate"] = validation_gate
+            if isinstance(adaptive_payload, dict):
+                adaptive_payload["trust_label"] = validation_gate["trust_label"]
+            if not spec.solver.experimental and validation_gate["verification_status"] != "validated":
+                verification_status = str(validation_gate["verification_status"])
 
     run_id = artifacts.root.name
     module_origin = str(solver_outcome.metadata.get("module_origin", "core"))

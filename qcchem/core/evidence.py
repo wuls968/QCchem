@@ -118,6 +118,15 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
     )
     method_bits = []
     variational = payload.get("variational_result") or {}
+    lr_ace_payload = {}
+    ansatz_payload = variational.get("ansatz")
+    if isinstance(ansatz_payload, dict):
+        lr_ace_payload = ansatz_payload.get("lr_ace") or {}
+        if not isinstance(lr_ace_payload, dict):
+            lr_ace_payload = {}
+    lr_ace_gate = lr_ace_payload.get("validation_gate") or {}
+    if not isinstance(lr_ace_gate, dict):
+        lr_ace_gate = {}
     if variational.get("solver_kind"):
         method_bits.append(str(variational.get("solver_kind")))
     ansatz = variational.get("ansatz")
@@ -209,6 +218,8 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "hardware_evidence_tier": payload.get("hardware_evidence_tier"),
             "verification_notes": payload.get("verification_notes", []),
             "scientific_risk_notes": payload.get("scientific_risk_notes", []),
+            "lr_ace_trust_label": lr_ace_gate.get("trust_label"),
+            "lr_ace_validation_gate": lr_ace_gate or None,
         },
         scientific_accuracy={
             "status": chem_status,

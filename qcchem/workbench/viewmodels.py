@@ -67,6 +67,9 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     reduction = payload.get("reduction_audit") or {}
     compression = payload.get("compression_result") or {}
     evidence_summary = payload.get("evidence_summary") or {}
+    variational = _safe_dict(payload.get("variational_result"))
+    ansatz = _safe_dict(variational.get("ansatz"))
+    lr_ace = _safe_dict(ansatz.get("lr_ace"))
 
     view_model = {
         "hero": {
@@ -113,6 +116,7 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "reduction": reduction,
         "compression": compression,
+        "lr_ace": lr_ace,
         "evidence_summary": evidence_summary,
         "confidence": {
             "verification_status": payload.get("verification_status"),

@@ -1,0 +1,18 @@
+{
+  "cases_with_estimated_cost": 5,
+  "cases_with_measured_cost": 0,
+  "field_model_campaign": {
+    "ansatz_limited_cases": [],
+    "by_model": {},
+    "case_count": 0,
+    "cutoff_sensitive_cases": [],
+    "hardware_candidates": [],
+    "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+    "recommended_trotter_step": null,
+    "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+    "trotter_limited_cases": []
+  },
+  "mean_achieved_error": 1.5746904783631167e-05,
+  "mean_estimated_cost": 62000.0,
+  "mean_measured_cost": null
+}

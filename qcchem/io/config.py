@@ -47,6 +47,7 @@ from qcchem.core import (
     LatticeQEDMatterSpec,
     LatticeQEDSpec,
     LRACEAdaptiveSpec,
+    LRACESpec,
     MappingSpec,
     MappingSymmetryReductionSpec,
     MeasurementSpec,
@@ -309,13 +310,46 @@ def _parse_continuity(
     )
 
 
-def _parse_lr_ace_adaptive(solver_raw: dict[str, Any]) -> LRACEAdaptiveSpec:
+def _parse_lr_ace(solver_raw: dict[str, Any]) -> LRACESpec:
+    lr_ace_raw = solver_raw.get("lr_ace")
+    if lr_ace_raw is None:
+        lr_ace_raw = {}
+    if not isinstance(lr_ace_raw, dict):
+        raise ValueError("solver.lr_ace must be a mapping.")
+    defaults = LRACESpec()
+    profile = _choice(
+        lr_ace_raw.get("profile", defaults.profile),
+        field_name="solver.lr_ace.profile",
+        allowed={"compact", "flagship_adaptive", "stress_local"},
+    )
+    validation_mode = _choice(
+        lr_ace_raw.get("validation_mode", defaults.validation_mode),
+        field_name="solver.lr_ace.validation_mode",
+        allowed={"trust_first"},
+    )
+    uncompressed_reference = _choice(
+        lr_ace_raw.get("uncompressed_reference", defaults.uncompressed_reference),
+        field_name="solver.lr_ace.uncompressed_reference",
+        allowed={"auto", "enabled", "disabled"},
+    )
+    return LRACESpec(
+        profile=profile,
+        validation_mode=validation_mode,
+        uncompressed_reference=uncompressed_reference,
+    )
+
+
+def _parse_lr_ace_adaptive(
+    solver_raw: dict[str, Any],
+    *,
+    default_enabled: bool = False,
+) -> LRACEAdaptiveSpec:
     adaptive_raw = solver_raw.get("lr_ace_adaptive")
     if not isinstance(adaptive_raw, dict):
-        return LRACEAdaptiveSpec()
+        return LRACEAdaptiveSpec(enabled=default_enabled)
     defaults = LRACEAdaptiveSpec()
     return LRACEAdaptiveSpec(
-        enabled=bool(adaptive_raw.get("enabled", False)),
+        enabled=bool(adaptive_raw.get("enabled", default_enabled)),
         generator_schedule=[
             int(value) for value in adaptive_raw.get("generator_schedule", defaults.generator_schedule)
         ],
@@ -1199,6 +1233,28 @@ def load_run_spec(path: Path) -> RunSpec:
     tasks_raw = _require_mapping(raw, "tasks")
     excited_raw = _require_mapping(tasks_raw, "excited_state")
     run_raw = _require_mapping(raw, "run")
+    solver_kind = str(solver_raw.get("kind", "vqe"))
+    normalized_solver_kind = solver_kind.strip().lower()
+    lr_ace = _parse_lr_ace(solver_raw)
+    lr_ace_profile_defaults = {
+        "compact": {"adaptive_enabled": False, "ansatz_reps": 1, "optimizer_maxiter": 220},
+        "flagship_adaptive": {"adaptive_enabled": True, "ansatz_reps": 8, "optimizer_maxiter": 1000},
+        "stress_local": {"adaptive_enabled": True, "ansatz_reps": 24, "optimizer_maxiter": 5000},
+    }
+    lr_ace_defaults = lr_ace_profile_defaults[lr_ace.profile]
+    default_ansatz_kind = "lr_ace" if normalized_solver_kind == "lr_ace" else "twolocal"
+    default_ansatz_reps = (
+        int(lr_ace_defaults["ansatz_reps"]) if normalized_solver_kind == "lr_ace" else 2
+    )
+    default_optimizer_maxiter = (
+        int(lr_ace_defaults["optimizer_maxiter"]) if normalized_solver_kind == "lr_ace" else 100
+    )
+    lr_ace_adaptive = _parse_lr_ace_adaptive(
+        solver_raw,
+        default_enabled=(
+            normalized_solver_kind == "lr_ace" and bool(lr_ace_defaults["adaptive_enabled"])
+        ),
+    )
 
     return RunSpec(
         molecule=_parse_molecule(molecule_raw, base_dir=resolved_path.parent),
@@ -1233,23 +1289,24 @@ def load_run_spec(path: Path) -> RunSpec:
             runtime=_parse_runtime_options(backend_raw),
         ),
         solver=SolverSpec(
-            kind=str(solver_raw.get("kind", "vqe")),
+            kind=solver_kind,
             optimizer=OptimizerSpec(
                 kind=str(optimizer_raw.get("kind", "COBYLA")),
-                maxiter=int(optimizer_raw.get("maxiter", 100)),
+                maxiter=int(optimizer_raw.get("maxiter", default_optimizer_maxiter)),
                 tol=float(optimizer_raw["tol"]) if optimizer_raw.get("tol") is not None else None,
             ),
             ansatz=AnsatzSpec(
-                kind=str(ansatz_raw.get("kind", "twolocal")),
+                kind=str(ansatz_raw.get("kind", default_ansatz_kind)),
                 rotation_blocks=[str(item) for item in ansatz_raw.get("rotation_blocks", ["ry", "rz"])],
                 entanglement_blocks=str(ansatz_raw.get("entanglement_blocks", "cz")),
                 entanglement=str(ansatz_raw.get("entanglement", "full")),
-                reps=int(ansatz_raw.get("reps", 2)),
+                reps=int(ansatz_raw.get("reps", default_ansatz_reps)),
                 skip_final_rotation_layer=bool(ansatz_raw.get("skip_final_rotation_layer", False)),
             ),
             initial_point=solver_raw.get("initial_point", "zeros"),
             experimental=bool(solver_raw.get("experimental", False)),
-            lr_ace_adaptive=_parse_lr_ace_adaptive(solver_raw),
+            lr_ace=lr_ace,
+            lr_ace_adaptive=lr_ace_adaptive,
         ),
         benchmark=BenchmarkSpec(
             enabled=bool(benchmark_raw.get("enabled", True)),

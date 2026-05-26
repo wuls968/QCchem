@@ -1,0 +1,770 @@
+{
+  "acceptance_summary": {
+    "accepted": true,
+    "blocking_failures": [],
+    "case_count": 5,
+    "policy": {
+      "fail_on_runtime_accuracy_promotion": true,
+      "require_evidence_summary": true,
+      "require_runtime_sidecar_for_hardware_verified": true,
+      "strict_exit_code": true
+    },
+    "recommended_action": "promote_accepted_benchmark",
+    "required_files": [
+      "result.json"
+    ],
+    "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
+    "suite_name": "lr_ace_flagship_suite_v1",
+    "warnings": []
+  },
+  "artifact_index_entry": {
+    "artifact_kind": "benchmark_suite",
+    "artifact_name": "lr_ace_flagship_suite_v1",
+    "artifact_root": "artifacts/lr_ace_flagship_suite_v1",
+    "hardware_verified": false,
+    "has_acceptance_summary": false,
+    "has_hardware_error_diagnostic": false,
+    "has_report_markdown": false,
+    "has_resolved_config": false,
+    "has_result_json": false,
+    "has_runtime_submission": false,
+    "mtime": 1779015104.3358335,
+    "recommended_action": "promote_validated_result",
+    "result_json": "artifacts/lr_ace_flagship_suite_v1/benchmark_result.json",
+    "runtime_evidence_status": "none",
+    "runtime_submission_status": null,
+    "schema_version": "qcchem.benchmark.v0.4-alpha",
+    "trust_tier": "validated",
+    "verification_status": "validated"
+  },
+  "artifacts": {
+    "registry_json": "artifacts/lr_ace_flagship_suite_v1/registry.json",
+    "report_markdown": "artifacts/lr_ace_flagship_suite_v1/benchmark_report.md",
+    "result_json": "artifacts/lr_ace_flagship_suite_v1/benchmark_result.json",
+    "root": "artifacts/lr_ace_flagship_suite_v1"
+  },
+  "calibration_summary": {
+    "cases_with_estimated_cost": 5,
+    "cases_with_measured_cost": 0,
+    "field_model_campaign": {
+      "ansatz_limited_cases": [],
+      "by_model": {},
+      "case_count": 0,
+      "cutoff_sensitive_cases": [],
+      "hardware_candidates": [],
+      "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+      "recommended_trotter_step": null,
+      "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+      "trotter_limited_cases": []
+    },
+    "mean_achieved_error": 1.5746904783631167e-05,
+    "mean_estimated_cost": 62000.0,
+    "mean_measured_cost": null
+  },
+  "cases": [
+    {
+      "absolute_error": 1.3086143280105489e-08,
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship",
+      "evidence_summary": {
+        "chemical_accuracy_status": "met",
+        "comparison_evidence": {
+          "expected_status": "validated",
+          "metrics": {
+            "comparison_target": "variational_result",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "promote_validated_result"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "variational_result",
+          "baseline_strength": "strong"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.3086143280105489e-08
+        },
+        "primary_scientific_claim": "Benchmark case h2_lr_ace_flagship is currently classified as validated for kind=run.",
+        "recommended_action": "promote_validated_result",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lr_ace_flagship",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "validated"
+        },
+        "trust_tier": "validated"
+      },
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.3086143280105489e-08,
+        "comparison_target": "variational_result",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "estimated_measurement_cost": 20000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model_decision": {
+          "available": false,
+          "hardware_candidate": false,
+          "hardware_skip_reason": "not_a_field_model_case"
+        },
+        "field_model_kind": null,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.009407709003426135,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 2,
+        "measurement_strategy": "low_rank_lr_ace_local",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.13002020795829594,
+        "within_uncertainty": null
+      },
+      "name": "h2_lr_ace_flagship",
+      "notes": [],
+      "relative_error": 7.064471403360494e-09,
+      "status": "validated",
+      "total_energy": -1.1372838214023577
+    },
+    {
+      "absolute_error": 9.83466863502258e-10,
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/lih_active_lr_ace_flagship",
+      "evidence_summary": {
+        "chemical_accuracy_status": "met",
+        "comparison_evidence": {
+          "expected_status": "validated",
+          "metrics": {
+            "comparison_target": "variational_result",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "promote_validated_result"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "variational_result",
+          "baseline_strength": "strong"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 9.83466863502258e-10
+        },
+        "primary_scientific_claim": "Benchmark case lih_active_lr_ace_flagship is currently classified as validated for kind=run.",
+        "recommended_action": "promote_validated_result",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "lih_active_lr_ace_flagship",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "validated"
+        },
+        "trust_tier": "validated"
+      },
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 9.83466863502258e-10,
+        "comparison_target": "variational_result",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "estimated_measurement_cost": 40000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model_decision": {
+          "available": false,
+          "hardware_candidate": false,
+          "hardware_skip_reason": "not_a_field_model_case"
+        },
+        "field_model_kind": null,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0392963329795748,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 4,
+        "measurement_strategy": "low_rank_lr_ace_local",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.17597612499957904,
+        "within_uncertainty": null
+      },
+      "name": "lih_active_lr_ace_flagship",
+      "notes": [],
+      "relative_error": 9.294504252079863e-10,
+      "status": "validated",
+      "total_energy": -7.862128832455129
+    },
+    {
+      "absolute_error": 7.580214354163672e-05,
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+      "evidence_summary": {
+        "chemical_accuracy_status": "met",
+        "comparison_evidence": {
+          "expected_status": "validated",
+          "metrics": {
+            "comparison_target": "compressed_vs_uncompressed",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "promote_validated_result"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "compressed_vs_uncompressed",
+          "baseline_strength": "strong"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 7.580214354163672e-05
+        },
+        "primary_scientific_claim": "Benchmark case h2o_active_lr_ace_adaptive is currently classified as validated for kind=run.",
+        "recommended_action": "promote_validated_result",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2o_active_lr_ace_adaptive",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "validated"
+        },
+        "trust_tier": "validated"
+      },
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 7.580214354163672e-05,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 7.580214354163672e-05,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 35.263980165997054,
+          "compressed_solver_energy": -6.1620590784684515,
+          "compressed_total_energy": -74.97024873352467,
+          "method": "modified_cholesky",
+          "post_term_count": 95,
+          "pre_term_count": 95,
+          "rank": 10,
+          "relative_error": 1.011097354824259e-06,
+          "threshold": 1e-10,
+          "uncompressed_solve_wall_time_seconds": 31.965455540979747,
+          "uncompressed_solver_energy": -6.161983276324899,
+          "uncompressed_total_energy": -74.97017293138113
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 95,
+        "compression_pre_term_count": 95,
+        "compression_rank": 10,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 70000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": true,
+        "field_model_decision": {
+          "available": false,
+          "hardware_candidate": false,
+          "hardware_skip_reason": "not_a_field_model_case"
+        },
+        "field_model_kind": null,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 35.263980165997054,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 7,
+        "measurement_strategy": "low_rank_lr_ace_adaptive_local",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 67.47925066697644,
+        "within_uncertainty": null
+      },
+      "name": "h2o_active_lr_ace_adaptive",
+      "notes": [],
+      "relative_error": 1.011097354824259e-06,
+      "status": "validated",
+      "total_energy": -74.97024873352467
+    },
+    {
+      "absolute_error": 1.1941071340615395e-06,
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive",
+      "evidence_summary": {
+        "chemical_accuracy_status": "met",
+        "comparison_evidence": {
+          "expected_status": "validated",
+          "metrics": {
+            "comparison_target": "compressed_vs_uncompressed",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "promote_validated_result"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "compressed_vs_uncompressed",
+          "baseline_strength": "strong"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.1941071340615395e-06
+        },
+        "primary_scientific_claim": "Benchmark case h3plus_lr_ace_adaptive is currently classified as validated for kind=run.",
+        "recommended_action": "promote_validated_result",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h3plus_lr_ace_adaptive",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "validated"
+        },
+        "trust_tier": "validated"
+      },
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.1941071340615395e-06,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 1.1941071340615395e-06,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 0.398849000048358,
+          "compressed_solver_energy": -3.0315333755722658,
+          "compressed_total_energy": -1.2675834674326278,
+          "method": "modified_cholesky",
+          "post_term_count": 52,
+          "pre_term_count": 52,
+          "rank": 6,
+          "relative_error": 9.420334359450455e-07,
+          "threshold": 1e-10,
+          "uncompressed_solve_wall_time_seconds": 0.34311766701284796,
+          "uncompressed_solver_energy": -3.0315345696794,
+          "uncompressed_total_energy": -1.267584661539762
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 52,
+        "compression_pre_term_count": 52,
+        "compression_rank": 6,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 70000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": true,
+        "field_model_decision": {
+          "available": false,
+          "hardware_candidate": false,
+          "hardware_skip_reason": "not_a_field_model_case"
+        },
+        "field_model_kind": null,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.398849000048358,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 7,
+        "measurement_strategy": "low_rank_lr_ace_adaptive_local",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 0.9209322920069098,
+        "within_uncertainty": null
+      },
+      "name": "h3plus_lr_ace_adaptive",
+      "notes": [],
+      "relative_error": 9.420334359450455e-07,
+      "status": "validated",
+      "total_energy": -1.2675834674326278
+    },
+    {
+      "absolute_error": 1.7242036323139587e-06,
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h4_chain_lr_ace_adaptive",
+      "evidence_summary": {
+        "chemical_accuracy_status": "met",
+        "comparison_evidence": {
+          "expected_status": "validated",
+          "metrics": {
+            "comparison_target": "compressed_vs_uncompressed",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "promote_validated_result"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "compressed_vs_uncompressed",
+          "baseline_strength": "strong"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.7242036323139587e-06
+        },
+        "primary_scientific_claim": "Benchmark case h4_chain_lr_ace_adaptive is currently classified as validated for kind=run.",
+        "recommended_action": "promote_validated_result",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h4_chain_lr_ace_adaptive",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "validated"
+        },
+        "trust_tier": "validated"
+      },
+      "expected_status": "validated",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.7242036323139587e-06,
+        "comparison_target": "compressed_vs_uncompressed",
+        "compressed_vs_uncompressed": {
+          "absolute_error": 1.7242036323139587e-06,
+          "available": true,
+          "compressed_solve_wall_time_seconds": 27.82985383301275,
+          "compressed_solver_energy": -4.727443655636667,
+          "compressed_total_energy": -2.179553380836666,
+          "method": "modified_cholesky",
+          "post_term_count": 165,
+          "pre_term_count": 165,
+          "rank": 10,
+          "relative_error": 7.910805413117001e-07,
+          "threshold": 1e-10,
+          "uncompressed_solve_wall_time_seconds": 34.37912945798598,
+          "uncompressed_solver_energy": -4.727445379840299,
+          "uncompressed_total_energy": -2.1795551050402984
+        },
+        "compression_method": "modified_cholesky",
+        "compression_post_term_count": 165,
+        "compression_pre_term_count": 165,
+        "compression_rank": 10,
+        "compression_verification_status": "validated",
+        "estimated_measurement_cost": 110000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": true,
+        "field_model_decision": {
+          "available": false,
+          "hardware_candidate": false,
+          "hardware_skip_reason": "not_a_field_model_case"
+        },
+        "field_model_kind": null,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 27.82985383301275,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 11,
+        "measurement_strategy": "low_rank_lr_ace_adaptive_local",
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "wall_time_seconds": 62.53281237499323,
+        "within_uncertainty": null
+      },
+      "name": "h4_chain_lr_ace_adaptive",
+      "notes": [],
+      "relative_error": 7.910805413117001e-07,
+      "status": "validated",
+      "total_energy": -2.179553380836666
+    }
+  ],
+  "dashboard_summary": {
+    "achieved_errors": {
+      "h2_lr_ace_flagship": 1.3086143280105489e-08,
+      "h2o_active_lr_ace_adaptive": 7.580214354163672e-05,
+      "h3plus_lr_ace_adaptive": 1.1941071340615395e-06,
+      "h4_chain_lr_ace_adaptive": 1.7242036323139587e-06,
+      "lih_active_lr_ace_flagship": 9.83466863502258e-10
+    },
+    "cases": [
+      {
+        "achieved_error": 1.3086143280105489e-08,
+        "estimated_measurement_cost": 20000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.009407709003426135,
+        "name": "h2_lr_ace_flagship",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 9.83466863502258e-10,
+        "estimated_measurement_cost": 40000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0392963329795748,
+        "name": "lih_active_lr_ace_flagship",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 7.580214354163672e-05,
+        "estimated_measurement_cost": 70000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 35.263980165997054,
+        "name": "h2o_active_lr_ace_adaptive",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.1941071340615395e-06,
+        "estimated_measurement_cost": 70000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.398849000048358,
+        "name": "h3plus_lr_ace_adaptive",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.7242036323139587e-06,
+        "estimated_measurement_cost": 110000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 27.82985383301275,
+        "name": "h4_chain_lr_ace_adaptive",
+        "runtime_evidence_status": "none"
+      }
+    ],
+    "compressed_cases": [
+      "h2o_active_lr_ace_adaptive",
+      "h3plus_lr_ace_adaptive",
+      "h4_chain_lr_ace_adaptive"
+    ],
+    "estimated_vs_measured_cost_ratios": {},
+    "field_model_campaign": {
+      "ansatz_limited_cases": [],
+      "by_model": {},
+      "case_count": 0,
+      "cutoff_sensitive_cases": [],
+      "hardware_candidates": [],
+      "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+      "recommended_trotter_step": null,
+      "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+      "trotter_limited_cases": []
+    },
+    "grouping_policies": {},
+    "hardware_verified_cases": [],
+    "precision_targets": {
+      "h2_lr_ace_flagship": 0.01,
+      "h2o_active_lr_ace_adaptive": 0.01,
+      "h3plus_lr_ace_adaptive": 0.01,
+      "h4_chain_lr_ace_adaptive": 0.01,
+      "lih_active_lr_ace_flagship": 0.01
+    },
+    "resilience_levels": {},
+    "runtime_cases": []
+  },
+  "description": "Trust-first LR-ACE flagship suite covering fast H2/LiH gates and slower adaptive active-space and strong-correlation diagnostics.\n",
+  "evidence_summary": {
+    "chemical_accuracy_status": "met",
+    "comparison_evidence": {
+      "best_case": "lih_active_lr_ace_flagship",
+      "status_counts": {
+        "validated": 5
+      }
+    },
+    "decision_worthiness": {
+      "recommended_action": "promote_validated_result"
+    },
+    "energy_evidence": {},
+    "execution_evidence": {},
+    "primary_baseline": {
+      "baseline_kind": "benchmark_suite_reference",
+      "baseline_scope": "benchmark_suite",
+      "baseline_source": "best_case",
+      "baseline_strength": "strong"
+    },
+    "primary_error_metric": {
+      "metric_kind": "best_case_absolute_error_hartree",
+      "units": "Hartree",
+      "value": 9.83466863502258e-10
+    },
+    "primary_scientific_claim": "Benchmark suite lr_ace_flagship_suite_v1 currently defends a validated scope across 5 cases.",
+    "recommended_action": "promote_validated_result",
+    "result_identity": {
+      "artifact_kind": "benchmark_suite",
+      "artifact_name": "lr_ace_flagship_suite_v1"
+    },
+    "runtime_derived_accuracy": {},
+    "runtime_evidence_status": "none",
+    "scientific_accuracy": {},
+    "trust_judgment": {
+      "verification_status": "validated"
+    },
+    "trust_tier": "validated"
+  },
+  "registry_entries": [
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2_lr_ace_flagship",
+      "created_at": "2026-05-17T10:49:33.084239+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lr_ace_flagship",
+      "source": "configs/lr_ace/h2_flagship.yaml",
+      "status": "validated",
+      "tags": [
+        "lr_ace",
+        "flagship",
+        "fast",
+        "h2"
+      ]
+    },
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/lih_active_lr_ace_flagship",
+      "created_at": "2026-05-17T10:49:33.334995+00:00",
+      "kind": "benchmark:run",
+      "name": "lih_active_lr_ace_flagship",
+      "source": "configs/lr_ace/lih_active_flagship.yaml",
+      "status": "validated",
+      "tags": [
+        "lr_ace",
+        "flagship",
+        "fast",
+        "lih",
+        "active_space"
+      ]
+    },
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h2o_active_lr_ace_adaptive",
+      "created_at": "2026-05-17T10:50:40.840251+00:00",
+      "kind": "benchmark:run",
+      "name": "h2o_active_lr_ace_adaptive",
+      "source": "configs/lr_ace/h2o_active_adaptive.yaml",
+      "status": "validated",
+      "tags": [
+        "lr_ace",
+        "flagship",
+        "slow",
+        "h2o",
+        "active_space"
+      ]
+    },
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h3plus_lr_ace_adaptive",
+      "created_at": "2026-05-17T10:50:41.772400+00:00",
+      "kind": "benchmark:run",
+      "name": "h3plus_lr_ace_adaptive",
+      "source": "configs/lr_ace/h3plus_adaptive.yaml",
+      "status": "validated",
+      "tags": [
+        "lr_ace",
+        "flagship",
+        "slow",
+        "h3plus"
+      ]
+    },
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1/cases/h4_chain_lr_ace_adaptive",
+      "created_at": "2026-05-17T10:51:44.330452+00:00",
+      "kind": "benchmark:run",
+      "name": "h4_chain_lr_ace_adaptive",
+      "source": "configs/lr_ace/h4_chain_adaptive.yaml",
+      "status": "validated",
+      "tags": [
+        "lr_ace",
+        "flagship",
+        "slow",
+        "h4_chain"
+      ]
+    },
+    {
+      "artifact_root": "artifacts/lr_ace_flagship_suite_v1",
+      "created_at": "2026-05-17T10:51:44.330486+00:00",
+      "kind": "benchmark_suite",
+      "name": "lr_ace_flagship_suite_v1",
+      "source": "benchmarks/lr_ace_flagship_suite_v1.yaml",
+      "status": "validated",
+      "tags": [
+        "benchmark",
+        "lr_ace",
+        "flagship",
+        "trust_first"
+      ]
+    }
+  ],
+  "schema_version": "qcchem.benchmark.v0.4-alpha",
+  "suite_name": "lr_ace_flagship_suite_v1",
+  "summary": {
+    "status_counts": {
+      "validated": 5
+    },
+    "total_cases": 5
+  }
+}

@@ -12,6 +12,48 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.integration
+def test_h2_lr_ace_flagship_core_run_is_validated_and_records_gate(tmp_path: Path) -> None:
+    result = run_from_config(
+        REPO_ROOT / "configs" / "lr_ace" / "h2_flagship.yaml",
+        output_dir=tmp_path / "h2_lr_ace_flagship",
+    )
+
+    assert result.verification_status == "validated"
+    assert result.module_origin == "core"
+    assert result.capability_tier == "flagship"
+    assert result.chemical_accuracy is not None
+    assert result.chemical_accuracy.meets_chemical_accuracy is True
+    assert result.variational_result is not None
+    assert result.variational_result.solver_kind == "lr_ace"
+
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    lr_ace = payload["variational_result"]["ansatz"]["lr_ace"]
+    assert lr_ace["method_role"] == "flagship"
+    assert lr_ace["profile"] == "compact"
+    assert lr_ace["validation_gate"]["verification_status"] == "validated"
+    assert lr_ace["validation_gate"]["trust_label"] in {
+        "local_exact_validated",
+        "passed_exact_reference",
+    }
+    assert payload["evidence_summary"]["trust_judgment"]["lr_ace_trust_label"] == lr_ace["validation_gate"]["trust_label"]
+
+
+@pytest.mark.integration
+def test_lih_active_lr_ace_flagship_core_run_is_validated(tmp_path: Path) -> None:
+    result = run_from_config(
+        REPO_ROOT / "configs" / "lr_ace" / "lih_active_flagship.yaml",
+        output_dir=tmp_path / "lih_active_lr_ace_flagship",
+    )
+
+    assert result.verification_status == "validated"
+    assert result.module_origin == "core"
+    assert result.capability_tier == "flagship"
+    assert result.mapping.num_qubits == 2
+    assert result.chemical_accuracy is not None
+    assert result.chemical_accuracy.meets_chemical_accuracy is True
+
+
+@pytest.mark.integration
 def test_h2_lr_ace_reaches_local_chemical_accuracy_and_records_provenance(tmp_path: Path) -> None:
     result = run_from_config(
         REPO_ROOT / "configs" / "exploratory" / "h2_lr_ace.yaml",

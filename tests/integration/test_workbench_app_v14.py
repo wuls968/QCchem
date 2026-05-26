@@ -21,6 +21,7 @@ SCIENTIFIC_PAGE_MODULES = {
     "qcchem.workbench.pages.mapping_resources": ("/mapping-resources", "Mapping, Resources, and Circuit", "build_mapping_resources_page"),
     "qcchem.workbench.pages.runtime_monitoring": ("/runtime-monitoring", "Runtime Monitoring", "build_runtime_monitoring_page"),
     "qcchem.workbench.pages.result_confidence": ("/result-confidence", "Result Confidence Report", "build_result_confidence_page"),
+    "qcchem.workbench.pages.lr_ace_method": ("/lr-ace-method", "LR-ACE Method", "build_lr_ace_method_page"),
 }
 AGGREGATE_PAGE_MODULES = {
     "qcchem.workbench.pages.studies": ("/studies", "Studies", "build_studies_page"),
@@ -129,6 +130,30 @@ def test_page_modules_expose_model_driven_builders() -> None:
     }
     model["confidence"]["comparison_target"] = "probe-reference"
     model["confidence"]["boundary"]["comparison_target"] = "probe-reference"
+    model["lr_ace"] = {
+        "method_role": "flagship",
+        "profile": "flagship_adaptive",
+        "selected_factor_count": 3,
+        "validation_gate": {
+            "trust_label": "passed_exact_reference",
+            "verification_status": "validated",
+            "blocking_reason": None,
+        },
+        "local_accuracy_gate": {
+            "passed": True,
+            "absolute_error_hartree": 0.0004,
+            "threshold_hartree": 0.0016,
+        },
+        "adaptive": {
+            "enabled": True,
+            "expansions": [
+                {
+                    "selected_count": 2,
+                    "best_estimated_drop_hartree": 0.0123,
+                }
+            ],
+        },
+    }
     model["structure"]["active_space_metadata"] = {
         "num_active_orbitals": 6,
         "num_active_electrons": 8,
@@ -146,6 +171,7 @@ def test_page_modules_expose_model_driven_builders() -> None:
         "qcchem.workbench.pages.mapping_resources": "Parity",
         "qcchem.workbench.pages.runtime_monitoring": "backend-probe",
         "qcchem.workbench.pages.result_confidence": "probe-reference",
+        "qcchem.workbench.pages.lr_ace_method": "flagship_adaptive",
     }
 
     for module_name, (_route, title, builder_name) in SCIENTIFIC_PAGE_MODULES.items():

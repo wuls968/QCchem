@@ -499,6 +499,15 @@ class LRACEAdaptiveSpec:
 
 
 @dataclass(slots=True)
+class LRACESpec:
+    """Flagship LR-ACE method defaults and validation policy."""
+
+    profile: str = "compact"
+    validation_mode: str = "trust_first"
+    uncompressed_reference: str = "auto"
+
+
+@dataclass(slots=True)
 class InitialPointCandidate:
     """Runtime-only warm-start candidate supplied by aggregate workflows."""
 
@@ -525,6 +534,7 @@ class SolverSpec:
     initial_point: str | list[float] = "zeros"
     initial_point_candidate: InitialPointCandidate | None = None
     experimental: bool = False
+    lr_ace: LRACESpec = field(default_factory=LRACESpec)
     lr_ace_adaptive: LRACEAdaptiveSpec = field(default_factory=LRACEAdaptiveSpec)
 
 
