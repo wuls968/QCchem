@@ -97,6 +97,14 @@ Run an artifact-only campaign:
 qcchem campaign run -c configs/campaign/trust_loop_mini.yaml
 ```
 
+Run the finite-cutoff lattice-QED sparse exact H2 example:
+
+```bash
+qcchem exploratory run \
+  -c configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml \
+  -o artifacts/h2_4site_lattice_qed_sparse_exact
+```
+
 Open the local workbench when UI dependencies are installed:
 
 ```bash
@@ -243,8 +251,40 @@ qcchem exploratory run \
   -c configs/exploratory/h2_4site_lattice_qed_sparse_dynamics.yaml
 ```
 
-Boundary: these artifacts validate the finite-cutoff workflow and physical-sector
-audit. They do not claim continuum-limit chemistry accuracy.
+Boundary: these artifacts validate finite-cutoff model consistency and
+physical-sector audit only. They do not claim continuum-limit chemistry
+accuracy, and they do not claim quantum hardware execution unless a real
+Runtime/shot-based result is submitted and collected.
+
+Sparse projected exact runs expose this boundary explicitly:
+
+- `chemical_accuracy.finite_model_exactness`: whether the configured finite
+  grid/cutoff/softening Hamiltonian passed its internal exact gate.
+- `chemical_accuracy.continuum_chemistry_accuracy`: `not_claimed` until grid,
+  cutoff, and softening convergence evidence exists.
+- `chemical_accuracy.hardware_accuracy`: `unavailable` until a real Runtime or
+  shot-based backend result exists.
+- `quantum_evidence.hamiltonian.pauli_terms_available`: `false` when
+  `pauli_materialization=skipped`; QCchem does not write a fake zero identity
+  Pauli Hamiltonian in that case.
+- `quantum_evidence.sparse_exact_validation`: projected dimension, NNZ, basis
+  hash, eigen residuals, gap, lowest eigenvalues, and projected matrix SHA-256.
+- `qft_model.observables`: site density, link electric flux, electric energy by
+  link, onsite/hopping energy breakdowns, Gauss-law residuals, and dominant
+  physical-sector configurations.
+
+QFT benchmark suites are available for smoke, cutoff/grid convergence,
+dynamics/resource checks, and guarded hardware micro previews:
+
+```bash
+qcchem benchmark run -c benchmarks/field_model_qft_smoke_v2.yaml
+qcchem benchmark run -c benchmarks/field_model_qft_cutoff_grid_convergence_v1.yaml
+qcchem benchmark run -c benchmarks/field_model_qft_dynamics_resource_v1.yaml
+```
+
+Real QFT Runtime micro jobs remain budget-gated. A config setting such as
+`submit_real_job: true` is not sufficient by itself; submission also requires an
+explicit runtime-budget confirmation phrase at action time.
 
 ### LR-ACE
 

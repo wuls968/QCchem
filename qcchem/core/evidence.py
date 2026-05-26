@@ -17,6 +17,9 @@ def _normalize_status(value: Any, *, default: str) -> str:
 def chemical_accuracy_status(summary: dict[str, Any] | None) -> str:
     if not isinstance(summary, dict) or not summary.get("available", False):
         return "unavailable"
+    continuum = summary.get("continuum_chemistry_accuracy")
+    if isinstance(continuum, dict) and continuum.get("status"):
+        return str(continuum["status"])
     meets = summary.get("meets_chemical_accuracy")
     if meets is True:
         return "met"
@@ -138,8 +141,8 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
         )
     elif field_model.get("model_kind") == "lattice_qed":
         primary_claim = (
-            f"{problem.get('molecule_name', 'System')} lattice-QED result is gauge-audited finite-cutoff evidence "
-            f"compared against {comparison_target}."
+            f"{problem.get('molecule_name', 'System')} lattice-QED result is finite-cutoff sparse/exact evidence "
+            f"for the configured Hamiltonian; continuum chemistry accuracy is not claimed."
         )
     if chem_status == "met" and not field_model.get("model_kind"):
         primary_claim = (
@@ -216,6 +219,9 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "meets_chemical_accuracy": chemical.get("meets_chemical_accuracy"),
             "absolute_error_hartree": chemical.get("absolute_error_hartree"),
             "threshold_hartree": chemical.get("threshold_hartree"),
+            "finite_model_exactness": chemical.get("finite_model_exactness"),
+            "continuum_chemistry_accuracy": chemical.get("continuum_chemistry_accuracy"),
+            "hardware_accuracy": chemical.get("hardware_accuracy"),
         },
         runtime_derived_accuracy={
             "status": runtime_acc_status,

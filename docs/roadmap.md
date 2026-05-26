@@ -121,6 +121,18 @@
   - local exact-baseline gates now pass for H2 and LiH active-space with 2-qubit parity-reduced workloads
   - retrieved H2 hardware probes reached a best runtime error of `0.001699 Ha`, just above chemical accuracy
   - next milestone is bias-aware mitigation / calibration for LR-ACE rather than simply increasing shots
+- QFT / lattice-QED sparse exact trust boundary:
+  - sector-first sparse projected construction avoids full-Hilbert-space-first assembly for supported physical sectors
+  - sparse exact evidence exposes projected matrix dimension, NNZ, basis hash,
+    residuals, gap, lowest eigenvalues, projected matrix SHA-256, and dominant
+    physical-sector configurations
+  - `chemical_accuracy` is split into finite-model exactness, continuum
+    chemistry accuracy, and hardware accuracy so finite-cutoff exactness cannot
+    be misread as continuum chemistry validation
+  - `pauli_materialization=skipped` now yields explicit
+    `pauli_terms_available: false` evidence instead of fake zero Pauli terms
+  - QFT benchmark families now cover smoke, cutoff/grid convergence,
+    dynamics/resource checks, and guarded runtime micro templates
 - 逐步从 curated page model 过渡到更完整的 artifact-driven browser
 
 ## v1.0 愿景

@@ -70,9 +70,10 @@ Expected run outputs:
 - `resolved_config.yaml`: fully resolved config snapshot.
 - `run.log`: execution log.
 - `exact_result.json`: exact baseline when available.
-- `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms,
-  measurement groups, counts, trajectory, state diagnostics, resource metrics,
-  and error budgets.
+- `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms when
+  they are materialized, measurement groups/counts when available, trajectory,
+  state diagnostics, resource metrics, error budgets, and sparse/projected
+  validation metadata for finite-cutoff field-model runs.
 - `runtime_submission.json`: runtime sidecar when runtime submission is attempted.
 - `calibration.json` and `calibration_report.md`: empirical execution calibration
   when available.
@@ -156,6 +157,29 @@ qcchem hardware optimize \
 Real submission is intentionally guarded. Do not use submit mode unless the
 budget and backend target have been reviewed at action time.
 
+Runtime-capable `run`, `exploratory run`, `benchmark run`, and hardware
+optimization paths accept `--confirm-runtime-budget`, but only the exact
+confirmation phrase expected by the configured runtime path unlocks real
+submission. Setting `submit_real_job: true` in YAML is not sufficient by itself.
+
+QFT dynamics runtime previews and micro runs should keep tight limits:
+
+```yaml
+problem:
+  qft:
+    dynamics:
+      runtime:
+        time_point_indices: [0, 10]
+        observable_names: [particle_number, total_gauss_violation]
+        max_pub_count: 4
+        max_total_pub_shots: 2048
+        max_logical_depth: 200
+```
+
+Use these fields to prevent the default time-grid/observable product from
+turning into a large Runtime batch. Real QFT micro jobs should remain small
+enough to inspect error bars, residuals, and usage before any larger run.
+
 ## Exploratory Workflows
 
 Use `qcchem exploratory run` when the config uses an exploratory solver or model.
@@ -166,6 +190,28 @@ QFT finite-cutoff lattice-QED:
 qcchem exploratory run \
   -c configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
 ```
+
+Sparse projected exact lattice-QED runs are finite-model checks, not continuum
+chemistry claims. Read these fields first:
+
+- `chemical_accuracy.finite_model_exactness`: internal exactness for the
+  configured finite grid/cutoff/softening Hamiltonian.
+- `chemical_accuracy.continuum_chemistry_accuracy`: `not_claimed` unless a
+  convergence scan is attached.
+- `chemical_accuracy.hardware_accuracy`: `unavailable` unless a Runtime or
+  shot-based backend result has been submitted and collected.
+- `qft_model.sparse_exact_validation`: `eigen_residual_norm`,
+  `relative_eigen_residual`, `ground_state_gap`, `lowest_eigenvalues`,
+  `projected_matrix_dimension`, `projected_hamiltonian_nnz`,
+  `physical_sector_dimension`, `basis_hash`, and `projected_matrix_sha256`.
+- `qft_model.observables`: site density, link electric flux, electric energy by
+  link, onsite energy by site, hopping energy by link,
+  Gauss-law residual by site, and dominant physical-sector configurations.
+
+When `qft_model.engine.pauli_materialization` is `skipped`, the quantum
+evidence sidecar records `pauli_terms_available: false` and leaves
+`hamiltonian.pauli_terms` empty. Measurement groups and shot cost in this path
+are sparse/exploratory estimates; they are not hardware measurement budgets.
 
 LR-ACE:
 
@@ -197,6 +243,14 @@ Start with:
 - `evidence_summary`
 - `quantum_evidence`
 
+`chemical_accuracy` may contain separate trust layers. For lattice-QED sparse
+exact artifacts, do not treat `absolute_error_hartree: 0` as continuum chemistry
+accuracy. The authoritative interpretation is:
+
+- `finite_model_exactness`: finite Hamiltonian internal exactness.
+- `continuum_chemistry_accuracy`: continuum chemistry claim status.
+- `hardware_accuracy`: Runtime/shot-based hardware claim status.
+
 For Trust-First review, the most important fields are:
 
 - `evidence_summary.primary_scientific_claim`
@@ -208,12 +262,15 @@ For Trust-First review, the most important fields are:
 The compact `quantum_evidence` field points to `quantum_evidence.json` and
 summarizes the detailed evidence layer. Use the sidecar when you need to audit:
 
-- Pauli Hamiltonian decomposition and per-term energy contributions.
+- Pauli Hamiltonian decomposition and per-term energy contributions when Pauli
+  terms are available.
 - Measurement grouping, shots, bitstring counts, and count digests.
 - VQE evaluation trajectory and final-state dominant configurations.
 - Hamiltonian variance, particle/spin/Z2/QFT constraint checks.
 - Circuit resources, measurement cost, and ansatz/shot/compression/hardware
   error budget.
+- Sparse exact validation and lattice-QED observables for projected QFT runs
+  where Pauli materialization was intentionally skipped.
 
 Mapping resources now separate the executed Hamiltonian from its untapered
 baseline:

@@ -1,0 +1,64 @@
+benchmark_suite:
+  name: field_model_qft_cutoff_grid_convergence_v1
+  description: Small local lattice-QED finite-cutoff and grid-sensitivity suite.
+  registry_name: field_model_qft_cutoff_grid_convergence_v1
+  tags: [benchmark, exploratory, field_model, lattice_qed, cutoff_grid_convergence]
+  cases:
+    - name: h2_lattice_qed_cutoff_0
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.electric_cutoff: 0
+      tags: [lattice_qed, electric_cutoff_scan]
+    - name: h2_lattice_qed_cutoff_1
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.electric_cutoff: 1
+      tags: [lattice_qed, electric_cutoff_scan]
+    - name: h2_lattice_qed_cutoff_2
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.gauge.electric_cutoff: 2
+      tags: [lattice_qed, electric_cutoff_scan]
+    - name: h2_lattice_qed_spacing_0p60
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.grid.spacing: [0.60]
+      tags: [lattice_qed, grid_spacing_scan]
+    - name: h2_lattice_qed_softening_0p25
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.grid.softening: 0.25
+      tags: [lattice_qed, softening_scan]
+    - name: h2_lattice_qed_3site_open
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.grid.shape: [3]
+        problem.qft.grid.boundary: open
+        problem.qft.constraints.max_sector_enumeration_qubits: 10
+      tags: [lattice_qed, site_count_scan, open_boundary]
+    - name: h2_lattice_qed_2site_periodic
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.grid.boundary: periodic
+      tags: [lattice_qed, boundary_scan, periodic_boundary]
+    - name: h2_lattice_qed_numeric_charge_sector_0
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_sector_audit.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.constraints.target_charge_sector: "0"
+      tags: [lattice_qed, numeric_charge_sector, sector_audit]

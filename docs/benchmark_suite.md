@@ -22,6 +22,11 @@ Benchmark Suite v1 不是一堆零散样例，而是 QCchem 的正式 benchmark 
 - `h2_optimizer_stability`
 - `qmmm_environment_embedding_smoke`
 - `qmmm_environment_embedding_full`
+- `field_model_qft_smoke_v2`
+- `field_model_qft_cutoff_grid_convergence_v1`
+- `field_model_qft_dynamics_resource_v1`
+- `field_model_qft_hardware_micro_v1`
+- `field_model_qft_hardware_micro_real_v1`
 
 ## case kind
 
@@ -95,6 +100,42 @@ raw/executed Pauli-term counts、`pauli_term_delta_raw_to_executed`、
 symmetry-reduction status、cache reload error、environment qubit growth。
 MM environment 不被量子化；这些指标只描述嵌入后的 QM Hamiltonian 映射与
 Z2 tapering 验证。
+
+## QFT / lattice-QED benchmark suites
+
+QFT benchmark suites are exploratory by design. They are useful for finite-model
+evidence, resource boundaries, and runtime-gate checks, but they do not promote
+lattice-QED artifacts to continuum chemistry accuracy.
+
+- `benchmarks/field_model_qft_smoke_v2.yaml`: CI-sized smoke suite for 2-site
+  exact/sector/dynamics, 4-site sparse projected exact, a 2D plaquette smoke
+  case, and disabled runtime preview.
+- `benchmarks/field_model_qft_cutoff_grid_convergence_v1.yaml`: finite
+  cutoff/grid scan over electric cutoff, spacing/softening, 2/4-site geometry,
+  open/periodic boundary choices, and neutral/numeric charge sectors.
+- `benchmarks/field_model_qft_dynamics_resource_v1.yaml`: Trotter step and 2D
+  Wilson dynamics resource suite with incremental-vs-legacy dynamics checks and
+  runtime preview gates.
+- `benchmarks/field_model_qft_hardware_micro_v1.yaml`: guarded hardware micro
+  preview; default is `submit_real_job: false`.
+- `benchmarks/field_model_qft_hardware_micro_real_v1.yaml`: real-runtime micro
+  template that must remain action-time budget gated and capped to a tiny
+  observable/time-point set.
+
+Acceptance for sparse exact QFT cases must read the three-layer accuracy fields:
+
+- `finite_model_exactness`: internal exactness for the finite
+  grid/cutoff/softening Hamiltonian.
+- `continuum_chemistry_accuracy`: `not_claimed` unless convergence evidence is
+  present.
+- `hardware_accuracy`: `unavailable` unless a real Runtime/shot-based result is
+  submitted and collected.
+
+For sparse projected cases with `pauli_materialization=skipped`,
+`quantum_evidence.json` must report `pauli_terms_available: false` and must not
+invent a zero-coefficient identity Pauli Hamiltonian. Measurement group counts
+and shot-cost fields must be labeled as sparse/exploratory estimates unless a
+materialized hardware path exists.
 
 ## 设计原则
 

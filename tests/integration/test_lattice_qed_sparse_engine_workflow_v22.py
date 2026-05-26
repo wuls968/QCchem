@@ -26,7 +26,71 @@ def test_h2_4site_lattice_qed_sparse_exact_writes_projected_engine_artifact(tmp_
     assert result.qft_model.engine["pauli_materialization"] == "skipped"
     assert result.qft_model.physical_sector["basis_hash"]
     assert result.qft_model.physical_sector["basis_index_count"] == result.qft_model.engine["projected_dimension"]
-    assert "QFT Physical-Sector Engine Audit" in result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert result.artifacts.quantum_evidence_json is not None
+
+    payload = json.loads(result.artifacts.result_json.read_text(encoding="utf-8"))
+    sidecar = json.loads(result.artifacts.quantum_evidence_json.read_text(encoding="utf-8"))
+    chemical_accuracy = payload["chemical_accuracy"]
+    assert chemical_accuracy["finite_model_exactness"]["status"] == "passed"
+    assert chemical_accuracy["continuum_chemistry_accuracy"]["status"] == "not_claimed"
+    assert chemical_accuracy["hardware_accuracy"]["status"] == "unavailable"
+    assert chemical_accuracy["meets_chemical_accuracy"] is None
+    assert payload["evidence_summary"]["chemical_accuracy_status"] == "not_claimed"
+
+    result_hamiltonian = payload["quantum_evidence"]["hamiltonian"]
+    sidecar_hamiltonian = sidecar["hamiltonian"]
+    assert result_hamiltonian["pauli_terms_available"] is False
+    assert sidecar_hamiltonian["pauli_terms_available"] is False
+    assert sidecar_hamiltonian["pauli_terms"] == []
+    assert result_hamiltonian["pauli_term_count"] is None
+    assert sidecar_hamiltonian["pauli_term_count"] is None
+    assert result_hamiltonian["projected_matrix_dimension"] == result.qft_model.engine["projected_dimension"]
+    assert result_hamiltonian["projected_hamiltonian_nnz"] == result.qft_model.engine["projected_hamiltonian_nnz"]
+    assert result_hamiltonian["physical_sector_dimension"] == result.qft_model.physical_sector["basis_index_count"]
+    assert result_hamiltonian["basis_hash"] == result.qft_model.physical_sector["basis_hash"]
+
+    for validation in (
+        payload["qft_model"]["sparse_exact_validation"],
+        payload["quantum_evidence"]["sparse_exact_validation"],
+        sidecar["sparse_exact_validation"],
+    ):
+        assert validation["available"] is True
+        assert validation["eigen_residual_norm"] <= 1.0e-8
+        assert validation["relative_eigen_residual"] <= 1.0e-8
+        assert validation["ground_state_gap"] is not None
+        assert validation["lowest_eigenvalues"]
+        assert validation["projected_matrix_sha256"]
+        assert validation["projected_matrix_dimension"] == result.qft_model.engine["projected_dimension"]
+        assert validation["projected_hamiltonian_nnz"] == result.qft_model.engine["projected_hamiltonian_nnz"]
+
+    observable_keys = {
+        "site_density",
+        "link_electric_flux",
+        "electric_energy_by_link",
+        "onsite_energy_by_site",
+        "hopping_energy_by_link",
+        "gauss_law_residual_by_site",
+        "dominant_physical_sector_configurations",
+    }
+    observables = payload["qft_model"]["observables"]
+    assert observable_keys <= set(observables)
+    for key in observable_keys:
+        assert "available" in observables[key]
+        if observables[key]["available"] is False:
+            assert observables[key]["reason"]
+
+    measurement = sidecar["measurement"]
+    assert measurement["measurement_group_count_scope"] == "sparse_exploratory_estimate"
+    assert measurement["estimated_measurement_cost_scope"] == "sparse_exploratory_estimate"
+    assert measurement["estimated_measurement_cost_is_hardware_cost"] is False
+
+    report = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "Trust Boundary Summary / 可信边界摘要" in report
+    assert "本次结果不证明 continuum chemistry accuracy" in report
+    assert "QFT Physical-Sector Engine Audit" in report
+    assert "pauli_terms_available" in report
+    assert "eigen_residual_norm" in report
+    assert "projected_matrix_sha256" in report
 
 
 @pytest.mark.integration

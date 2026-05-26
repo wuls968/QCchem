@@ -779,6 +779,11 @@ def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
         raise ValueError(
             "problem.qft.engine.representation must be one of auto, sparse_projected, sparse_full, or dense_full."
         )
+    engine_projected_builder = str(engine_raw.get("projected_builder", "auto")).strip().lower()
+    if engine_projected_builder not in {"auto", "sector_first", "legacy_full_project"}:
+        raise ValueError(
+            "problem.qft.engine.projected_builder must be one of auto, sector_first, or legacy_full_project."
+        )
     engine_materialize_pauli = str(engine_raw.get("materialize_pauli", "auto")).strip().lower()
     if engine_materialize_pauli not in {"auto", "always", "never"}:
         raise ValueError("problem.qft.engine.materialize_pauli must be one of auto, always, or never.")
@@ -794,6 +799,43 @@ def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
     engine_projector_tolerance = float(engine_raw.get("projector_tolerance", 1.0e-8))
     if engine_projector_tolerance <= 0.0:
         raise ValueError("problem.qft.engine.projector_tolerance must be positive.")
+    runtime_time_indices_raw = dynamics_runtime_raw.get("time_point_indices")
+    runtime_time_indices = None
+    if runtime_time_indices_raw is not None:
+        if not isinstance(runtime_time_indices_raw, list):
+            raise ValueError("problem.qft.dynamics.runtime.time_point_indices must be a list.")
+        runtime_time_indices = [int(value) for value in runtime_time_indices_raw]
+        if any(value < 0 for value in runtime_time_indices):
+            raise ValueError("problem.qft.dynamics.runtime.time_point_indices entries must be non-negative.")
+    runtime_observable_names_raw = dynamics_runtime_raw.get("observable_names")
+    runtime_observable_names = None
+    if runtime_observable_names_raw is not None:
+        if not isinstance(runtime_observable_names_raw, list):
+            raise ValueError("problem.qft.dynamics.runtime.observable_names must be a list.")
+        runtime_observable_names = [str(value) for value in runtime_observable_names_raw]
+        if not runtime_observable_names:
+            raise ValueError("problem.qft.dynamics.runtime.observable_names must not be empty.")
+    runtime_max_pub_count = (
+        int(dynamics_runtime_raw["max_pub_count"])
+        if dynamics_runtime_raw.get("max_pub_count") is not None
+        else None
+    )
+    if runtime_max_pub_count is not None and runtime_max_pub_count < 1:
+        raise ValueError("problem.qft.dynamics.runtime.max_pub_count must be positive.")
+    runtime_max_total_pub_shots = (
+        int(dynamics_runtime_raw["max_total_pub_shots"])
+        if dynamics_runtime_raw.get("max_total_pub_shots") is not None
+        else None
+    )
+    if runtime_max_total_pub_shots is not None and runtime_max_total_pub_shots < 1:
+        raise ValueError("problem.qft.dynamics.runtime.max_total_pub_shots must be positive.")
+    runtime_max_logical_depth = (
+        int(dynamics_runtime_raw["max_logical_depth"])
+        if dynamics_runtime_raw.get("max_logical_depth") is not None
+        else None
+    )
+    if runtime_max_logical_depth is not None and runtime_max_logical_depth < 1:
+        raise ValueError("problem.qft.dynamics.runtime.max_logical_depth must be positive.")
 
     return LatticeQEDSpec(
         enabled=bool(qft_raw.get("enabled", False)),
@@ -839,6 +881,7 @@ def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
             auto_project_physical_sector=bool(
                 engine_raw.get("auto_project_physical_sector", True)
             ),
+            projected_builder=engine_projected_builder,
             max_projected_dimension=engine_max_projected_dimension,
             max_full_qubits_for_dense=engine_max_full_qubits_for_dense,
             materialize_pauli=engine_materialize_pauli,
@@ -872,6 +915,11 @@ def _parse_lattice_qed(problem_raw: dict[str, Any]) -> LatticeQEDSpec:
                 runtime_observables=str(
                     dynamics_runtime_raw.get("runtime_observables", "aggregate_gauge")
                 ),
+                time_point_indices=runtime_time_indices,
+                observable_names=runtime_observable_names,
+                max_pub_count=runtime_max_pub_count,
+                max_total_pub_shots=runtime_max_total_pub_shots,
+                max_logical_depth=runtime_max_logical_depth,
             ),
         ),
     )

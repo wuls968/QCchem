@@ -121,6 +121,7 @@ def test_load_run_spec_parses_lattice_qed_defaults(tmp_path: Path) -> None:
     assert spec.problem.qft.ansatz.generator_policy == "gauge_invariant_hopping"
     assert spec.problem.qft.engine.representation == "auto"
     assert spec.problem.qft.engine.auto_project_physical_sector is True
+    assert spec.problem.qft.engine.projected_builder == "auto"
     assert spec.problem.qft.engine.max_projected_dimension == 4096
     assert spec.problem.qft.engine.max_full_qubits_for_dense == 10
     assert spec.problem.qft.engine.materialize_pauli == "auto"
@@ -136,6 +137,8 @@ def test_load_run_spec_parses_lattice_qed_defaults(tmp_path: Path) -> None:
     assert spec.problem.qft.dynamics.evolution.trotter_step == pytest.approx(0.05)
     assert spec.problem.qft.dynamics.runtime.enabled is True
     assert spec.problem.qft.dynamics.runtime.runtime_observables == "aggregate_gauge"
+    assert spec.problem.qft.dynamics.runtime.time_point_indices is None
+    assert spec.problem.qft.dynamics.runtime.observable_names is None
 
 
 def test_lattice_qed_grid_shape_must_match_dimensions(tmp_path: Path) -> None:
@@ -155,6 +158,7 @@ def test_lattice_qed_engine_parses_sparse_projected_options(tmp_path: Path) -> N
         """    engine:
       representation: sparse_projected
       auto_project_physical_sector: true
+      projected_builder: sector_first
       max_projected_dimension: 128
       max_full_qubits_for_dense: 6
       materialize_pauli: never
@@ -167,11 +171,38 @@ def test_lattice_qed_engine_parses_sparse_projected_options(tmp_path: Path) -> N
     spec = load_run_spec(config)
 
     assert spec.problem.qft.engine.representation == "sparse_projected"
+    assert spec.problem.qft.engine.projected_builder == "sector_first"
     assert spec.problem.qft.engine.max_projected_dimension == 128
     assert spec.problem.qft.engine.max_full_qubits_for_dense == 6
     assert spec.problem.qft.engine.materialize_pauli == "never"
     assert spec.problem.qft.engine.store_basis_indices == "hash_only"
     assert spec.problem.qft.engine.projector_tolerance == pytest.approx(1.0e-9)
+
+
+def test_lattice_qed_runtime_parses_micro_batch_limits(tmp_path: Path) -> None:
+    config = tmp_path / "qft_runtime_limits.yaml"
+    _write_qft_config(config)
+    text = config.read_text(encoding="utf-8")
+    text = text.replace(
+        "        runtime_observables: aggregate_gauge\n",
+        """        runtime_observables: aggregate_gauge
+        time_point_indices: [0, 10]
+        observable_names: [particle_number, total_gauss_violation]
+        max_pub_count: 4
+        max_total_pub_shots: 2048
+        max_logical_depth: 200
+""",
+    )
+    config.write_text(text, encoding="utf-8")
+
+    spec = load_run_spec(config)
+
+    runtime = spec.problem.qft.dynamics.runtime
+    assert runtime.time_point_indices == [0, 10]
+    assert runtime.observable_names == ["particle_number", "total_gauss_violation"]
+    assert runtime.max_pub_count == 4
+    assert runtime.max_total_pub_shots == 2048
+    assert runtime.max_logical_depth == 200
 
 
 def test_lattice_qed_engine_rejects_invalid_materialization_policy(tmp_path: Path) -> None:

@@ -18,6 +18,7 @@ from qcchem.chem.external_charges import (
 from qcchem.core import LatticeQEDSpec, MoleculeSpec, QFTModelSummary
 from qcchem.qft.grid import ATOMIC_NUMBERS, LatticeGrid, build_lattice_grid
 from qcchem.qft.links import U1LinkOperators, build_u1_link_operators, matrix_to_sparse_pauli
+from qcchem.qft.projected_builder import build_sector_first_projected
 
 
 @dataclass(slots=True)
@@ -1140,6 +1141,214 @@ def _sparse_reference_gauss_expectations(
     return payload
 
 
+def _build_sector_first_lattice_qed_context(
+    molecule: MoleculeSpec,
+    spec: LatticeQEDSpec,
+    grid: LatticeGrid,
+    link_ops: U1LinkOperators,
+    target: int,
+    external_point_charges: ResolvedExternalPointCharges | None,
+    *,
+    actual_representation: str,
+    materialize_resolved: bool,
+    total_qubits: int,
+) -> LatticeQEDContext:
+    projected = build_sector_first_projected(
+        molecule,
+        spec,
+        grid,
+        link_ops,
+        target,
+        external_point_charges,
+        total_qubits=total_qubits,
+    )
+    target_charge_values = projected.basis.target_charge_values
+    tolerance = float(spec.engine.projector_tolerance)
+    physical_sector = projected.basis.physical_sector_payload(
+        max_qubits=int(spec.constraints.max_sector_enumeration_qubits),
+        tolerance=tolerance,
+        target_charge_sector=str(spec.constraints.target_charge_sector),
+    )
+    physical_sector["estimated_full_dimension"] = int(projected.matter_dimension * projected.gauge_dimension)
+    sparse_bundle = SparseLatticeQEDBundle(
+        full_hamiltonian=sp.csr_matrix(
+            (projected.metadata["full_dimension"], projected.metadata["full_dimension"]),
+            dtype=complex,
+        ),
+        sector_matrices={},
+        gauss_law_matrices=[],
+        projected_hamiltonian=projected.hamiltonian,
+        projected_sector_matrices=projected.sectors,
+        projected_gauss_law_matrices=projected.gauss_law_matrices,
+        physical_indices=projected.basis.physical_indices,
+        metadata=dict(projected.metadata),
+    )
+    gauss_metadata, commutator_metadata = _build_gauss_law_summary(
+        projected.gauss_law_matrices,
+        hamiltonian_matrix=np.zeros((0, 0), dtype=complex),
+        target_charge_values=target_charge_values,
+        atol=tolerance,
+        materialize_pauli=False,
+    )
+    ansatz_metadata, ansatz_generator_ops = _build_gauge_invariant_ansatz_plan(
+        projected.sectors,
+        projected.gauss_law_matrices,
+        spec,
+        atol=tolerance,
+        materialize_pauli=False,
+    )
+    reference = physical_sector.get("reference_basis_index")
+    reference_row = 0 if projected.basis.dimension else None
+    residuals = []
+    if reference_row is not None:
+        residuals = [
+            float(value - target_value)
+            for value, target_value in zip(
+                projected.basis.gauss_values[int(reference_row)].tolist(),
+                target_charge_values,
+            )
+        ]
+    constraint_expectations = {
+        "available": reference is not None,
+        "gauss_law_tolerance": tolerance,
+        "target_charge_sector": str(spec.constraints.target_charge_sector),
+        "reference_basis_index": reference,
+        "reference_state_gauss_law_residuals": residuals,
+        "reference_state_max_abs_gauss_law": (
+            float(max(abs(value) for value in residuals)) if residuals else None
+        ),
+    }
+    constraints = {
+        "gauss_law_penalty": float(spec.constraints.gauss_law_penalty),
+        "particle_number_penalty": float(spec.constraints.particle_number_penalty),
+        "padding_penalty": float(spec.constraints.padding_penalty),
+        "enforce_physical_sector": bool(spec.constraints.enforce_physical_sector),
+        "target_charge_sector": str(spec.constraints.target_charge_sector),
+        "gauss_law_tolerance": float(spec.constraints.gauss_law_tolerance),
+        "max_sector_enumeration_qubits": int(spec.constraints.max_sector_enumeration_qubits),
+    }
+    constraint_residuals = {
+        "gauss_law_penalty": float(spec.constraints.gauss_law_penalty),
+        "particle_number_penalty": float(spec.constraints.particle_number_penalty),
+        "padding_penalty": float(spec.constraints.padding_penalty),
+        "max_hamiltonian_gauge_commutator_norm": None,
+        "reference_state_max_abs_gauss_law": float(
+            constraint_expectations.get("reference_state_max_abs_gauss_law") or 0.0
+        ),
+    }
+    gauge_qubits = len(grid.links) * link_ops.num_qubits
+    nuclear_repulsion = _nuclear_repulsion(molecule, spec.grid.softening)
+    external_nuclear_energy = float(
+        external_point_charges.qm_nuclear_interaction_energy
+        if external_point_charges is not None and external_point_charges.enabled
+        else 0.0
+    )
+    external_summary = (
+        external_point_charges.to_summary(adapter_strategy="lattice_qed.scalar_potential_only")
+        if external_point_charges is not None and external_point_charges.enabled
+        else None
+    )
+    external_payload = {}
+    if external_summary is not None:
+        external_summary.risk_notes.append(
+            "Lattice-QED treats external point charges as an added scalar onsite potential only; Gauss-law background charges are unchanged."
+        )
+        external_payload = {
+            "enabled": True,
+            "charge_count": external_summary.charge_count,
+            "total_charge": external_summary.total_charge,
+            "unit": external_summary.unit,
+            "adapter_strategy": external_summary.adapter_strategy,
+            "qm_nuclear_interaction_energy": external_summary.qm_nuclear_interaction_energy,
+            "includes_mm_self_energy": external_summary.includes_mm_self_energy,
+            "gauss_law_background_modified": False,
+            "risk_notes": list(external_summary.risk_notes),
+        }
+    qubit_hamiltonian = SparsePauliOp.from_list([("I" * total_qubits, 0.0)])
+    if materialize_resolved:
+        qubit_hamiltonian = matrix_to_sparse_pauli(
+            projected.hamiltonian.toarray(),
+            atol=1.0e-10,
+        ).simplify(atol=1.0e-10)
+    engine_metadata = {
+        "requested_representation": spec.engine.representation,
+        "actual_representation": actual_representation,
+        "operator_representation": actual_representation,
+        "auto_project_physical_sector": bool(spec.engine.auto_project_physical_sector),
+        "projected_builder": spec.engine.projected_builder,
+        "build_mode": projected.metadata["build_mode"],
+        "projected_dimension": int(projected.basis.dimension),
+        "full_dimension": int(projected.metadata["full_dimension"]),
+        "full_to_projected_reduction": projected.metadata.get("full_to_projected_reduction"),
+        "peak_matrix_dimension": projected.metadata.get("peak_matrix_dimension"),
+        "projected_builder_fallback_reason": None,
+        "max_projected_dimension": int(spec.engine.max_projected_dimension),
+        "max_full_qubits_for_dense": int(spec.engine.max_full_qubits_for_dense),
+        "materialize_pauli": spec.engine.materialize_pauli,
+        "pauli_materialization": "materialized" if materialize_resolved else "skipped",
+        "dense_full_matrix_materialized": False,
+        "store_basis_indices": spec.engine.store_basis_indices,
+        "projector_tolerance": tolerance,
+        "full_hamiltonian_nnz": None,
+        "projected_hamiltonian_nnz": int(projected.hamiltonian.nnz),
+        "sector_nnz": dict(projected.metadata.get("sector_nnz", {})),
+        "projection_skipped_reason": None,
+    }
+    return LatticeQEDContext(
+        qubit_hamiltonian=qubit_hamiltonian,
+        summary=QFTModelSummary(
+            enabled=True,
+            model=spec.model,
+            dimensions=spec.dimensions,
+            grid_shape=list(spec.grid.shape),
+            grid_spacing=[float(value) for value in spec.grid.spacing],
+            grid_origin=spec.grid.origin,
+            grid_axes=spec.grid.axes,
+            boundary=spec.grid.boundary,
+            softening=float(spec.grid.softening),
+            site_count=grid.site_count,
+            link_count=len(grid.links),
+            plaquette_count=len(grid.plaquettes),
+            matter_mode_count=projected.matter_modes,
+            matter_qubits=projected.matter_modes,
+            gauge_qubits=gauge_qubits,
+            total_qubits=total_qubits,
+            gauge_group=spec.gauge.group,
+            gauge_electric_cutoff=int(spec.gauge.electric_cutoff),
+            gauge_coupling=float(spec.gauge.coupling),
+            target_electrons=target,
+            term_counts_by_sector={name: int(matrix.nnz) for name, matrix in projected.sectors.items()},
+            constraints=constraints,
+            constraint_residuals=constraint_residuals,
+            nuclear_charge_by_site=[float(value) for value in grid.nuclear_charge_by_site],
+            gauss_law_generators=gauss_metadata,
+            hamiltonian_gauge_commutator_norms=commutator_metadata,
+            physical_sector=physical_sector,
+            gauge_invariant_ansatz=ansatz_metadata,
+            constraint_expectations=constraint_expectations,
+            engine=engine_metadata,
+            external_point_charges=external_payload,
+            notes=[
+                "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+                "Physical-sector-first builder materialized only the projected sparse operator.",
+                "Sparse/projected engine is an internal finite-cutoff representation, not continuum chemistry.",
+                "Runtime circuits still act on the full qubit register unless explicitly transformed.",
+            ],
+        ),
+        grid=grid,
+        link_operator=link_ops,
+        nuclear_repulsion_energy=nuclear_repulsion,
+        external_point_charge_nuclear_interaction_energy=external_nuclear_energy,
+        external_point_charges=external_summary,
+        target_electrons=target,
+        hamiltonian_matrix=np.zeros((0, 0), dtype=complex),
+        sector_matrices={},
+        gauss_law_matrices=[],
+        ansatz_generator_ops=ansatz_generator_ops,
+        sparse_bundle=sparse_bundle,
+    )
+
+
 def _build_sparse_lattice_qed_context(
     molecule: MoleculeSpec,
     spec: LatticeQEDSpec,
@@ -1152,6 +1361,27 @@ def _build_sparse_lattice_qed_context(
     materialize_resolved: bool,
     total_qubits: int,
 ) -> LatticeQEDContext:
+    projected_builder_fallback_reason = None
+    if (
+        actual_representation == "sparse_projected"
+        and bool(spec.constraints.enforce_physical_sector)
+        and spec.engine.projected_builder.strip().lower() != "legacy_full_project"
+    ):
+        try:
+            return _build_sector_first_lattice_qed_context(
+                molecule,
+                spec,
+                grid,
+                link_ops,
+                target,
+                external_point_charges,
+                actual_representation=actual_representation,
+                materialize_resolved=materialize_resolved,
+                total_qubits=total_qubits,
+            )
+        except ValueError as exc:
+            projected_builder_fallback_reason = str(exc)
+
     sectors, gauss_law_matrices, matter_modes, matter_dimension, gauge_dimension = _build_sparse_sector_matrices(
         molecule,
         spec,
@@ -1263,7 +1493,16 @@ def _build_sparse_lattice_qed_context(
         "actual_representation": actual_representation,
         "operator_representation": actual_representation,
         "auto_project_physical_sector": bool(spec.engine.auto_project_physical_sector),
+        "projected_builder": spec.engine.projected_builder,
+        "build_mode": "legacy_full_project",
         "projected_dimension": sparse_bundle.metadata.get("projected_dimension"),
+        "full_to_projected_reduction": (
+            float(full_dimension) / float(sparse_bundle.metadata.get("projected_dimension"))
+            if sparse_bundle.metadata.get("projected_dimension")
+            else None
+        ),
+        "peak_matrix_dimension": int(full_dimension),
+        "projected_builder_fallback_reason": projected_builder_fallback_reason,
         "full_dimension": int(full_dimension),
         "max_projected_dimension": int(spec.engine.max_projected_dimension),
         "max_full_qubits_for_dense": int(spec.engine.max_full_qubits_for_dense),
@@ -1489,7 +1728,12 @@ def build_lattice_qed_context(
         "actual_representation": actual_representation,
         "operator_representation": actual_representation,
         "auto_project_physical_sector": bool(spec.engine.auto_project_physical_sector),
+        "projected_builder": spec.engine.projected_builder,
+        "build_mode": "dense_full",
         "projected_dimension": None,
+        "full_to_projected_reduction": None,
+        "peak_matrix_dimension": int(matter_dimension * gauge_dimension),
+        "projected_builder_fallback_reason": None,
         "full_dimension": int(matter_dimension * gauge_dimension),
         "max_projected_dimension": int(spec.engine.max_projected_dimension),
         "max_full_qubits_for_dense": int(spec.engine.max_full_qubits_for_dense),

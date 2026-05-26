@@ -262,6 +262,7 @@ class LatticeQEDEngineSpec:
 
     representation: str = "auto"
     auto_project_physical_sector: bool = True
+    projected_builder: str = "auto"
     max_projected_dimension: int = 4096
     max_full_qubits_for_dense: int = 10
     materialize_pauli: str = "auto"
@@ -306,6 +307,11 @@ class LatticeQEDDynamicsRuntimeSpec:
 
     enabled: bool = False
     runtime_observables: str = "aggregate_gauge"
+    time_point_indices: list[int] | None = None
+    observable_names: list[str] | None = None
+    max_pub_count: int | None = None
+    max_total_pub_shots: int | None = None
+    max_logical_depth: int | None = None
 
 
 @dataclass(slots=True)

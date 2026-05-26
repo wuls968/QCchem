@@ -1,0 +1,46 @@
+benchmark_suite:
+  name: field_model_qft_smoke_v2
+  description: Compact QFT smoke suite for exact, sector, dynamics, sparse, plaquette, and disabled runtime-preview coverage.
+  registry_name: field_model_qft_smoke_v2
+  tags: [benchmark, exploratory, field_model, lattice_qed, qft_smoke]
+  cases:
+    - name: h2_lattice_qed_2site_exact
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, two_site, exact]
+    - name: h2_lattice_qed_2site_sector_audit
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_sector_audit.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, two_site, sector_audit]
+    - name: h2_lattice_qed_2site_dynamics
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, two_site, dynamics, trotter]
+    - name: h2_lattice_qed_4site_sparse_projected
+      kind: run
+      config: configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, four_site, sparse_projected, exact]
+    - name: h2_lattice_qed_2d_plaquette
+      kind: run
+      config: configs/exploratory/h2_2d_lattice_qed_projected_exact.yaml
+      expected_status: exploratory
+      tags: [lattice_qed, two_dimensional, plaquette, sparse_projected]
+    - name: h2_lattice_qed_runtime_preview_disabled
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics_runtime.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.runtime.enabled: false
+        backend.runtime.enabled: false
+        backend.runtime.runtime_ready: false
+        backend.runtime.session_ready: false
+        backend.runtime.batch_ready: false
+        backend.runtime.options:
+          submit_real_job: false
+          wait_for_result: false
+          use_batch: false
+      tags: [lattice_qed, runtime_preview, disabled]

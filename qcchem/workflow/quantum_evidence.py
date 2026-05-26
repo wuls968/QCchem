@@ -31,6 +31,75 @@ def _coerce_real(value: complex | float | int) -> float:
     return float(np.real(value))
 
 
+def _qft_payload(qft_model: Any | None) -> dict[str, Any]:
+    payload = to_primitive(qft_model) if qft_model is not None else {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _pauli_materialization_skipped(qft_payload: dict[str, Any]) -> bool:
+    engine = qft_payload.get("engine") if isinstance(qft_payload.get("engine"), dict) else {}
+    return str(engine.get("pauli_materialization") or "").strip().lower() == "skipped"
+
+
+def _qft_projected_metadata(qft_payload: dict[str, Any]) -> dict[str, Any]:
+    engine = qft_payload.get("engine") if isinstance(qft_payload.get("engine"), dict) else {}
+    physical = (
+        qft_payload.get("physical_sector")
+        if isinstance(qft_payload.get("physical_sector"), dict)
+        else {}
+    )
+    validation = (
+        qft_payload.get("sparse_exact_validation")
+        if isinstance(qft_payload.get("sparse_exact_validation"), dict)
+        else {}
+    )
+    return {
+        "projected_matrix_dimension": validation.get("projected_matrix_dimension")
+        or engine.get("projected_dimension"),
+        "projected_hamiltonian_nnz": validation.get("projected_hamiltonian_nnz")
+        or engine.get("projected_hamiltonian_nnz"),
+        "physical_sector_dimension": validation.get("physical_sector_dimension")
+        or physical.get("physical_sector_dimension")
+        or physical.get("basis_index_count"),
+        "basis_hash": validation.get("basis_hash") or physical.get("basis_hash"),
+        "projected_matrix_sha256": validation.get("projected_matrix_sha256"),
+        "qft_engine_build_mode": engine.get("build_mode"),
+        "qft_engine_actual_representation": engine.get("actual_representation"),
+    }
+
+
+def _measurement_plan_payload(measurement: Any | None, *, pauli_skipped: bool) -> dict[str, Any] | None:
+    plan = to_primitive(measurement)
+    if not isinstance(plan, dict):
+        return None
+    if not pauli_skipped:
+        return plan
+    sparse_group_count = plan.get("group_count")
+    sparse_estimated_cost = plan.get("estimated_shot_cost")
+    notes = list(plan.get("notes", []) or [])
+    notes.extend(
+        [
+            "Pauli terms are unavailable because sparse projected lattice-QED skipped materialization.",
+            "Sparse exploratory estimates are recorded separately from Pauli hardware measurement costs.",
+        ]
+    )
+    plan.update(
+        {
+            "pauli_terms_available": False,
+            "term_count": None,
+            "group_count": None,
+            "estimated_shot_cost": None,
+            "uncompressed_group_count": None,
+            "uncompressed_estimated_shot_cost": None,
+            "cost_reduction_ratio": None,
+            "sparse_exploratory_group_count": sparse_group_count,
+            "sparse_exploratory_estimated_shot_cost": sparse_estimated_cost,
+            "notes": notes,
+        }
+    )
+    return plan
+
+
 def _bind_circuit(circuit: QuantumCircuit, parameters: list[float]) -> QuantumCircuit:
     if not circuit.num_parameters:
         return circuit
@@ -260,7 +329,19 @@ def _pauli_evidence(
     *,
     operator: SparsePauliOp,
     state: Statevector | None,
+    pauli_terms_available: bool = True,
+    unavailable_reason: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    if not pauli_terms_available:
+        return [], [], {
+            "pauli_terms_available": False,
+            "pauli_unavailable_reason": unavailable_reason or "pauli_terms_not_available",
+            "pauli_term_count": None,
+            "measurement_group_count": None,
+            "expectations_available": False,
+            "energy_contribution_sum": None,
+            "coefficient_l1_norm": None,
+        }
     groups = _group_operator(operator)
     labels_to_group: dict[str, int] = {}
     group_payloads: list[dict[str, Any]] = []
@@ -302,6 +383,7 @@ def _pauli_evidence(
             }
         )
     summary = {
+        "pauli_terms_available": True,
         "pauli_term_count": len(operator),
         "measurement_group_count": len(group_payloads),
         "expectations_available": expectation_available,
@@ -499,6 +581,8 @@ def build_and_write_quantum_evidence(
     existing_error_budget: dict[str, Any] | None = None,
 ) -> QuantumEvidenceSummary:
     """Build the compact summary and write the full quantum evidence sidecar."""
+    qft_payload = _qft_payload(qft_model)
+    pauli_skipped = _pauli_materialization_skipped(qft_payload)
     state, bound_circuit, state_notes = _final_state(
         solver_outcome=solver_outcome,
         spectrum=spectrum,
@@ -507,33 +591,72 @@ def build_and_write_quantum_evidence(
     pauli_terms, measurement_groups, hamiltonian_summary = _pauli_evidence(
         operator=mapping.qubit_hamiltonian,
         state=state,
+        pauli_terms_available=not pauli_skipped,
+        unavailable_reason=(
+            "qft_sparse_projected_pauli_materialization_skipped"
+            if pauli_skipped
+            else None
+        ),
     )
+    projected_metadata = _qft_projected_metadata(qft_payload)
+    hamiltonian_summary.update({key: value for key, value in projected_metadata.items() if value is not None})
     shots = int(getattr(backend_summary, "shots", None) or DEFAULT_COUNTS_SHOTS)
     seed = getattr(backend_summary, "seed", None)
-    backend_counts = _sample_counts_from_backend(
-        backend=backend,
-        bound_circuit=bound_circuit,
-        groups=measurement_groups,
-        shots=shots,
-        seed=seed,
-    )
-    if backend_counts is None:
-        group_counts, sampling_summary = _sample_counts_from_state(
-            state=state,
+    if pauli_skipped:
+        group_counts = []
+        sampling_summary = {
+            "available": False,
+            "reason": "pauli_materialization_skipped_for_sparse_projected_lattice_qed",
+            "source": "not_applicable",
+        }
+    else:
+        backend_counts = _sample_counts_from_backend(
+            backend=backend,
+            bound_circuit=bound_circuit,
             groups=measurement_groups,
             shots=shots,
             seed=seed,
         )
-    else:
-        group_counts, sampling_summary = backend_counts
+        if backend_counts is None:
+            group_counts, sampling_summary = _sample_counts_from_state(
+                state=state,
+                groups=measurement_groups,
+                shots=shots,
+                seed=seed,
+            )
+        else:
+            group_counts, sampling_summary = backend_counts
     state_summary = _state_summary(state=state, operator=mapping.qubit_hamiltonian, spectrum=spectrum)
     resources = _resource_summary(bound_circuit, runtime_submission, mapping)
+    resources.update({key: value for key, value in projected_metadata.items() if value is not None})
+    sparse_estimate = bool(pauli_skipped and qft_payload)
+    groups_sha256 = None if pauli_skipped else _json_sha256({"groups": measurement_groups})
+    raw_estimated_cost = getattr(measurement, "estimated_shot_cost", None) if measurement is not None else None
     measurement_summary = {
-        "plan": to_primitive(measurement),
-        "qubit_wise_group_count": len(measurement_groups),
+        "plan": _measurement_plan_payload(measurement, pauli_skipped=pauli_skipped),
+        "qubit_wise_group_count": None if pauli_skipped else len(measurement_groups),
         "counts_shots_per_group": shots,
-        "estimated_measurement_cost": getattr(measurement, "estimated_shot_cost", None) if measurement is not None else None,
-        "groups_sha256": _json_sha256({"groups": measurement_groups}),
+        "estimated_measurement_cost": None if pauli_skipped else raw_estimated_cost,
+        "sparse_exploratory_estimated_measurement_cost": raw_estimated_cost if sparse_estimate else None,
+        "groups_sha256": groups_sha256,
+        "measurement_group_count_scope": (
+            "sparse_exploratory_estimate" if sparse_estimate else "pauli_grouping"
+        ),
+        "estimated_measurement_cost_scope": (
+            "sparse_exploratory_estimate" if sparse_estimate else "pauli_grouping"
+        ),
+        "estimated_measurement_cost_is_hardware_cost": False if sparse_estimate else None,
+        "sparse_estimated_group_count": (
+            getattr(measurement, "group_count", None) if sparse_estimate and measurement is not None else None
+        ),
+        "notes": (
+            [
+                "Pauli terms are not materialized for this sparse projected lattice-QED Hamiltonian.",
+                "Measurement groups and shot cost are exploratory sparse estimates, not real hardware measurement cost.",
+            ]
+            if sparse_estimate
+            else []
+        ),
     }
     symmetry_checks = _symmetry_summary(problem, mapping, qft_model)
     error_budget = _error_budget(
@@ -546,9 +669,19 @@ def build_and_write_quantum_evidence(
         environment_embedding=environment_embedding,
         existing_error_budget=existing_error_budget,
     )
+    sparse_exact_validation = (
+        qft_payload.get("sparse_exact_validation")
+        if isinstance(qft_payload.get("sparse_exact_validation"), dict)
+        else {}
+    )
+    lattice_qed_observables = (
+        qft_payload.get("observables")
+        if isinstance(qft_payload.get("observables"), dict)
+        else {}
+    )
     field_payload = {
         "field_model": to_primitive(field_model),
-        "qft_model": to_primitive(qft_model),
+        "qft_model": qft_payload,
         "qft_dynamics": to_primitive(qft_dynamics),
         "cavity_qed_model": to_primitive(cavity_qed_model),
         "environment_embedding": to_primitive(environment_embedding),
@@ -578,6 +711,8 @@ def build_and_write_quantum_evidence(
         "symmetry_checks": symmetry_checks,
         "resources": resources,
         "error_budget": error_budget,
+        "sparse_exact_validation": sparse_exact_validation,
+        "lattice_qed_observables": lattice_qed_observables,
         "field_and_embedding": field_payload,
         "notes": state_notes,
     }
@@ -600,5 +735,7 @@ def build_and_write_quantum_evidence(
         symmetry_checks=symmetry_checks,
         resources=resources,
         error_budget=error_budget,
+        sparse_exact_validation=sparse_exact_validation,
+        lattice_qed_observables=lattice_qed_observables,
         notes=state_notes,
     )

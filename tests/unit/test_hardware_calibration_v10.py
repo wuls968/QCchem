@@ -213,6 +213,37 @@ def test_runtime_preview_skips_service_initialization_when_submission_disabled(m
     assert summary.options_snapshot["budget_strategy"] == "shot_budget"
 
 
+def test_runtime_real_submission_requires_budget_confirmation_before_service_init(monkeypatch) -> None:
+    fake_runtime_module = types.ModuleType("qiskit_ibm_runtime")
+    fake_runtime_module.__version__ = "test-version"
+
+    class _ExplodingService:
+        def __init__(self) -> None:
+            raise AssertionError("QiskitRuntimeService should not be initialized without confirmation")
+
+    fake_runtime_module.QiskitRuntimeService = _ExplodingService
+    monkeypatch.setitem(__import__("sys").modules, "qiskit_ibm_runtime", fake_runtime_module)
+
+    summary = attempt_runtime_submission(
+        spec=BackendSpec(
+            runtime=RuntimeOptionsSpec(
+                enabled=True,
+                service="ibm_runtime",
+                runtime_ready=True,
+                options={"submit_real_job": True},
+            )
+        ),
+        circuit=SimpleNamespace(num_qubits=2, num_parameters=0),
+        operator=SimpleNamespace(num_qubits=2),
+        parameter_values=[],
+    )
+
+    assert summary is not None
+    assert summary.submitted is False
+    assert summary.failure_category == "runtime_budget_confirmation_missing"
+    assert summary.result_provenance["attempt_stage"] == "confirmation_gate"
+
+
 def test_runtime_submission_callback_runs_immediately_after_job_submit(monkeypatch) -> None:
     fake_runtime_module = types.ModuleType("qiskit_ibm_runtime")
     fake_runtime_module.__version__ = "test-version"
@@ -278,6 +309,7 @@ def test_runtime_submission_callback_runs_immediately_after_job_submit(monkeypat
                 options={
                     "backend_name": "fake_backend",
                     "submit_real_job": True,
+                    "runtime_budget_confirmation": "I understand IBM Runtime budget",
                     "wait_for_result": False,
                 },
             )
@@ -359,6 +391,7 @@ def test_runtime_submission_merges_custom_estimator_options(monkeypatch) -> None
                 options={
                     "backend_name": "fake_backend",
                     "submit_real_job": True,
+                    "runtime_budget_confirmation": "I understand IBM Runtime budget",
                     "wait_for_result": False,
                     "estimator_options": {
                         "dynamical_decoupling": {
@@ -480,6 +513,7 @@ def test_runtime_submission_auto_selects_lowest_layout_error_backend(monkeypatch
                 precision_target=0.02,
                 options={
                     "submit_real_job": True,
+                    "runtime_budget_confirmation": "I understand IBM Runtime budget",
                     "wait_for_result": False,
                     "layout_strategy": "min_weighted_error",
                 },

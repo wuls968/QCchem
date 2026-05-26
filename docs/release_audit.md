@@ -73,7 +73,16 @@ release_audit:
       required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms:
+        - QFT
+        - LR-ACE
+        - TC-QSCI
+        - finite-cutoff
+        - exploratory boundary
+        - release audit
+        - finite_model_exactness
+        - continuum_chemistry_accuracy
+        - hardware_accuracy
       required: true
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
@@ -102,6 +111,14 @@ The Trust-First profile verifies:
 - QFT, LR-ACE, and TC-QSCI assets remain inside the exploratory boundary.
 - QFT language remains finite-cutoff lattice-QED / sparse projected
   physical-sector evidence, not continuum chemistry accuracy.
+- Sparse exact QFT evidence keeps the three-layer accuracy boundary:
+  `finite_model_exactness`, `continuum_chemistry_accuracy`, and
+  `hardware_accuracy`.
+- Sparse projected QFT artifacts do not convert `pauli_materialization=skipped`
+  into fake zero-coefficient Pauli Hamiltonians. The release-facing evidence
+  terms are `pauli_terms_available`, `sparse_exact_validation`,
+  `projected_matrix_sha256`, `basis_hash`, and explicit sparse/exploratory
+  measurement-cost scope.
 - Required docs contain the release language needed for the Trust-First Release.
 
 ## JSON Contract
@@ -124,6 +141,7 @@ for release review and handoff.
 ## Operating Rules
 
 - Do not add real runtime submission to release audit.
+- Do not run QFT hardware micro real suites from release audit.
 - Do not let release audit regenerate curated artifacts.
 - Do not promote QFT, LR-ACE, or TC-QSCI from exploratory to validated through a
   documentation-only change.

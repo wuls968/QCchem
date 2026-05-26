@@ -20,6 +20,7 @@ from qcchem.qft.lattice_qed import (
     _fermion_number_sparse,
     _mode_index,
 )
+from qcchem.qft.projected_builder import build_projected_observable_components
 
 
 @dataclass(slots=True)
@@ -78,6 +79,45 @@ def _project_matrices_if_needed(
 
 def build_qft_observable_matrices(context: LatticeQEDContext) -> QFTObservableMatrices:
     """Build the observable matrices used by QFT dynamics and reports."""
+    projected_components = build_projected_observable_components(context)
+    if projected_components is not None:
+        site_density = projected_components["site_density"]
+        link_electric_flux = projected_components["link_electric_flux"]
+        link_electric_energy = projected_components["link_electric_energy"]
+        gauss_residual = projected_components["gauss_residual"]
+        plaquette_wilson = projected_components["plaquette_wilson"]
+        zero = projected_components["zero"]
+        particle_number = sum(site_density, zero)
+        total_electric_energy = sum(link_electric_energy, zero)
+        total_gauss_violation = sum((matrix @ matrix for matrix in gauss_residual), zero)
+        total_wilson = sum(plaquette_wilson, zero)
+        return QFTObservableMatrices(
+            site_density=site_density,
+            link_electric_flux=link_electric_flux,
+            link_electric_energy=link_electric_energy,
+            gauss_residual=gauss_residual,
+            plaquette_wilson=plaquette_wilson,
+            aggregate={
+                "particle_number": particle_number,
+                "total_electric_energy": total_electric_energy,
+                "total_gauss_violation": total_gauss_violation,
+                "total_wilson": total_wilson,
+            },
+            metadata={
+                "site_density_count": len(site_density),
+                "link_electric_flux_count": len(link_electric_flux),
+                "link_electric_energy_count": len(link_electric_energy),
+                "gauss_residual_count": len(gauss_residual),
+                "plaquette_wilson_count": len(plaquette_wilson),
+                "aggregate_observables": [
+                    "particle_number",
+                    "total_electric_energy",
+                    "total_gauss_violation",
+                    "total_wilson",
+                ],
+                "build_mode": "sector_first_projected",
+            },
+        )
     spin_components = _spin_components(context)
     matter_modes = int(context.summary.matter_mode_count)
     matter_dimension = 2**matter_modes

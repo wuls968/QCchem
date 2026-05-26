@@ -38,6 +38,10 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="Run a QCchem calculation from YAML config.")
     run_parser.add_argument("-c", "--config", type=Path, required=True, help="Path to YAML config.")
     run_parser.add_argument("-o", "--output-dir", type=Path, help="Override artifact output directory.")
+    run_parser.add_argument(
+        "--confirm-runtime-budget",
+        help="Required before any config-requested real IBM Runtime submission can proceed.",
+    )
 
     report_parser = subparsers.add_parser("report", help="Regenerate a run Markdown report from result.json.")
     report_parser.add_argument("result_json", type=Path, help="Path to result.json.")
@@ -60,6 +64,10 @@ def _build_parser() -> argparse.ArgumentParser:
     benchmark_run = benchmark_subparsers.add_parser("run", help="Run a benchmark suite from YAML config.")
     benchmark_run.add_argument("-c", "--config", type=Path, required=True)
     benchmark_run.add_argument("-o", "--output-dir", type=Path)
+    benchmark_run.add_argument(
+        "--confirm-runtime-budget",
+        help="Required before any benchmark case can submit a real IBM Runtime job.",
+    )
     benchmark_report = benchmark_subparsers.add_parser("report", help="Regenerate a benchmark report from JSON.")
     benchmark_report.add_argument("result_json", type=Path)
     benchmark_report.add_argument("-o", "--output", type=Path)
@@ -99,6 +107,10 @@ def _build_parser() -> argparse.ArgumentParser:
     exploratory_run = exploratory_subparsers.add_parser("run", help="Run an exploratory QCchem calculation.")
     exploratory_run.add_argument("-c", "--config", type=Path, required=True)
     exploratory_run.add_argument("-o", "--output-dir", type=Path)
+    exploratory_run.add_argument(
+        "--confirm-runtime-budget",
+        help="Required before any exploratory config can submit a real IBM Runtime job.",
+    )
 
     workbench_parser = subparsers.add_parser("workbench", help="Local QCchem visual workbench.")
     workbench_subparsers = workbench_parser.add_subparsers(dest="workbench_command", required=True)
@@ -249,7 +261,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         try:
-            result = run_from_config(args.config, output_dir=args.output_dir)
+            result = run_from_config(
+                args.config,
+                output_dir=args.output_dir,
+                confirm_runtime_budget=args.confirm_runtime_budget,
+            )
         except ValueError as exc:
             print(f"QCchem run rejected: {exc}")
             return 2
@@ -271,11 +287,18 @@ def main(argv: list[str] | None = None) -> int:
                 f"low_rank_workload={result.runtime_options.low_rank_workload}"
             )
         if result.measurement is not None:
+            measurement_scope = ""
+            if (
+                result.qft_model is not None
+                and (result.qft_model.engine or {}).get("pauli_materialization") == "skipped"
+            ):
+                measurement_scope = " (sparse/exploratory estimate; not hardware measurement cost)"
             print(
                 "Measurement plan: "
                 f"strategy={result.measurement.strategy}, "
                 f"groups={result.measurement.group_count}, "
                 f"estimated_cost={result.measurement.estimated_shot_cost:.0f}"
+                f"{measurement_scope}"
             )
         if result.calibration is not None:
             print(
@@ -367,7 +390,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "benchmark":
         if args.benchmark_command == "run":
-            result = run_benchmark_suite_from_config(args.config, output_dir=args.output_dir)
+            result = run_benchmark_suite_from_config(
+                args.config,
+                output_dir=args.output_dir,
+                confirm_runtime_budget=args.confirm_runtime_budget,
+            )
             if isinstance(result, dict):
                 summary = result.get("summary", {})
                 print(f"Benchmark suite completed: {result.get('suite_name')}")
@@ -449,6 +476,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.config,
                 output_dir=args.output_dir,
                 exploratory_command=True,
+                confirm_runtime_budget=args.confirm_runtime_budget,
             )
             print(f"QCchem exploratory run completed: {result.problem.molecule_name}")
             print(f"Verification status: {result.verification_status}")

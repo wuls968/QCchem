@@ -80,6 +80,7 @@ def test_local_hopping_pulse_dynamics_preserves_gauss_sector_and_records_41_poin
     assert max(abs(value - 1.0) for value in dynamics["exact"]["state_norms"]) <= 1.0e-8
     assert max(dynamics["exact"]["observables"]["total_gauss_violation"]) <= 1.0e-8
     assert dynamics["trotter"]["circuit_resources"]["time_point_count"] == 41
+    assert dynamics["trotter"]["propagation_mode"] == "incremental_monotonic"
     assert dynamics["trotter_error_summary"]["max_loschmidt_abs_error"] is not None
 
 
@@ -135,3 +136,47 @@ def test_trotter_circuit_exists_for_time_point_and_runtime_batch_disabled_record
     assert preview["submitted"] is False
     assert preview["pub_count"] == 1
     assert preview["failure_category"] == "runtime_submission_disabled"
+
+
+def test_qft_runtime_micro_limits_filter_time_points_and_observables() -> None:
+    spec = _h2_spec()
+    spec.dynamics.runtime.time_point_indices = [0, 10]
+    spec.dynamics.runtime.observable_names = ["particle_number", "total_gauss_violation"]
+    spec.dynamics.runtime.max_pub_count = 4
+    spec.dynamics.runtime.max_total_pub_shots = 2048
+    spec.dynamics.runtime.max_logical_depth = 200
+    backend = BackendSpec()
+    backend.runtime.enabled = True
+    backend.runtime.max_budgeted_shots = 512
+    backend.runtime.options["submit_real_job"] = False
+    context = build_lattice_qed_context(_h2_molecule(), spec, mapping_kind="jordan_wigner")
+
+    dynamics = build_lattice_qed_dynamics(context, spec, backend_spec=backend)
+
+    runtime_batch = dynamics["runtime_batch"]
+    assert runtime_batch["pub_count"] == 4
+    assert runtime_batch["failure_category"] == "runtime_submission_disabled"
+    assert {item["observable"] for item in runtime_batch["pubs_preview"]} == {
+        "particle_number",
+        "total_gauss_violation",
+    }
+    assert [item["time"] for item in runtime_batch["pubs_preview"][::2]] == [0.0, 0.5]
+
+
+def test_qft_runtime_budget_gate_rejects_too_many_pubs_before_submission() -> None:
+    spec = _h2_spec()
+    spec.dynamics.runtime.time_point_indices = [0, 10]
+    spec.dynamics.runtime.observable_names = ["particle_number", "total_gauss_violation"]
+    spec.dynamics.runtime.max_pub_count = 3
+    backend = BackendSpec()
+    backend.runtime.enabled = True
+    backend.runtime.options["submit_real_job"] = True
+    backend.runtime.options["runtime_budget_confirmation"] = "I understand IBM Runtime budget"
+    context = build_lattice_qed_context(_h2_molecule(), spec, mapping_kind="jordan_wigner")
+
+    dynamics = build_lattice_qed_dynamics(context, spec, backend_spec=backend)
+
+    runtime_batch = dynamics["runtime_batch"]
+    assert runtime_batch["submitted"] is False
+    assert runtime_batch["failure_category"] == "runtime_budget_exceeded"
+    assert runtime_batch["result_provenance"]["attempt_stage"] == "budget_gate"
