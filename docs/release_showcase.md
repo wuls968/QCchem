@@ -4,6 +4,11 @@ This is the repeatable demo path for the `Trust-First Release`. The path is
 designed to show QCchem as an evidence-first research console rather than a
 collection of unrelated quantum chemistry demos.
 
+Use `README.md` as the public entrypoint and `docs/user_manual.md` as the
+operator guide. This showcase is narrower: it fixes the release demo order and
+keeps validated evidence, exploratory boundary language, and release audit
+expectations aligned.
+
 ## Setup
 
 Install the project and optional UI extras:
@@ -28,6 +33,11 @@ qcchem release audit \
 
 The release audit reads local docs, configs, and artifacts only. It performs no
 runtime submission.
+
+Do not use the showcase to upgrade a claim. If a page shows `hardware_verified`,
+QFT finite-cutoff evidence, LR-ACE flagship evidence, or TC-QSCI exploratory
+evidence, explain the same boundary used in README and the user manual before
+showing raw energy values.
 
 ## Showcase Order
 

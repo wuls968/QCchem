@@ -152,8 +152,11 @@ for release review and handoff.
 - Do not treat an Evidence Capsule or Claim Compiler pass as a replacement for
   a validated baseline, chemical accuracy status, runtime evidence status, or
   release audit.
-- Keep release terms consistent across README, verified scope, release showcase,
-  and reports.
+- Keep release terms consistent across README, user manual, verified scope,
+  release showcase, release audit docs, and reports.
+- Keep docs role-specific but claim-equivalent: README is the public entrypoint,
+  the user manual is the task guide, verified scope is the claim-boundary
+  reference, and release showcase is the demo path.
 - If full pytest runs before the audit, confirm it did not rewrite tracked
   artifacts:
 

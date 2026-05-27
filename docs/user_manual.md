@@ -1,7 +1,11 @@
 # QCchem User Manual
 
-This manual covers the everyday QCchem workflow: install, run, inspect outputs,
-work with aggregate studies, and understand release boundaries.
+This manual is the operational guide for QCchem users. It explains how to run
+local calculations, validate artifacts, inspect evidence, use Research OS
+analysis commands, open the Workbench, and keep release language conservative.
+
+Use the README for quick orientation. Use this manual when you need the exact
+command sequence or the meaning of an artifact field.
 
 ## Installation
 
@@ -12,15 +16,45 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-Optional extras:
+Install optional extras only when needed:
 
 ```bash
-python -m pip install -e ".[ui]"
-python -m pip install -e ".[runtime]"
-python -m pip install -e ".[ai]"
+python -m pip install -e ".[ui]"       # qcchem workbench serve
+python -m pip install -e ".[runtime]"  # IBM Runtime submit/collect helpers
+python -m pip install -e ".[ai]"       # AI workspace provider adapter
 ```
 
-## Single Run Workflow
+Use local output directories such as `artifacts/h2_local` while experimenting.
+Curated artifacts under `artifacts/` are release evidence and should not be
+rewritten casually.
+
+## Command Cheat Sheet
+
+| Goal | Command |
+| --- | --- |
+| Run one calculation | `qcchem run -c configs/h2.yaml -o artifacts/h2_local` |
+| Inspect a config | `qcchem inspect -c configs/lih_active_vqe.yaml` |
+| Regenerate a report | `qcchem report artifacts/h2/result.json` |
+| Preview active-space selection | `qcchem active-space recommend -c configs/lih_active_space_trusted_score.yaml -o artifacts/lih_active_space_recommendation.json --emit-yaml-patch` |
+| Validate PBC/PBC-QMMM | `qcchem validation pbc-qmmm --profile smoke -o artifacts/pbc_qmmm_validation_smoke` |
+| Run a benchmark suite | `qcchem benchmark run -c benchmarks/benchmark_suite_v1.yaml -o artifacts/benchmark_suite_v1_local` |
+| Evaluate benchmark acceptance | `qcchem benchmark accept artifacts/benchmark_suite_v1/benchmark_result.json` |
+| Run a study | `qcchem study run -c configs/studies/mini_comparison.yaml -o artifacts/mini_comparison_study_local` |
+| Run a scan | `qcchem scan run -c configs/scans/h2_short_scan.yaml -o artifacts/h2_short_scan_local` |
+| Index artifacts | `qcchem artifacts index artifacts` |
+| Build an evidence capsule | `qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2` |
+| Plan a research objective | `qcchem objective plan -c configs/objectives/h2_local_validation.yaml -o artifacts/objectives/h2_local_validation_plan` |
+| Check claim language | `qcchem claim check --claim-file examples/claims/hardware_overclaim.txt --target artifacts/hardware_calibration_suite_v1 -o artifacts/claim_reviews/hardware_overclaim` |
+| Review exploratory promotion | `qcchem promote exploratory --artifact artifacts/h2_lr_ace/result.json --target validated_algorithm_candidate -o artifacts/promotion/h2_lr_ace` |
+| Collect a Runtime result | `qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout` |
+| Serve the Workbench | `qcchem workbench serve` |
+| Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
+
+Runtime-capable commands accept `--confirm-runtime-budget`, but real submission
+only unlocks when the configured confirmation phrase is supplied at action time.
+Setting `submit_real_job: true` in YAML is not sufficient by itself.
+
+## Run Single Calculations
 
 Run from a YAML config:
 
@@ -34,7 +68,16 @@ Inspect before running:
 qcchem inspect -c configs/lih_active_vqe.yaml
 ```
 
-Use an XYZ/PDB/MOL/SDF/MOL2 structure file instead of inline YAML geometry:
+Regenerate a report from an existing result:
+
+```bash
+qcchem report artifacts/h2/result.json
+```
+
+### Structure Files
+
+Use `molecule.structure_file` when coordinates live in XYZ, PDB, MOL/SDF V2000,
+or MOL2:
 
 ```yaml
 molecule:
@@ -51,68 +94,46 @@ qcchem run -c examples/h2_from_xyz.yaml -o artifacts/h2_from_xyz_local
 ```
 
 File coordinates are interpreted as angstrom. `charge`, `multiplicity`, and
-`basis` stay in the YAML config. QCchem records the structure file path, parser,
-atom count, selected first record/model, raw file SHA-256, and normalized
-geometry SHA-256 in `result.json`, `report.md`, and QCSchema extras when that
-export is enabled. Do not set both `molecule.geometry` and
-`molecule.structure_file` in the same config.
+`basis` stay in YAML. QCchem records the parser, resolved path, atom count,
+selected first record/model, raw file SHA-256, and normalized geometry SHA-256
+in run provenance. Do not set both `molecule.geometry` and
+`molecule.structure_file` in one config.
 
-Regenerate a report from an existing result:
+## Validate PBC And PBC-QMMM
 
-```bash
-qcchem report artifacts/h2/result.json
-```
-
-Validate the executable Gamma-only PBC/PBC-QMMM path:
+Run the smoke profile:
 
 ```bash
 qcchem validation pbc-qmmm --profile smoke -o artifacts/pbc_qmmm_validation_smoke
 ```
 
-The smoke profile runs `configs/pbc_h2_gamma.yaml`,
-`configs/pbc_h2_qmmm.yaml`, and the non-Gamma rejection fixture. Outputs are
-`pbc_qmmm_validation.json`, `pbc_qmmm_validation.md`, and `metrics.csv`.
-The full profile also exercises VQE/twolocal, active-space, compression,
-LR-ACE, and TC-QSCI routing on the Gamma-only PBC Hamiltonian. The validated
-scope is Gamma-only/supercell electronic structure plus fixed-charge
-PBC-QM/MM Ewald electrostatics; forces, stress, cell optimization, PME dynamics,
-and non-Gamma mapped quantum algorithms remain out of scope. PBC v1 also
-requires closed-shell RHF, fully periodic 3D cells, matching molecule/cell
-units, neutral full QM/MM cells, and `neutralization: reject`; uniform
-backgrounds, mixed periodic axes, open-shell/UHF mapping, and runtime
-submission are rejected.
+The smoke profile runs:
 
-Expected run outputs:
+- `configs/pbc_h2_gamma.yaml`
+- `configs/pbc_h2_qmmm.yaml`
+- a non-Gamma rejection fixture
 
-- `result.json`: structured result payload.
-- `report.md`: human-readable report.
-- `resolved_config.yaml`: fully resolved config snapshot.
-- `run.log`: execution log.
-- `exact_result.json`: exact baseline when available.
-- `quantum_evidence.json`: full quantum evidence sidecar with Pauli terms when
-  they are materialized, measurement groups/counts when available, trajectory,
-  state diagnostics, resource metrics, error budgets, and sparse/projected
-  validation metadata for finite-cutoff field-model runs.
-- `field_model_registry.json`: field-model registry sidecar for implemented and
-  placeholder model families.
-- `field_hamiltonian.json`: sector-level field Hamiltonian terms, energy
-  contributions, and closure checks.
-- `field_observables.json`: lattice-QED or cavity-QED observable payloads.
-- `field_dynamics.json`: finite-cutoff dynamics curves and exact-vs-Trotter
-  observable error matrix when dynamics are enabled.
-- `field_constraints.json`: Gauss-law, physical-sector, photon-subspace, and
-  cutoff constraint evidence.
-- `field_resources.json`: field-model qubit, Pauli-term, dynamics-circuit, and
-  runtime-preview resources.
-- `field_error_budget.json`: finite-cutoff, Trotter, ansatz, photon-cutoff, and
-  placeholder-boundary error budget.
-- PBC/PBC-QMMM: `periodic_boundary` and `pbc_qmmm` result dictionaries, mirrored
-  into reports, QCSchema extras, the artifact index, and workbench view models.
-- `runtime_submission.json`: runtime sidecar when runtime submission is attempted.
-- `calibration.json` and `calibration_report.md`: empirical execution calibration
-  when available.
+It writes `pbc_qmmm_validation.json`, `pbc_qmmm_validation.md`, and
+`metrics.csv`. The full profile also exercises VQE/twolocal, active-space,
+compression, LR-ACE, and TC-QSCI routing on the Gamma-only PBC Hamiltonian.
 
-## Aggregate Workflows
+Validated v1 scope:
+
+- Gamma-only/supercell electronic structure.
+- Fixed-charge PBC-QM/MM Ewald electrostatics.
+- Closed-shell RHF, fully periodic 3D cells, matching molecule/cell units.
+- Neutral full QM/MM cells with `neutralization: reject`.
+- Reports, QCSchema extras, HDF5 exports, artifact indexing, and Workbench
+  model propagation.
+
+Out of scope:
+
+- Non-Gamma mapped quantum algorithms.
+- Forces, stress, cell optimization, PME dynamics, polarization, MM relaxation.
+- Mixed periodic axes, open-shell/UHF mapping, runtime submission.
+- Charged full QM/MM cells or uniform-background neutralization.
+
+## Run Aggregate Workflows
 
 Benchmark suite:
 
@@ -138,17 +159,20 @@ qcchem scan run \
   -o artifacts/h2_short_scan_local
 ```
 
-VQE scan workflows use chemical continuity by default. The first scan point uses
-the configured `solver.initial_point`, the second point uses the previous VQE
-`optimal_parameters`, and later points use a `linear_predictor` over the two
-previous optimized parameter vectors. The run artifact records
-`variational_result.initial_point_provenance`, and scan tables include whether
-the candidate was reused, `candidate_source`, `effective_strategy`, predictor
-history, evaluations, parameter count, and any fallback reason.
+Aggregate workflows preserve underlying run artifacts and add suite-level JSON,
+Markdown reports, tables, registries, and acceptance summaries. Read aggregate
+reports as best-evidence summaries first, then drill into individual case
+artifacts.
+
+VQE scan workflows use chemical continuity by default. The first point uses the
+configured `solver.initial_point`, the second uses the previous VQE optimum, and
+later points use a `linear_predictor` over the two previous optimized parameter
+vectors. Scan tables record candidate reuse, source, effective strategy,
+predictor history, evaluations, parameter count, and fallback reason.
 
 Study workflows keep continuity off by default because many studies compare
 different basis sets, active spaces, mappings, or ansatz shapes. Enable it only
-for ordered sweeps where the YAML run order is chemically meaningful:
+for ordered sweeps where YAML run order is chemically meaningful:
 
 ```yaml
 study:
@@ -158,31 +182,42 @@ study:
     on_parameter_mismatch: fallback
 ```
 
-If the previous optimum has a different parameter count from the current ansatz,
-QCchem does not pad or truncate parameters. It falls back to the run's configured
-`solver.initial_point` and records the mismatch in provenance.
+QCchem does not pad or truncate parameters when ansatz parameter counts differ.
+It falls back to the configured initial point and records the mismatch.
 
-Aggregate reports should be read as evidence summaries first, then as detailed
-case lists.
+## Preview Active-Space Recommendations
 
-## Runtime Collection
-
-If a real Runtime job was submitted and local waiting was interrupted, collect
-the result later:
+Preview a trusted active-space recommendation without running the quantum solver:
 
 ```bash
-qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout
+qcchem active-space recommend \
+  -c configs/lih_active_space_trusted_score.yaml \
+  -o artifacts/lih_active_space_trusted_score_recommendation.json \
+  --emit-yaml-patch
 ```
 
-This reads `runtime_submission.json`, polls provider state when available, and
-merges returned metadata back into `result.json` and `report.md`.
+Active-space auto selection supports:
 
-## Research OS Analysis Loop
+- `frontier_orbitals`: the legacy contiguous HOMO/LUMO window heuristic.
+- `trusted_orbital_score`: a PySCF-backed rule scorer with orbital energies,
+  SCF occupations, optional MP2 natural-occupation diagnostics, candidate
+  scores, confidence, resource-budget rejections, warnings, and provenance
+  under `active_space_metadata.recommendation`.
 
-Use Research Objectives when a study needs an explicit claim, required evidence,
-candidate configs, promotion policy, and recommended next action:
+Treat this as auditable classical preprocessing. It is not a standalone
+chemistry validation claim.
+
+## Use Research OS Analysis Commands
+
+Use Research Objectives for a claim, required evidence, candidate configs,
+promotion policy, and next action:
 
 ```bash
+qcchem objective init \
+  --name h2-local-validation \
+  --claim "H2/STO-3G local statevector energy is validated against exact baseline" \
+  -o configs/objectives/h2_local_validation_draft.yaml
+
 qcchem objective plan \
   -c configs/objectives/h2_local_validation.yaml \
   -o artifacts/objectives/h2_local_validation_plan
@@ -198,7 +233,7 @@ Use Evidence Capsules before treating an artifact as best evidence:
 qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2
 ```
 
-Use the Claim Compiler to detect overclaim language and get a safe rewrite:
+Use the Claim Compiler to detect overclaim language:
 
 ```bash
 qcchem claim check \
@@ -208,7 +243,7 @@ qcchem claim check \
 ```
 
 Use the Promotion Gate before using candidate or validated language for QFT,
-LR-ACE, TC-QSCI, or other exploratory boundary artifacts:
+LR-ACE, TC-QSCI, or any other exploratory boundary artifact:
 
 ```bash
 qcchem promote exploratory \
@@ -217,14 +252,24 @@ qcchem promote exploratory \
   -o artifacts/promotion/h2_lr_ace
 ```
 
-All four commands are local analysis paths. They preserve `trust tier`,
-`baseline strength`, `chemical accuracy status`, `runtime evidence status`, and
-`hardware verification boundary`. They do not submit real hardware jobs or
-promote exploratory artifacts automatically.
+These commands are local analysis paths. They preserve trust tier, baseline
+strength, chemical accuracy status, runtime evidence status, hardware
+verification boundary, and recommended next action. They do not submit hardware
+jobs or promote exploratory artifacts automatically.
 
-## Hardware Optimization
+## Use Runtime And Hardware Paths
 
-Preview first:
+If a real Runtime job was submitted and local waiting was interrupted, collect
+the result later:
+
+```bash
+qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout
+```
+
+This reads `runtime_submission.json`, polls provider state when available, and
+merges returned metadata back into `result.json` and `report.md`.
+
+Preview hardware optimization before any real submission:
 
 ```bash
 qcchem hardware optimize \
@@ -233,15 +278,11 @@ qcchem hardware optimize \
   --preview
 ```
 
-Real submission is intentionally guarded. Do not use submit mode unless the
-budget and backend target have been reviewed at action time.
+Real submission requires explicit runtime-budget confirmation and should remain
+small enough to inspect error bars, residuals, usage, and bias before spending
+more budget.
 
-Runtime-capable `run`, `exploratory run`, `benchmark run`, and hardware
-optimization paths accept `--confirm-runtime-budget`, but only the exact
-confirmation phrase expected by the configured runtime path unlocks real
-submission. Setting `submit_real_job: true` in YAML is not sufficient by itself.
-
-QFT dynamics runtime previews and micro runs should keep tight limits:
+For QFT dynamics runtime previews and micro runs, keep tight limits:
 
 ```yaml
 problem:
@@ -255,13 +296,10 @@ problem:
         max_logical_depth: 200
 ```
 
-Use these fields to prevent the default time-grid/observable product from
-turning into a large Runtime batch. Real QFT micro jobs should remain small
-enough to inspect error bars, residuals, and usage before any larger run.
+## Run Exploratory Workflows
 
-## Exploratory Workflows
-
-Use `qcchem exploratory run` when the config uses an exploratory solver or model.
+Use `qcchem exploratory run` when the config uses an exploratory solver or
+field model.
 
 QFT finite-cutoff lattice-QED:
 
@@ -270,29 +308,7 @@ qcchem exploratory run \
   -c configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
 ```
 
-Sparse projected exact lattice-QED runs are finite-model checks, not continuum
-chemistry claims. Read these fields first:
-
-- `chemical_accuracy.finite_model_exactness`: internal exactness for the
-  configured finite grid/cutoff/softening Hamiltonian.
-- `chemical_accuracy.continuum_chemistry_accuracy`: `not_claimed` unless a
-  convergence scan is attached.
-- `chemical_accuracy.hardware_accuracy`: `unavailable` unless a Runtime or
-  shot-based backend result has been submitted and collected.
-- `qft_model.sparse_exact_validation`: `eigen_residual_norm`,
-  `relative_eigen_residual`, `ground_state_gap`, `lowest_eigenvalues`,
-  `projected_matrix_dimension`, `projected_hamiltonian_nnz`,
-  `physical_sector_dimension`, `basis_hash`, and `projected_matrix_sha256`.
-- `qft_model.observables`: site density, link electric flux, electric energy by
-  link, onsite energy by site, hopping energy by link,
-  Gauss-law residual by site, and dominant physical-sector configurations.
-
-When `qft_model.engine.pauli_materialization` is `skipped`, the quantum
-evidence sidecar records `pauli_terms_available: false` and leaves
-`hamiltonian.pauli_terms` empty. Measurement groups and shot cost in this path
-are sparse/exploratory estimates; they are not hardware measurement budgets.
-
-LR-ACE:
+LR-ACE legacy exploratory probe:
 
 ```bash
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
@@ -304,19 +320,41 @@ TC-QSCI:
 qcchem exploratory run -c configs/exploratory/h2_tc_qsci.yaml
 ```
 
-Exploratory artifacts are reproducible research evidence, but they are not
-validated chemistry claims.
+Exploratory artifacts are reproducible research evidence. They are not
+validated chemistry claims unless a later release explicitly moves them through
+the required validation gate.
 
-## Reading `result.json`
+## Read Artifacts
 
-Start with:
+Expected single-run files:
+
+- `result.json`: structured result payload.
+- `report.md`: human-readable report.
+- `resolved_config.yaml`: fully resolved config snapshot.
+- `run.log`: execution log.
+- `exact_result.json`: exact baseline when available.
+- `quantum_evidence.json`: detailed quantum evidence sidecar.
+- `runtime_submission.json`: runtime sidecar when submission is attempted.
+- `calibration.json` and `calibration_report.md`: empirical calibration when
+  available.
+
+Field-model runs may also write:
+
+- `field_model_registry.json`
+- `field_hamiltonian.json`
+- `field_observables.json`
+- `field_dynamics.json`
+- `field_constraints.json`
+- `field_resources.json`
+- `field_error_budget.json`
+
+Start with these `result.json` fields:
 
 - `schema_version`
 - `problem`
 - `mapping`
 - `backend`
 - `energy`
-- `benchmark`
 - `chemical_accuracy`
 - `runtime_chemical_accuracy`
 - `evidence_summary`
@@ -325,15 +363,7 @@ Start with:
 - `pbc`
 - `pbc_qmmm`
 
-`chemical_accuracy` may contain separate trust layers. For lattice-QED sparse
-exact artifacts, do not treat `absolute_error_hartree: 0` as continuum chemistry
-accuracy. The authoritative interpretation is:
-
-- `finite_model_exactness`: finite Hamiltonian internal exactness.
-- `continuum_chemistry_accuracy`: continuum chemistry claim status.
-- `hardware_accuracy`: Runtime/shot-based hardware claim status.
-
-For Trust-First review, the most important fields are:
+For Trust-First review, read:
 
 - `evidence_summary.primary_scientific_claim`
 - `evidence_summary.primary_baseline`
@@ -341,73 +371,66 @@ For Trust-First review, the most important fields are:
 - `evidence_summary.trust_tier`
 - `evidence_summary.recommended_action`
 
-The compact `quantum_evidence` field points to `quantum_evidence.json` and
-summarizes the detailed evidence layer. Use the sidecar when you need to audit:
+Use `quantum_evidence.json` for:
 
-- Pauli Hamiltonian decomposition and per-term energy contributions when Pauli
-  terms are available.
+- Pauli Hamiltonian decomposition and per-term energy contributions.
 - Measurement grouping, shots, bitstring counts, and count digests.
-- VQE evaluation trajectory and final-state dominant configurations.
+- VQE trajectory and final-state dominant configurations.
 - Hamiltonian variance, particle/spin/Z2/QFT constraint checks.
-- Circuit resources, measurement cost, and ansatz/shot/compression/hardware
-  error budget.
-- Sparse exact validation and lattice-QED observables for projected QFT runs
-  where Pauli materialization was intentionally skipped.
+- Circuit resources, measurement cost, and error budgets.
+- Sparse exact validation and lattice-QED observables when Pauli
+  materialization is skipped.
 
-The compact `field_evidence` field points to the field-model sidecars. Use
-those files for finite-cutoff QFT/cavity evidence:
+Use field sidecars for finite-cutoff QFT and cavity evidence:
 
-- Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law generators,
-  physical-sector hash, Wilson/electric observables, and Trotter diagnostics.
+- Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law
+  generators, physical-sector hash, Wilson/electric observables, and Trotter
+  diagnostics.
 - Pauli-Fierz cavity-QED photon occupation, dipole expectation,
   electron-photon coupling, dipole self energy, polaritonic composition, photon
   leakage, and photon-cutoff inputs.
-- Sector-level field-Hamiltonian energy closure against the solver Hamiltonian.
-- Scalar, fermion, and generic gauge-field placeholder entries are registry
-  schema only and are not scientific evidence.
+- Sector-level field-Hamiltonian energy closure against the solver
+  Hamiltonian.
 
-Mapping resources now separate the executed Hamiltonian from its untapered
-baseline:
+Scalar, fermion, and generic gauge-field placeholder registry entries are schema
+only and are not scientific evidence.
 
-- `mapping.num_qubits` and `mapping.qubit_term_count` describe the executed
-  qubit Hamiltonian.
-- `mapping.raw_num_qubits` and `mapping.raw_qubit_term_count` describe the
-  pre-Z2-tapering Hamiltonian.
-- `mapping.symmetry_tapered_qubits`, `mapping.z2_symmetry_count`, and
-  `mapping.z2_tapering_values` record the Z2 tapering sector and savings.
-- `problem.point_group_metadata` and
-  `reduction_audit.point_group_metadata` record PySCF point-group irreps.
-  Point-group `audit` mode records symmetry only; `irrep_filter` is the
-  explicit model-reduction mode.
+## Interpret Trust Boundaries
 
-Active-space auto selection supports two strategies:
+`hardware_verified` means runtime provenance exists: submission metadata, job
+identity when available, retrieved result status, and sidecar merge history. It
+does not mean chemical accuracy was achieved.
 
-- `frontier_orbitals`: the legacy contiguous HOMO/LUMO window heuristic.
-- `trusted_orbital_score`: a PySCF-backed rule scorer that records orbital
-  energies, SCF occupations, optional MP2 natural-occupation diagnostics,
-  candidate scores, confidence, resource-budget rejections, warnings, and
-  provenance under `active_space_metadata.recommendation`.
+QFT sparse exact artifacts split accuracy into:
 
-Preview a trusted active-space recommendation without running the quantum
-solver:
+- `finite_model_exactness`: internal exactness for the configured finite grid,
+  cutoff, and softening Hamiltonian.
+- `continuum_chemistry_accuracy`: `not_claimed` unless convergence evidence is
+  attached.
+- `hardware_accuracy`: `unavailable` unless a Runtime or shot-based backend
+  result has been submitted and collected.
 
-```bash
-python -m qcchem.cli.main active-space recommend \
-  -c configs/lih_active_space_trusted_score.yaml \
-  -o artifacts/lih_active_space_trusted_score_recommendation.json \
-  --emit-yaml-patch
-```
+When `qft_model.engine.pauli_materialization` is `skipped`, the quantum evidence
+sidecar records `pauli_terms_available: false` and leaves
+`hamiltonian.pauli_terms` empty. Read `sparse_exact_validation` instead:
 
-For exploratory assets, also inspect:
+- `eigen_residual_norm`
+- `relative_eigen_residual`
+- `ground_state_gap`
+- `lowest_eigenvalues`
+- `projected_matrix_dimension`
+- `projected_hamiltonian_nnz`
+- `physical_sector_dimension`
+- `basis_hash`
+- `projected_matrix_sha256`
 
-- `qft_model`
-- `qft_dynamics`
-- `tc_qsci_result`
-- `determinant_selection`
-- `cast_hamiltonian`
-- `low_rank_resource_estimate`
-- `qpe_resource_estimate`
-- `error_budget`
+LR-ACE flagship artifacts are gated method evidence, not blanket method
+validation. Legacy LR-ACE configs remain exploratory unless a release gate says
+otherwise.
+
+TC-QSCI records determinant selection, symmetry-sector checks, CAST sampling
+provenance, low-rank resource estimates, QPE resource estimates, and error
+budget fields. It remains exploratory.
 
 ## Workbench
 
@@ -423,13 +446,18 @@ Default route:
 http://127.0.0.1:8050/overview
 ```
 
-Read pages in this order for release demos:
+Read release-demo pages in this order:
 
 1. Overview
 2. Result Confidence
 3. Benchmarks
 4. Hardware Campaign
 5. AI Workspace
+
+The Workbench should lead with best evidence, trust tier, baseline strength,
+chemical accuracy status, runtime evidence status, hardware verification
+boundary, exploratory boundary, and recommended next action before raw algorithm
+settings.
 
 ## Release Audit
 
@@ -446,4 +474,16 @@ Outputs:
 - `release_readiness.json`
 - `release_readiness.md`
 
-The audit performs no runtime submission and should not mutate curated artifacts.
+Release audit reads local source files, docs, configs, and curated artifacts. It
+performs no runtime submission and should not mutate curated artifacts. On
+failure, read `release_readiness.md` first; it lists failed check names and
+recommended actions.
+
+Before publishing release-facing docs, also run:
+
+```bash
+git diff --check
+git diff --name-only -- artifacts
+```
+
+The second command should print nothing for a documentation-only change.

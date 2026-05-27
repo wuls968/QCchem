@@ -2,6 +2,8 @@
 
 This document defines what QCchem currently verifies, what remains exploratory,
 and which words must not be over-interpreted in release-facing reports.
+Use `README.md` for quick project orientation and `docs/user_manual.md` for
+task-level commands; this file is the stricter claim-boundary reference.
 
 ## Trust-First Release Semantics
 
@@ -240,6 +242,12 @@ artifacts. It performs no runtime submission. The default manifest verifies:
 - QFT, LR-ACE, and TC-QSCI exploratory boundary classification, and
 - required release terms in README, verified scope, release showcase, release
   audit docs, and Research OS docs.
+
+README, user manual, release showcase, and release audit docs may explain the
+same workflows at different depth, but they must preserve the same conservative
+claim rules: `hardware_verified` is runtime provenance, QFT sparse exactness is
+finite-cutoff model evidence, LR-ACE flagship is gate-dependent method evidence,
+and TC-QSCI remains exploratory.
 
 The Research OS checks are deliberately local: evidence capsule, claim compiler,
 promotion gate, and research objective artifacts may be reviewed by the audit,
