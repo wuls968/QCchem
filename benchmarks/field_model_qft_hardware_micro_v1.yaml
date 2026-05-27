@@ -1,0 +1,25 @@
+benchmark_suite:
+  name: field_model_qft_hardware_micro_v1
+  description: Guarded lattice-QED runtime micro suite; defaults to preview-only and never submits real IBM jobs.
+  registry_name: field_model_qft_hardware_micro_v1
+  tags: [benchmark, exploratory, field_model, lattice_qed, hardware_micro, runtime_preview]
+  cases:
+    - name: h2_lattice_qed_hardware_micro_preview
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics_runtime.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.time_grid.stop: 1.0
+        problem.qft.dynamics.time_grid.num_points: 11
+        problem.qft.dynamics.runtime.time_point_indices: [0, 10]
+        problem.qft.dynamics.runtime.observable_names: [particle_number, total_gauss_violation]
+        problem.qft.dynamics.runtime.max_pub_count: 4
+        problem.qft.dynamics.runtime.max_total_pub_shots: 2048
+        problem.qft.dynamics.runtime.max_logical_depth: 200
+        backend.runtime.max_budgeted_shots: 512
+        backend.runtime.options:
+          submit_real_job: false
+          wait_for_result: false
+          use_batch: true
+          default_shots: 512
+      tags: [lattice_qed, hardware_micro, runtime_preview]

@@ -1,0 +1,2085 @@
+{
+  "acceptance_summary": {
+    "accepted": true,
+    "blocking_failures": [],
+    "case_count": 8,
+    "policy": {
+      "fail_on_runtime_accuracy_promotion": true,
+      "require_evidence_summary": true,
+      "require_runtime_sidecar_for_hardware_verified": true,
+      "strict_exit_code": true
+    },
+    "recommended_action": "promote_accepted_benchmark",
+    "required_files": [
+      "result.json"
+    ],
+    "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
+    "suite_name": "field_model_qft_cutoff_grid_convergence_v1",
+    "warnings": []
+  },
+  "artifact_index_entry": {
+    "artifact_kind": "benchmark_suite",
+    "artifact_name": "field_model_qft_cutoff_grid_convergence_v1",
+    "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis",
+    "hardware_verified": false,
+    "has_acceptance_summary": false,
+    "has_hardware_error_diagnostic": false,
+    "has_report_markdown": false,
+    "has_resolved_config": false,
+    "has_result_json": false,
+    "has_runtime_submission": false,
+    "mtime": 1779590237.6426756,
+    "recommended_action": "compare_against_best_evidence",
+    "result_json": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/benchmark_result.json",
+    "runtime_evidence_status": "none",
+    "runtime_submission_status": null,
+    "schema_version": "qcchem.benchmark.v0.4-alpha",
+    "trust_tier": "exploratory",
+    "verification_status": "exploratory"
+  },
+  "artifacts": {
+    "registry_json": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/registry.json",
+    "report_markdown": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/benchmark_report.md",
+    "result_json": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/benchmark_result.json",
+    "root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis"
+  },
+  "calibration_summary": {
+    "cases_with_estimated_cost": 8,
+    "cases_with_measured_cost": 0,
+    "field_model_campaign": {
+      "ansatz_limited_cases": [],
+      "by_model": {
+        "lattice_qed": {
+          "case_count": 8,
+          "cases": [
+            "h2_lattice_qed_cutoff_0",
+            "h2_lattice_qed_cutoff_1",
+            "h2_lattice_qed_cutoff_2",
+            "h2_lattice_qed_spacing_0p60",
+            "h2_lattice_qed_softening_0p25",
+            "h2_lattice_qed_3site_open",
+            "h2_lattice_qed_2site_periodic",
+            "h2_lattice_qed_numeric_charge_sector_0"
+          ],
+          "hardware_candidates": []
+        }
+      },
+      "case_count": 8,
+      "cutoff_sensitive_cases": [],
+      "hardware_candidates": [],
+      "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+      "recommended_trotter_step": null,
+      "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+      "trotter_limited_cases": []
+    },
+    "mean_achieved_error": 1.4654943925052066e-14,
+    "mean_estimated_cost": 250000.0,
+    "mean_measured_cost": null
+  },
+  "cases": [
+    {
+      "absolute_error": 2.4868995751603507e-14,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_0",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 2.4868995751603507e-14
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_cutoff_0 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_cutoff_0",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 2.4868995751603507e-14,
+        "benchmark_absolute_error": 2.4868995751603507e-14,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 10000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 0,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 32,
+            "full_hamiltonian_nnz": 32,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 32,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 0,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 24,
+              "hopping": 0,
+              "magnetic_plaquette": 0,
+              "onsite": 30,
+              "padding_penalty": 16,
+              "particle_number_penalty": 20
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 32,
+          "gauge_qubits": 1,
+          "matter_qubits": 4,
+          "pauli_terms": 12,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 0,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 3,
+            "hopping": 0,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 2,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 5
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.005445000002509914,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 1,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 12,
+        "physical_sector_dimension": 4,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 5,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.08830762500292622,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_cutoff_0",
+      "notes": [],
+      "relative_error": 3.053851789319376e-15,
+      "status": "exploratory",
+      "total_energy": -6.921881558007845
+    },
+    {
+      "absolute_error": 1.0658141036401503e-14,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_1",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.0658141036401503e-14
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_cutoff_1 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_cutoff_1",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.0658141036401503e-14,
+        "benchmark_absolute_error": 1.0658141036401503e-14,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 64,
+            "full_hamiltonian_nnz": 96,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 64,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 32,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 54,
+              "hopping": 32,
+              "magnetic_plaquette": 0,
+              "onsite": 60,
+              "padding_penalty": 16,
+              "particle_number_penalty": 40
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 64,
+          "gauge_qubits": 2,
+          "matter_qubits": 4,
+          "pauli_terms": 54,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 2,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 12,
+            "hopping": 32,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 4,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 6
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0027317920030327514,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 54,
+        "physical_sector_dimension": 6,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 6,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.10376470799383242,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_cutoff_1",
+      "notes": [],
+      "relative_error": 1.1000527290666323e-15,
+      "status": "exploratory",
+      "total_energy": -8.4671514060141
+    },
+    {
+      "absolute_error": 1.7763568394002505e-15,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_2",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.7763568394002505e-15
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_cutoff_2 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_cutoff_2",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.7763568394002505e-15,
+        "benchmark_absolute_error": 1.7763568394002505e-15,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 490000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 2,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 128,
+            "full_hamiltonian_nnz": 192,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 128,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 64,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 110,
+              "hopping": 64,
+              "magnetic_plaquette": 0,
+              "onsite": 120,
+              "padding_penalty": 48,
+              "particle_number_penalty": 80
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 128,
+          "gauge_qubits": 3,
+          "matter_qubits": 4,
+          "pauli_terms": 122,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 6,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 32,
+            "hopping": 80,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 8,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 7
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.014303749994724058,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 49,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 122,
+        "physical_sector_dimension": 6,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 7,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.15329658400150947,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_cutoff_2",
+      "notes": [],
+      "relative_error": 1.833421215111056e-16,
+      "status": "exploratory",
+      "total_energy": -8.467151406014102
+    },
+    {
+      "absolute_error": 1.7763568394002505e-14,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.7763568394002505e-14
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_spacing_0p60 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_spacing_0p60",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.7763568394002505e-14,
+        "benchmark_absolute_error": 1.7763568394002505e-14,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.6
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 64,
+            "full_hamiltonian_nnz": 96,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 64,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 32,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 54,
+              "hopping": 32,
+              "magnetic_plaquette": 0,
+              "onsite": 60,
+              "padding_penalty": 16,
+              "particle_number_penalty": 40
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 64,
+          "gauge_qubits": 2,
+          "matter_qubits": 4,
+          "pauli_terms": 54,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 2,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 12,
+            "hopping": 32,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 4,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 6
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0019547499978216365,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 54,
+        "physical_sector_dimension": 6,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 6,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.10655441699782386,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_spacing_0p60",
+      "notes": [],
+      "relative_error": 1.6465829377268832e-15,
+      "status": "exploratory",
+      "total_energy": -9.566537409920109
+    },
+    {
+      "absolute_error": 1.0658141036401503e-14,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_softening_0p25",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 1.0658141036401503e-14
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_softening_0p25 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_softening_0p25",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 1.0658141036401503e-14,
+        "benchmark_absolute_error": 1.0658141036401503e-14,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 64,
+            "full_hamiltonian_nnz": 96,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 64,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 32,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 54,
+              "hopping": 32,
+              "magnetic_plaquette": 0,
+              "onsite": 60,
+              "padding_penalty": 16,
+              "particle_number_penalty": 40
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 64,
+          "gauge_qubits": 2,
+          "matter_qubits": 4,
+          "pauli_terms": 54,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 2,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 12,
+            "hopping": 32,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 4,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 6
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0018469580099917948,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 54,
+        "physical_sector_dimension": 6,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 6,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.11105258300085552,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_softening_0p25",
+      "notes": [],
+      "relative_error": 8.816572521003661e-16,
+      "status": "exploratory",
+      "total_energy": -10.808493996311938
+    },
+    {
+      "absolute_error": 0.0,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_3site_open",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 0.0
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_3site_open is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_3site_open",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 0.0,
+        "benchmark_absolute_error": 0.0,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "qubit_count_above_hardware_gate",
+          "hardware_skip_reasons": [
+            "qubit_count_above_hardware_gate",
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              3
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 1024,
+            "full_hamiltonian_nnz": 2048,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 1024,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 768,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 1000,
+              "hopping": 1024,
+              "magnetic_plaquette": 0,
+              "onsite": 1008,
+              "padding_penalty": 448,
+              "particle_number_penalty": 784
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 1024,
+          "gauge_qubits": 4,
+          "matter_qubits": 6,
+          "pauli_terms": 112,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 3,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 36,
+            "hopping": 64,
+            "magnetic_plaquette": 0,
+            "onsite": 7,
+            "padding_penalty": 7,
+            "particle_number_penalty": 22
+          },
+          "total_qubits": 10
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.022063959011575207,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 112,
+        "physical_sector_dimension": 13,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 10,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 1.3075710839912063,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_3site_open",
+      "notes": [],
+      "relative_error": 0.0,
+      "status": "exploratory",
+      "total_energy": -7.87837226058406
+    },
+    {
+      "absolute_error": 4.263256414560601e-14,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_2site_periodic",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 4.263256414560601e-14
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_2site_periodic is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_2site_periodic",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 4.263256414560601e-14,
+        "benchmark_absolute_error": 4.263256414560601e-14,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 256,
+            "full_hamiltonian_nnz": 512,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 256,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 192,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 224,
+              "hopping": 256,
+              "magnetic_plaquette": 0,
+              "onsite": 240,
+              "padding_penalty": 112,
+              "particle_number_penalty": 160
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 256,
+          "gauge_qubits": 4,
+          "matter_qubits": 4,
+          "pauli_terms": 101,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 3,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 25,
+            "hopping": 64,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 7,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 8
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.26756712500355206,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_exact",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 101,
+        "physical_sector_dimension": 16,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 8,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.42314341699238867,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_2site_periodic",
+      "notes": [],
+      "relative_error": 3.932442579301422e-15,
+      "status": "exploratory",
+      "total_energy": -9.619639351237533
+    },
+    {
+      "absolute_error": 8.881784197001252e-15,
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_numeric_charge_sector_0",
+      "evidence_summary": {
+        "chemical_accuracy_status": "not_met",
+        "comparison_evidence": {
+          "expected_status": "exploratory",
+          "metrics": {
+            "comparison_target": "exact_baseline",
+            "runtime_evidence_status": "none"
+          }
+        },
+        "decision_worthiness": {
+          "recommended_action": "compare_against_best_evidence"
+        },
+        "energy_evidence": {},
+        "execution_evidence": {},
+        "primary_baseline": {
+          "baseline_kind": "benchmark_reference",
+          "baseline_scope": "benchmark_case",
+          "baseline_source": "exact_baseline",
+          "baseline_strength": "medium"
+        },
+        "primary_error_metric": {
+          "metric_kind": "absolute_error_hartree",
+          "units": "Hartree",
+          "value": 8.881784197001252e-15
+        },
+        "primary_scientific_claim": "Benchmark case h2_lattice_qed_numeric_charge_sector_0 is currently classified as exploratory for kind=run.",
+        "recommended_action": "compare_against_best_evidence",
+        "result_identity": {
+          "artifact_kind": "benchmark_case",
+          "artifact_name": "h2_lattice_qed_numeric_charge_sector_0",
+          "case_kind": "run"
+        },
+        "runtime_derived_accuracy": {},
+        "runtime_evidence_status": "none",
+        "scientific_accuracy": {},
+        "trust_judgment": {
+          "verification_status": "exploratory"
+        },
+        "trust_tier": "exploratory"
+      },
+      "expected_status": "exploratory",
+      "kind": "run",
+      "metrics": {
+        "achieved_error": 8.881784197001252e-15,
+        "benchmark_absolute_error": 8.881784197001252e-15,
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "compression_method": null,
+        "compression_post_term_count": null,
+        "compression_pre_term_count": null,
+        "compression_rank": null,
+        "compression_verification_status": null,
+        "engine_representation": "dense_full",
+        "estimated_measurement_cost": 250000.0,
+        "estimated_vs_measured_cost": null,
+        "execution_enabled": false,
+        "field_model.model_kind": "lattice_qed",
+        "field_model_capability_tier": "exploratory",
+        "field_model_decision": {
+          "ansatz_limited": false,
+          "available": true,
+          "cutoff_sensitive": false,
+          "gate_version": "qcchem.field_model_campaign.v0.1-alpha",
+          "hardware_candidate": false,
+          "hardware_skip_reason": "missing_runtime_preview_metadata",
+          "hardware_skip_reasons": [
+            "missing_runtime_preview_metadata"
+          ],
+          "local_exact_ok": true,
+          "thresholds": {
+            "ansatz_vs_exact_hartree": 0.001,
+            "gauss_or_leakage_tolerance": 1e-06,
+            "max_hardware_depth": 200,
+            "max_hardware_qubits": 8,
+            "max_hardware_two_qubit_gates": 80,
+            "photon_cutoff_delta_hartree": 0.001,
+            "trotter_max_observable_error": 0.01
+          },
+          "trotter_limited": false
+        },
+        "field_model_error_budget": {
+          "finite_cutoff": {
+            "electric_cutoff": 1,
+            "grid_shape": [
+              2
+            ],
+            "grid_spacing": [
+              0.75
+            ]
+          },
+          "gauss_law": {
+            "max_hamiltonian_gauge_commutator_norm": 0.0,
+            "reference_state_max_abs_gauss_law": 0.0,
+            "tolerance": 1e-08
+          },
+          "trotter": null
+        },
+        "field_model_kind": "lattice_qed",
+        "field_model_observables": [
+          "gauss_law",
+          "physical_sector",
+          "electric_flux",
+          "electric_energy",
+          "wilson_loop",
+          "real_time_dynamics",
+          "trotter_resource_estimate",
+          "qpe_resource_estimate"
+        ],
+        "field_model_registry": "finite_cutoff_lattice_qed",
+        "field_model_resource_estimate": {
+          "engine": {
+            "actual_representation": "dense_full",
+            "auto_project_physical_sector": true,
+            "build_mode": "dense_full",
+            "dense_full_matrix_materialized": true,
+            "full_dimension": 64,
+            "full_hamiltonian_nnz": 96,
+            "full_to_projected_reduction": null,
+            "materialize_pauli": "auto",
+            "max_full_qubits_for_dense": 10,
+            "max_projected_dimension": 4096,
+            "operator_representation": "dense_full",
+            "pauli_materialization": "materialized",
+            "peak_matrix_dimension": 64,
+            "projected_builder": "auto",
+            "projected_builder_fallback_reason": null,
+            "projected_dimension": null,
+            "projection_skipped_reason": "dense_full_representation",
+            "projector_tolerance": 1e-08,
+            "requested_representation": "auto",
+            "sector_nnz": {
+              "density_coulomb": 0,
+              "electric": 32,
+              "external_point_charge": 0,
+              "gauss_law_penalty": 54,
+              "hopping": 32,
+              "magnetic_plaquette": 0,
+              "onsite": 60,
+              "padding_penalty": 16,
+              "particle_number_penalty": 40
+            },
+            "store_basis_indices": "preview"
+          },
+          "full_dimension": 64,
+          "gauge_qubits": 2,
+          "matter_qubits": 4,
+          "pauli_terms": 54,
+          "projected_dimension": null,
+          "term_counts_by_sector": {
+            "density_coulomb": 0,
+            "electric": 2,
+            "external_point_charge": 0,
+            "gauss_law_penalty": 12,
+            "hopping": 32,
+            "magnetic_plaquette": 0,
+            "onsite": 5,
+            "padding_penalty": 4,
+            "particle_number_penalty": 7
+          },
+          "total_qubits": 6
+        },
+        "field_model_risk_notes": [
+          "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+        ],
+        "gauss_law_residual": 0.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "local_exact_baseline_available": true,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "max_trotter_observable_error": null,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.003575916009140201,
+        "measurement_execution_mode": "estimator",
+        "measurement_group_count": 25,
+        "measurement_strategy": "lattice_qed_sector_audit",
+        "pauli_materialization": "materialized",
+        "pauli_terms": 54,
+        "physical_sector_dimension": 6,
+        "policy": "benchmark",
+        "precision_target": 0.01,
+        "projected_dimension": null,
+        "qubits": 6,
+        "runtime_evidence_status": "none",
+        "runtime_grouping_policy": null,
+        "runtime_low_rank_workload": null,
+        "runtime_preview": {
+          "attempted": false,
+          "available": false,
+          "failure_category": null,
+          "submitted": false
+        },
+        "runtime_preview_available": false,
+        "runtime_preview_submitted": false,
+        "runtime_resilience_level": null,
+        "runtime_service": null,
+        "runtime_submission_status": null,
+        "trotter_error_summary": {},
+        "trotter_max_depth": null,
+        "trotter_max_operation_count": null,
+        "trotter_max_two_qubit_gate_count": null,
+        "trotter_step": null,
+        "wall_time_seconds": 0.11627166600374039,
+        "within_uncertainty": null
+      },
+      "name": "h2_lattice_qed_numeric_charge_sector_0",
+      "notes": [],
+      "relative_error": 9.167106075555263e-16,
+      "status": "exploratory",
+      "total_energy": -8.467151406014109
+    }
+  ],
+  "dashboard_summary": {
+    "achieved_errors": {
+      "h2_lattice_qed_2site_periodic": 4.263256414560601e-14,
+      "h2_lattice_qed_3site_open": 0.0,
+      "h2_lattice_qed_cutoff_0": 2.4868995751603507e-14,
+      "h2_lattice_qed_cutoff_1": 1.0658141036401503e-14,
+      "h2_lattice_qed_cutoff_2": 1.7763568394002505e-15,
+      "h2_lattice_qed_numeric_charge_sector_0": 8.881784197001252e-15,
+      "h2_lattice_qed_softening_0p25": 1.0658141036401503e-14,
+      "h2_lattice_qed_spacing_0p60": 1.7763568394002505e-14
+    },
+    "cases": [
+      {
+        "achieved_error": 2.4868995751603507e-14,
+        "estimated_measurement_cost": 10000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.005445000002509914,
+        "name": "h2_lattice_qed_cutoff_0",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.0658141036401503e-14,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0027317920030327514,
+        "name": "h2_lattice_qed_cutoff_1",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.7763568394002505e-15,
+        "estimated_measurement_cost": 490000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.014303749994724058,
+        "name": "h2_lattice_qed_cutoff_2",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.7763568394002505e-14,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0019547499978216365,
+        "name": "h2_lattice_qed_spacing_0p60",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 1.0658141036401503e-14,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.0018469580099917948,
+        "name": "h2_lattice_qed_softening_0p25",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 0.0,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.022063959011575207,
+        "name": "h2_lattice_qed_3site_open",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 4.263256414560601e-14,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.26756712500355206,
+        "name": "h2_lattice_qed_2site_periodic",
+        "runtime_evidence_status": "none"
+      },
+      {
+        "achieved_error": 8.881784197001252e-15,
+        "estimated_measurement_cost": 250000.0,
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "measured_shot_usage": null,
+        "measured_wall_time_seconds": 0.003575916009140201,
+        "name": "h2_lattice_qed_numeric_charge_sector_0",
+        "runtime_evidence_status": "none"
+      }
+    ],
+    "compressed_cases": [],
+    "estimated_vs_measured_cost_ratios": {},
+    "field_model_campaign": {
+      "ansatz_limited_cases": [],
+      "by_model": {
+        "lattice_qed": {
+          "case_count": 8,
+          "cases": [
+            "h2_lattice_qed_cutoff_0",
+            "h2_lattice_qed_cutoff_1",
+            "h2_lattice_qed_cutoff_2",
+            "h2_lattice_qed_spacing_0p60",
+            "h2_lattice_qed_softening_0p25",
+            "h2_lattice_qed_3site_open",
+            "h2_lattice_qed_2site_periodic",
+            "h2_lattice_qed_numeric_charge_sector_0"
+          ],
+          "hardware_candidates": []
+        }
+      },
+      "case_count": 8,
+      "cutoff_sensitive_cases": [],
+      "hardware_candidates": [],
+      "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+      "recommended_trotter_step": null,
+      "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+      "trotter_limited_cases": []
+    },
+    "grouping_policies": {},
+    "hardware_verified_cases": [],
+    "precision_targets": {
+      "h2_lattice_qed_2site_periodic": 0.01,
+      "h2_lattice_qed_3site_open": 0.01,
+      "h2_lattice_qed_cutoff_0": 0.01,
+      "h2_lattice_qed_cutoff_1": 0.01,
+      "h2_lattice_qed_cutoff_2": 0.01,
+      "h2_lattice_qed_numeric_charge_sector_0": 0.01,
+      "h2_lattice_qed_softening_0p25": 0.01,
+      "h2_lattice_qed_spacing_0p60": 0.01
+    },
+    "resilience_levels": {},
+    "runtime_cases": []
+  },
+  "description": "Small local lattice-QED finite-cutoff and grid-sensitivity suite.",
+  "evidence_summary": {
+    "chemical_accuracy_status": "met",
+    "comparison_evidence": {
+      "best_case": "h2_lattice_qed_3site_open",
+      "status_counts": {
+        "exploratory": 8
+      }
+    },
+    "decision_worthiness": {
+      "recommended_action": "compare_against_best_evidence"
+    },
+    "energy_evidence": {},
+    "execution_evidence": {},
+    "primary_baseline": {
+      "baseline_kind": "benchmark_suite_reference",
+      "baseline_scope": "benchmark_suite",
+      "baseline_source": "best_case",
+      "baseline_strength": "strong"
+    },
+    "primary_error_metric": {
+      "metric_kind": "best_case_absolute_error_hartree",
+      "units": "Hartree",
+      "value": 0.0
+    },
+    "primary_scientific_claim": "Benchmark suite field_model_qft_cutoff_grid_convergence_v1 currently defends a exploratory scope across 8 cases.",
+    "recommended_action": "compare_against_best_evidence",
+    "result_identity": {
+      "artifact_kind": "benchmark_suite",
+      "artifact_name": "field_model_qft_cutoff_grid_convergence_v1"
+    },
+    "runtime_derived_accuracy": {},
+    "runtime_evidence_status": "none",
+    "scientific_accuracy": {},
+    "trust_judgment": {
+      "verification_status": "exploratory"
+    },
+    "trust_tier": "exploratory"
+  },
+  "registry_entries": [
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_0",
+      "created_at": "2026-05-24T02:37:15.202985+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_cutoff_0",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "electric_cutoff_scan"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_1",
+      "created_at": "2026-05-24T02:37:15.315010+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_cutoff_1",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "electric_cutoff_scan"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_cutoff_2",
+      "created_at": "2026-05-24T02:37:15.478142+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_cutoff_2",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "electric_cutoff_scan"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60",
+      "created_at": "2026-05-24T02:37:15.595098+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_spacing_0p60",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "grid_spacing_scan"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_softening_0p25",
+      "created_at": "2026-05-24T02:37:15.725127+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_softening_0p25",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "softening_scan"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_3site_open",
+      "created_at": "2026-05-24T02:37:17.052905+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_3site_open",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "site_count_scan",
+        "open_boundary"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_2site_periodic",
+      "created_at": "2026-05-24T02:37:17.504133+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_2site_periodic",
+      "source": "./configs/exploratory/h2_lattice_qed_exact.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "boundary_scan",
+        "periodic_boundary"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_numeric_charge_sector_0",
+      "created_at": "2026-05-24T02:37:17.634873+00:00",
+      "kind": "benchmark:run",
+      "name": "h2_lattice_qed_numeric_charge_sector_0",
+      "source": "./configs/exploratory/h2_lattice_qed_sector_audit.yaml",
+      "status": "exploratory",
+      "tags": [
+        "lattice_qed",
+        "numeric_charge_sector",
+        "sector_audit"
+      ]
+    },
+    {
+      "artifact_root": "/tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis",
+      "created_at": "2026-05-24T02:37:17.634909+00:00",
+      "kind": "benchmark_suite",
+      "name": "field_model_qft_cutoff_grid_convergence_v1",
+      "source": "benchmarks/field_model_qft_cutoff_grid_convergence_v1.yaml",
+      "status": "exploratory",
+      "tags": [
+        "benchmark",
+        "exploratory",
+        "field_model",
+        "lattice_qed",
+        "cutoff_grid_convergence"
+      ]
+    }
+  ],
+  "schema_version": "qcchem.benchmark.v0.4-alpha",
+  "suite_name": "field_model_qft_cutoff_grid_convergence_v1",
+  "summary": {
+    "status_counts": {
+      "exploratory": 8
+    },
+    "total_cases": 8
+  }
+}

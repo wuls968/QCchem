@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from time import perf_counter
 from typing import Any, Callable
 
@@ -39,6 +41,74 @@ def _backend_pending_jobs(backend: Any) -> int:
         return int(pending)
     except Exception:
         return 0
+
+
+def _runtime_service_kwargs(spec: BackendSpec) -> dict[str, Any]:
+    """Map QCchem runtime service labels onto current qiskit-ibm-runtime kwargs."""
+    options = spec.runtime.options
+    raw_channel = options.get("channel") or spec.runtime.service
+    raw_channel_key = str(raw_channel).strip().lower()
+    if (
+        raw_channel_key == "ibm_quantum_platform"
+        and options.get("token") is None
+        and options.get("account_name") is None
+    ):
+        legacy_kwargs = _legacy_platform_account_kwargs()
+        if legacy_kwargs:
+            return legacy_kwargs
+    channel_aliases = {
+        "ibm_quantum_platform": "ibm_quantum",
+        "ibm_quantum": "ibm_quantum",
+        "ibm_cloud": "ibm_cloud",
+        "local": "local",
+    }
+    channel = channel_aliases.get(raw_channel_key)
+    kwargs: dict[str, Any] = {}
+    if channel is not None:
+        kwargs["channel"] = channel
+    option_map = {
+        "token": "token",
+        "url": "url",
+        "account_name": "name",
+        "instance": "instance",
+    }
+    for option_key, service_key in option_map.items():
+        value = options.get(option_key)
+        if value is not None:
+            kwargs[service_key] = value
+    return kwargs
+
+
+def _legacy_platform_account_kwargs() -> dict[str, Any]:
+    """Load old ibm_quantum_platform account records for qiskit-ibm-runtime 0.36."""
+    path = Path.home() / ".qiskit" / "qiskit-ibm.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    candidates = [
+        account
+        for account in payload.values()
+        if isinstance(account, dict)
+        and str(account.get("channel", "")).strip().lower() == "ibm_quantum_platform"
+    ]
+    if not candidates:
+        return {}
+    candidates.sort(key=lambda account: not bool(account.get("is_default_account", False)))
+    account = candidates[0]
+    token = account.get("token")
+    if not token:
+        return {}
+    url = str(account.get("url") or "")
+    channel = "ibm_cloud" if "cloud.ibm.com" in url else "ibm_quantum"
+    kwargs: dict[str, Any] = {"channel": channel, "token": token}
+    for key in ("url", "instance", "private_endpoint"):
+        value = account.get(key)
+        if value is not None:
+            kwargs[key] = value
+    return kwargs
 
 
 def _select_runtime_backend_name(
@@ -148,6 +218,19 @@ def attempt_runtime_submission(
             "real_submission_requested": False,
         }
         return summary
+    confirmation = spec.runtime.options.get("runtime_budget_confirmation")
+    if confirmation != "I understand IBM Runtime budget":
+        summary.failure_category = "runtime_budget_confirmation_missing"
+        summary.failure_message = (
+            "Real Runtime submission requires --confirm-runtime-budget "
+            "'I understand IBM Runtime budget'."
+        )
+        summary.submission_wall_time_seconds = float(perf_counter() - started)
+        summary.result_provenance = {
+            "attempt_stage": "confirmation_gate",
+            "real_submission_requested": True,
+        }
+        return summary
 
     try:
         import qiskit_ibm_runtime
@@ -159,7 +242,8 @@ def attempt_runtime_submission(
         return summary
 
     try:
-        service = QiskitRuntimeService()
+        service_kwargs = _runtime_service_kwargs(spec)
+        service = QiskitRuntimeService(**service_kwargs)
     except Exception as exc:
         summary.failure_category = "account_not_found" if type(exc).__name__ == "AccountNotFoundError" else "service_initialization_failed"
         summary.failure_message = f"{type(exc).__name__}: {exc}"
@@ -167,6 +251,7 @@ def attempt_runtime_submission(
         summary.result_provenance = {
             "attempt_stage": "initialize_service",
             "runtime_package_version": getattr(qiskit_ibm_runtime, "__version__", "unknown"),
+            "service_kwargs": {key: ("***" if key == "token" else value) for key, value in service_kwargs.items()},
         }
         return summary
 
@@ -279,6 +364,18 @@ def attempt_runtime_submission(
     if isinstance(custom_estimator_options, dict):
         estimator_options = _deep_merge_options(estimator_options, custom_estimator_options)
     try:
+        prepared_circuit = circuit
+        if getattr(circuit, "num_parameters", 0):
+            parameters = list(circuit.parameters)
+            values = np.asarray(parameter_values, dtype=float).reshape(-1)
+            if len(parameters) != len(values):
+                raise ValueError(
+                    "Runtime submission parameter count does not match the ansatz circuit."
+                )
+            prepared_circuit = circuit.assign_parameters(
+                {parameter: float(value) for parameter, value in zip(parameters, values)},
+                inplace=False,
+            )
         pass_manager = generate_preset_pass_manager(
             backend=backend,
             optimization_level=optimization_level,
@@ -288,7 +385,7 @@ def attempt_runtime_submission(
             approximation_degree=approximation_degree,
             seed_transpiler=seed_transpiler,
         )
-        isa_circuit = pass_manager.run(circuit)
+        isa_circuit = pass_manager.run(prepared_circuit)
         isa_operator = operator.apply_layout(isa_circuit.layout)
         counts = isa_circuit.count_ops()
         summary.transpiled_depth = int(isa_circuit.depth()) if isa_circuit.depth() is not None else None

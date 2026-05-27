@@ -1,0 +1,33 @@
+{
+  "cases_with_estimated_cost": 8,
+  "cases_with_measured_cost": 0,
+  "field_model_campaign": {
+    "ansatz_limited_cases": [],
+    "by_model": {
+      "lattice_qed": {
+        "case_count": 8,
+        "cases": [
+          "h2_lattice_qed_cutoff_0",
+          "h2_lattice_qed_cutoff_1",
+          "h2_lattice_qed_cutoff_2",
+          "h2_lattice_qed_spacing_0p60",
+          "h2_lattice_qed_softening_0p25",
+          "h2_lattice_qed_3site_open",
+          "h2_lattice_qed_2site_periodic",
+          "h2_lattice_qed_numeric_charge_sector_0"
+        ],
+        "hardware_candidates": []
+      }
+    },
+    "case_count": 8,
+    "cutoff_sensitive_cases": [],
+    "hardware_candidates": [],
+    "hardware_gate_note": "Real quantum hardware is not submitted by this local campaign; candidates only mean a preview passed local exact/cutoff/leakage/resource gates.",
+    "recommended_trotter_step": null,
+    "schema_version": "qcchem.field_model_campaign.v0.1-alpha",
+    "trotter_limited_cases": []
+  },
+  "mean_achieved_error": 1.4654943925052066e-14,
+  "mean_estimated_cost": 250000.0,
+  "mean_measured_cost": null
+}

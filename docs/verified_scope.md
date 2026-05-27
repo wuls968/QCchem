@@ -107,13 +107,31 @@ QFT assets include:
 - compact U(1) finite-cutoff lattice-QED Hamiltonian construction,
 - Gauss-law generators and commutator audits,
 - sparse projected physical-sector engine for small grids,
+- sector-first projected sparse construction and basis hashing,
+- sparse exact validation fields such as `eigen_residual_norm`,
+  `relative_eigen_residual`, `ground_state_gap`, `lowest_eigenvalues`, and
+  `projected_matrix_sha256`,
+- lattice-QED observables including site density, link electric flux,
+  electric-energy by link, onsite/hopping energy breakdowns, Gauss-law residuals,
+  and dominant physical-sector configurations,
 - exact finite-cutoff real-time dynamics curves, and
 - guarded runtime-batch preview metadata.
 - independent field evidence sidecars for registry, Hamiltonian sectors,
   observables, dynamics, constraints, resources, and error budgets.
 
-Boundary: QFT evidence is finite-cutoff lattice-QED evidence only. It is not a
-continuum chemistry accuracy claim.
+Boundary: QFT evidence is finite-cutoff lattice-QED evidence only. The sparse
+exact path splits accuracy into `finite_model_exactness`,
+`continuum_chemistry_accuracy`, and `hardware_accuracy`. A passed finite-model
+exactness gate does not claim continuum chemistry accuracy; that layer remains
+`not_claimed` until grid/cutoff/softening convergence evidence exists. Hardware
+accuracy remains `unavailable` unless a real Runtime/shot-based backend result is
+submitted and collected.
+
+When `pauli_materialization=skipped`, `quantum_evidence.json` must report
+`pauli_terms_available: false` and leave `hamiltonian.pauli_terms` empty. It
+must not present a zero-coefficient identity Pauli term as the Hamiltonian.
+Measurement group counts and shot-cost values on that path are
+sparse/exploratory estimates, not real hardware measurement costs.
 
 ### Pauli-Fierz Cavity-QED
 
@@ -227,6 +245,11 @@ The Research OS checks are deliberately local: evidence capsule, claim compiler,
 promotion gate, and research objective artifacts may be reviewed by the audit,
 but the audit does not run calculations, submit hardware, or rewrite curated
 artifacts.
+
+Release audit must protect the lattice-QED trust boundary language:
+`finite_model_exactness`, `continuum_chemistry_accuracy`, `hardware_accuracy`,
+`pauli_materialization`, `pauli_terms_available`, and `sparse_exact_validation`
+are evidence-boundary terms, not cosmetic report fields.
 
 Run:
 

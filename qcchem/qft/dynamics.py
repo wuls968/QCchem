@@ -31,6 +31,7 @@ from qcchem.qft.observables import (
     build_qft_observable_matrices,
     expectation_value,
 )
+from qcchem.qft.projected_builder import build_projected_local_hopping_pulse
 
 _SECTOR_ORDER = [
     "onsite",
@@ -111,6 +112,9 @@ def _local_hopping_pulse_matrix(context: LatticeQEDContext, spec: LatticeQEDSpec
     link_index = int(initial.link_index)
     if link_index < 0 or link_index >= len(context.grid.links):
         raise ValueError("problem.qft.dynamics.initial_state.link_index is outside the grid link range.")
+    projected_pulse = build_projected_local_hopping_pulse(context, spec)
+    if projected_pulse is not None:
+        return projected_pulse
 
     link = context.grid.links[link_index]
     spin_components = int(context.summary.matter_mode_count // context.summary.site_count)
@@ -395,10 +399,34 @@ def _trotter_dynamics(
     curves = _empty_observable_curves(observables)
     state_norms: list[float] = []
     step = float(spec.dynamics.evolution.trotter_step)
-    for time in times:
-        state = _trotter_state(context, initial_state, time=float(time), step=step)
-        state_norms.append(float(np.linalg.norm(state)))
-        _append_observables(curves, observables, state, initial_state)
+    monotonic = all(float(next_time) >= float(time) for time, next_time in zip(times, times[1:]))
+    propagation_mode = "incremental_monotonic"
+    if monotonic:
+        sequence = [(name, sp.csr_matrix(matrix)) for name, matrix in _sector_sequence(context)]
+        state = np.asarray(initial_state, dtype=complex)
+        previous_time = float(times[0]) if times else 0.0
+        if times and abs(previous_time) > 1.0e-15:
+            state = _trotter_state(context, initial_state, time=previous_time, step=step)
+        for time in times:
+            delta = float(time) - previous_time
+            if abs(delta) > 1.0e-15:
+                step_count = max(int(np.ceil(abs(delta) / step)), 1)
+                dt = float(delta) / float(step_count)
+                for _ in range(step_count):
+                    for _, matrix in sequence:
+                        state = expm_multiply((-1.0j * dt) * matrix, state)
+                norm = float(np.linalg.norm(state))
+                if norm > 0.0:
+                    state = state / norm
+            state_norms.append(float(np.linalg.norm(state)))
+            _append_observables(curves, observables, state, initial_state)
+            previous_time = float(time)
+    else:
+        propagation_mode = "restart_per_time_point"
+        for time in times:
+            state = _trotter_state(context, initial_state, time=float(time), step=step)
+            state_norms.append(float(np.linalg.norm(state)))
+            _append_observables(curves, observables, state, initial_state)
     resources = _trotter_circuit_resources(context, spec, times)
     return {
         "available": True,
@@ -407,6 +435,7 @@ def _trotter_dynamics(
         "state_norms": state_norms,
         "observables": curves,
         "circuit_resources": resources,
+        "propagation_mode": propagation_mode,
     }
 
 
@@ -455,7 +484,8 @@ def _append_evolution_gate(
     unitary_gates: bool,
 ) -> None:
     if unitary_gates:
-        circuit.append(HamiltonianGate(matrix, time=float(time)), range(circuit.num_qubits))
+        hamiltonian = matrix.toarray() if sp.issparse(matrix) else matrix
+        circuit.append(HamiltonianGate(hamiltonian, time=float(time)), range(circuit.num_qubits))
     else:
         circuit.append(Gate(name=name[:32], num_qubits=circuit.num_qubits, params=[]), range(circuit.num_qubits))
 
@@ -531,6 +561,7 @@ def _projector_sparse_pauli(state: np.ndarray) -> SparsePauliOp:
 def _runtime_operators(
     observables: QFTObservableMatrices,
     initial_state: np.ndarray,
+    observable_names: list[str] | None = None,
 ) -> dict[str, SparsePauliOp]:
     operators = {
         "particle_number": matrix_to_sparse_pauli(
@@ -552,7 +583,28 @@ def _runtime_operators(
             observables.aggregate["total_wilson"].toarray(),
             atol=1.0e-10,
         )
+    if observable_names is not None:
+        requested = [str(name) for name in observable_names]
+        unknown = sorted(set(requested) - set(operators))
+        if unknown:
+            raise ValueError(
+                "problem.qft.dynamics.runtime.observable_names contains unsupported observables: "
+                + ", ".join(unknown)
+            )
+        operators = {name: operators[name] for name in requested}
     return {name: op.simplify(atol=1.0e-10) for name, op in operators.items()}
+
+
+def _runtime_time_points(spec: LatticeQEDSpec, times: list[float]) -> list[float]:
+    indices = spec.dynamics.runtime.time_point_indices
+    if indices is None:
+        return list(times)
+    selected = []
+    for index in indices:
+        if int(index) >= len(times):
+            raise ValueError("problem.qft.dynamics.runtime.time_point_indices entry is outside the time grid.")
+        selected.append(float(times[int(index)]))
+    return selected
 
 
 def _runtime_batch(
@@ -562,6 +614,7 @@ def _runtime_batch(
     observables: QFTObservableMatrices,
     initial_state: np.ndarray,
     times: list[float],
+    exact: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     if not spec.dynamics.runtime.enabled:
         return None
@@ -575,9 +628,16 @@ def _runtime_batch(
             "observable_policy": spec.dynamics.runtime.runtime_observables,
         }
     submit_real_job = bool(backend_spec.runtime.options.get("submit_real_job", False))
-    operators = _runtime_operators(observables, initial_state)
+    operators = _runtime_operators(
+        observables,
+        initial_state,
+        observable_names=spec.dynamics.runtime.observable_names,
+    )
+    runtime_times = _runtime_time_points(spec, times)
+    exact_observables = (exact or {}).get("observables") or {}
+    time_to_index = {float(time): index for index, time in enumerate(times)}
     pubs: list[dict[str, Any]] = []
-    for time in times:
+    for time in runtime_times:
         circuit = build_trotter_circuit(
             context,
             spec,
@@ -585,6 +645,11 @@ def _runtime_batch(
             unitary_gates=submit_real_job,
         )
         for observable_name, operator in operators.items():
+            reference_value = None
+            exact_curve = exact_observables.get(observable_name)
+            exact_index = time_to_index.get(float(time))
+            if isinstance(exact_curve, list) and exact_index is not None and exact_index < len(exact_curve):
+                reference_value = exact_curve[exact_index]
             pubs.append(
                 {
                     "time": float(time),
@@ -592,12 +657,18 @@ def _runtime_batch(
                     "circuit": circuit,
                     "operator": operator,
                     "parameter_values": [],
+                    "reference_value": reference_value,
                 }
             )
     return attempt_runtime_batch_submission(
         spec=backend_spec,
         pubs=pubs,
         observable_policy=spec.dynamics.runtime.runtime_observables,
+        runtime_limits={
+            "max_pub_count": spec.dynamics.runtime.max_pub_count,
+            "max_total_pub_shots": spec.dynamics.runtime.max_total_pub_shots,
+            "max_logical_depth": spec.dynamics.runtime.max_logical_depth,
+        },
     )
 
 
@@ -624,6 +695,7 @@ def build_lattice_qed_dynamics(
         observables,
         initial_state,
         times,
+        exact=exact,
     )
     return {
         "enabled": True,

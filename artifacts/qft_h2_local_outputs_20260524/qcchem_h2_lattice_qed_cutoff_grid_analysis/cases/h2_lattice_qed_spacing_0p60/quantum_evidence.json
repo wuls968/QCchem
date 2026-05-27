@@ -1,0 +1,3570 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 1.7763568394002505e-14,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": true,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_model": {
+      "capability_tier": "exploratory",
+      "error_budget": {},
+      "model_kind": "lattice_qed",
+      "observables": [
+        "gauss_law",
+        "physical_sector",
+        "electric_flux",
+        "electric_energy",
+        "wilson_loop",
+        "real_time_dynamics",
+        "trotter_resource_estimate",
+        "qpe_resource_estimate"
+      ],
+      "registry_name": "finite_cutoff_lattice_qed",
+      "resource_estimate": {},
+      "risk_notes": [
+        "Finite-cutoff lattice-QED evidence is gauge-audited but not a continuum-limit chemistry claim."
+      ]
+    },
+    "qft_dynamics": null,
+    "qft_model": {
+      "boundary": "open",
+      "constraint_expectations": {
+        "available": true,
+        "gauss_law_tolerance": 1e-08,
+        "reference_basis_index": 14,
+        "reference_state_gauss_law_residuals": [
+          0.0,
+          0.0
+        ],
+        "reference_state_max_abs_gauss_law": 0.0,
+        "target_charge_sector": "neutral"
+      },
+      "constraint_residuals": {
+        "gauss_law_penalty": 10.0,
+        "max_hamiltonian_gauge_commutator_norm": 0.0,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "reference_state_max_abs_gauss_law": 0.0
+      },
+      "constraints": {
+        "enforce_physical_sector": false,
+        "gauss_law_penalty": 10.0,
+        "gauss_law_tolerance": 1e-08,
+        "max_sector_enumeration_qubits": 10,
+        "padding_penalty": 50.0,
+        "particle_number_penalty": 10.0,
+        "target_charge_sector": "neutral"
+      },
+      "dimensions": 1,
+      "enabled": true,
+      "engine": {
+        "actual_representation": "dense_full",
+        "auto_project_physical_sector": true,
+        "build_mode": "dense_full",
+        "dense_full_matrix_materialized": true,
+        "full_dimension": 64,
+        "full_hamiltonian_nnz": 96,
+        "full_to_projected_reduction": null,
+        "materialize_pauli": "auto",
+        "max_full_qubits_for_dense": 10,
+        "max_projected_dimension": 4096,
+        "operator_representation": "dense_full",
+        "pauli_materialization": "materialized",
+        "peak_matrix_dimension": 64,
+        "projected_builder": "auto",
+        "projected_builder_fallback_reason": null,
+        "projected_dimension": null,
+        "projection_skipped_reason": "dense_full_representation",
+        "projector_tolerance": 1e-08,
+        "requested_representation": "auto",
+        "sector_nnz": {
+          "density_coulomb": 0,
+          "electric": 32,
+          "external_point_charge": 0,
+          "gauss_law_penalty": 54,
+          "hopping": 32,
+          "magnetic_plaquette": 0,
+          "onsite": 60,
+          "padding_penalty": 16,
+          "particle_number_penalty": 40
+        },
+        "store_basis_indices": "preview"
+      },
+      "external_point_charges": {},
+      "gauge_coupling": 1.0,
+      "gauge_electric_cutoff": 1,
+      "gauge_group": "u1",
+      "gauge_invariant_ansatz": {
+        "commutator_checks": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 32,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ],
+        "generator_policy": "gauge_invariant_hopping",
+        "kind": "gauss_law_preserving",
+        "selected_generator_count": 1,
+        "selected_generators": [
+          {
+            "commutator_norms": [
+              0.0,
+              0.0
+            ],
+            "commutes_with_all_gauss_law_generators": true,
+            "max_commutator_norm": 0.0,
+            "pauli_materialized": true,
+            "pauli_term_count": 32,
+            "sector": "hopping",
+            "selected": true,
+            "skipped_reason": null
+          }
+        ]
+      },
+      "gauge_qubits": 2,
+      "gauss_law_generators": [
+        {
+          "diagonal_max": 2.0,
+          "diagonal_min": -2.0,
+          "frobenius_norm": 8.0,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 4,
+          "site_index": 0,
+          "target_charge": 0.0
+        },
+        {
+          "diagonal_max": 2.0,
+          "diagonal_min": -2.0,
+          "frobenius_norm": 8.0,
+          "hermitian": true,
+          "pauli_materialized": true,
+          "pauli_term_count": 4,
+          "site_index": 1,
+          "target_charge": 0.0
+        }
+      ],
+      "grid_axes": "principal",
+      "grid_origin": "molecule_center",
+      "grid_shape": [
+        2
+      ],
+      "grid_spacing": [
+        0.6
+      ],
+      "hamiltonian_gauge_commutator_norms": [
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 0,
+          "skipped_reason": null,
+          "within_tolerance": true
+        },
+        {
+          "frobenius_norm": 0.0,
+          "site_index": 1,
+          "skipped_reason": null,
+          "within_tolerance": true
+        }
+      ],
+      "link_count": 1,
+      "matter_mode_count": 4,
+      "matter_qubits": 4,
+      "model": "lattice_qed_minimal_coupling",
+      "notes": [
+        "Exploratory finite-cutoff compact-U(1) lattice-QED Hamiltonian.",
+        "Exact baselines compare against this discretized Hamiltonian, not continuum chemistry.",
+        "Gauge links use binary padding with encoded dimension 4.",
+        "Pauli decomposition was materialized for this finite Hamiltonian."
+      ],
+      "nuclear_charge_by_site": [
+        1.0,
+        1.0
+      ],
+      "physical_sector": {
+        "basis_hash": "2b09b0092e7aa557f0dc1571f81bba9b786e3eb7921d0c0b64b905064d0ddf31",
+        "basis_index_count": 6,
+        "basis_indices": [
+          14,
+          21,
+          25,
+          37,
+          41,
+          48
+        ],
+        "basis_indices_preview": [
+          14,
+          21,
+          25,
+          37,
+          41,
+          48
+        ],
+        "enumerated": true,
+        "estimated_full_dimension": 64,
+        "max_sector_enumeration_qubits": 10,
+        "padding_state_rejection_count": 16,
+        "physical_sector_dimension": 6,
+        "reference_basis_index": 14,
+        "skipped_reason": null,
+        "target_charge_sector": "neutral",
+        "tolerance": 1e-08
+      },
+      "plaquette_count": 0,
+      "site_count": 2,
+      "softening": 0.35,
+      "target_electrons": 2,
+      "term_counts_by_sector": {
+        "density_coulomb": 0,
+        "electric": 2,
+        "external_point_charge": 0,
+        "gauss_law_penalty": 12,
+        "hopping": 32,
+        "magnetic_plaquette": 0,
+        "onsite": 5,
+        "padding_penalty": 4,
+        "particle_number_penalty": 7
+      },
+      "total_qubits": 6
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 155.55555555555557,
+    "energy_contribution_sum": -10.7881406924605,
+    "expectations_available": true,
+    "measurement_group_count": 25,
+    "pauli_term_count": 54,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 34.500864395866884,
+        "energy_contribution": 34.50086439586688,
+        "expectation_value": 0.9999999999999998,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "IIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -2.2499999999999964,
+        "energy_contribution": 0.2016848238657534,
+        "expectation_value": -0.08963769949589054,
+        "index": 1,
+        "measurement_group_id": 24,
+        "pauli": "IIIIIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -12.499999999999998,
+        "energy_contribution": -6.81023562184931,
+        "expectation_value": 0.5448188497479449,
+        "index": 2,
+        "measurement_group_id": 16,
+        "pauli": "IIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 12.500000000000002,
+        "energy_contribution": -6.810235621849319,
+        "expectation_value": -0.5448188497479455,
+        "index": 3,
+        "measurement_group_id": 24,
+        "pauli": "IIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.062283901033278,
+        "energy_contribution": -4.407470510213796e-15,
+        "expectation_value": -2.1371793224034263e-15,
+        "index": 4,
+        "measurement_group_id": 4,
+        "pauli": "IIIZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -4.999999999999998,
+        "energy_contribution": -2.2759057512602636,
+        "expectation_value": 0.45518115025205286,
+        "index": 5,
+        "measurement_group_id": 20,
+        "pauli": "IIIZZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.000000000000002,
+        "energy_contribution": -2.2759057512602836,
+        "expectation_value": 0.4551811502520565,
+        "index": 6,
+        "measurement_group_id": 24,
+        "pauli": "IIIZZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.062283901033279,
+        "energy_contribution": 3.148193221581284e-15,
+        "expectation_value": 1.5265566588595902e-15,
+        "index": 7,
+        "measurement_group_id": 0,
+        "pauli": "IIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -2.2759057512602827,
+        "expectation_value": 0.4551811502520565,
+        "index": 8,
+        "measurement_group_id": 16,
+        "pauli": "IIZIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -5.0,
+        "energy_contribution": -2.2759057512602645,
+        "expectation_value": 0.45518115025205286,
+        "index": 9,
+        "measurement_group_id": 24,
+        "pauli": "IIZIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": -0.8963769949589053,
+        "expectation_value": -0.08963769949589054,
+        "index": 10,
+        "measurement_group_id": 24,
+        "pauli": "IIZZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 11,
+        "measurement_group_id": 8,
+        "pauli": "IXZXIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291904,
+        "expectation_value": 0.49798721942161367,
+        "index": 12,
+        "measurement_group_id": 8,
+        "pauli": "IXZXXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291901,
+        "expectation_value": 0.49798721942161356,
+        "index": 13,
+        "measurement_group_id": 0,
+        "pauli": "IXZXYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 14,
+        "measurement_group_id": 16,
+        "pauli": "IXZXZX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": -0.49798721942161495,
+        "index": 15,
+        "measurement_group_id": 9,
+        "pauli": "IXZYIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291901,
+        "expectation_value": 0.49798721942161356,
+        "index": 16,
+        "measurement_group_id": 9,
+        "pauli": "IXZYXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291904,
+        "expectation_value": -0.49798721942161367,
+        "index": 17,
+        "measurement_group_id": 1,
+        "pauli": "IXZYYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": -0.49798721942161495,
+        "index": 18,
+        "measurement_group_id": 17,
+        "pauli": "IXZYZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 19,
+        "measurement_group_id": 10,
+        "pauli": "IYZXIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291901,
+        "expectation_value": -0.49798721942161356,
+        "index": 20,
+        "measurement_group_id": 10,
+        "pauli": "IYZXXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291904,
+        "expectation_value": 0.49798721942161367,
+        "index": 21,
+        "measurement_group_id": 2,
+        "pauli": "IYZXYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 22,
+        "measurement_group_id": 18,
+        "pauli": "IYZXZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 23,
+        "measurement_group_id": 11,
+        "pauli": "IYZYIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291904,
+        "expectation_value": 0.49798721942161367,
+        "index": 24,
+        "measurement_group_id": 11,
+        "pauli": "IYZYXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291901,
+        "expectation_value": 0.49798721942161356,
+        "index": 25,
+        "measurement_group_id": 3,
+        "pauli": "IYZYYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291926,
+        "expectation_value": 0.49798721942161495,
+        "index": 26,
+        "measurement_group_id": 19,
+        "pauli": "IYZYZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.06228390103328,
+        "energy_contribution": 4.4074705102138e-15,
+        "expectation_value": 2.1371793224034263e-15,
+        "index": 27,
+        "measurement_group_id": 4,
+        "pauli": "IZIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -2.2759057512602645,
+        "expectation_value": -0.45518115025205286,
+        "index": 28,
+        "measurement_group_id": 20,
+        "pauli": "IZIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -2.2759057512602827,
+        "expectation_value": -0.4551811502520565,
+        "index": 29,
+        "measurement_group_id": 24,
+        "pauli": "IZIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999999,
+        "energy_contribution": -4.999999999999998,
+        "expectation_value": -0.9999999999999999,
+        "index": 30,
+        "measurement_group_id": 4,
+        "pauli": "IZIZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 4.999999999999999,
+        "energy_contribution": 0.4481884974794526,
+        "expectation_value": 0.08963769949589054,
+        "index": 31,
+        "measurement_group_id": 24,
+        "pauli": "IZZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291898,
+        "expectation_value": 0.49798721942161334,
+        "index": 32,
+        "measurement_group_id": 12,
+        "pauli": "XZXIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 33,
+        "measurement_group_id": 12,
+        "pauli": "XZXIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 34,
+        "measurement_group_id": 4,
+        "pauli": "XZXIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291896,
+        "expectation_value": 0.4979872194216132,
+        "index": 35,
+        "measurement_group_id": 20,
+        "pauli": "XZXIZX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291896,
+        "expectation_value": -0.4979872194216132,
+        "index": 36,
+        "measurement_group_id": 13,
+        "pauli": "XZYIIY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 37,
+        "measurement_group_id": 13,
+        "pauli": "XZYIXY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": -0.4979872194216153,
+        "index": 38,
+        "measurement_group_id": 5,
+        "pauli": "XZYIYX"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291898,
+        "expectation_value": -0.49798721942161334,
+        "index": 39,
+        "measurement_group_id": 21,
+        "pauli": "XZYIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291896,
+        "expectation_value": 0.4979872194216132,
+        "index": 40,
+        "measurement_group_id": 14,
+        "pauli": "YZXIIY"
+      },
+      {
+        "coefficient_imag": -0.0,
+        "coefficient_real": 0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": -0.4979872194216153,
+        "index": 41,
+        "measurement_group_id": 14,
+        "pauli": "YZXIXY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 42,
+        "measurement_group_id": 6,
+        "pauli": "YZXIYX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291898,
+        "expectation_value": 0.49798721942161334,
+        "index": 43,
+        "measurement_group_id": 22,
+        "pauli": "YZXIZY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291898,
+        "expectation_value": 0.49798721942161334,
+        "index": 44,
+        "measurement_group_id": 15,
+        "pauli": "YZYIIX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 45,
+        "measurement_group_id": 15,
+        "pauli": "YZYIXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291932,
+        "expectation_value": 0.4979872194216153,
+        "index": 46,
+        "measurement_group_id": 7,
+        "pauli": "YZYIYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.1736111111111111,
+        "energy_contribution": -0.08645611448291896,
+        "expectation_value": 0.4979872194216132,
+        "index": 47,
+        "measurement_group_id": 23,
+        "pauli": "YZYIZX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 2.0622839010332807,
+        "energy_contribution": -3.148193221581287e-15,
+        "expectation_value": -1.5265566588595902e-15,
+        "index": 48,
+        "measurement_group_id": 0,
+        "pauli": "ZIIIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.000000000000001,
+        "energy_contribution": -2.275905751260283,
+        "expectation_value": -0.4551811502520565,
+        "index": 49,
+        "measurement_group_id": 16,
+        "pauli": "ZIIIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.000000000000001,
+        "energy_contribution": -2.2759057512602645,
+        "expectation_value": -0.45518115025205286,
+        "index": 50,
+        "measurement_group_id": 24,
+        "pauli": "ZIIIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": 0.44818849747945266,
+        "expectation_value": 0.08963769949589054,
+        "index": 51,
+        "measurement_group_id": 24,
+        "pauli": "ZIIZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 5.0,
+        "energy_contribution": -4.999999999999999,
+        "expectation_value": -0.9999999999999999,
+        "index": 52,
+        "measurement_group_id": 0,
+        "pauli": "ZIZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 10.0,
+        "energy_contribution": -0.8963769949589053,
+        "expectation_value": -0.08963769949589054,
+        "index": 53,
+        "measurement_group_id": 24,
+        "pauli": "ZZIIII"
+      }
+    ]
+  },
+  "measurement": {
+    "counts_shots_per_group": 4096,
+    "estimated_measurement_cost": 250000.0,
+    "groups": [
+      {
+        "basis": "ZXZXYY",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "IXZXYY",
+          "IIZIII",
+          "ZIIIII",
+          "ZIZIII",
+          "IIIIII"
+        ],
+        "term_count": 5
+      },
+      {
+        "basis": "ZXZYYX",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "IXZYYX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZYZXYX",
+        "basis_conflicts": [],
+        "group_id": 2,
+        "pauli_labels": [
+          "IYZXYX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZYZYYY",
+        "basis_conflicts": [],
+        "group_id": 3,
+        "pauli_labels": [
+          "IYZYYY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "XZXZYY",
+        "basis_conflicts": [],
+        "group_id": 4,
+        "pauli_labels": [
+          "XZXIYY",
+          "IIIZII",
+          "IZIIII",
+          "IZIZII"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "XZYZYX",
+        "basis_conflicts": [],
+        "group_id": 5,
+        "pauli_labels": [
+          "XZYIYX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "YZXZYX",
+        "basis_conflicts": [],
+        "group_id": 6,
+        "pauli_labels": [
+          "YZXIYX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "YZYZYY",
+        "basis_conflicts": [],
+        "group_id": 7,
+        "pauli_labels": [
+          "YZYIYY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZXZXXX",
+        "basis_conflicts": [],
+        "group_id": 8,
+        "pauli_labels": [
+          "IXZXXX",
+          "IXZXIX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZXZYXY",
+        "basis_conflicts": [],
+        "group_id": 9,
+        "pauli_labels": [
+          "IXZYXY",
+          "IXZYIY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZXXY",
+        "basis_conflicts": [],
+        "group_id": 10,
+        "pauli_labels": [
+          "IYZXXY",
+          "IYZXIY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZYZYXX",
+        "basis_conflicts": [],
+        "group_id": 11,
+        "pauli_labels": [
+          "IYZYXX",
+          "IYZYIX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZXZXX",
+        "basis_conflicts": [],
+        "group_id": 12,
+        "pauli_labels": [
+          "XZXIXX",
+          "XZXIIX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XZYZXY",
+        "basis_conflicts": [],
+        "group_id": 13,
+        "pauli_labels": [
+          "XZYIXY",
+          "XZYIIY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZXZXY",
+        "basis_conflicts": [],
+        "group_id": 14,
+        "pauli_labels": [
+          "YZXIXY",
+          "YZXIIY"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "YZYZXX",
+        "basis_conflicts": [],
+        "group_id": 15,
+        "pauli_labels": [
+          "YZYIXX",
+          "YZYIIX"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "ZXZXZX",
+        "basis_conflicts": [],
+        "group_id": 16,
+        "pauli_labels": [
+          "IXZXZX",
+          "IIZIZI",
+          "ZIIIZI",
+          "IIIIZI"
+        ],
+        "term_count": 4
+      },
+      {
+        "basis": "ZXZYZY",
+        "basis_conflicts": [],
+        "group_id": 17,
+        "pauli_labels": [
+          "IXZYZY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZYZXZY",
+        "basis_conflicts": [],
+        "group_id": 18,
+        "pauli_labels": [
+          "IYZXZY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZYZYZX",
+        "basis_conflicts": [],
+        "group_id": 19,
+        "pauli_labels": [
+          "IYZYZX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "XZXZZX",
+        "basis_conflicts": [],
+        "group_id": 20,
+        "pauli_labels": [
+          "XZXIZX",
+          "IIIZZI",
+          "IZIIZI"
+        ],
+        "term_count": 3
+      },
+      {
+        "basis": "XZYZZY",
+        "basis_conflicts": [],
+        "group_id": 21,
+        "pauli_labels": [
+          "XZYIZY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "YZXZZY",
+        "basis_conflicts": [],
+        "group_id": 22,
+        "pauli_labels": [
+          "YZXIZY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "YZYZZX",
+        "basis_conflicts": [],
+        "group_id": 23,
+        "pauli_labels": [
+          "YZYIZX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZZZZZZ",
+        "basis_conflicts": [],
+        "group_id": 24,
+        "pauli_labels": [
+          "IIIIIZ",
+          "IIIIZZ",
+          "IIIZZZ",
+          "IIZIZZ",
+          "IIZZII",
+          "IZIIZZ",
+          "IZZIII",
+          "ZIIIZZ",
+          "ZIIZII",
+          "ZZIIII"
+        ],
+        "term_count": 10
+      }
+    ],
+    "groups_sha256": "85cc424d342fb5f3648bb5defb39785ed7b04a99bf0fcb34043073e2cbd54ba1",
+    "plan": {
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 250000.0,
+      "execution_mode": "estimator",
+      "group_count": 25,
+      "grouping_policy": "finite_cutoff_field_terms",
+      "low_rank_aware": false,
+      "notes": [
+        "Measurement groups estimated with strategy 'lattice_qed_exact'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "runtime_precision_target": 0.01,
+      "strategy": "lattice_qed_exact",
+      "term_count": 54,
+      "uncompressed_estimated_shot_cost": 250000.0,
+      "uncompressed_group_count": 25
+    },
+    "qubit_wise_group_count": 25
+  },
+  "notes": [],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 6,
+    "operation_counts": {},
+    "qubit_term_count": 54,
+    "raw_num_qubits": 6,
+    "raw_qubit_term_count": 54,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "h2_lattice_qed_spacing_0p60",
+  "sampling": {
+    "available": true,
+    "counts_sha256": "cfd05490331fb33e1b5f27f6d083df5ca7c5219f8b83baeec1582e09a3de5dcc",
+    "group_count": 25,
+    "group_counts": [
+      {
+        "available": true,
+        "basis": "ZXZXYY",
+        "counts": {
+          "001000": 1,
+          "001001": 240,
+          "001010": 284,
+          "001011": 1,
+          "001100": 253,
+          "001111": 260,
+          "011000": 265,
+          "011010": 1,
+          "011011": 241,
+          "011101": 247,
+          "011110": 249,
+          "100000": 123,
+          "100001": 126,
+          "100010": 109,
+          "100011": 116,
+          "100100": 135,
+          "100101": 134,
+          "100110": 142,
+          "100111": 114,
+          "110000": 142,
+          "110001": 117,
+          "110010": 127,
+          "110011": 129,
+          "110100": 149,
+          "110101": 120,
+          "110110": 139,
+          "110111": 132
+        },
+        "group_id": 0,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001010",
+            284
+          ],
+          [
+            "011000",
+            265
+          ],
+          [
+            "001111",
+            260
+          ],
+          [
+            "001100",
+            253
+          ],
+          [
+            "011110",
+            249
+          ],
+          [
+            "011101",
+            247
+          ],
+          [
+            "011011",
+            241
+          ],
+          [
+            "001001",
+            240
+          ],
+          [
+            "110100",
+            149
+          ],
+          [
+            "100110",
+            142
+          ],
+          [
+            "110000",
+            142
+          ],
+          [
+            "110110",
+            139
+          ],
+          [
+            "100100",
+            135
+          ],
+          [
+            "100101",
+            134
+          ],
+          [
+            "110111",
+            132
+          ],
+          [
+            "110011",
+            129
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYYX",
+        "counts": {
+          "001000": 283,
+          "001010": 1,
+          "001011": 241,
+          "001101": 249,
+          "001110": 257,
+          "001111": 1,
+          "011001": 249,
+          "011010": 262,
+          "011100": 240,
+          "011101": 1,
+          "011111": 253,
+          "100000": 146,
+          "100001": 140,
+          "100010": 138,
+          "100011": 118,
+          "100100": 131,
+          "100101": 136,
+          "100110": 116,
+          "100111": 125,
+          "110000": 136,
+          "110001": 129,
+          "110010": 108,
+          "110011": 126,
+          "110100": 138,
+          "110101": 124,
+          "110110": 139,
+          "110111": 109
+        },
+        "group_id": 1,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001000",
+            283
+          ],
+          [
+            "011010",
+            262
+          ],
+          [
+            "001110",
+            257
+          ],
+          [
+            "011111",
+            253
+          ],
+          [
+            "001101",
+            249
+          ],
+          [
+            "011001",
+            249
+          ],
+          [
+            "001011",
+            241
+          ],
+          [
+            "011100",
+            240
+          ],
+          [
+            "100000",
+            146
+          ],
+          [
+            "100001",
+            140
+          ],
+          [
+            "110110",
+            139
+          ],
+          [
+            "100010",
+            138
+          ],
+          [
+            "110100",
+            138
+          ],
+          [
+            "100101",
+            136
+          ],
+          [
+            "110000",
+            136
+          ],
+          [
+            "100100",
+            131
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXYX",
+        "counts": {
+          "001001": 262,
+          "001010": 239,
+          "001100": 247,
+          "001111": 271,
+          "011000": 252,
+          "011001": 1,
+          "011010": 1,
+          "011011": 249,
+          "011101": 275,
+          "011110": 260,
+          "011111": 2,
+          "100000": 109,
+          "100001": 133,
+          "100010": 116,
+          "100011": 137,
+          "100100": 128,
+          "100101": 129,
+          "100110": 125,
+          "100111": 143,
+          "110000": 131,
+          "110001": 140,
+          "110010": 123,
+          "110011": 111,
+          "110100": 122,
+          "110101": 150,
+          "110110": 120,
+          "110111": 120
+        },
+        "group_id": 2,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "011101",
+            275
+          ],
+          [
+            "001111",
+            271
+          ],
+          [
+            "001001",
+            262
+          ],
+          [
+            "011110",
+            260
+          ],
+          [
+            "011000",
+            252
+          ],
+          [
+            "011011",
+            249
+          ],
+          [
+            "001100",
+            247
+          ],
+          [
+            "001010",
+            239
+          ],
+          [
+            "110101",
+            150
+          ],
+          [
+            "100111",
+            143
+          ],
+          [
+            "110001",
+            140
+          ],
+          [
+            "100011",
+            137
+          ],
+          [
+            "100001",
+            133
+          ],
+          [
+            "110000",
+            131
+          ],
+          [
+            "100101",
+            129
+          ],
+          [
+            "100100",
+            128
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYYY",
+        "counts": {
+          "001000": 1,
+          "001001": 257,
+          "001010": 252,
+          "001100": 251,
+          "001111": 291,
+          "011000": 244,
+          "011001": 1,
+          "011010": 1,
+          "011011": 268,
+          "011101": 251,
+          "011110": 266,
+          "100000": 123,
+          "100001": 125,
+          "100010": 142,
+          "100011": 110,
+          "100100": 137,
+          "100101": 121,
+          "100110": 124,
+          "100111": 134,
+          "110000": 95,
+          "110001": 135,
+          "110010": 130,
+          "110011": 132,
+          "110100": 125,
+          "110101": 138,
+          "110110": 114,
+          "110111": 128
+        },
+        "group_id": 3,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001111",
+            291
+          ],
+          [
+            "011011",
+            268
+          ],
+          [
+            "011110",
+            266
+          ],
+          [
+            "001001",
+            257
+          ],
+          [
+            "001010",
+            252
+          ],
+          [
+            "001100",
+            251
+          ],
+          [
+            "011101",
+            251
+          ],
+          [
+            "011000",
+            244
+          ],
+          [
+            "100010",
+            142
+          ],
+          [
+            "110101",
+            138
+          ],
+          [
+            "100100",
+            137
+          ],
+          [
+            "110001",
+            135
+          ],
+          [
+            "100111",
+            134
+          ],
+          [
+            "110011",
+            132
+          ],
+          [
+            "110010",
+            130
+          ],
+          [
+            "110111",
+            128
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZYY",
+        "counts": {
+          "000100": 218,
+          "000101": 1,
+          "000111": 272,
+          "001100": 1,
+          "001101": 266,
+          "001110": 228,
+          "010000": 145,
+          "010001": 137,
+          "010010": 118,
+          "010011": 112,
+          "011000": 122,
+          "011001": 132,
+          "011010": 143,
+          "011011": 118,
+          "100101": 239,
+          "100110": 286,
+          "101100": 265,
+          "101111": 230,
+          "110000": 116,
+          "110001": 120,
+          "110010": 138,
+          "110011": 142,
+          "111000": 144,
+          "111001": 139,
+          "111010": 158,
+          "111011": 106
+        },
+        "group_id": 4,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "100110",
+            286
+          ],
+          [
+            "000111",
+            272
+          ],
+          [
+            "001101",
+            266
+          ],
+          [
+            "101100",
+            265
+          ],
+          [
+            "100101",
+            239
+          ],
+          [
+            "101111",
+            230
+          ],
+          [
+            "001110",
+            228
+          ],
+          [
+            "000100",
+            218
+          ],
+          [
+            "111010",
+            158
+          ],
+          [
+            "010000",
+            145
+          ],
+          [
+            "111000",
+            144
+          ],
+          [
+            "011010",
+            143
+          ],
+          [
+            "110011",
+            142
+          ],
+          [
+            "111001",
+            139
+          ],
+          [
+            "110010",
+            138
+          ],
+          [
+            "010001",
+            137
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZYX",
+        "counts": {
+          "000100": 1,
+          "000101": 262,
+          "000110": 267,
+          "000111": 2,
+          "001100": 231,
+          "001111": 230,
+          "010000": 146,
+          "010001": 146,
+          "010010": 140,
+          "010011": 137,
+          "011000": 126,
+          "011001": 119,
+          "011010": 130,
+          "011011": 137,
+          "100100": 244,
+          "100101": 1,
+          "100111": 246,
+          "101101": 275,
+          "101110": 277,
+          "110000": 148,
+          "110001": 133,
+          "110010": 135,
+          "110011": 108,
+          "111000": 103,
+          "111001": 129,
+          "111010": 112,
+          "111011": 111
+        },
+        "group_id": 5,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "101110",
+            277
+          ],
+          [
+            "101101",
+            275
+          ],
+          [
+            "000110",
+            267
+          ],
+          [
+            "000101",
+            262
+          ],
+          [
+            "100111",
+            246
+          ],
+          [
+            "100100",
+            244
+          ],
+          [
+            "001100",
+            231
+          ],
+          [
+            "001111",
+            230
+          ],
+          [
+            "110000",
+            148
+          ],
+          [
+            "010000",
+            146
+          ],
+          [
+            "010001",
+            146
+          ],
+          [
+            "010010",
+            140
+          ],
+          [
+            "010011",
+            137
+          ],
+          [
+            "011011",
+            137
+          ],
+          [
+            "110010",
+            135
+          ],
+          [
+            "110001",
+            133
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZYX",
+        "counts": {
+          "000100": 257,
+          "000111": 263,
+          "001101": 248,
+          "001110": 223,
+          "001111": 2,
+          "010000": 134,
+          "010001": 146,
+          "010010": 120,
+          "010011": 121,
+          "011000": 117,
+          "011001": 130,
+          "011010": 133,
+          "011011": 132,
+          "100100": 1,
+          "100101": 254,
+          "100110": 251,
+          "100111": 1,
+          "101100": 257,
+          "101111": 268,
+          "110000": 124,
+          "110001": 156,
+          "110010": 124,
+          "110011": 145,
+          "111000": 130,
+          "111001": 125,
+          "111010": 114,
+          "111011": 120
+        },
+        "group_id": 6,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "101111",
+            268
+          ],
+          [
+            "000111",
+            263
+          ],
+          [
+            "000100",
+            257
+          ],
+          [
+            "101100",
+            257
+          ],
+          [
+            "100101",
+            254
+          ],
+          [
+            "100110",
+            251
+          ],
+          [
+            "001101",
+            248
+          ],
+          [
+            "001110",
+            223
+          ],
+          [
+            "110001",
+            156
+          ],
+          [
+            "010001",
+            146
+          ],
+          [
+            "110011",
+            145
+          ],
+          [
+            "010000",
+            134
+          ],
+          [
+            "011010",
+            133
+          ],
+          [
+            "011011",
+            132
+          ],
+          [
+            "011001",
+            130
+          ],
+          [
+            "111000",
+            130
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZYY",
+        "counts": {
+          "000100": 220,
+          "000110": 2,
+          "000111": 240,
+          "001100": 1,
+          "001101": 274,
+          "001110": 241,
+          "001111": 2,
+          "010000": 118,
+          "010001": 142,
+          "010010": 122,
+          "010011": 141,
+          "011000": 111,
+          "011001": 133,
+          "011010": 130,
+          "011011": 134,
+          "100101": 272,
+          "100110": 233,
+          "101100": 242,
+          "101101": 1,
+          "101110": 2,
+          "101111": 274,
+          "110000": 129,
+          "110001": 141,
+          "110010": 124,
+          "110011": 131,
+          "111000": 128,
+          "111001": 126,
+          "111010": 146,
+          "111011": 136
+        },
+        "group_id": 7,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001101",
+            274
+          ],
+          [
+            "101111",
+            274
+          ],
+          [
+            "100101",
+            272
+          ],
+          [
+            "101100",
+            242
+          ],
+          [
+            "001110",
+            241
+          ],
+          [
+            "000111",
+            240
+          ],
+          [
+            "100110",
+            233
+          ],
+          [
+            "000100",
+            220
+          ],
+          [
+            "111010",
+            146
+          ],
+          [
+            "010001",
+            142
+          ],
+          [
+            "010011",
+            141
+          ],
+          [
+            "110001",
+            141
+          ],
+          [
+            "111011",
+            136
+          ],
+          [
+            "011011",
+            134
+          ],
+          [
+            "011001",
+            133
+          ],
+          [
+            "110011",
+            131
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZXXX",
+        "counts": {
+          "001000": 2,
+          "001001": 271,
+          "001010": 253,
+          "001011": 1,
+          "001100": 267,
+          "001111": 242,
+          "011000": 240,
+          "011011": 270,
+          "011100": 4,
+          "011101": 244,
+          "011110": 245,
+          "011111": 1,
+          "100000": 252,
+          "100001": 1,
+          "100010": 269,
+          "100100": 1,
+          "100101": 258,
+          "100110": 2,
+          "100111": 244,
+          "110000": 2,
+          "110001": 264,
+          "110011": 255,
+          "110100": 262,
+          "110101": 1,
+          "110110": 245
+        },
+        "group_id": 8,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001001",
+            271
+          ],
+          [
+            "011011",
+            270
+          ],
+          [
+            "100010",
+            269
+          ],
+          [
+            "001100",
+            267
+          ],
+          [
+            "110001",
+            264
+          ],
+          [
+            "110100",
+            262
+          ],
+          [
+            "100101",
+            258
+          ],
+          [
+            "110011",
+            255
+          ],
+          [
+            "001010",
+            253
+          ],
+          [
+            "100000",
+            252
+          ],
+          [
+            "011110",
+            245
+          ],
+          [
+            "110110",
+            245
+          ],
+          [
+            "011101",
+            244
+          ],
+          [
+            "100111",
+            244
+          ],
+          [
+            "001111",
+            242
+          ],
+          [
+            "011000",
+            240
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYXY",
+        "counts": {
+          "001000": 1,
+          "001001": 239,
+          "001010": 293,
+          "001100": 254,
+          "001101": 1,
+          "001110": 1,
+          "001111": 257,
+          "011000": 240,
+          "011001": 1,
+          "011010": 1,
+          "011011": 279,
+          "011101": 274,
+          "011110": 246,
+          "100001": 248,
+          "100011": 259,
+          "100100": 251,
+          "100110": 262,
+          "100111": 2,
+          "110000": 259,
+          "110010": 238,
+          "110011": 1,
+          "110101": 227,
+          "110111": 262
+        },
+        "group_id": 9,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001010",
+            293
+          ],
+          [
+            "011011",
+            279
+          ],
+          [
+            "011101",
+            274
+          ],
+          [
+            "100110",
+            262
+          ],
+          [
+            "110111",
+            262
+          ],
+          [
+            "100011",
+            259
+          ],
+          [
+            "110000",
+            259
+          ],
+          [
+            "001111",
+            257
+          ],
+          [
+            "001100",
+            254
+          ],
+          [
+            "100100",
+            251
+          ],
+          [
+            "100001",
+            248
+          ],
+          [
+            "011110",
+            246
+          ],
+          [
+            "011000",
+            240
+          ],
+          [
+            "001001",
+            239
+          ],
+          [
+            "110010",
+            238
+          ],
+          [
+            "110101",
+            227
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXXY",
+        "counts": {
+          "001000": 243,
+          "001010": 1,
+          "001011": 289,
+          "001101": 249,
+          "001110": 265,
+          "001111": 2,
+          "011000": 2,
+          "011001": 257,
+          "011010": 246,
+          "011100": 226,
+          "011101": 1,
+          "011111": 236,
+          "100000": 266,
+          "100001": 1,
+          "100010": 264,
+          "100101": 295,
+          "100111": 262,
+          "110000": 2,
+          "110001": 237,
+          "110010": 1,
+          "110011": 252,
+          "110100": 246,
+          "110110": 252,
+          "110111": 1
+        },
+        "group_id": 10,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "100101",
+            295
+          ],
+          [
+            "001011",
+            289
+          ],
+          [
+            "100000",
+            266
+          ],
+          [
+            "001110",
+            265
+          ],
+          [
+            "100010",
+            264
+          ],
+          [
+            "100111",
+            262
+          ],
+          [
+            "011001",
+            257
+          ],
+          [
+            "110011",
+            252
+          ],
+          [
+            "110110",
+            252
+          ],
+          [
+            "001101",
+            249
+          ],
+          [
+            "011010",
+            246
+          ],
+          [
+            "110100",
+            246
+          ],
+          [
+            "001000",
+            243
+          ],
+          [
+            "110001",
+            237
+          ],
+          [
+            "011111",
+            236
+          ],
+          [
+            "011100",
+            226
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYXX",
+        "counts": {
+          "001001": 275,
+          "001010": 260,
+          "001100": 246,
+          "001111": 259,
+          "011000": 255,
+          "011001": 1,
+          "011011": 220,
+          "011101": 261,
+          "011110": 233,
+          "011111": 1,
+          "100000": 252,
+          "100001": 1,
+          "100010": 277,
+          "100100": 1,
+          "100101": 237,
+          "100111": 276,
+          "110001": 255,
+          "110011": 293,
+          "110100": 264,
+          "110110": 229
+        },
+        "group_id": 11,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110011",
+            293
+          ],
+          [
+            "100010",
+            277
+          ],
+          [
+            "100111",
+            276
+          ],
+          [
+            "001001",
+            275
+          ],
+          [
+            "110100",
+            264
+          ],
+          [
+            "011101",
+            261
+          ],
+          [
+            "001010",
+            260
+          ],
+          [
+            "001111",
+            259
+          ],
+          [
+            "011000",
+            255
+          ],
+          [
+            "110001",
+            255
+          ],
+          [
+            "100000",
+            252
+          ],
+          [
+            "001100",
+            246
+          ],
+          [
+            "100101",
+            237
+          ],
+          [
+            "011110",
+            233
+          ],
+          [
+            "110110",
+            229
+          ],
+          [
+            "011011",
+            220
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZXX",
+        "counts": {
+          "000100": 218,
+          "000111": 257,
+          "001101": 253,
+          "001110": 276,
+          "010001": 240,
+          "010010": 1,
+          "010011": 260,
+          "011000": 260,
+          "011001": 1,
+          "011010": 233,
+          "100101": 245,
+          "100110": 270,
+          "100111": 1,
+          "101100": 272,
+          "101110": 1,
+          "101111": 261,
+          "110000": 239,
+          "110010": 292,
+          "111001": 229,
+          "111010": 2,
+          "111011": 285
+        },
+        "group_id": 12,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110010",
+            292
+          ],
+          [
+            "111011",
+            285
+          ],
+          [
+            "001110",
+            276
+          ],
+          [
+            "101100",
+            272
+          ],
+          [
+            "100110",
+            270
+          ],
+          [
+            "101111",
+            261
+          ],
+          [
+            "010011",
+            260
+          ],
+          [
+            "011000",
+            260
+          ],
+          [
+            "000111",
+            257
+          ],
+          [
+            "001101",
+            253
+          ],
+          [
+            "100101",
+            245
+          ],
+          [
+            "010001",
+            240
+          ],
+          [
+            "110000",
+            239
+          ],
+          [
+            "011010",
+            233
+          ],
+          [
+            "111001",
+            229
+          ],
+          [
+            "000100",
+            218
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZXY",
+        "counts": {
+          "000100": 253,
+          "000110": 1,
+          "000111": 277,
+          "001101": 271,
+          "001110": 284,
+          "001111": 1,
+          "010000": 246,
+          "010010": 233,
+          "011001": 257,
+          "011010": 2,
+          "011011": 226,
+          "100101": 250,
+          "100110": 252,
+          "100111": 1,
+          "101100": 256,
+          "101110": 1,
+          "101111": 241,
+          "110001": 259,
+          "110011": 258,
+          "111000": 266,
+          "111001": 1,
+          "111010": 259,
+          "111011": 1
+        },
+        "group_id": 13,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "001110",
+            284
+          ],
+          [
+            "000111",
+            277
+          ],
+          [
+            "001101",
+            271
+          ],
+          [
+            "111000",
+            266
+          ],
+          [
+            "110001",
+            259
+          ],
+          [
+            "111010",
+            259
+          ],
+          [
+            "110011",
+            258
+          ],
+          [
+            "011001",
+            257
+          ],
+          [
+            "101100",
+            256
+          ],
+          [
+            "000100",
+            253
+          ],
+          [
+            "100110",
+            252
+          ],
+          [
+            "100101",
+            250
+          ],
+          [
+            "010000",
+            246
+          ],
+          [
+            "101111",
+            241
+          ],
+          [
+            "010010",
+            233
+          ],
+          [
+            "011011",
+            226
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZXY",
+        "counts": {
+          "000101": 246,
+          "000110": 239,
+          "000111": 1,
+          "001100": 265,
+          "001101": 2,
+          "001110": 1,
+          "001111": 256,
+          "010001": 248,
+          "010011": 261,
+          "011000": 258,
+          "011010": 258,
+          "011011": 1,
+          "100100": 264,
+          "100111": 264,
+          "101100": 1,
+          "101101": 225,
+          "101110": 239,
+          "110000": 284,
+          "110001": 1,
+          "110010": 270,
+          "110011": 1,
+          "111001": 271,
+          "111010": 2,
+          "111011": 238
+        },
+        "group_id": 14,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110000",
+            284
+          ],
+          [
+            "111001",
+            271
+          ],
+          [
+            "110010",
+            270
+          ],
+          [
+            "001100",
+            265
+          ],
+          [
+            "100100",
+            264
+          ],
+          [
+            "100111",
+            264
+          ],
+          [
+            "010011",
+            261
+          ],
+          [
+            "011000",
+            258
+          ],
+          [
+            "011010",
+            258
+          ],
+          [
+            "001111",
+            256
+          ],
+          [
+            "010001",
+            248
+          ],
+          [
+            "000101",
+            246
+          ],
+          [
+            "000110",
+            239
+          ],
+          [
+            "101110",
+            239
+          ],
+          [
+            "111011",
+            238
+          ],
+          [
+            "101101",
+            225
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZXX",
+        "counts": {
+          "000100": 278,
+          "000111": 277,
+          "001101": 268,
+          "001110": 252,
+          "010001": 262,
+          "010011": 245,
+          "011000": 265,
+          "011001": 2,
+          "011010": 254,
+          "011011": 1,
+          "100100": 1,
+          "100101": 260,
+          "100110": 244,
+          "100111": 2,
+          "101100": 271,
+          "101101": 1,
+          "101111": 230,
+          "110000": 231,
+          "110001": 1,
+          "110010": 252,
+          "110011": 1,
+          "111001": 253,
+          "111011": 245
+        },
+        "group_id": 15,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "000100",
+            278
+          ],
+          [
+            "000111",
+            277
+          ],
+          [
+            "101100",
+            271
+          ],
+          [
+            "001101",
+            268
+          ],
+          [
+            "011000",
+            265
+          ],
+          [
+            "010001",
+            262
+          ],
+          [
+            "100101",
+            260
+          ],
+          [
+            "011010",
+            254
+          ],
+          [
+            "111001",
+            253
+          ],
+          [
+            "001110",
+            252
+          ],
+          [
+            "110010",
+            252
+          ],
+          [
+            "010011",
+            245
+          ],
+          [
+            "111011",
+            245
+          ],
+          [
+            "100110",
+            244
+          ],
+          [
+            "110000",
+            231
+          ],
+          [
+            "101111",
+            230
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZXZX",
+        "counts": {
+          "001000": 154,
+          "001001": 130,
+          "001010": 115,
+          "001011": 101,
+          "001100": 126,
+          "001101": 141,
+          "001110": 132,
+          "001111": 127,
+          "011000": 116,
+          "011001": 141,
+          "011010": 128,
+          "011011": 101,
+          "011100": 136,
+          "011101": 155,
+          "011110": 134,
+          "011111": 124,
+          "100000": 504,
+          "100001": 3,
+          "100100": 1,
+          "100101": 514,
+          "110000": 1,
+          "110001": 513,
+          "110100": 498,
+          "110101": 1
+        },
+        "group_id": 16,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "100101",
+            514
+          ],
+          [
+            "110001",
+            513
+          ],
+          [
+            "100000",
+            504
+          ],
+          [
+            "110100",
+            498
+          ],
+          [
+            "011101",
+            155
+          ],
+          [
+            "001000",
+            154
+          ],
+          [
+            "001101",
+            141
+          ],
+          [
+            "011001",
+            141
+          ],
+          [
+            "011100",
+            136
+          ],
+          [
+            "011110",
+            134
+          ],
+          [
+            "001110",
+            132
+          ],
+          [
+            "001001",
+            130
+          ],
+          [
+            "011010",
+            128
+          ],
+          [
+            "001111",
+            127
+          ],
+          [
+            "001100",
+            126
+          ],
+          [
+            "011111",
+            124
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZXZYZY",
+        "counts": {
+          "001000": 146,
+          "001001": 150,
+          "001010": 103,
+          "001011": 109,
+          "001100": 140,
+          "001101": 151,
+          "001110": 118,
+          "001111": 126,
+          "011000": 112,
+          "011001": 157,
+          "011010": 113,
+          "011011": 121,
+          "011100": 143,
+          "011101": 133,
+          "011110": 124,
+          "011111": 114,
+          "100000": 1,
+          "100001": 509,
+          "100100": 496,
+          "100101": 1,
+          "110000": 531,
+          "110100": 2,
+          "110101": 496
+        },
+        "group_id": 17,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110000",
+            531
+          ],
+          [
+            "100001",
+            509
+          ],
+          [
+            "100100",
+            496
+          ],
+          [
+            "110101",
+            496
+          ],
+          [
+            "011001",
+            157
+          ],
+          [
+            "001101",
+            151
+          ],
+          [
+            "001001",
+            150
+          ],
+          [
+            "001000",
+            146
+          ],
+          [
+            "011100",
+            143
+          ],
+          [
+            "001100",
+            140
+          ],
+          [
+            "011101",
+            133
+          ],
+          [
+            "001111",
+            126
+          ],
+          [
+            "011110",
+            124
+          ],
+          [
+            "011011",
+            121
+          ],
+          [
+            "001110",
+            118
+          ],
+          [
+            "011111",
+            114
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZXZY",
+        "counts": {
+          "001000": 124,
+          "001001": 134,
+          "001010": 126,
+          "001011": 109,
+          "001100": 136,
+          "001101": 141,
+          "001110": 123,
+          "001111": 106,
+          "011000": 132,
+          "011001": 135,
+          "011010": 97,
+          "011011": 113,
+          "011100": 137,
+          "011101": 168,
+          "011110": 111,
+          "011111": 123,
+          "100000": 526,
+          "100100": 1,
+          "100101": 498,
+          "110001": 563,
+          "110100": 493
+        },
+        "group_id": 18,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110001",
+            563
+          ],
+          [
+            "100000",
+            526
+          ],
+          [
+            "100101",
+            498
+          ],
+          [
+            "110100",
+            493
+          ],
+          [
+            "011101",
+            168
+          ],
+          [
+            "001101",
+            141
+          ],
+          [
+            "011100",
+            137
+          ],
+          [
+            "001100",
+            136
+          ],
+          [
+            "011001",
+            135
+          ],
+          [
+            "001001",
+            134
+          ],
+          [
+            "011000",
+            132
+          ],
+          [
+            "001010",
+            126
+          ],
+          [
+            "001000",
+            124
+          ],
+          [
+            "001110",
+            123
+          ],
+          [
+            "011111",
+            123
+          ],
+          [
+            "011011",
+            113
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZYZYZX",
+        "counts": {
+          "001000": 137,
+          "001001": 152,
+          "001010": 120,
+          "001011": 105,
+          "001100": 153,
+          "001101": 145,
+          "001110": 113,
+          "001111": 115,
+          "011000": 142,
+          "011001": 141,
+          "011010": 118,
+          "011011": 103,
+          "011100": 137,
+          "011101": 153,
+          "011110": 90,
+          "011111": 102,
+          "100000": 516,
+          "100101": 511,
+          "110000": 1,
+          "110001": 509,
+          "110100": 533
+        },
+        "group_id": 19,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110100",
+            533
+          ],
+          [
+            "100000",
+            516
+          ],
+          [
+            "100101",
+            511
+          ],
+          [
+            "110001",
+            509
+          ],
+          [
+            "001100",
+            153
+          ],
+          [
+            "011101",
+            153
+          ],
+          [
+            "001001",
+            152
+          ],
+          [
+            "001101",
+            145
+          ],
+          [
+            "011000",
+            142
+          ],
+          [
+            "011001",
+            141
+          ],
+          [
+            "001000",
+            137
+          ],
+          [
+            "011100",
+            137
+          ],
+          [
+            "001010",
+            120
+          ],
+          [
+            "011010",
+            118
+          ],
+          [
+            "001111",
+            115
+          ],
+          [
+            "001110",
+            113
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZXZZX",
+        "counts": {
+          "000100": 144,
+          "000101": 134,
+          "000110": 103,
+          "000111": 103,
+          "001100": 148,
+          "001101": 137,
+          "001110": 107,
+          "001111": 131,
+          "010001": 512,
+          "011000": 499,
+          "100100": 146,
+          "100101": 150,
+          "100110": 103,
+          "100111": 111,
+          "101100": 133,
+          "101101": 140,
+          "101110": 139,
+          "101111": 122,
+          "110000": 519,
+          "111000": 2,
+          "111001": 513
+        },
+        "group_id": 20,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110000",
+            519
+          ],
+          [
+            "111001",
+            513
+          ],
+          [
+            "010001",
+            512
+          ],
+          [
+            "011000",
+            499
+          ],
+          [
+            "100101",
+            150
+          ],
+          [
+            "001100",
+            148
+          ],
+          [
+            "100100",
+            146
+          ],
+          [
+            "000100",
+            144
+          ],
+          [
+            "101101",
+            140
+          ],
+          [
+            "101110",
+            139
+          ],
+          [
+            "001101",
+            137
+          ],
+          [
+            "000101",
+            134
+          ],
+          [
+            "101100",
+            133
+          ],
+          [
+            "001111",
+            131
+          ],
+          [
+            "101111",
+            122
+          ],
+          [
+            "100111",
+            111
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XZYZZY",
+        "counts": {
+          "000100": 141,
+          "000101": 151,
+          "000110": 100,
+          "000111": 121,
+          "001100": 143,
+          "001101": 146,
+          "001110": 120,
+          "001111": 120,
+          "010000": 502,
+          "011000": 2,
+          "011001": 494,
+          "100100": 123,
+          "100101": 150,
+          "100110": 120,
+          "100111": 125,
+          "101100": 127,
+          "101101": 148,
+          "101110": 112,
+          "101111": 124,
+          "110000": 2,
+          "110001": 540,
+          "111000": 483,
+          "111001": 2
+        },
+        "group_id": 21,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "110001",
+            540
+          ],
+          [
+            "010000",
+            502
+          ],
+          [
+            "011001",
+            494
+          ],
+          [
+            "111000",
+            483
+          ],
+          [
+            "000101",
+            151
+          ],
+          [
+            "100101",
+            150
+          ],
+          [
+            "101101",
+            148
+          ],
+          [
+            "001101",
+            146
+          ],
+          [
+            "001100",
+            143
+          ],
+          [
+            "000100",
+            141
+          ],
+          [
+            "101100",
+            127
+          ],
+          [
+            "100111",
+            125
+          ],
+          [
+            "101111",
+            124
+          ],
+          [
+            "100100",
+            123
+          ],
+          [
+            "000111",
+            121
+          ],
+          [
+            "001110",
+            120
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZXZZY",
+        "counts": {
+          "000100": 140,
+          "000101": 154,
+          "000110": 129,
+          "000111": 104,
+          "001100": 151,
+          "001101": 137,
+          "001110": 101,
+          "001111": 99,
+          "010001": 510,
+          "011000": 532,
+          "100100": 152,
+          "100101": 145,
+          "100110": 112,
+          "100111": 108,
+          "101100": 130,
+          "101101": 141,
+          "101110": 105,
+          "101111": 112,
+          "110000": 498,
+          "110001": 3,
+          "111001": 533
+        },
+        "group_id": 22,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "111001",
+            533
+          ],
+          [
+            "011000",
+            532
+          ],
+          [
+            "010001",
+            510
+          ],
+          [
+            "110000",
+            498
+          ],
+          [
+            "000101",
+            154
+          ],
+          [
+            "100100",
+            152
+          ],
+          [
+            "001100",
+            151
+          ],
+          [
+            "100101",
+            145
+          ],
+          [
+            "101101",
+            141
+          ],
+          [
+            "000100",
+            140
+          ],
+          [
+            "001101",
+            137
+          ],
+          [
+            "101100",
+            130
+          ],
+          [
+            "000110",
+            129
+          ],
+          [
+            "100110",
+            112
+          ],
+          [
+            "101111",
+            112
+          ],
+          [
+            "100111",
+            108
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YZYZZX",
+        "counts": {
+          "000100": 140,
+          "000101": 126,
+          "000110": 108,
+          "000111": 126,
+          "001100": 150,
+          "001101": 160,
+          "001110": 92,
+          "001111": 122,
+          "010000": 2,
+          "010001": 494,
+          "011000": 544,
+          "011001": 2,
+          "100100": 142,
+          "100101": 143,
+          "100110": 108,
+          "100111": 116,
+          "101100": 139,
+          "101101": 151,
+          "101110": 124,
+          "101111": 105,
+          "110000": 484,
+          "110001": 4,
+          "111000": 3,
+          "111001": 511
+        },
+        "group_id": 23,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "011000",
+            544
+          ],
+          [
+            "111001",
+            511
+          ],
+          [
+            "010001",
+            494
+          ],
+          [
+            "110000",
+            484
+          ],
+          [
+            "001101",
+            160
+          ],
+          [
+            "101101",
+            151
+          ],
+          [
+            "001100",
+            150
+          ],
+          [
+            "100101",
+            143
+          ],
+          [
+            "100100",
+            142
+          ],
+          [
+            "000100",
+            140
+          ],
+          [
+            "101100",
+            139
+          ],
+          [
+            "000101",
+            126
+          ],
+          [
+            "000111",
+            126
+          ],
+          [
+            "101110",
+            124
+          ],
+          [
+            "001111",
+            122
+          ],
+          [
+            "100111",
+            116
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZZZZZZ",
+        "counts": {
+          "001110": 942,
+          "011001": 1066,
+          "100101": 1154,
+          "110000": 934
+        },
+        "group_id": 24,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "100101",
+            1154
+          ],
+          [
+            "011001",
+            1066
+          ],
+          [
+            "001110",
+            942
+          ],
+          [
+            "110000",
+            934
+          ]
+        ]
+      }
+    ],
+    "shots_per_group": 4096,
+    "source": "statevector_sampler_from_final_state"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "state": {
+    "available": true,
+    "dominant_configurations": [
+      {
+        "bitstring": "100101",
+        "probability": 0.2724094248739734
+      },
+      {
+        "bitstring": "011001",
+        "probability": 0.2724094248739717
+      },
+      {
+        "bitstring": "001110",
+        "probability": 0.22759057512602748
+      },
+      {
+        "bitstring": "110000",
+        "probability": 0.22759057512602718
+      },
+      {
+        "bitstring": "101001",
+        "probability": 7.015974240566745e-31
+      },
+      {
+        "bitstring": "010101",
+        "probability": 1.6539473449503316e-31
+      },
+      {
+        "bitstring": "111001",
+        "probability": 3.056798029622688e-32
+      },
+      {
+        "bitstring": "011101",
+        "probability": 2.9513895202334785e-32
+      },
+      {
+        "bitstring": "011110",
+        "probability": 1.574216829878599e-32
+      },
+      {
+        "bitstring": "110101",
+        "probability": 1.4354057888646963e-32
+      },
+      {
+        "bitstring": "000000",
+        "probability": 1.2113254414395532e-32
+      },
+      {
+        "bitstring": "111000",
+        "probability": 9.865609482563063e-33
+      },
+      {
+        "bitstring": "101110",
+        "probability": 9.477050712759979e-33
+      },
+      {
+        "bitstring": "000010",
+        "probability": 8.891716808818683e-33
+      },
+      {
+        "bitstring": "001010",
+        "probability": 7.343526772369034e-33
+      },
+      {
+        "bitstring": "110100",
+        "probability": 7.329417120806467e-33
+      }
+    ],
+    "ground_state_overlap": 0.9999999999999996,
+    "hamiltonian_expectation": -10.7881406924605,
+    "hamiltonian_variance": 1.4210854715202004e-14,
+    "variance_method": "sparse_matrix_norm"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": {
+      "available": true,
+      "gauss_law_tolerance": 1e-08,
+      "reference_basis_index": 14,
+      "reference_state_gauss_law_residuals": [
+        0.0,
+        0.0
+      ],
+      "reference_state_max_abs_gauss_law": 0.0,
+      "target_charge_sector": "neutral"
+    },
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Molecular Z2 and point-group reduction are skipped for finite-cutoff lattice-QED field models."
+      ],
+      "status": "skipped_unsupported_field_model",
+      "validation": {},
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    }
+  }
+}

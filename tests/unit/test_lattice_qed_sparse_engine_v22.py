@@ -19,7 +19,12 @@ def _h2_molecule() -> MoleculeSpec:
     )
 
 
-def _spec(*, shape: list[int] | None = None, spin_components: int = 2) -> LatticeQEDSpec:
+def _spec(
+    *,
+    shape: list[int] | None = None,
+    spin_components: int = 2,
+    projected_builder: str = "auto",
+) -> LatticeQEDSpec:
     spec = LatticeQEDSpec(enabled=True)
     spec.dimensions = 1
     spec.grid.shape = shape or [2]
@@ -40,6 +45,7 @@ def _spec(*, shape: list[int] | None = None, spin_components: int = 2) -> Lattic
     spec.engine.materialize_pauli = "never"
     spec.engine.store_basis_indices = "full"
     spec.engine.max_projected_dimension = 4096
+    spec.engine.projected_builder = projected_builder
     return spec
 
 
@@ -54,7 +60,7 @@ def test_sparse_full_hamiltonian_matches_dense_sector_by_sector_for_2_site_h2() 
     dense_context = build_lattice_qed_context(_h2_molecule(), _dense_spec(), mapping_kind="jordan_wigner")
     sparse_context = build_lattice_qed_context(
         _h2_molecule(),
-        _spec(),
+        _spec(projected_builder="legacy_full_project"),
         mapping_kind="jordan_wigner",
     )
 
@@ -93,14 +99,20 @@ def test_sparse_engine_includes_external_point_charge_sector_without_gauss_backg
     assert embedded.summary.term_counts_by_sector["external_point_charge"] > 0
     assert embedded.summary.external_point_charges["gauss_law_background_modified"] is False
     assert embedded.summary.nuclear_charge_by_site == baseline.summary.nuclear_charge_by_site
+    assert baseline.sparse_bundle.projected_hamiltonian is not None
+    assert embedded.sparse_bundle.projected_hamiltonian is not None
     assert not np.allclose(
-        embedded.sparse_bundle.full_hamiltonian.toarray(),
-        baseline.sparse_bundle.full_hamiltonian.toarray(),
+        embedded.sparse_bundle.projected_hamiltonian.toarray(),
+        baseline.sparse_bundle.projected_hamiltonian.toarray(),
     )
 
 
 def test_projected_hamiltonian_is_hermitian_and_matches_indexed_full_hamiltonian() -> None:
-    context = build_lattice_qed_context(_h2_molecule(), _spec(), mapping_kind="jordan_wigner")
+    context = build_lattice_qed_context(
+        _h2_molecule(),
+        _spec(projected_builder="legacy_full_project"),
+        mapping_kind="jordan_wigner",
+    )
     bundle = context.sparse_bundle
 
     assert bundle is not None

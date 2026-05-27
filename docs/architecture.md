@@ -29,6 +29,9 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 : 显式隔离的实验性 solver / mitigation / benchmark 模块。它们可以落正式 artifact，但不会默认进入 validated 主链。
   当前包含 LR-ACE (`Low-Rank Adaptive Chemistry Eigensolver`) 原型：它从 mapped low-rank/compressed Hamiltonian 的 dominant non-diagonal factors 生成 compact real-mixing Pauli-evolution ansatz，并通过 QCchem evidence gate 标注为 exploratory。
 
+`qcchem/qft`
+: 有限截断 lattice-QED / QFT 子系统。它负责 compact U(1) grid/link/plaquette 构建、Gauss-law audit、sector-first sparse projected builder、projected observable matrices、dynamics/Trotter resources，以及 `sparse_evidence.py` 中的 sparse exact validation 和 lattice-QED observables。这个包输出 finite-model evidence，不输出 continuum chemistry claim。
+
 `qcchem/backends`
 : backend adapter、measurement planner、noise model helper、runtime/session-ready snapshot、runtime submission attempt helper、capability snapshot、execution policy defaults。
 
@@ -65,6 +68,8 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 1. CLI 或 workflow 读取 YAML 并解析为 `RunSpec`
 2. policy defaults 合并到 backend/benchmark/mitigation 配置
 3. `chem` 构建 `ElectronicStructureContext`
+   - 若启用 `problem.qft`，则改由 `qcchem/qft` 构建 finite-cutoff
+     `LatticeQEDContext`，并把该模型保持在 exploratory boundary 内
 4. `chem` 同时生成 `reduction_audit`
 5. `mapping` 生成 qubit Hamiltonian
 6. `chem/compression.py` 构建 compressed fermionic Hamiltonian 与 compression audit
@@ -82,6 +87,27 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 14. 如启用 runtime path，额外记录 empirical calibration 与 real runtime submission attempt
 15. 构建 `Evidence Summary`，把 scientific claim、baseline、error metric、trust tier 和 recommended action 收成统一读口
 16. hardware calibration suite 以 `runtime_submission` 为 authoritative runtime-evidence source 聚合 dashboard，并把 `hardware_verified` / `hardware_evidence_tier` 一起纳入导出和汇总
+
+### QFT / Lattice-QED Sparse Exact
+
+1. `build_lattice_qed_context` 解析 finite grid/cutoff/softening、matter/gauge
+   basis、Gauss-law sector 和 external scalar potentials。
+2. `projected_builder.py` 在 sector-first 路径中直接枚举 physical-sector
+   basis 并组装 projected sparse Hamiltonian，避免先 materialize full Hilbert
+   space 再投影。
+3. `sparse_evidence.py` 重新对 projected Hamiltonian 做 residual/hash
+   evidence：`eigen_residual_norm`、`relative_eigen_residual`,
+   `ground_state_gap`, `lowest_eigenvalues`, `projected_matrix_sha256`,
+   `projected_matrix_dimension`, `projected_hamiltonian_nnz`, `basis_hash`。
+4. `workflow/runner.py` 将 `chemical_accuracy` 分层为
+   `finite_model_exactness`、`continuum_chemistry_accuracy` 和
+   `hardware_accuracy`。
+5. `workflow/quantum_evidence.py` 在 `pauli_materialization=skipped` 时输出
+   `pauli_terms_available: false`，并把 measurement/cost 字段标记为
+   sparse/exploratory estimate，而不是 hardware measurement cost。
+6. `reporting/markdown.py` 在报告开头写出 `Trust Boundary Summary /
+   可信边界摘要`，让 finite-model exactness、continuum chemistry accuracy 和
+   hardware accuracy 的边界先于能量数值出现。
 
 ### Evidence-Grounded AI Agent
 
@@ -163,6 +189,9 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 
 `MeasurementSummary`
 : 记录 measurement strategy、group count、estimated shot cost、runtime precision target、execution mode，以及 compressed/uncompressed 的测量复杂度比较。
+  对 sparse projected lattice-QED，measurement plan 中的 group/cost 只能作为
+  sparse/exploratory estimate；如果 Pauli materialization 被跳过，hardware-facing
+  Pauli group/cost 字段应为空或显式不可用。
 
 `CalibrationSummary`
 : 记录 measured wall time、measured shot usage、achieved error，以及 estimated vs measured cost 的经验校准结果。
@@ -187,6 +216,9 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 `RunResult`
 : 原子级 artifact；benchmark/study/scan/task 都围绕它组织。
   当前它会显式区分 `chemical_accuracy` 和 `runtime_chemical_accuracy`，避免把“本地 solver 达标”和“真实 runtime 推导总能量达标”混成同一个判断。
+  对 lattice-QED sparse exact，`chemical_accuracy` 进一步拆成
+  `finite_model_exactness`、`continuum_chemistry_accuracy`、`hardware_accuracy`，
+  防止 finite-cutoff exact error 被误读成真实连续空间化学精度。
 
 `EvidenceSummary`
 : 轻量证据摘要层，当前统一至少覆盖：

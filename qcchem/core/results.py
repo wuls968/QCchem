@@ -298,6 +298,8 @@ class QuantumEvidenceSummary:
     symmetry_checks: dict[str, Any] = field(default_factory=dict)
     resources: dict[str, Any] = field(default_factory=dict)
     error_budget: dict[str, Any] = field(default_factory=dict)
+    sparse_exact_validation: dict[str, Any] = field(default_factory=dict)
+    lattice_qed_observables: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
 
@@ -348,6 +350,9 @@ class ChemicalAccuracySummary:
     reference_energy: float | None = None
     computed_energy: float | None = None
     status: str = "no_reference"
+    finite_model_exactness: dict[str, Any] = field(default_factory=dict)
+    continuum_chemistry_accuracy: dict[str, Any] = field(default_factory=dict)
+    hardware_accuracy: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
 
@@ -708,6 +713,8 @@ class QFTModelSummary:
     constraint_expectations: dict[str, Any] = field(default_factory=dict)
     engine: dict[str, Any] = field(default_factory=dict)
     external_point_charges: dict[str, Any] = field(default_factory=dict)
+    sparse_exact_validation: dict[str, Any] = field(default_factory=dict)
+    observables: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
 

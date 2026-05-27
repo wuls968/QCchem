@@ -1,0 +1,13 @@
+2026-05-24 10:37:15,538 INFO Loading config from ./configs/exploratory/h2_lattice_qed_exact.yaml
+2026-05-24 10:37:15,539 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=0c68621f7ed9
+2026-05-24 10:37:15,544 INFO Building exploratory lattice-QED field Hamiltonian
+2026-05-24 10:37:15,550 INFO Constructed lattice-QED Hamiltonian: sites=2, links=1, qubits=6
+2026-05-24 10:37:15,554 INFO Prepared measurement plan: groups=25, cost=250000
+2026-05-24 10:37:15,554 INFO Skipping backend construction for solver: exact
+2026-05-24 10:37:15,555 INFO Running solver: exact
+2026-05-24 10:37:15,557 INFO Computing exact spectrum for 1 states
+2026-05-24 10:37:15,559 INFO Writing exact baseline artifact to /tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60/exact_result.json
+2026-05-24 10:37:15,560 INFO Computed empirical calibration: wall_time=0.002s, measured_cost=None
+2026-05-24 10:37:15,584 INFO Writing JSON result to /tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60/result.json
+2026-05-24 10:37:15,587 INFO Writing Markdown report to /tmp/qcchem_h2_lattice_qed_cutoff_grid_analysis/cases/h2_lattice_qed_spacing_0p60/report.md
+2026-05-24 10:37:15,588 INFO Run completed

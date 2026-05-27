@@ -153,6 +153,30 @@ qcchem exploratory run \
 Boundary: sparse projected physical-sector, Gauss-law, and finite-cutoff audit
 evidence only. No continuum chemistry claim.
 
+For sparse exact artifacts, show the report's `Trust Boundary Summary / 可信边界摘要`
+and `Chemical Accuracy Frame` before discussing energy values. The expected
+reading is:
+
+- `finite_model_exactness`: finite Hamiltonian internal exactness.
+- `continuum_chemistry_accuracy`: `not_claimed` unless convergence evidence is
+  attached.
+- `hardware_accuracy`: `unavailable` unless a real Runtime/shot-based result was
+  submitted and collected.
+- `pauli_terms_available`: `false` when Pauli materialization was skipped; the
+  sidecar should show sparse validation metadata instead of a fake Pauli
+  Hamiltonian.
+
+Optional QFT benchmark appendix:
+
+```bash
+qcchem benchmark run -c benchmarks/field_model_qft_smoke_v2.yaml
+qcchem benchmark run -c benchmarks/field_model_qft_cutoff_grid_convergence_v1.yaml
+qcchem benchmark run -c benchmarks/field_model_qft_dynamics_resource_v1.yaml
+```
+
+These suites are exploratory finite-model/resource evidence. They should not be
+used as a continuum chemistry validation slide.
+
 LR-ACE flagship:
 
 ```bash

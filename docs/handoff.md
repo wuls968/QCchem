@@ -18,6 +18,26 @@
 
 ## 本轮新增
 
+- QFT / lattice-QED sparse exact trust-boundary overhaul:
+  - `chemical_accuracy` now separates `finite_model_exactness`,
+    `continuum_chemistry_accuracy`, and `hardware_accuracy`
+  - finite-cutoff exactness is allowed to pass without claiming continuum
+    chemistry accuracy
+  - hardware accuracy remains unavailable unless Runtime/shot-based evidence is
+    submitted and collected
+  - `quantum_evidence.json` no longer writes fake zero identity Pauli terms when
+    `pauli_materialization=skipped`; it records `pauli_terms_available: false`
+  - sparse exact validation now includes projected dimension/NNZ, basis hash,
+    eigen residuals, gap, lowest eigenvalues, and projected matrix SHA-256
+  - report output now begins QFT sparse exact artifacts with a bilingual `Trust
+    Boundary Summary / 可信边界摘要`
+- QFT benchmark expansion:
+  - `field_model_qft_smoke_v2`
+  - `field_model_qft_cutoff_grid_convergence_v1`
+  - `field_model_qft_dynamics_resource_v1`
+  - `field_model_qft_hardware_micro_v1`
+  - `field_model_qft_hardware_micro_real_v1`
+  - real QFT Runtime micro runs remain guarded by explicit budget confirmation
 - `Evidence Summary` 已进入核心 artifact 与 aggregate：
   - run
   - benchmark case / suite
@@ -71,7 +91,7 @@
 
 这条路径对应 QCchem 当前最完整的“最佳证据 -> 边界解释 -> 推荐动作”叙事。
 
-固定展示顺序也已落到 [release_showcase.md](/Users/a0000/QCchem/docs/release_showcase.md)。
+固定展示顺序也已落到 [release_showcase.md](release_showcase.md)。
 
 ## 本轮已完成
 

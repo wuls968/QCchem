@@ -29,6 +29,7 @@ python -m pytest tests/integration/test_qwen_core_integration_v09.py -q
 python -m pytest tests/unit/test_release_audit_v23.py -q
 python -m pytest tests/integration/test_release_audit_workflow_v23.py -q
 python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
+python -m pytest tests/unit/test_lattice_qed_sparse_engine_v22.py tests/unit/test_lattice_qed_sector_first_builder.py tests/unit/test_field_model_qft_benchmark_configs.py -q
 python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py -q
 ```
 
@@ -106,6 +107,22 @@ validation plan adds stronger acceptance criteria.
 Do not promote an exploratory algorithm by changing docs alone. Promotion
 requires tests, release audit changes, benchmark evidence, and a clear public
 scope statement.
+
+For finite-cutoff lattice-QED sparse exact work:
+
+- Keep the solver boundary separate from output/report changes. Most trust fixes
+  should live in result structure, `quantum_evidence`, reports, and tests.
+- Preserve the three-layer accuracy contract:
+  `finite_model_exactness`, `continuum_chemistry_accuracy`, and
+  `hardware_accuracy`.
+- If `pauli_materialization=skipped`, emit `pauli_terms_available: false` and an
+  empty Pauli-term list. Do not create an identity Pauli term to satisfy an old
+  schema path.
+- Measurement group counts and shot-cost estimates on sparse projected paths
+  must be labeled as sparse/exploratory estimates unless a hardware-ready
+  materialized operator path exists.
+- New QFT evidence fields should be additive and nullable, and tests should
+  cover `result.json`, `quantum_evidence.json`, and `report.md` together.
 
 ## Release Checklist
 

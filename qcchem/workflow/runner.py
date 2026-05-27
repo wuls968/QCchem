@@ -71,6 +71,10 @@ from qcchem.io.serialization import to_primitive
 from qcchem.mapping import MappedHamiltonian, map_fermionic_hamiltonian
 from qcchem.mitigation import build_mitigation_summary
 from qcchem.qft import build_lattice_qed_context, build_lattice_qed_dynamics
+from qcchem.qft.sparse_evidence import (
+    summarize_lattice_qed_sparse_exact_evidence,
+    unavailable_lattice_qed_observables,
+)
 from qcchem.reporting import write_calibration_report, write_markdown_report, write_result_json
 from qcchem.exploratory.solvers.registry import build_exploratory_solver
 from qcchem.exploratory.tc_qsci import run_tc_qsci
@@ -339,6 +343,98 @@ def _build_runtime_chemical_accuracy(
         exact_total_energy,
         assessment_target="runtime_derived",
         statistical_error=statistical_error,
+    )
+
+
+def _lattice_qed_hardware_accuracy_layer(runtime_submission: RuntimeSubmissionSummary | None) -> dict[str, Any]:
+    if runtime_submission is None:
+        return {
+            "available": False,
+            "status": "unavailable",
+            "reason": "Runtime/shot-based backend was not submitted for this artifact.",
+        }
+    if runtime_submission.submitted and runtime_submission.succeeded:
+        return {
+            "available": True,
+            "status": "retrieved_result",
+            "backend_name": runtime_submission.backend_name,
+            "job_id": runtime_submission.job_id,
+        }
+    if runtime_submission.submitted:
+        return {
+            "available": False,
+            "status": "submitted",
+            "reason": "Runtime job was submitted but no successful result has been collected.",
+            "backend_name": runtime_submission.backend_name,
+            "job_id": runtime_submission.job_id,
+        }
+    if runtime_submission.attempted:
+        return {
+            "available": False,
+            "status": "runtime_attempt",
+            "reason": runtime_submission.failure_message or "Runtime submission was attempted but not submitted.",
+            "failure_category": runtime_submission.failure_category,
+        }
+    return {
+        "available": False,
+        "status": "unavailable",
+        "reason": "Runtime/shot-based backend was not submitted for this artifact.",
+    }
+
+
+def _with_lattice_qed_accuracy_layers(
+    chemical_accuracy: Any,
+    *,
+    benchmark: BenchmarkSummary,
+    exact_baseline: ExactBaselineSummary,
+    runtime_submission: RuntimeSubmissionSummary | None,
+) -> Any:
+    """Reframe finite lattice-QED exactness without claiming continuum chemistry accuracy."""
+    finite_status = "unavailable"
+    finite_passed = None
+    if exact_baseline.available and benchmark.absolute_error is not None:
+        finite_passed = bool(
+            benchmark.meets_threshold
+            if benchmark.meets_threshold is not None
+            else benchmark.absolute_error <= benchmark.absolute_error_threshold
+        )
+        finite_status = "passed" if finite_passed else "failed"
+    finite_model_exactness = {
+        "available": finite_passed is not None,
+        "status": finite_status,
+        "scope": "finite_cutoff_lattice_qed_hamiltonian",
+        "comparison_target": benchmark.comparison_target,
+        "absolute_error_hartree": benchmark.absolute_error,
+        "relative_error": benchmark.relative_error,
+        "threshold_hartree": benchmark.absolute_error_threshold,
+        "reference_energy": exact_baseline.total_energy,
+        "exactness_claim": "Exact only within the configured finite grid/cutoff/softening Hamiltonian.",
+    }
+    continuum_chemistry_accuracy = {
+        "available": False,
+        "status": "not_claimed",
+        "reason": "No grid, electric-cutoff, and softening convergence scan is attached to this single sparse exact run.",
+        "required_evidence": [
+            "grid_spacing_convergence",
+            "electric_cutoff_convergence",
+            "softening_convergence",
+            "continuum_extrapolation_or_error_model",
+        ],
+    }
+    hardware_accuracy = _lattice_qed_hardware_accuracy_layer(runtime_submission)
+    return replace(
+        chemical_accuracy,
+        assessment_target="lattice_qed_sparse_exact_trust_boundary",
+        meets_chemical_accuracy=None,
+        status="not_claimed",
+        finite_model_exactness=finite_model_exactness,
+        continuum_chemistry_accuracy=continuum_chemistry_accuracy,
+        hardware_accuracy=hardware_accuracy,
+        notes=[
+            "Finite-cutoff sparse exactness is separated from continuum chemistry accuracy.",
+            "This artifact does not claim continuum chemistry accuracy without convergence evidence.",
+            "This artifact does not claim hardware accuracy unless a Runtime/shot-based backend result is collected.",
+        ],
     )
 
 
@@ -858,6 +954,16 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         backend_precision=spec.backend.precision,
         backend_shots=spec.backend.shots,
     )
+    if (
+        qft_context is not None
+        and (qft_context.summary.engine or {}).get("pauli_materialization") == "skipped"
+    ):
+        measurement.notes.extend(
+            [
+                "Pauli materialization was skipped for the sparse projected lattice-QED Hamiltonian.",
+                "Measurement group count and shot cost are sparse/exploratory estimates, not a hardware measurement budget.",
+            ]
+        )
     _record(
         logger,
         events,
@@ -1175,6 +1281,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         comparison_target = "sampled_result"
         compared_energy = sampled_result.sampled_solver_energy_mean
         statistical_error = sampled_result.standard_error
+    elif solver_kind == "lattice_qed_sparse_exact":
+        comparison_target = "finite_cutoff_sparse_exact"
     elif solver_kind in {"exact", "reference"}:
         comparison_target = "exact_baseline"
 
@@ -1218,6 +1326,23 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         exact_total_energy=exact_baseline.total_energy,
         compressed_vs_uncompressed=compressed_comparison,
     )
+    if qft_context is not None and solver_kind == "lattice_qed_sparse_exact":
+        try:
+            sparse_validation, lattice_observables = summarize_lattice_qed_sparse_exact_evidence(
+                qft_context,
+                molecule=spec.molecule,
+                qft_spec=spec.problem.qft,
+                solver_energy=solver_energy,
+            )
+        except Exception as exc:  # pragma: no cover - defensive artifact path
+            sparse_validation = {
+                "available": False,
+                "reason": f"sparse_exact_evidence_failed: {type(exc).__name__}: {exc}",
+            }
+            lattice_observables = unavailable_lattice_qed_observables(str(sparse_validation["reason"]))
+        qft_context.summary.sparse_exact_validation.update(sparse_validation)
+        qft_context.summary.observables.update(lattice_observables)
+        field_model = build_field_model_summary(kind="lattice_qed", model_summary=qft_context.summary)
     if cavity_context is not None:
         cavity_observables = summarize_cavity_qed_observables(
             cavity_context,
@@ -1417,6 +1542,13 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             else 0.0
         ),
     )
+    if qft_context is not None and solver_kind == "lattice_qed_sparse_exact" and chemical_accuracy is not None:
+        chemical_accuracy = _with_lattice_qed_accuracy_layers(
+            chemical_accuracy,
+            benchmark=benchmark,
+            exact_baseline=exact_baseline,
+            runtime_submission=runtime_submission,
+        )
 
     verification_status = _classify_verification_status(benchmark, sampled_result)
     if (
@@ -1806,8 +1938,11 @@ def run_from_config(
     output_dir: Path | None = None,
     *,
     exploratory_command: bool = False,
+    confirm_runtime_budget: str | None = None,
 ) -> RunResult:
     """Run a QCchem calculation from a YAML configuration."""
     spec = load_run_spec(config_path)
+    if confirm_runtime_budget:
+        spec.backend.runtime.options["runtime_budget_confirmation"] = confirm_runtime_budget
     _ensure_exploratory_allowed(spec, exploratory_command=exploratory_command)
     return run_spec(spec, source_config=str(config_path), output_dir=output_dir)

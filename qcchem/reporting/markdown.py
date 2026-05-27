@@ -72,6 +72,29 @@ def _hardware_execution_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _trust_boundary_summary_lines(data: dict[str, Any]) -> list[str]:
+    chemical = data.get("chemical_accuracy") or {}
+    finite = chemical.get("finite_model_exactness") if isinstance(chemical, dict) else {}
+    continuum = chemical.get("continuum_chemistry_accuracy") if isinstance(chemical, dict) else {}
+    hardware = chemical.get("hardware_accuracy") if isinstance(chemical, dict) else {}
+    if not data.get("qft_model") and not any(isinstance(item, dict) and item for item in (finite, continuum, hardware)):
+        return []
+    return [
+        "## Trust Boundary Summary / 可信边界摘要",
+        "",
+        "- 中文: 本次结果证明 finite-cutoff lattice-QED sparse exact 在当前有限格点/有限截断 Hamiltonian 内部自洽。",
+        "- 中文: 本次结果不证明 continuum chemistry accuracy；需要 grid/cutoff/softening 收敛证据后才能声称。",
+        "- 中文: 本次结果不证明 quantum hardware execution；未提交或未收集 Runtime/shot-based 后端时硬件精度不可用。",
+        "- English: This result supports internal consistency of the finite-cutoff lattice-QED sparse exact model only.",
+        "- English: This result does not claim continuum chemistry accuracy without grid/cutoff/softening convergence evidence.",
+        "- English: This result does not prove quantum hardware execution unless a Runtime/shot-based backend result is submitted and collected.",
+        f"- finite_model_exactness: `{finite}`",
+        f"- continuum_chemistry_accuracy: `{continuum}`",
+        f"- hardware_accuracy: `{hardware}`",
+        "",
+    ]
+
+
 def _chemical_accuracy_lines(summary: dict[str, Any], units: str) -> list[str]:
     assessment_target = str(summary.get("assessment_target", "local_execution"))
     title_suffix = "Local Execution" if assessment_target == "local_execution" else "Runtime-Derived"
@@ -87,6 +110,9 @@ def _chemical_accuracy_lines(summary: dict[str, Any], units: str) -> list[str]:
         f"- threshold_hartree: `{summary.get('threshold_hartree')}`",
         f"- threshold_kcal_mol: `{summary.get('threshold_kcal_mol')}`",
         f"- statistical_error: {_fmt_energy(summary.get('statistical_error'), units)}",
+        f"- finite_model_exactness: `{summary.get('finite_model_exactness', {})}`",
+        f"- continuum_chemistry_accuracy: `{summary.get('continuum_chemistry_accuracy', {})}`",
+        f"- hardware_accuracy: `{summary.get('hardware_accuracy', {})}`",
         f"- notes: `{summary.get('notes', [])}`",
         "",
     ]
@@ -192,6 +218,30 @@ def _hero_lines(data: dict[str, Any], units: str) -> list[str]:
 
 def _chemical_accuracy_frame_lines(data: dict[str, Any], units: str) -> list[str]:
     primary = _primary_chemical_accuracy_summary(data) or {}
+    finite = primary.get("finite_model_exactness") if isinstance(primary.get("finite_model_exactness"), dict) else {}
+    continuum = (
+        primary.get("continuum_chemistry_accuracy")
+        if isinstance(primary.get("continuum_chemistry_accuracy"), dict)
+        else {}
+    )
+    hardware = primary.get("hardware_accuracy") if isinstance(primary.get("hardware_accuracy"), dict) else {}
+    if finite or continuum or hardware:
+        return [
+            "## Chemical Accuracy Frame",
+            "",
+            "> Lattice-QED sparse exact reports finite-model exactness separately from continuum chemistry and hardware accuracy.",
+            "",
+            f"- finite_model_exactness: `{finite}`",
+            f"- continuum_chemistry_accuracy: `{continuum}`",
+            f"- hardware_accuracy: `{hardware}`",
+            f"- status: `{primary.get('status')}`",
+            f"- meets_chemical_accuracy: `{primary.get('meets_chemical_accuracy')}`",
+            f"- finite_absolute_error_hartree: {_fmt_energy(finite.get('absolute_error_hartree'), units)}",
+            f"- continuum_chemistry_accuracy_status: `{continuum.get('status')}`",
+            f"- hardware_accuracy_status: `{hardware.get('status')}`",
+            f"- notes: `{primary.get('notes', [])}`",
+            "",
+        ]
     assessments = [
         summary.get("assessment_target")
         for summary in _explicit_available_chemical_accuracy_summaries(data)
@@ -238,6 +288,12 @@ def _runtime_evidence_frame_lines(data: dict[str, Any]) -> list[str]:
 def _qft_model_lines(data: dict[str, Any]) -> list[str]:
     qft = data.get("qft_model") or {}
     engine = qft.get("engine", {}) if isinstance(qft.get("engine"), dict) else {}
+    sparse_validation = (
+        qft.get("sparse_exact_validation", {})
+        if isinstance(qft.get("sparse_exact_validation"), dict)
+        else {}
+    )
+    observables = qft.get("observables", {}) if isinstance(qft.get("observables"), dict) else {}
     lines = [
         "## Lattice QED Field Model",
         "",
@@ -260,6 +316,8 @@ def _qft_model_lines(data: dict[str, Any]) -> list[str]:
         f"- term_counts_by_sector: `{qft.get('term_counts_by_sector', {})}`",
         f"- constraints: `{qft.get('constraints', {})}`",
         f"- engine: `{engine}`",
+        f"- sparse_exact_validation: `{sparse_validation}`",
+        f"- observables: `{observables}`",
         f"- nuclear_charge_by_site: `{qft.get('nuclear_charge_by_site', [])}`",
         f"- external_point_charges: `{qft.get('external_point_charges', {})}`",
         f"- notes: `{qft.get('notes', [])}`",
@@ -292,11 +350,18 @@ def _qft_model_lines(data: dict[str, Any]) -> list[str]:
                 f"- requested_representation: `{engine.get('requested_representation')}`",
                 f"- actual_representation: `{engine.get('actual_representation')}`",
                 f"- projected_dimension: `{engine.get('projected_dimension')}`",
+                f"- projected_matrix_dimension: `{sparse_validation.get('projected_matrix_dimension')}`",
+                f"- projected_hamiltonian_nnz: `{sparse_validation.get('projected_hamiltonian_nnz') or engine.get('projected_hamiltonian_nnz')}`",
                 f"- full_dimension: `{engine.get('full_dimension')}`",
                 f"- pauli_materialization: `{engine.get('pauli_materialization')}`",
                 f"- dense_full_matrix_materialized: `{engine.get('dense_full_matrix_materialized')}`",
                 f"- basis_hash: `{qft.get('physical_sector', {}).get('basis_hash')}`",
                 f"- basis_index_count: `{qft.get('physical_sector', {}).get('basis_index_count')}`",
+                f"- eigen_residual_norm: `{sparse_validation.get('eigen_residual_norm')}`",
+                f"- relative_eigen_residual: `{sparse_validation.get('relative_eigen_residual')}`",
+                f"- ground_state_gap: `{sparse_validation.get('ground_state_gap')}`",
+                f"- lowest_eigenvalues: `{sparse_validation.get('lowest_eigenvalues')}`",
+                f"- projected_matrix_sha256: `{sparse_validation.get('projected_matrix_sha256')}`",
                 f"- sparse_projection_correctness: `projected operators are finite-cutoff indexed submatrices when projection is active`",
                 f"- runtime_circuit_boundary: `Runtime previews still target the full qubit register unless separately transformed`",
                 f"- continuum_chemistry_accuracy: `not asserted by this exploratory engine audit`",
@@ -550,6 +615,8 @@ def _quantum_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
     symmetry = evidence.get("symmetry_checks") or {}
     resources = evidence.get("resources") or {}
     error_budget = evidence.get("error_budget") or {}
+    sparse_validation = evidence.get("sparse_exact_validation") or {}
+    lattice_observables = evidence.get("lattice_qed_observables") or {}
     dominant = state.get("dominant_configurations", [])
     return [
         "## Quantum Evidence",
@@ -560,11 +627,22 @@ def _quantum_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- schema: `{evidence.get('schema')}`",
         f"- sidecar_path: `{evidence.get('sidecar_path')}`",
         f"- sidecar_sha256: `{evidence.get('sidecar_sha256')}`",
+        f"- pauli_terms_available: `{hamiltonian.get('pauli_terms_available')}`",
+        f"- pauli_unavailable_reason: `{hamiltonian.get('pauli_unavailable_reason')}`",
         f"- pauli_term_count: `{hamiltonian.get('pauli_term_count')}`",
         f"- measurement_group_count: `{hamiltonian.get('measurement_group_count')}`",
         f"- energy_contribution_sum: {_fmt_energy(hamiltonian.get('energy_contribution_sum'), units)}",
         f"- coefficient_l1_norm: `{hamiltonian.get('coefficient_l1_norm')}`",
+        f"- projected_matrix_dimension: `{hamiltonian.get('projected_matrix_dimension')}`",
+        f"- projected_hamiltonian_nnz: `{hamiltonian.get('projected_hamiltonian_nnz')}`",
+        f"- physical_sector_dimension: `{hamiltonian.get('physical_sector_dimension')}`",
+        f"- basis_hash: `{hamiltonian.get('basis_hash')}`",
+        f"- projected_matrix_sha256: `{hamiltonian.get('projected_matrix_sha256')}`",
         f"- groups_sha256: `{measurement.get('groups_sha256')}`",
+        f"- measurement_group_count_scope: `{measurement.get('measurement_group_count_scope')}`",
+        f"- estimated_measurement_cost_scope: `{measurement.get('estimated_measurement_cost_scope')}`",
+        f"- estimated_measurement_cost_is_hardware_cost: `{measurement.get('estimated_measurement_cost_is_hardware_cost')}`",
+        f"- sparse_exploratory_estimated_measurement_cost: `{measurement.get('sparse_exploratory_estimated_measurement_cost')}`",
         f"- counts_available: `{sampling.get('available')}`",
         f"- counts_source: `{sampling.get('source')}`",
         f"- counts_sha256: `{sampling.get('counts_sha256')}`",
@@ -578,6 +656,12 @@ def _quantum_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- qft_constraints: `{symmetry.get('qft_constraints')}`",
         f"- resources: `{resources}`",
         f"- error_budget: `{error_budget}`",
+        f"- eigen_residual_norm: `{sparse_validation.get('eigen_residual_norm')}`",
+        f"- relative_eigen_residual: `{sparse_validation.get('relative_eigen_residual')}`",
+        f"- ground_state_gap: `{sparse_validation.get('ground_state_gap')}`",
+        f"- lowest_eigenvalues: `{sparse_validation.get('lowest_eigenvalues')}`",
+        f"- sparse_exact_validation: `{sparse_validation}`",
+        f"- lattice_qed_observables: `{lattice_observables}`",
         f"- notes: `{evidence.get('notes', [])}`",
         "",
     ]
@@ -741,6 +825,7 @@ def render_markdown_report(result: Any) -> str:
                 "",
             ]
         )
+    lines.extend(_trust_boundary_summary_lines(data))
     lines.extend(
         [
         *_report_cover_lines(data, units),

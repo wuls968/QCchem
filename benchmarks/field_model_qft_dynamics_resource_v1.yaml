@@ -1,0 +1,46 @@
+benchmark_suite:
+  name: field_model_qft_dynamics_resource_v1
+  description: Compact QFT dynamics-resource suite for Trotter-step and runtime-preview gates.
+  registry_name: field_model_qft_dynamics_resource_v1
+  tags: [benchmark, exploratory, field_model, lattice_qed, dynamics_resource]
+  cases:
+    - name: h2_lattice_qed_trotter_step_0p20
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.20
+      tags: [lattice_qed, dynamics, trotter_step_scan]
+    - name: h2_lattice_qed_trotter_step_0p10
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.10
+      tags: [lattice_qed, dynamics, trotter_step_scan]
+    - name: h2_lattice_qed_trotter_step_0p05
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.evolution.trotter_step: 0.05
+      tags: [lattice_qed, dynamics, trotter_step_scan]
+    - name: h2_lattice_qed_dynamics_runtime_preview
+      kind: run
+      config: configs/exploratory/h2_lattice_qed_dynamics_runtime.yaml
+      expected_status: exploratory
+      overrides:
+        problem.qft.dynamics.time_grid.stop: 1.0
+        problem.qft.dynamics.time_grid.num_points: 11
+        problem.qft.dynamics.runtime.time_point_indices: [0, 10]
+        problem.qft.dynamics.runtime.observable_names: [particle_number, total_gauss_violation]
+        problem.qft.dynamics.runtime.max_pub_count: 4
+        problem.qft.dynamics.runtime.max_total_pub_shots: 2048
+        problem.qft.dynamics.runtime.max_logical_depth: 200
+        backend.runtime.max_budgeted_shots: 512
+        backend.runtime.options:
+          submit_real_job: false
+          wait_for_result: false
+          use_batch: true
+          default_shots: 512
+      tags: [lattice_qed, dynamics, runtime_preview, hardware_gate]

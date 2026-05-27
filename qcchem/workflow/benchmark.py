@@ -281,10 +281,17 @@ def _environment_embedding_case_metrics(result: Any) -> dict[str, Any]:
     }
 
 
-def _run_case(case, case_root: Path) -> BenchmarkCaseResult:
+def _run_case(
+    case,
+    case_root: Path,
+    *,
+    confirm_runtime_budget: str | None = None,
+) -> BenchmarkCaseResult:
     spec = load_run_spec(case.config)
     if case.overrides:
         spec = clone_spec_with_overrides(spec, case.overrides)
+    if confirm_runtime_budget:
+        spec.backend.runtime.options["runtime_budget_confirmation"] = confirm_runtime_budget
     result = run_spec(spec, source_config=str(case.config), output_dir=case_root)
     runtime_evidence_status = _runtime_evidence_status_from_submission(result.runtime_submission)
     field_model_metrics = extract_field_model_case_metrics(result)
@@ -749,7 +756,13 @@ def _noise_comparison_case(case, case_root: Path) -> BenchmarkCaseResult:
     return outcome
 
 
-def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path | None = None) -> BenchmarkSuiteResult:
+def run_benchmark_suite_from_spec(
+    spec,
+    *,
+    source_config: str,
+    output_dir: Path | None = None,
+    confirm_runtime_budget: str | None = None,
+) -> BenchmarkSuiteResult:
     """Run a benchmark suite from an already-parsed spec."""
     suite_root = output_dir or Path("artifacts") / spec.name
     artifacts = _prepare_benchmark_artifacts(Path(suite_root))
@@ -761,7 +774,11 @@ def run_benchmark_suite_from_spec(spec, *, source_config: str, output_dir: Path 
     for case in spec.cases:
         case_root = cases_root / case.name
         if case.kind == "run":
-            outcome = _run_case(case, case_root)
+            outcome = _run_case(
+                case,
+                case_root,
+                confirm_runtime_budget=confirm_runtime_budget,
+            )
         elif case.kind == "consistency":
             outcome = _jw_bk_consistency_case(case, case_root)
         elif case.kind == "shot_scaling":
@@ -1010,9 +1027,16 @@ def _run_hardware_calibration_suite_from_spec(
 def run_benchmark_suite_from_config(
     path: Path,
     output_dir: Path | None = None,
+    *,
+    confirm_runtime_budget: str | None = None,
 ) -> BenchmarkSuiteResult | dict[str, Any]:
     """Load and run a benchmark suite from YAML."""
     spec = load_benchmark_entry_spec(path)
     if isinstance(spec, HardwareCalibrationSuiteSpec):
         return _run_hardware_calibration_suite_from_spec(spec, output_dir=output_dir)
-    return run_benchmark_suite_from_spec(spec, source_config=str(path), output_dir=output_dir)
+    return run_benchmark_suite_from_spec(
+        spec,
+        source_config=str(path),
+        output_dir=output_dir,
+        confirm_runtime_budget=confirm_runtime_budget,
+    )

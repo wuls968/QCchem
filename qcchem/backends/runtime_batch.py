@@ -10,6 +10,7 @@ from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 from qcchem.backends.runtime_submission import (
     _deep_merge_options,
+    _runtime_service_kwargs,
     _select_runtime_backend_name,
 )
 from qcchem.core import BackendSpec
@@ -26,6 +27,7 @@ def _pub_preview(pub: dict[str, Any], index: int) -> dict[str, Any]:
         "circuit_depth": int(circuit.depth()) if circuit is not None and circuit.depth() is not None else None,
         "operator_qubits": int(getattr(operator, "num_qubits", 0)),
         "parameter_count": int(len(pub.get("parameter_values", []) or [])),
+        "reference_value": pub.get("reference_value"),
     }
 
 
@@ -34,6 +36,7 @@ def attempt_runtime_batch_submission(
     spec: BackendSpec,
     pubs: list[dict[str, Any]],
     observable_policy: str = "aggregate_gauge",
+    runtime_limits: dict[str, Any] | None = None,
     submission_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Attempt a guarded IBM Runtime Estimator batch for many QFT dynamics pubs."""
@@ -72,17 +75,72 @@ def attempt_runtime_batch_submission(
             "observable_policy": observable_policy,
         },
     }
+    limits = runtime_limits or {}
+    if limits:
+        summary["runtime_limits"] = dict(limits)
     if not spec.runtime.enabled:
         summary["failure_category"] = "runtime_disabled"
         summary["failure_message"] = "Backend runtime is disabled; no batch submission was attempted."
         summary["submission_wall_time_seconds"] = float(perf_counter() - started)
         return summary
+    max_pub_count = limits.get("max_pub_count")
+    if max_pub_count is not None and len(pubs) > int(max_pub_count):
+        summary["failure_category"] = "runtime_budget_exceeded"
+        summary["failure_message"] = (
+            f"Runtime batch pub_count={len(pubs)} exceeds max_pub_count={int(max_pub_count)}."
+        )
+        summary["result_provenance"]["attempt_stage"] = "budget_gate"
+        summary["submission_wall_time_seconds"] = float(perf_counter() - started)
+        return summary
+    default_shots_limit = spec.runtime.options.get("default_shots")
+    if default_shots_limit is None and spec.runtime.max_budgeted_shots is not None:
+        default_shots_limit = spec.runtime.max_budgeted_shots
+    max_total_pub_shots = limits.get("max_total_pub_shots")
+    if max_total_pub_shots is not None and default_shots_limit is not None:
+        total_pub_shots = int(len(pubs)) * int(default_shots_limit)
+        if total_pub_shots > int(max_total_pub_shots):
+            summary["failure_category"] = "runtime_budget_exceeded"
+            summary["failure_message"] = (
+                f"Runtime batch pub_shots={total_pub_shots} exceeds "
+                f"max_total_pub_shots={int(max_total_pub_shots)}."
+            )
+            summary["result_provenance"]["attempt_stage"] = "budget_gate"
+            summary["result_provenance"]["estimated_total_pub_shots"] = total_pub_shots
+            summary["submission_wall_time_seconds"] = float(perf_counter() - started)
+            return summary
+    max_logical_depth = limits.get("max_logical_depth")
+    if max_logical_depth is not None:
+        depths = [
+            item.get("circuit_depth")
+            for item in summary["pubs_preview"]
+            if isinstance(item, dict) and item.get("circuit_depth") is not None
+        ]
+        max_depth = max(depths, default=0)
+        if int(max_depth) > int(max_logical_depth):
+            summary["failure_category"] = "runtime_budget_exceeded"
+            summary["failure_message"] = (
+                f"Runtime batch max_logical_depth={int(max_depth)} exceeds "
+                f"max_logical_depth={int(max_logical_depth)}."
+            )
+            summary["result_provenance"]["attempt_stage"] = "budget_gate"
+            summary["submission_wall_time_seconds"] = float(perf_counter() - started)
+            return summary
     if not bool(spec.runtime.options.get("submit_real_job", False)):
         summary["failure_category"] = "runtime_submission_disabled"
         summary["failure_message"] = (
             "Runtime batch is configured for preview only; no remote IBM job was requested."
         )
         summary["result_provenance"]["attempt_stage"] = "submission_disabled_before_service_init"
+        summary["submission_wall_time_seconds"] = float(perf_counter() - started)
+        return summary
+    confirmation = spec.runtime.options.get("runtime_budget_confirmation")
+    if confirmation != "I understand IBM Runtime budget":
+        summary["failure_category"] = "runtime_budget_confirmation_missing"
+        summary["failure_message"] = (
+            "Real Runtime batch submission requires --confirm-runtime-budget "
+            "'I understand IBM Runtime budget'."
+        )
+        summary["result_provenance"]["attempt_stage"] = "confirmation_gate"
         summary["submission_wall_time_seconds"] = float(perf_counter() - started)
         return summary
 
@@ -97,7 +155,8 @@ def attempt_runtime_batch_submission(
         return summary
 
     try:
-        service = QiskitRuntimeService()
+        service_kwargs = _runtime_service_kwargs(spec)
+        service = QiskitRuntimeService(**service_kwargs)
     except Exception as exc:
         summary["failure_category"] = (
             "account_not_found" if type(exc).__name__ == "AccountNotFoundError" else "service_initialization_failed"
@@ -107,6 +166,10 @@ def attempt_runtime_batch_submission(
         summary["result_provenance"]["runtime_package_version"] = getattr(
             qiskit_ibm_runtime, "__version__", "unknown"
         )
+        summary["result_provenance"]["service_kwargs"] = {
+            key: ("***" if key == "token" else value)
+            for key, value in service_kwargs.items()
+        }
         summary["submission_wall_time_seconds"] = float(perf_counter() - started)
         return summary
 
@@ -235,10 +298,32 @@ def attempt_runtime_batch_submission(
         if bool(spec.runtime.options.get("wait_for_result", False)):
             runtime_result = job.result()
             summary["succeeded"] = True
+            pub_results = []
+            for pub, item in zip(pubs, runtime_result):
+                evs = np.asarray(item.data.evs).tolist()
+                stds = np.asarray(item.data.stds).tolist()
+                reference_value = pub.get("reference_value")
+                residual = None
+                try:
+                    residual = float(np.asarray(item.data.evs).reshape(-1)[0]) - float(reference_value)
+                except Exception:
+                    residual = None
+                pub_results.append(
+                    {
+                        "time": pub.get("time"),
+                        "observable": pub.get("observable"),
+                        "evs": evs,
+                        "stds": stds,
+                        "reference_value": reference_value,
+                        "runtime_minus_exact_residual": residual,
+                        "metadata": dict(item.metadata),
+                    }
+                )
             summary["returned_job_metadata"] = {
                 "evs": [np.asarray(item.data.evs).tolist() for item in runtime_result],
                 "stds": [np.asarray(item.data.stds).tolist() for item in runtime_result],
                 "metadata": [dict(item.metadata) for item in runtime_result],
+                "pub_results": pub_results,
             }
             summary["result_provenance"]["attempt_stage"] = "result_retrieved"
         summary["submission_wall_time_seconds"] = float(perf_counter() - started)
