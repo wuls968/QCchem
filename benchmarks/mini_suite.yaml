@@ -11,7 +11,7 @@ benchmark_suite:
     - name: h2_shot_vqe
       kind: run
       config: configs/h2_shot.yaml
-      expected_status: unstable
+      expected_status: validated
     - name: jw_bk_consistency_h2
       kind: consistency
       config: configs/h2_exact.yaml

@@ -9,34 +9,140 @@ from pathlib import Path
 
 import yaml
 
-from qcchem.chem import build_electronic_structure_context
-from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
-from qcchem.io.agent_config import load_agent_task_spec
-from qcchem.io.artifact_index import build_artifact_index
-from qcchem.io.config import load_run_spec
-from qcchem.io.objective_config import write_objective_template
-from qcchem.io.serialization import to_primitive
-from qcchem.reporting import write_aggregate_report, write_markdown_report
-from qcchem.workflow.agent import run_agent_task_from_config, summarize_agent_target
-from qcchem.workflow.acceptance import accept_benchmark_result
-from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
-from qcchem.workflow.evidence_agent import (
-    append_ai_provenance_event,
-    review_claims,
-    summarize_evidence_artifacts,
-    write_review_outputs,
-)
-from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
-from qcchem.workflow.benchmark import run_benchmark_suite_from_config
-from qcchem.workflow.campaign import accept_campaign_result, report_campaign_result, run_campaign_from_config
-from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
-from qcchem.workflow.objective import plan_research_objective, status_research_objective
-from qcchem.workflow.promotion import review_exploratory_promotion, write_promotion_outputs
-from qcchem.workflow.release_audit import run_release_audit_from_config
-from qcchem.workflow.runner import run_from_config
-from qcchem.workflow.runtime_collect import collect_runtime_artifact
-from qcchem.workflow.scan import run_scan_from_config
-from qcchem.workflow.study import run_study_from_config
+
+def _load_attr(module_name: str, attribute: str):
+    return getattr(importlib.import_module(module_name), attribute)
+
+
+def load_agent_task_spec(*args, **kwargs):
+    return _load_attr("qcchem.io.agent_config", "load_agent_task_spec")(*args, **kwargs)
+
+
+def build_artifact_index(*args, **kwargs):
+    return _load_attr("qcchem.io.artifact_index", "build_artifact_index")(*args, **kwargs)
+
+
+def load_run_spec(*args, **kwargs):
+    return _load_attr("qcchem.io.config", "load_run_spec")(*args, **kwargs)
+
+
+def write_objective_template(*args, **kwargs):
+    return _load_attr("qcchem.io.objective_config", "write_objective_template")(*args, **kwargs)
+
+
+def to_primitive(*args, **kwargs):
+    return _load_attr("qcchem.io.serialization", "to_primitive")(*args, **kwargs)
+
+
+def write_aggregate_report(*args, **kwargs):
+    return _load_attr("qcchem.reporting", "write_aggregate_report")(*args, **kwargs)
+
+
+def write_markdown_report(*args, **kwargs):
+    return _load_attr("qcchem.reporting", "write_markdown_report")(*args, **kwargs)
+
+
+def run_agent_task_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.agent", "run_agent_task_from_config")(*args, **kwargs)
+
+
+def summarize_agent_target(*args, **kwargs):
+    return _load_attr("qcchem.workflow.agent", "summarize_agent_target")(*args, **kwargs)
+
+
+def accept_benchmark_result(*args, **kwargs):
+    return _load_attr("qcchem.workflow.acceptance", "accept_benchmark_result")(*args, **kwargs)
+
+
+def compile_claim_review(*args, **kwargs):
+    return _load_attr("qcchem.workflow.claim_compiler", "compile_claim_review")(*args, **kwargs)
+
+
+def write_claim_review_outputs(*args, **kwargs):
+    return _load_attr("qcchem.workflow.claim_compiler", "write_claim_review_outputs")(*args, **kwargs)
+
+
+def append_ai_provenance_event(*args, **kwargs):
+    return _load_attr("qcchem.workflow.evidence_agent", "append_ai_provenance_event")(*args, **kwargs)
+
+
+def review_claims(*args, **kwargs):
+    return _load_attr("qcchem.workflow.evidence_agent", "review_claims")(*args, **kwargs)
+
+
+def summarize_evidence_artifacts(*args, **kwargs):
+    return _load_attr("qcchem.workflow.evidence_agent", "summarize_evidence_artifacts")(*args, **kwargs)
+
+
+def write_review_outputs(*args, **kwargs):
+    return _load_attr("qcchem.workflow.evidence_agent", "write_review_outputs")(*args, **kwargs)
+
+
+def build_and_write_evidence_capsule(*args, **kwargs):
+    return _load_attr("qcchem.workflow.evidence_capsule", "build_and_write_evidence_capsule")(*args, **kwargs)
+
+
+def run_benchmark_suite_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.benchmark", "run_benchmark_suite_from_config")(*args, **kwargs)
+
+
+def accept_campaign_result(*args, **kwargs):
+    return _load_attr("qcchem.workflow.campaign", "accept_campaign_result")(*args, **kwargs)
+
+
+def report_campaign_result(*args, **kwargs):
+    return _load_attr("qcchem.workflow.campaign", "report_campaign_result")(*args, **kwargs)
+
+
+def run_campaign_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.campaign", "run_campaign_from_config")(*args, **kwargs)
+
+
+def run_hardware_optimization_from_config(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.hardware_optimization",
+        "run_hardware_optimization_from_config",
+    )(*args, **kwargs)
+
+
+def plan_research_objective(*args, **kwargs):
+    return _load_attr("qcchem.workflow.objective", "plan_research_objective")(*args, **kwargs)
+
+
+def status_research_objective(*args, **kwargs):
+    return _load_attr("qcchem.workflow.objective", "status_research_objective")(*args, **kwargs)
+
+
+def review_exploratory_promotion(*args, **kwargs):
+    return _load_attr("qcchem.workflow.promotion", "review_exploratory_promotion")(*args, **kwargs)
+
+
+def write_promotion_outputs(*args, **kwargs):
+    return _load_attr("qcchem.workflow.promotion", "write_promotion_outputs")(*args, **kwargs)
+
+
+def run_release_audit_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.release_audit", "run_release_audit_from_config")(*args, **kwargs)
+
+
+def run_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.runner", "run_from_config")(*args, **kwargs)
+
+
+def collect_runtime_artifact(*args, **kwargs):
+    return _load_attr("qcchem.workflow.runtime_collect", "collect_runtime_artifact")(*args, **kwargs)
+
+
+def run_scan_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.scan", "run_scan_from_config")(*args, **kwargs)
+
+
+def run_study_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.study", "run_study_from_config")(*args, **kwargs)
+
+
+def build_electronic_structure_context(*args, **kwargs):
+    return _load_attr("qcchem.chem.problem_builder", "build_electronic_structure_context")(*args, **kwargs)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -316,6 +422,8 @@ def _run_workbench_command(host: str, port: int, debug: bool) -> int:
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:
+    from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
+
     active_space = spec.problem.active_space
     if active_space is None or active_space.selection_mode.strip().lower() != "auto":
         spec.problem.active_space = ActiveSpaceSpec(

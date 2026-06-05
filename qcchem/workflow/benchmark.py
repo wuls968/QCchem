@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 
 from qcchem.core.chemical_accuracy import CHEMICAL_ACCURACY_HARTREE
-from qcchem.chem import build_electronic_structure_context
 from qcchem.core import (
     BenchmarkArtifactPaths,
     BenchmarkCaseResult,
@@ -33,7 +32,6 @@ from qcchem.mapping import map_fermionic_hamiltonian
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report, write_hardware_calibration_report
 from qcchem.solvers import ExactDiagonalizationSolver
-from qcchem.validation import run_pbc_qmmm_validation, run_qmmm_embedding_validation
 from qcchem.core.evidence import (
     build_benchmark_case_evidence_summary,
     build_benchmark_suite_evidence_summary,
@@ -41,11 +39,34 @@ from qcchem.core.evidence import (
 )
 from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
-from qcchem.workflow.runner import run_spec
 from qcchem.workflow.acceptance import build_benchmark_acceptance_summary
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 
 SCHEMA_VERSION = "qcchem.benchmark.v0.4-alpha"
+
+
+def build_electronic_structure_context(*args, **kwargs):
+    from qcchem.chem.problem_builder import build_electronic_structure_context as impl
+
+    return impl(*args, **kwargs)
+
+
+def run_spec(*args, **kwargs):
+    from qcchem.workflow.runner import run_spec as impl
+
+    return impl(*args, **kwargs)
+
+
+def run_qmmm_embedding_validation(*args, **kwargs):
+    from qcchem.validation import run_qmmm_embedding_validation as impl
+
+    return impl(*args, **kwargs)
+
+
+def run_pbc_qmmm_validation(*args, **kwargs):
+    from qcchem.validation import run_pbc_qmmm_validation as impl
+
+    return impl(*args, **kwargs)
 
 
 def _prepare_benchmark_artifacts(root: Path) -> BenchmarkArtifactPaths:
