@@ -32,6 +32,9 @@ The validated surface currently includes:
   benchmark suites, scan points, scan aggregates, hardware campaign aggregates,
   and AI-facing summaries.
 - H2 exact and statevector ground-state workflows.
+- Optional CUDA-Q local simulator backend configs for H2 through
+  `cudaq_statevector` and `cudaq_sample`; this is simulator execution evidence,
+  not QPU hardware evidence.
 - LiH exact and LiH active-space VQE benchmark workflows.
 - H2O active-space exact workflow.
 - Active-space, freeze-core, remove-virtual, and active-space auto
@@ -67,6 +70,12 @@ The validated surface currently includes:
   `qcchem validation pbc-qmmm`.
 
 ## Hardware-Verified Boundary
+
+CUDA-Q `qpp-cpu` and `nvidia` targets are local simulator targets in QCchem's
+v1 integration. Even when `target: nvidia` uses a GPU statevector simulator, the
+run is not `hardware_verified` and does not imply a retrieved QPU Runtime
+result. Hardware verification remains tied to persisted runtime submission and
+collect evidence.
 
 `hardware_verified` means:
 

@@ -938,6 +938,8 @@ def render_markdown_report(result: Any) -> str:
         f"- Abelian grouping: `{backend.get('abelian_grouping')}`",
         f"- Noise enabled: `{backend.get('noise_enabled')}`",
         f"- Runtime enabled: `{backend.get('runtime_enabled')}`",
+        f"- Backend metadata: `{backend.get('metadata', {})}`",
+        f"- Backend provenance: `{backend.get('provenance', {})}`",
         "",
         "## Backend Capability",
         "",

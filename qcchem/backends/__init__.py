@@ -10,6 +10,7 @@ from .policy_engine import resolve_policy
 from .runtime_submission import attempt_runtime_submission
 from .runtime_batch import attempt_runtime_batch_submission
 from .runtime import build_runtime_options_summary
+from .cudaq_adapter import CudaQBackend
 from .shot_estimator import ShotEstimatorBackend
 from .statevector import StatevectorBackend
 
@@ -21,15 +22,19 @@ def build_backend(spec):
         return StatevectorBackend(spec)
     if normalized in {"shot_estimator", "aer_shot_estimator"}:
         return ShotEstimatorBackend(spec)
+    if normalized in {"cudaq_statevector", "cudaq_sample"}:
+        return CudaQBackend(spec)
     raise ValueError(
         f"Unsupported backend kind '{spec.kind}'. "
-        "Supported backends are 'statevector' and 'shot_estimator'."
+        "Supported backends are 'statevector', 'shot_estimator', "
+        "'cudaq_statevector', and 'cudaq_sample'."
     )
 
 
 __all__ = [
     "BackendAdapter",
     "BackendEstimate",
+    "CudaQBackend",
     "LayoutPlan",
     "ShotEstimatorBackend",
     "StatevectorBackend",

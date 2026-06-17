@@ -40,6 +40,38 @@ def describe_backend_capabilities(spec: BackendSpec) -> BackendCapabilitySummary
             supports_confidence_metrics=True,
         )
 
+    if kind == "cudaq_statevector":
+        return BackendCapabilitySummary(
+            backend_kind=spec.kind,
+            statevector=True,
+            shot_based=False,
+            exact_baseline=True,
+            runtime_ready=False,
+            session_ready=False,
+            batch_ready=False,
+            mitigation_ready=False,
+            noise_model_ready=False,
+            supports_grouping=False,
+            supports_repetitions=False,
+            supports_confidence_metrics=False,
+        )
+
+    if kind == "cudaq_sample":
+        return BackendCapabilitySummary(
+            backend_kind=spec.kind,
+            statevector=False,
+            shot_based=True,
+            exact_baseline=True,
+            runtime_ready=False,
+            session_ready=False,
+            batch_ready=False,
+            mitigation_ready=False,
+            noise_model_ready=False,
+            supports_grouping=False,
+            supports_repetitions=True,
+            supports_confidence_metrics=True,
+        )
+
     if "runtime" in kind:
         return BackendCapabilitySummary(
             backend_kind=spec.kind,

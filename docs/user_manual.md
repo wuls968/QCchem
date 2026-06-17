@@ -381,6 +381,27 @@ Use `quantum_evidence.json` for:
 - Sparse exact validation and lattice-QED observables when Pauli
   materialization is skipped.
 
+Optional CUDA-Q simulator runs use the same artifact contract through
+`backend.kind: cudaq_statevector` or `backend.kind: cudaq_sample`. Install with
+`python -m pip install -e ".[cudaq]"` in Python 3.11+ and configure the target
+under `backend.runtime.options.target`:
+
+```yaml
+backend:
+  kind: cudaq_statevector
+  runtime:
+    service: cudaq_local
+    options:
+      target: qpp-cpu
+      fail_if_no_gpu: false
+```
+
+Use `target: nvidia` only on a CUDA-Q-capable Linux GPU host. QCchem records
+CUDA-Q target metadata in `backend.metadata`, but CUDA-Q CPU/GPU simulator runs
+remain local simulator evidence and do not set `hardware_verified`. For GPU
+statevector runs, set `target_option` explicitly, for example `fp64` or
+`mgpu,fp64`.
+
 Use field sidecars for finite-cutoff QFT and cavity evidence:
 
 - Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law

@@ -31,6 +31,7 @@ python -m pytest tests/integration/test_release_audit_workflow_v23.py -q
 python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
 python -m pytest tests/unit/test_lattice_qed_sparse_engine_v22.py tests/unit/test_lattice_qed_sector_first_builder.py tests/unit/test_field_model_qft_benchmark_configs.py -q
 python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py -q
+python -m pytest tests/unit/test_cudaq_backend.py -q
 ```
 
 Full suite:
@@ -46,6 +47,18 @@ python -m compileall -q qcchem
 git diff --check
 git status --short
 ```
+
+CUDA-Q integration checks:
+
+```bash
+python -m pytest tests/unit/test_cudaq_backend.py tests/unit/test_noise_platform_v04.py -q
+python -m pytest tests/integration/test_cudaq_workflow.py -q
+```
+
+The integration tests call `pytest.importorskip("cudaq")`; they are expected to
+skip on environments without CUDA-Q. Passing those tests on macOS or CPU-only
+hosts does not prove CUDA-Q GPU performance. GPU evidence requires a Python
+3.11+ Linux environment with CUDA-Q, NVIDIA drivers, and a supported GPU.
 
 ## Warning Policy
 
@@ -95,6 +108,16 @@ Keep these entrypoints stable unless a migration is explicitly planned:
 - `run_from_config`
 - `run_spec`
 - existing `result.json` field names
+
+CUDA-Q backend compatibility:
+
+- Keep `cudaq` as an optional dependency only; importing QCchem must not require
+  CUDA-Q.
+- Treat `cudaq_statevector` and `cudaq_sample` as local simulator backends.
+  They must not mark `hardware_verified` unless a separate runtime submission
+  path is added and validated.
+- CUDA-Q target options belong in `backend.runtime.options` for v1:
+  `target`, `target_option`, `fail_if_no_gpu`, and `qpu_id`.
 
 New result sections should be additive and nullable where practical.
 

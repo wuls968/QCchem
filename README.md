@@ -32,6 +32,7 @@ Optional extras:
 python -m pip install -e ".[ui]"       # Dash workbench
 python -m pip install -e ".[runtime]"  # IBM Runtime helpers
 python -m pip install -e ".[ai]"       # AI workspace provider adapter
+python -m pip install -e ".[cudaq]"    # CUDA-Q local simulator backend; Python 3.11+
 ```
 
 ## First 10 Minutes
@@ -81,6 +82,7 @@ Open `docs/user_manual.md` for the full task-oriented guide.
 | Surface | Status | Use it for | Boundary |
 | --- | --- | --- | --- |
 | H2 exact/statevector, LiH active-space VQE, H2O active-space exact | Validated local evidence | Release-facing chemistry examples with explicit baselines | Still read `evidence_summary` before making claims. |
+| CUDA-Q local simulator backend | Optional simulator evidence | `cudaq_statevector` / `cudaq_sample` VQE execution on CUDA-Q `qpp-cpu` or `nvidia` targets | GPU simulation is not `hardware_verified` QPU evidence and requires a CUDA-Q-capable Python 3.11+ environment. |
 | Gamma-only PBC and PBC-QM/MM Ewald | Validated v1 slice | Supercell PBC and fixed-charge PBC-QM/MM smoke/full validation | No non-Gamma mapped quantum algorithms, forces, stress, PME dynamics, runtime submission, or uniform-background neutralization. |
 | LR-ACE flagship | Gated method evidence | Low-rank-factor-informed local runs and curated flagship benchmark artifacts | LR-ACE flagship is not a blanket publication-grade claim; each artifact must pass its trust-first gate. |
 | Runtime and hardware probes | Hardware-verified plumbing when collected | Submission, sidecar persistence, result collection, budget-ledger review | `hardware_verified` means runtime provenance exists, not chemistry validation. |
@@ -115,6 +117,17 @@ placeholder boundary map.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.
+
+CUDA-Q local simulator configs use the normal run command:
+
+```bash
+qcchem run -c configs/h2_cudaq_statevector.yaml -o artifacts/h2_cudaq_statevector_local
+qcchem run -c configs/h2_cudaq_sample.yaml -o artifacts/h2_cudaq_sample_local
+```
+
+Set `backend.runtime.options.target: nvidia` only on a Linux host with CUDA-Q,
+NVIDIA drivers, and a supported GPU. This remains simulator evidence; it does
+not set `hardware_verified`.
 
 ## Artifact Contract
 

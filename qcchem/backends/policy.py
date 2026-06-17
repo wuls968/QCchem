@@ -88,7 +88,11 @@ def apply_policy_defaults(
     merged_benchmark = dict(benchmark_raw)
     merged_mitigation = dict(mitigation_raw)
 
-    if merged_backend.get("kind", "statevector") in {"shot_estimator", "aer_shot_estimator"}:
+    if merged_backend.get("kind", "statevector") in {
+        "shot_estimator",
+        "aer_shot_estimator",
+        "cudaq_sample",
+    }:
         merged_backend.setdefault("shots", defaults["default_shots"])
         merged_backend.setdefault("repetitions", defaults["default_repetitions"])
 
@@ -140,7 +144,11 @@ def resolve_execution_policy(
 ) -> ExecutionPolicySummary:
     """Resolve a QCchem execution policy to a persisted summary."""
     defaults = _defaults_for(policy_spec.name)
-    default_shots = defaults["default_shots"] if backend_spec.kind in {"shot_estimator", "aer_shot_estimator"} else None
+    default_shots = (
+        defaults["default_shots"]
+        if backend_spec.kind in {"shot_estimator", "aer_shot_estimator", "cudaq_sample"}
+        else None
+    )
     return ExecutionPolicySummary(
         name=policy_spec.name,
         default_shots=default_shots,

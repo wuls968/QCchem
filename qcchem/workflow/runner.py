@@ -705,7 +705,7 @@ def _build_sampled_result(
 ) -> SampledResultSummary | None:
     if backend is None or solver_kind not in {"vqe", "lr_ace", "lattice_qed_givqe"}:
         return None
-    if getattr(backend, "backend_kind", "") != "shot_estimator":
+    if getattr(backend, "backend_kind", "") not in {"shot_estimator", "cudaq_sample"}:
         return None
     ansatz = solver_outcome.metadata.get("ansatz_circuit")
     if ansatz is None:
@@ -1733,6 +1733,11 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         abelian_grouping=spec.backend.abelian_grouping,
         noise_enabled=spec.backend.noise.enabled,
         runtime_enabled=spec.backend.runtime.enabled,
+        metadata=dict(getattr(backend, "metadata", {}) or {}),
+        provenance={
+            "adapter": getattr(backend, "backend_kind", spec.backend.kind) if backend is not None else None,
+            "simulator_evidence_only": spec.backend.kind.strip().lower().startswith("cudaq_"),
+        },
     )
     field_evidence = build_and_write_field_evidence(
         run_id=run_id,
