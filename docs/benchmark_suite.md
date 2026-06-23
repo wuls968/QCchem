@@ -125,6 +125,34 @@ submission 和 reduced-dimensional PBC flags。
 `qcchem benchmark run -c benchmarks/pbc_qmmm_suite_v1.yaml` 进入 benchmark
 acceptance。
 
+## Tag-filtered benchmark runs
+
+Benchmark cases can carry tags such as `fast`, `slow`, `runtime_preview`, or
+`full`. Use explicit tag filters when a suite contains both quick gates and
+slow diagnostic cases:
+
+```bash
+qcchem benchmark run \
+  -c benchmarks/lr_ace_flagship_suite_v1.yaml \
+  --include-tag fast \
+  -o artifacts/lr_ace_flagship_fast
+```
+
+Repeat `--include-tag` to select cases matching any listed tag. Repeat
+`--exclude-tag` to skip cases carrying any listed tag:
+
+```bash
+qcchem benchmark run \
+  -c benchmarks/lr_ace_flagship_suite_v1.yaml \
+  --exclude-tag slow \
+  -o artifacts/lr_ace_flagship_without_slow
+```
+
+The filter changes which cases run; it does not change case configs,
+acceptance rules, energies, baselines, or trust-tier language. The resulting
+`benchmark_result.json` records `calibration_summary.case_filter` and
+`dashboard_summary.case_filter` with selected and skipped cases.
+
 ## QFT / lattice-QED benchmark suites
 
 QFT benchmark suites are exploratory by design. They are useful for finite-model

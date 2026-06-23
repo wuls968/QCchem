@@ -75,11 +75,16 @@ release_audit:
     - path: docs/promotion_gate.md
       terms: [promotion gate, exploratory boundary, QFT, LR-ACE, TC-QSCI, validated]
       required: true
+    - path: docs/custom_workflows.md
+      terms: [custom workflows, workflow_result.json, workflow_graph.json, provenance.jsonl, qcchem.workflow_steps]
+      required: true
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
     - python -m pytest tests/unit/test_release_audit_new_terms.py -q
     - python -m pytest tests/unit/test_objective_config.py tests/unit/test_evidence_capsule.py tests/unit/test_claim_compiler.py tests/unit/test_promotion_gate.py -q
+    - python -m pytest tests/unit/test_custom_workflow_config.py tests/unit/test_custom_workflow_engine.py tests/unit/test_platform_v03.py -q
     - python -m pytest tests/integration/test_release_audit_workflow_v23.py -q
+    - python -m pytest tests/integration/test_custom_workflow_cli.py tests/integration/test_custom_workflow_ai_workbench.py -q
     - python -m pytest tests/integration/test_trust_first_release_v16.py -q
     - python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
     - python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py tests/integration/test_h2_workflow.py -q

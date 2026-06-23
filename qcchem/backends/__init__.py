@@ -2,6 +2,7 @@
 
 from .base import BackendAdapter, BackendEstimate
 from .capabilities import describe_backend_capabilities
+from .cudaq_adapter import CudaQBackend
 from .layout import LayoutPlan, recommend_initial_layout
 from .measurement import plan_measurement as build_measurement_plan
 from .noise import build_noise_model_summary
@@ -21,15 +22,19 @@ def build_backend(spec):
         return StatevectorBackend(spec)
     if normalized in {"shot_estimator", "aer_shot_estimator"}:
         return ShotEstimatorBackend(spec)
+    if normalized in {"cudaq_statevector", "cudaq_sample"}:
+        return CudaQBackend(spec)
     raise ValueError(
         f"Unsupported backend kind '{spec.kind}'. "
-        "Supported backends are 'statevector' and 'shot_estimator'."
+        "Supported backends are 'statevector', 'shot_estimator', "
+        "'cudaq_statevector', and 'cudaq_sample'."
     )
 
 
 __all__ = [
     "BackendAdapter",
     "BackendEstimate",
+    "CudaQBackend",
     "LayoutPlan",
     "ShotEstimatorBackend",
     "StatevectorBackend",

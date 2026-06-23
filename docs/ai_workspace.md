@@ -137,6 +137,20 @@ The Research OS action route adds local, analysis-only actions:
 - `objective_status`: summarizes objective status using linked artifacts,
   evidence capsule validation, and claim compiler output.
 
+The custom workflow route adds:
+
+- `workflow_validate`: validates workflow YAML, references, limits, and plugin
+  metadata without running chemistry.
+- `workflow_run`: runs a YAML workflow through the central workflow runner and
+  writes the normal workflow artifact bundle.
+- `workflow_summarize`: reads an existing `workflow_result.json` and regenerates
+  an AI-friendly summary/report.
+
+Workflow deliveries keep the parsed workflow status, acceptance summary, step
+counts, result JSON, and report path in the delivery record. The `/ai-workspace`
+Delivery History renders those fields directly, so workflow review does not
+depend on opening the raw JSON first.
+
 These actions keep `best evidence`, `trust tier`, `baseline strength`,
 `chemical accuracy status`, `runtime evidence status`, `recommended next
 action`, `hardware verification boundary`, and `exploratory boundary` visible in

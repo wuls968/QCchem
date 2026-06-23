@@ -175,8 +175,17 @@ def _report_cover_lines(data: dict[str, Any], units: str) -> list[str]:
     problem = data["problem"]
     mapping = data["mapping"]
     backend = data["backend"]
+    backend_metadata = backend.get("metadata") or {}
     benchmark = data["benchmark"]
     confidence = _primary_chemical_accuracy_summary(data) or {}
+    backend_evidence_lines: list[str] = []
+    if backend_metadata:
+        backend_evidence_lines = [
+            f"- backend_target: `{backend_metadata.get('cudaq_target') or backend_metadata.get('target')}`",
+            f"- backend_target_evidence_tier: `{backend_metadata.get('target_evidence_tier')}`",
+            f"- backend_num_available_gpus: `{backend_metadata.get('num_available_gpus')}`",
+            f"- backend_module_path: `{backend_metadata.get('cudaq_module_file')}`",
+        ]
     return [
         "## Report Cover",
         "",
@@ -193,6 +202,7 @@ def _report_cover_lines(data: dict[str, Any], units: str) -> list[str]:
         f"- benchmark_absolute_error: {_fmt_energy(benchmark.get('absolute_error'), units)}",
         f"- best_available_assessment: `{confidence.get('assessment_target')}`",
         f"- backend_kind: `{backend['kind']}`",
+        *backend_evidence_lines,
         "",
     ]
 

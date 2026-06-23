@@ -97,6 +97,24 @@ and collected two controlled Runtime jobs:
 This validates submission, sidecar, collect, and budget tracking. It does not
 promote the chemistry result to `validated`.
 
+## CUDA-Q/MKL-Q Local Backend Boundary
+
+QCchem can optionally call CUDA-Q-compatible local targets through the `cudaq`
+Python API:
+
+- `backend.kind: cudaq_statevector`
+- `backend.kind: cudaq_sample`
+
+The default MKL-Q target is `mklq-cpu`. It is treated as stable local simulator
+evidence, not hardware execution. `mklq-metal` is explicit opt-in smoke evidence
+for an experimental mixed Metal/CPU path. CUDA-Q/MKL-Q artifacts record
+`cudaq_version`, module path, selected target, available targets,
+`num_available_gpus`, and an evidence tier in `backend.metadata`.
+
+All local CUDA-Q/MKL-Q simulator paths must keep `hardware_verified == false`.
+Use Runtime sidecar submission and collection before making a hardware-verified
+claim.
+
 ## Exploratory Surface
 
 Exploratory assets produce real artifacts and reports, but their claims remain

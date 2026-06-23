@@ -46,8 +46,9 @@ showing raw energy values.
 3. Benchmarks
 4. Hardware Campaign
 5. AI Workspace
-6. Research OS Artifacts
-7. Exploratory Appendix
+6. Workflow Studio
+7. Research OS Artifacts
+8. Exploratory Appendix
 
 ## 1. Overview
 
@@ -118,7 +119,26 @@ Use this page to answer:
 The default AI role is conservative evidence interpretation. It should explain
 boundaries before proposing execution.
 
-## 6. Research OS Artifacts
+## 6. Workflow Studio
+
+Route: `/workflow-studio`
+
+Use this page to answer:
+
+- Which workflow YAML is the source of truth?
+- Which built-in or installed plugins are available?
+- Did the latest workflow run complete and pass acceptance?
+- Are `workflow_result.json`, `workflow_graph.json`, `provenance.jsonl`,
+  `registry.json`, and `workflow_report.md` present together?
+
+The release line is artifact-first: a workflow is reviewable only when its
+result, graph, provenance, registry, and report sidecars travel together. The
+curated demo path should inspect
+`artifacts/workflows/research_os_review_workflow/workflow_result.json` and its
+sidecars; plugin execution does not imply hardware/runtime permission unless a
+separate runtime artifact proves that boundary.
+
+## 7. Research OS Artifacts
 
 Run the Research Objective, Evidence Capsule, Claim Compiler, and Promotion Gate
 surfaces as local evidence checks:
@@ -145,7 +165,7 @@ These outputs connect best evidence, trust tier, baseline strength, chemical
 accuracy status, runtime evidence status, hardware verification boundary,
 exploratory boundary, and recommended next action before release audit.
 
-## 7. Exploratory Appendix
+## 8. Exploratory Appendix
 
 The appendix is optional and must not promote exploratory research assets into
 the validated release path.
@@ -224,6 +244,7 @@ The release-grade artifact set is:
 - `artifacts/mini_comparison_study/study_result.json`
 - `artifacts/h2_short_scan/scan_result.json`
 - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json`
+- `artifacts/workflows/research_os_review_workflow/workflow_result.json`
 - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
 - `configs/objectives/h2_local_validation.yaml`
 - `configs/objectives/lih_compression_trust_loop.yaml`
@@ -250,3 +271,5 @@ handoff notes:
 - `evidence capsule`
 - `claim compiler`
 - `promotion gate`
+- `custom workflow`
+- `workflow_result.json`

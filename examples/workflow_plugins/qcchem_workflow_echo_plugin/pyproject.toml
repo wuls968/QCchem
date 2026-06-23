@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qcchem-workflow-echo-plugin"
+version = "0.1.0"
+description = "Example QCchem workflow step plugin."
+requires-python = ">=3.10"
+dependencies = ["QCchem"]
+
+[project.entry-points."qcchem.workflow_steps"]
+echo_decision = "qcchem_workflow_echo_plugin:EchoDecisionStep"
+
+[tool.setuptools.packages.find]
+where = ["src"]

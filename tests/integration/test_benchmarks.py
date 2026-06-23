@@ -165,11 +165,25 @@ def test_lr_ace_flagship_benchmark_suite_accepts_fast_gates(tmp_path: Path) -> N
     result = run_benchmark_suite_from_config(
         Path("benchmarks/lr_ace_flagship_suite_v1.yaml"),
         output_dir=tmp_path / "lr-ace-flagship-suite",
+        include_tags=["fast"],
     )
 
-    assert result.summary.status_counts["validated"] >= 2
+    assert result.summary.total_cases == 2
+    assert result.summary.status_counts["validated"] == 2
     assert result.acceptance_summary is not None
     assert result.acceptance_summary["accepted"] is True
+    assert result.calibration_summary["case_filter"]["include_tags"] == ["fast"]
+    assert result.calibration_summary["case_filter"]["selected_cases"] == [
+        "h2_lr_ace_flagship",
+        "lih_active_lr_ace_flagship",
+    ]
+    assert {
+        item["name"] for item in result.calibration_summary["case_filter"]["skipped_cases"]
+    } == {
+        "h2o_active_lr_ace_adaptive",
+        "h3plus_lr_ace_adaptive",
+        "h4_chain_lr_ace_adaptive",
+    }
     fast_cases = [
         case
         for case in result.cases

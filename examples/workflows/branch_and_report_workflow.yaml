@@ -1,0 +1,23 @@
+workflow:
+  version: "1"
+  name: branch_and_report_workflow
+  description: Run H2 and render a report only when the run completed.
+  output_root: ../../artifacts/workflows/branch_and_report_workflow
+  limits:
+    max_steps: 12
+    max_iterations: 3
+  steps:
+    - id: run_h2
+      kind: run_config
+      inputs:
+        config: ../../configs/h2_exact.yaml
+    - id: render_report
+      kind: report
+      when: ${steps.run_h2.outputs.result_json}
+      inputs:
+        result_json: ${steps.run_h2.outputs.result_json}
+  acceptance:
+    required_steps:
+      - run_h2
+      - render_report
+    fail_on_required_failure: true

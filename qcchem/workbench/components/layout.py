@@ -187,6 +187,19 @@ def page_focus(pathname: str | None) -> dict[str, object]:
                 ("Inspect", "Delivery history and review state"),
             ],
         },
+        "/workflow-studio": {
+            "route_label": "Workflow Studio",
+            "summary": "YAML-first workflow surface for plugin visibility, graph review, acceptance status, and durable run sidecars.",
+            "rail_title": "Make workflow automation auditable",
+            "rail_note": "Custom workflows should stay grounded in source YAML, resolved plugins, graph structure, provenance, and report artifacts.",
+            "callout_title": "Automation still needs evidence",
+            "callout_body": "Use this studio to validate the workflow shape and inspect recent run sidecars before treating any automation output as reviewable evidence.",
+            "checklist": [
+                ("Validate", "YAML source and plugin registry"),
+                ("Inspect", "Derived graph and step limits"),
+                ("Review", "Acceptance, provenance, and report paths"),
+            ],
+        },
     }
     return focus_map.get(active_path, focus_map["/overview"])
 

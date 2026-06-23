@@ -829,6 +829,171 @@ select {
   gap: 12px;
 }
 
+.qcchem-workflow-studio__split {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.45fr) minmax(260px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.qcchem-workflow-studio__palette,
+.qcchem-workflow-studio__canvas,
+.qcchem-workflow-studio__inspector {
+  min-height: 620px;
+}
+
+.qcchem-workflow-studio__plugin-list,
+.qcchem-workflow-studio__run-list,
+.qcchem-workflow-studio__commands {
+  display: grid;
+  gap: 10px;
+}
+
+.qcchem-workflow-studio__plugin,
+.qcchem-workflow-studio__run {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--qcchem-surface-line);
+  border-radius: var(--qcchem-radius-sm);
+  background: var(--qcchem-surface-panel);
+}
+
+.qcchem-workflow-studio__run-facts {
+  display: grid;
+  gap: 4px;
+  color: var(--qcchem-text-secondary);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-studio__run-blocker {
+  margin: 0;
+  padding: 8px;
+  border-left: 3px solid var(--qcchem-status-unstable);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--qcchem-status-unstable);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-studio__yaml {
+  width: 100%;
+  min-height: 360px;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid var(--qcchem-surface-line);
+  border-radius: var(--qcchem-radius-sm);
+  background: #0f172a;
+  color: #f8fafc;
+  font-family: var(--qcchem-type-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.qcchem-workflow-studio__editor-actions {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr) auto;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.qcchem-workflow-studio__editor-actions button,
+.qcchem-workflow-studio__editor-actions input {
+  min-height: 38px;
+  border: 1px solid var(--qcchem-surface-line);
+  border-radius: var(--qcchem-radius-sm);
+  font: inherit;
+}
+
+.qcchem-workflow-studio__editor-actions button {
+  padding: 0 14px;
+  background: var(--qcchem-accent-deep-blue);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.qcchem-workflow-studio__editor-actions input {
+  width: 100%;
+  padding: 0 10px;
+  background: var(--qcchem-surface-panel);
+  color: var(--qcchem-text-primary);
+}
+
+.qcchem-workflow-studio__status-line {
+  min-height: 20px;
+  margin-top: 8px;
+  color: var(--qcchem-text-secondary);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-studio__graph {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.qcchem-workflow-studio__node {
+  display: grid;
+  min-height: 72px;
+  align-content: center;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--qcchem-accent-signal);
+  border-radius: var(--qcchem-radius-sm);
+  background: var(--qcchem-accent-ice);
+  color: var(--qcchem-accent-deep-blue);
+  font-family: var(--qcchem-type-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-studio__node span,
+.qcchem-workflow-studio__node small {
+  font-family: var(--qcchem-type-body);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--qcchem-text-secondary);
+}
+
+.qcchem-workflow-studio__empty-graph,
+.qcchem-workflow-studio__validation {
+  padding: 12px;
+  border: 1px dashed rgba(193, 199, 205, 0.82);
+  border-radius: var(--qcchem-radius-sm);
+  color: var(--qcchem-text-secondary);
+}
+
+.qcchem-workflow-studio__validation {
+  margin: 12px 0;
+}
+
+.qcchem-workflow-studio__validation-ok {
+  display: grid;
+  gap: 6px;
+}
+
+.qcchem-workflow-studio__validation-error {
+  color: var(--qcchem-status-unstable);
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-studio__commands code {
+  display: block;
+  padding: 10px;
+  border-radius: var(--qcchem-radius-sm);
+  background: var(--qcchem-surface-panel);
+  color: var(--qcchem-text-secondary);
+  font-family: var(--qcchem-type-mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 @keyframes qcchem-fade-up {
   from {
     opacity: 0;
@@ -867,7 +1032,9 @@ select {
   .qcchem-page__analysis-grid,
   .qcchem-ai-assistant-window__field-grid,
   .qcchem-ai-assistant-window__preview-grid,
-  .qcchem-ai-workspace-page__ticket-grid {
+  .qcchem-ai-workspace-page__ticket-grid,
+  .qcchem-workflow-studio__split,
+  .qcchem-workflow-studio__graph {
     grid-template-columns: 1fr;
   }
 

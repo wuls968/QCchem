@@ -32,6 +32,14 @@ Optional extras:
 python -m pip install -e ".[ui]"       # Dash workbench
 python -m pip install -e ".[runtime]"  # IBM Runtime helpers
 python -m pip install -e ".[ai]"       # AI workspace provider adapter
+python -m pip install -e ".[cudaq]"    # Optional upstream CUDA-Q Python API
+```
+
+For the local MKL-Q source prefix on this Mac, use the Python ABI that matches
+the installed extensions:
+
+```bash
+PYTHONPATH=/Users/a0000/.cudaq-mklq /opt/anaconda3/bin/python3 -m qcchem.cli.main run -c configs/h2_cudaq_mklq_cpu.yaml -o artifacts/h2_cudaq_mklq_cpu
 ```
 
 ## First 10 Minutes
@@ -81,6 +89,7 @@ Open `docs/user_manual.md` for the full task-oriented guide.
 | Surface | Status | Use it for | Boundary |
 | --- | --- | --- | --- |
 | H2 exact/statevector, LiH active-space VQE, H2O active-space exact | Validated local evidence | Release-facing chemistry examples with explicit baselines | Still read `evidence_summary` before making claims. |
+| CUDA-Q/MKL-Q optional local targets | Optional simulator evidence | `cudaq_statevector` and `cudaq_sample` checks through the CUDA-Q Python API | `mklq-cpu` is the default local simulator target; `mklq-metal` is explicit experimental mixed Metal/CPU smoke evidence. Neither sets `hardware_verified`. |
 | Gamma-only PBC and PBC-QM/MM Ewald | Validated v1 slice | Supercell PBC and fixed-charge PBC-QM/MM smoke/full validation | No non-Gamma mapped quantum algorithms, forces, stress, PME dynamics, runtime submission, or uniform-background neutralization. |
 | LR-ACE flagship | Gated method evidence | Low-rank-factor-informed local runs and curated flagship benchmark artifacts | LR-ACE flagship is not a blanket publication-grade claim; each artifact must pass its trust-first gate. |
 | Runtime and hardware probes | Hardware-verified plumbing when collected | Submission, sidecar persistence, result collection, budget-ledger review | `hardware_verified` means runtime provenance exists, not chemistry validation. |
@@ -102,6 +111,7 @@ placeholder boundary map.
 | Run a benchmark suite | `qcchem benchmark run -c <suite.yaml> -o <artifact_dir>` |
 | Evaluate benchmark acceptance | `qcchem benchmark accept <benchmark_result.json>` |
 | Run a study or scan | `qcchem study run ...` / `qcchem scan run ...` |
+| Run a custom workflow | `qcchem workflow validate|run|report|plugins|template ...` |
 | Build an artifact index | `qcchem artifacts index artifacts` |
 | Validate an evidence capsule | `qcchem artifacts capsule <artifact_dir> -o <output_dir>` |
 | Plan or summarize a Research Objective | `qcchem objective init|plan|status ...` |
@@ -163,6 +173,13 @@ Keep these statements precise in README text, reports, papers, and AI prompts:
 - A release audit pass is a local readiness check. It performs no runtime
   submission and does not upgrade exploratory evidence to validated evidence.
 
+## AI Workspace
+
+The Workbench includes a floating research copilot shell plus the `/ai-workspace`
+ticket hub. Drafted requests stay evidence-aware and ticket-mediated; accepted
+tickets can validate, run, and summarize custom workflows through the same local
+artifact and provenance paths as the CLI.
+
 ## Common Workflows
 
 ### Structure Files
@@ -213,6 +230,20 @@ qcchem promote exploratory \
 These commands are local analysis-only paths for best evidence, trust tier,
 baseline strength, overclaim detection, and promotion review.
 
+### Custom Workflows
+
+```bash
+qcchem workflow validate -c examples/workflows/h2_trust_first_workflow.yaml
+qcchem workflow run -c examples/workflows/h2_trust_first_workflow.yaml
+qcchem workflow plugins
+```
+
+Custom workflows use YAML as the source of truth, write
+`workflow_result.json`, `workflow_report.md`, `workflow_graph.json`,
+`provenance.jsonl`, `registry.json`, and step outputs, and can load installed
+Python step plugins from the `qcchem.workflow_steps` entry point group. The
+Workbench `/workflow-studio` page reads the same protocol.
+
 ### Exploratory Research Assets
 
 ```bash
@@ -237,6 +268,8 @@ For curated QFT, LR-ACE, and TC-QSCI release demonstrations, use
 - `docs/promotion_gate.md`: Promotion Gate workflow.
 - `docs/workbench.md`: local visual Workbench guide.
 - `docs/ai_workspace.md`: AI ticket and provider flow.
+- `docs/custom_workflows.md`: YAML workflow engine, plugin contract, artifacts,
+  and Workflow Studio guide.
 - `docs/developer_guide.md`: contribution, test, warning, and artifact hygiene.
 
 ## Development
@@ -244,7 +277,7 @@ For curated QFT, LR-ACE, and TC-QSCI release demonstrations, use
 Install all development extras:
 
 ```bash
-python -m pip install -e ".[dev,ui,ai,runtime]"
+python -m pip install -e ".[dev,ui,ai,runtime,cudaq]"
 ```
 
 Run the core checks:
@@ -254,6 +287,9 @@ python -m compileall qcchem
 python -m pytest
 git diff --check
 ```
+
+The default pytest gate excludes tests marked `slow`. Run exploratory stress
+checks explicitly with `python -m pytest -m slow -q`.
 
 Run the release gate:
 

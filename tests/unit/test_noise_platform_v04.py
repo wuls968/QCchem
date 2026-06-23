@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
 import yaml
 
 from qcchem.backends.capabilities import describe_backend_capabilities
@@ -14,6 +17,7 @@ from qcchem.core import (
     PolicySpec,
     RuntimeOptionsSpec,
 )
+from qcchem.backends.shot_estimator import ShotEstimatorBackend
 from qcchem.io.config import load_run_spec
 
 
@@ -107,6 +111,49 @@ def test_backend_capabilities_include_noise_runtime_session_and_batch_flags() ->
     assert capabilities.session_ready is True
     assert capabilities.batch_ready is True
     assert capabilities.supports_confidence_metrics is True
+
+
+def test_shot_estimator_bounds_local_aer_parallelism_by_default() -> None:
+    backend = ShotEstimatorBackend(BackendSpec(kind="shot_estimator", shots=1024))
+
+    assert backend._backend.options.max_parallel_threads == 1
+    assert backend._backend.options.max_parallel_experiments == 1
+    assert backend._backend.options.max_parallel_shots == 1
+
+
+def test_shot_estimator_accepts_runtime_parallel_overrides() -> None:
+    backend = ShotEstimatorBackend(
+        BackendSpec(
+            kind="shot_estimator",
+            shots=1024,
+            runtime=RuntimeOptionsSpec(
+                options={
+                    "max_parallel_threads": 2,
+                    "max_parallel_experiments": 1,
+                    "max_parallel_shots": 1,
+                }
+            ),
+        )
+    )
+
+    assert backend._backend.options.max_parallel_threads == 2
+    assert backend._backend.options.max_parallel_experiments == 1
+    assert backend._backend.options.max_parallel_shots == 1
+
+
+def test_shot_estimator_uses_python_pauli_sampler_by_default() -> None:
+    backend = ShotEstimatorBackend(BackendSpec(kind="shot_estimator", shots=16))
+    circuit = QuantumCircuit(1)
+    operator = SparsePauliOp.from_list([("Z", 1.0)])
+
+    estimate = backend.evaluate(circuit, operator, np.asarray([], dtype=float))
+
+    assert backend._backend.engine == "statevector_pauli_sampler"
+    assert backend._backend.native_aer is False
+    assert estimate.value == 1.0
+    assert estimate.reported_std == 0.0
+    assert estimate.metadata["sampling_engine"] == "statevector_pauli_sampler"
+    assert estimate.metadata["native_aer"] is False
 
 
 def test_hardware_ready_policy_exposes_runtime_and_session_expectations() -> None:

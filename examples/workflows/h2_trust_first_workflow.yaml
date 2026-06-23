@@ -1,0 +1,31 @@
+workflow:
+  version: "1"
+  name: h2_trust_first_workflow
+  description: Run H2, validate its evidence capsule, and check a conservative claim.
+  output_root: ../../artifacts/workflows/h2_trust_first_workflow
+  limits:
+    max_steps: 16
+    max_iterations: 4
+  parameters:
+    claim: The H2 local run is validated against an exact baseline within the configured trust boundary.
+  steps:
+    - id: run_h2
+      kind: run_config
+      inputs:
+        config: ../../configs/h2_exact.yaml
+    - id: capsule_h2
+      kind: capsule_validate
+      inputs:
+        artifact_root: ${steps.run_h2.outputs.artifact_root}
+    - id: claim_h2
+      kind: claim_check
+      inputs:
+        targets:
+          - ${steps.run_h2.outputs.artifact_root}
+        claim_text: ${parameters.claim}
+  acceptance:
+    required_steps:
+      - run_h2
+      - capsule_h2
+      - claim_h2
+    fail_on_required_failure: true

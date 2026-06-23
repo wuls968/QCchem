@@ -7,8 +7,9 @@ import platform
 import shutil
 import subprocess
 import json
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from time import perf_counter
 from types import SimpleNamespace
@@ -102,6 +103,20 @@ ENERGY_FORMULA = (
     "+ external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; "
     "electronic_energy = solver_energy + constant_energy_correction"
 )
+GIT_COMMAND_TIMEOUT_SECONDS = 2.0
+
+
+@dataclass(frozen=True, slots=True)
+class _GitProvenanceSnapshot:
+    """Process-local repository metadata used by run provenance."""
+
+    commit: str | None
+    branch: str | None
+    describe: str | None
+    remote_origin: str | None
+    workspace_dirty: bool | None
+    workspace_status: str
+    status_summary: dict[str, int]
 
 
 def _project_root() -> Path:
@@ -161,93 +176,54 @@ def _record(logger: logging.Logger, events: list[str], message: str) -> None:
     events.append(message)
 
 
-def _git_commit(root: Path) -> str | None:
+def _git_stdout(root: Path, args: list[str], *, strip: bool = True) -> str | None:
+    git_executable = shutil.which("git")
+    if git_executable is None:
+        return None
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
+            [git_executable, "-C", str(root), *args],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             check=True,
+            timeout=GIT_COMMAND_TIMEOUT_SECONDS,
+            close_fds=False,
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
         return None
-    return result.stdout.strip() or None
+    return result.stdout.strip() if strip else result.stdout
+
+
+def _git_commit(root: Path) -> str | None:
+    return _git_stdout(root, ["rev-parse", "HEAD"]) or None
 
 
 def _git_describe(root: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "describe", "--always", "--dirty", "--tags"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        return None
-    return result.stdout.strip() or None
+    return _git_stdout(root, ["describe", "--always", "--dirty", "--tags"]) or None
 
 
 def _git_branch(root: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        return None
-    branch = result.stdout.strip()
-    return branch or None
+    return _git_stdout(root, ["rev-parse", "--abbrev-ref", "HEAD"]) or None
 
 
 def _git_remote_origin(root: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "remote", "get-url", "origin"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        return None
-    return result.stdout.strip() or None
+    return _git_stdout(root, ["remote", "get-url", "origin"]) or None
 
 
 def _workspace_status_porcelain(root: Path) -> str:
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
-        return ""
-    return result.stdout
+    return _git_stdout(root, ["status", "--porcelain"], strip=False) or ""
 
 
 def _workspace_dirty(root: Path) -> bool | None:
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError:
+    status = _git_stdout(root, ["status", "--porcelain"], strip=False)
+    if status is None:
         return None
-    return bool(result.stdout.strip())
+    return bool(status.strip())
 
 
-def _git_status_summary(root: Path) -> dict[str, int]:
-    porcelain = _workspace_status_porcelain(root).splitlines()
+def _git_status_summary_from_porcelain(porcelain_status: str) -> dict[str, int]:
+    porcelain = porcelain_status.splitlines()
     summary = {"staged": 0, "unstaged": 0, "untracked": 0}
     for line in porcelain:
         if line.startswith("??"):
@@ -258,6 +234,27 @@ def _git_status_summary(root: Path) -> dict[str, int]:
         if line[1:2].strip():
             summary["unstaged"] += 1
     return summary
+
+
+def _git_status_summary(root: Path) -> dict[str, int]:
+    return _git_status_summary_from_porcelain(_workspace_status_porcelain(root))
+
+
+@lru_cache(maxsize=8)
+def _git_provenance_snapshot(root: Path) -> _GitProvenanceSnapshot:
+    resolved_root = root.resolve()
+    raw_workspace_status = _git_stdout(resolved_root, ["status", "--porcelain"], strip=False)
+    workspace_status = raw_workspace_status or ""
+    workspace_dirty: bool | None = None if raw_workspace_status is None else bool(workspace_status.strip())
+    return _GitProvenanceSnapshot(
+        commit=_git_commit(resolved_root),
+        branch=_git_branch(resolved_root),
+        describe=_git_describe(resolved_root),
+        remote_origin=_git_remote_origin(resolved_root),
+        workspace_dirty=workspace_dirty,
+        workspace_status=workspace_status,
+        status_summary=_git_status_summary_from_porcelain(workspace_status),
+    )
 
 
 def _dependency_versions() -> dict[str, str]:
@@ -705,7 +702,7 @@ def _build_sampled_result(
 ) -> SampledResultSummary | None:
     if backend is None or solver_kind not in {"vqe", "lr_ace", "lattice_qed_givqe"}:
         return None
-    if getattr(backend, "backend_kind", "") != "shot_estimator":
+    if getattr(backend, "backend_kind", "") not in {"shot_estimator", "cudaq_sample"}:
         return None
     ansatz = solver_outcome.metadata.get("ansatz_circuit")
     if ansatz is None:
@@ -810,13 +807,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     logger = _build_logger(artifacts.log_file)
     events: list[str] = []
     repo_root = _project_root()
-    git_commit = _git_commit(repo_root)
-    git_branch = _git_branch(repo_root)
-    git_describe = _git_describe(repo_root)
-    git_remote_origin = _git_remote_origin(repo_root)
-    workspace_dirty = _workspace_dirty(repo_root)
-    workspace_status = _workspace_status_porcelain(repo_root)
-    git_status_summary = _git_status_summary(repo_root)
+    git_provenance = _git_provenance_snapshot(repo_root)
     dependency_versions = _dependency_versions()
     input_sources = _input_sources_from_spec(spec)
     _record(logger, events, f"Loading config from {source_config}")
@@ -1733,6 +1724,8 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         abelian_grouping=spec.backend.abelian_grouping,
         noise_enabled=spec.backend.noise.enabled,
         runtime_enabled=spec.backend.runtime.enabled,
+        metadata=dict(getattr(backend, "metadata", {}) or {}),
+        provenance=dict(getattr(backend, "provenance", {}) or {}),
     )
     field_evidence = build_and_write_field_evidence(
         run_id=run_id,
@@ -1871,24 +1864,24 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             wall_time_seconds=0.0,
             source_config=str(source_config),
             seed=spec.run.seed,
-            git_commit=git_commit,
-            git_commit_short=((git_commit or "")[:12] or None),
-            git_branch=git_branch,
-            git_describe=git_describe,
-            git_remote_origin=git_remote_origin,
+            git_commit=git_provenance.commit,
+            git_commit_short=((git_provenance.commit or "")[:12] or None),
+            git_branch=git_provenance.branch,
+            git_describe=git_provenance.describe,
+            git_remote_origin=git_provenance.remote_origin,
             repo_root=str(repo_root),
-            workspace_dirty=workspace_dirty,
+            workspace_dirty=git_provenance.workspace_dirty,
             workspace_fingerprint=workspace_fingerprint(
                 [
                     str(source_config),
                     yaml.safe_dump(to_primitive(spec), sort_keys=True),
                     json.dumps(input_sources, sort_keys=True),
                     json.dumps(dependency_versions, sort_keys=True),
-                    workspace_status,
+                    git_provenance.workspace_status,
                 ]
             ),
             input_sources=input_sources,
-            git_status_summary=git_status_summary,
+            git_status_summary=git_provenance.status_summary,
             dependency_versions=dependency_versions,
         ),
         log_summary=LogSummary(events=list(events)),

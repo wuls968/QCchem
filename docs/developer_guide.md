@@ -33,10 +33,18 @@ python -m pytest tests/unit/test_lattice_qed_sparse_engine_v22.py tests/unit/tes
 python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py -q
 ```
 
-Full suite:
+Default suite:
 
 ```bash
 python -m pytest -q
+```
+
+`pyproject.toml` excludes tests marked `slow` from the default gate. Slow tests
+are exploratory stress checks, not deleted coverage. Run them explicitly when
+validating long LR-ACE/adaptive or other stress surfaces:
+
+```bash
+python -m pytest -m slow -q
 ```
 
 Static/hygiene checks:
@@ -46,6 +54,19 @@ python -m compileall -q qcchem
 git diff --check
 git status --short
 ```
+
+CUDA-Q/MKL-Q optional backend checks:
+
+```bash
+PYTHONPATH=/Users/a0000/.cudaq-mklq /opt/anaconda3/bin/python3 -m pytest tests/unit/test_cudaq_backend.py -q
+PYTHONPATH=/Users/a0000/.cudaq-mklq /opt/anaconda3/bin/python3 -m pytest tests/integration/test_cudaq_mklq_workflow.py -q
+PYTHONPATH=/Users/a0000/.cudaq-mklq /opt/anaconda3/bin/python3 -m qcchem.cli.main run -c configs/h2_cudaq_mklq_cpu.yaml -o /tmp/qcchem-mklq-cpu-smoke
+```
+
+The local MKL-Q prefix currently targets CPython 3.12 on this Mac. Treat
+`mklq-metal` as experimental mixed Metal/CPU smoke evidence and keep
+`hardware_verified` false unless a real Runtime/QPU result is collected through
+the runtime sidecar path.
 
 ## Warning Policy
 
@@ -95,6 +116,20 @@ Keep these entrypoints stable unless a migration is explicitly planned:
 - `run_from_config`
 - `run_spec`
 - existing `result.json` field names
+
+Custom workflow compatibility:
+
+- Keep `qcchem workflow validate/run/report/plugins/template` additive and
+  backward-compatible within workflow `version: "1"`.
+- Keep the `qcchem.workflow_steps` entry point group stable for plugin authors.
+- A workflow plugin should expose a class with `describe()`, `validate()`, and
+  `run()`; `plan_next()` is optional and may only return step definitions that
+  the central runner validates before execution.
+- Do not let plugin code bypass runtime or hardware confirmation gates. Installed
+  plugins are trusted local Python code, but QCchem artifacts must still record
+  package metadata, step outputs, workflow limits, and provenance.
+- Tests for new workflow steps should cover YAML loading, reference resolution,
+  CLI execution, artifact bundle creation, and failure policy behavior.
 
 New result sections should be additive and nullable where practical.
 

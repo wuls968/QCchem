@@ -29,6 +29,13 @@ from qcchem.workflow.evidence_agent import (
 from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.campaign import accept_campaign_result, report_campaign_result, run_campaign_from_config
+from qcchem.workflow.custom_workflow import (
+    report_custom_workflow_result,
+    run_custom_workflow_from_config,
+    validate_workflow_from_config,
+    workflow_plugins_summary,
+    write_workflow_template,
+)
 from qcchem.workflow.hardware_optimization import run_hardware_optimization_from_config
 from qcchem.workflow.objective import plan_research_objective, status_research_objective
 from qcchem.workflow.promotion import review_exploratory_promotion, write_promotion_outputs
@@ -82,6 +89,18 @@ def _build_parser() -> argparse.ArgumentParser:
     benchmark_run = benchmark_subparsers.add_parser("run", help="Run a benchmark suite from YAML config.")
     benchmark_run.add_argument("-c", "--config", type=Path, required=True)
     benchmark_run.add_argument("-o", "--output-dir", type=Path)
+    benchmark_run.add_argument(
+        "--include-tag",
+        action="append",
+        default=[],
+        help="Run only benchmark cases carrying this tag. Repeat to include any of several tags.",
+    )
+    benchmark_run.add_argument(
+        "--exclude-tag",
+        action="append",
+        default=[],
+        help="Skip benchmark cases carrying this tag. Repeat to exclude several tags.",
+    )
     benchmark_run.add_argument(
         "--confirm-runtime-budget",
         help="Required before any benchmark case can submit a real IBM Runtime job.",
@@ -220,6 +239,21 @@ def _build_parser() -> argparse.ArgumentParser:
         "--confirm-runtime-budget",
         help="Required for --submit when the config requests action-time confirmation.",
     )
+
+    workflow_parser = subparsers.add_parser("workflow", help="Custom workflow engine commands.")
+    workflow_subparsers = workflow_parser.add_subparsers(dest="workflow_command", required=True)
+    workflow_validate = workflow_subparsers.add_parser("validate", help="Validate a custom workflow YAML file.")
+    workflow_validate.add_argument("-c", "--config", type=Path, required=True)
+    workflow_run = workflow_subparsers.add_parser("run", help="Run a custom workflow YAML file.")
+    workflow_run.add_argument("-c", "--config", type=Path, required=True)
+    workflow_run.add_argument("-o", "--output-dir", type=Path)
+    workflow_report = workflow_subparsers.add_parser("report", help="Regenerate a workflow Markdown report.")
+    workflow_report.add_argument("result_json", type=Path)
+    workflow_report.add_argument("-o", "--output", type=Path)
+    workflow_plugins = workflow_subparsers.add_parser("plugins", help="List built-in and installed workflow step plugins.")
+    workflow_plugins.add_argument("--builtins-only", action="store_true", help="List only QCchem built-in workflow step plugins.")
+    workflow_template = workflow_subparsers.add_parser("template", help="Write a starter custom workflow YAML file.")
+    workflow_template.add_argument("-o", "--output", type=Path, required=True)
 
     agent_parser = subparsers.add_parser("agent", help="Agent-friendly QCchem task commands.")
     agent_subparsers = agent_parser.add_subparsers(dest="agent_command", required=True)
@@ -530,11 +564,17 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "benchmark":
         if args.benchmark_command == "run":
-            result = run_benchmark_suite_from_config(
-                args.config,
-                output_dir=args.output_dir,
-                confirm_runtime_budget=args.confirm_runtime_budget,
-            )
+            try:
+                result = run_benchmark_suite_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    confirm_runtime_budget=args.confirm_runtime_budget,
+                    include_tags=args.include_tag,
+                    exclude_tags=args.exclude_tag,
+                )
+            except ValueError as exc:
+                print(f"Benchmark suite rejected: {exc}")
+                return 2
             if isinstance(result, dict):
                 summary = result.get("summary", {})
                 print(f"Benchmark suite completed: {result.get('suite_name')}")
@@ -790,6 +830,38 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Budget ledger: {summary.get('runtime_budget_ledger')}")
             print(f"Plan: {summary.get('plan_json')}")
             print(f"Report: {summary.get('report_markdown')}")
+            return 0
+
+    if args.command == "workflow":
+        if args.workflow_command == "validate":
+            try:
+                summary = validate_workflow_from_config(args.config)
+            except ValueError as exc:
+                print(f"Workflow validation rejected: {exc}")
+                return 2
+            print(json.dumps(to_primitive(summary), indent=2, sort_keys=True))
+            return 0
+        if args.workflow_command == "run":
+            try:
+                result = run_custom_workflow_from_config(args.config, output_dir=args.output_dir)
+            except ValueError as exc:
+                print(f"Workflow run rejected: {exc}")
+                return 2
+            print(f"Workflow completed: {result.workflow_name}")
+            print(f"Status: {result.status}")
+            print(f"Artifacts: {result.artifact_root}")
+            print(f"Report: {result.outputs['workflow_report_markdown']}")
+            return 0 if result.status == "completed" else 2
+        if args.workflow_command == "report":
+            outputs = report_custom_workflow_result(args.result_json, output_path=args.output)
+            print(f"Workflow report written to {outputs['workflow_report_markdown']}")
+            return 0
+        if args.workflow_command == "plugins":
+            print(json.dumps(to_primitive(workflow_plugins_summary(include_installed=not args.builtins_only)), indent=2, sort_keys=True))
+            return 0
+        if args.workflow_command == "template":
+            path = write_workflow_template(args.output)
+            print(f"Workflow template written to {path}")
             return 0
 
     if args.command == "agent":

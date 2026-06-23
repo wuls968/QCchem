@@ -56,6 +56,9 @@ LOCAL_ACTION_KINDS = {
     "promotion_review",
     "objective_plan",
     "objective_status",
+    "workflow_validate",
+    "workflow_run",
+    "workflow_summarize",
 }
 
 BLOCKED_ACTION_KINDS = {
@@ -362,6 +365,12 @@ def _infer_action_kind(task_type: str, request_text: str, linked_artifacts: list
         return "objective_status"
     if "objective" in lowered or "plan objective" in lowered:
         return "objective_plan"
+    if "workflow" in lowered and "validate" in lowered:
+        return "workflow_validate"
+    if "workflow" in lowered and ("summarize" in lowered or "summary" in lowered or "report" in lowered):
+        return "workflow_summarize"
+    if "workflow" in lowered and ("run" in lowered or "execute" in lowered):
+        return "workflow_run"
     if task_type == "analysis":
         return "compare_artifacts" if linked_artifacts else "review_claims"
     if "runtime collect" in lowered or "collect runtime" in lowered:
@@ -452,6 +461,24 @@ def build_cost_estimate(action: dict[str, Any], evidence_graph: dict[str, Any]) 
             "budget_boundary": "Local Trust-First analysis only; no chemistry run and no hardware submission.",
             "evidence_trust_tier": evidence_graph.get("trust_tier"),
         }
+    if action_kind == "workflow_validate":
+        return {
+            "cost_tier": "analysis_only",
+            "budget_boundary": "Validates workflow YAML and plugin metadata only.",
+            "evidence_trust_tier": evidence_graph.get("trust_tier"),
+        }
+    if action_kind == "workflow_run":
+        return {
+            "cost_tier": "local_workflow",
+            "budget_boundary": "Runs a QCchem workflow through declared step policies; runtime submission remains guarded by existing confirmations.",
+            "evidence_trust_tier": evidence_graph.get("trust_tier"),
+        }
+    if action_kind == "workflow_summarize":
+        return {
+            "cost_tier": "analysis_only",
+            "budget_boundary": "Reads existing workflow_result.json and regenerates summary/report outputs.",
+            "evidence_trust_tier": evidence_graph.get("trust_tier"),
+        }
     return {
         "cost_tier": "analysis_only",
         "budget_boundary": "No calculation or hardware budget is spent.",
@@ -465,6 +492,8 @@ def classify_research_risk(action: dict[str, Any], evidence_graph: dict[str, Any
     action_kind = str(action.get("action_kind") or "")
     if action_kind in {"runtime_collect", "hardware_optimize_preview"}:
         reasons.append(f"{action_kind} touches runtime or hardware-facing workflow state.")
+    if action_kind == "workflow_run":
+        reasons.append("workflow_run can dispatch multiple local workflow steps and must preserve workflow limits.")
     if str(action.get("risk_tier") or "") == "high":
         reasons.append(f"{action_kind} is marked high risk by local action rules.")
     if action_kind == "promotion_review":

@@ -225,6 +225,8 @@ class BackendSummary:
     abelian_grouping: bool = True
     noise_enabled: bool = False
     runtime_enabled: bool = False
+    metadata: dict[str, Any] = field(default_factory=dict)
+    provenance: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

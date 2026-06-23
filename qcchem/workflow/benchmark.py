@@ -756,22 +756,72 @@ def _noise_comparison_case(case, case_root: Path) -> BenchmarkCaseResult:
     return outcome
 
 
+def _normalize_tag_filter(values: str | list[str] | tuple[str, ...] | set[str] | None) -> set[str]:
+    if isinstance(values, str):
+        values = [values]
+    return {str(value).strip() for value in (values or []) if str(value).strip()}
+
+
+def _select_benchmark_cases(
+    cases: list[Any],
+    *,
+    include_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+    exclude_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+) -> tuple[list[Any], dict[str, Any]]:
+    include = _normalize_tag_filter(include_tags)
+    exclude = _normalize_tag_filter(exclude_tags)
+    selected = []
+    skipped = []
+    for case in cases:
+        case_tags = set(getattr(case, "tags", []) or [])
+        include_miss = bool(include) and not bool(case_tags & include)
+        exclude_hit = bool(exclude) and bool(case_tags & exclude)
+        if include_miss or exclude_hit:
+            skipped.append(
+                {
+                    "name": case.name,
+                    "tags": sorted(case_tags),
+                    "reason": "include_tags_not_matched" if include_miss else "exclude_tags_matched",
+                }
+            )
+            continue
+        selected.append(case)
+    if not selected:
+        raise ValueError(
+            "Benchmark tag filters selected no cases "
+            f"(include_tags={sorted(include)}, exclude_tags={sorted(exclude)})."
+        )
+    return selected, {
+        "include_tags": sorted(include),
+        "exclude_tags": sorted(exclude),
+        "selected_cases": [case.name for case in selected],
+        "skipped_cases": skipped,
+    }
+
+
 def run_benchmark_suite_from_spec(
     spec,
     *,
     source_config: str,
     output_dir: Path | None = None,
     confirm_runtime_budget: str | None = None,
+    include_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+    exclude_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> BenchmarkSuiteResult:
     """Run a benchmark suite from an already-parsed spec."""
     suite_root = output_dir or Path("artifacts") / spec.name
     artifacts = _prepare_benchmark_artifacts(Path(suite_root))
     cases_root = artifacts.root / "cases"
     cases_root.mkdir(parents=True, exist_ok=True)
+    selected_cases, case_filter_summary = _select_benchmark_cases(
+        list(spec.cases),
+        include_tags=include_tags,
+        exclude_tags=exclude_tags,
+    )
 
     case_results: list[BenchmarkCaseResult] = []
     registry_entries = []
-    for case in spec.cases:
+    for case in selected_cases:
         case_root = cases_root / case.name
         if case.kind == "run":
             outcome = _run_case(
@@ -828,6 +878,7 @@ def run_benchmark_suite_from_spec(
         if case.metrics.get("achieved_error") is not None
     ]
     calibration_summary = {
+        "case_filter": case_filter_summary,
         "cases_with_measured_cost": len(measured_costs),
         "cases_with_estimated_cost": len(estimated_costs),
         "mean_estimated_cost": (sum(estimated_costs) / len(estimated_costs) if estimated_costs else None),
@@ -836,6 +887,7 @@ def run_benchmark_suite_from_spec(
         "field_model_campaign": field_model_campaign_summary,
     }
     dashboard_summary = {
+        "case_filter": case_filter_summary,
         "compressed_cases": [
             case.name for case in case_results if case.metrics.get("compression_method") is not None
         ],
@@ -1029,6 +1081,8 @@ def run_benchmark_suite_from_config(
     output_dir: Path | None = None,
     *,
     confirm_runtime_budget: str | None = None,
+    include_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+    exclude_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> BenchmarkSuiteResult | dict[str, Any]:
     """Load and run a benchmark suite from YAML."""
     spec = load_benchmark_entry_spec(path)
@@ -1039,4 +1093,6 @@ def run_benchmark_suite_from_config(
         source_config=str(path),
         output_dir=output_dir,
         confirm_runtime_budget=confirm_runtime_budget,
+        include_tags=include_tags,
+        exclude_tags=exclude_tags,
     )

@@ -8,6 +8,16 @@ from .ai_workspace import (
     ResearchActionProposal,
 )
 from .objective import ResearchObjectiveSpec
+from .workflows import (
+    WorkflowAcceptanceSpec,
+    WorkflowLimitsSpec,
+    WorkflowPluginDescription,
+    WorkflowRetrySpec,
+    WorkflowRunResult,
+    WorkflowSpec,
+    WorkflowStepResult,
+    WorkflowStepSpec,
+)
 from .results import (
     ArtifactPaths,
     BackendCapabilitySummary,
@@ -216,6 +226,14 @@ __all__ = [
     "GradientTaskSpec",
     "HardwareOptimizationSpec",
     "InitialPointCandidate",
+    "WorkflowAcceptanceSpec",
+    "WorkflowLimitsSpec",
+    "WorkflowPluginDescription",
+    "WorkflowRetrySpec",
+    "WorkflowRunResult",
+    "WorkflowSpec",
+    "WorkflowStepResult",
+    "WorkflowStepSpec",
     "LatticeQEDAnsatzSpec",
     "LatticeQEDConstraintSpec",
     "LatticeQEDDynamicsEvolutionSpec",

@@ -28,6 +28,11 @@ from qcchem.workflow.ai_store import workspace_root, write_delivery_record, writ
 from qcchem.workflow.agent import run_analysis_ticket
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
+from qcchem.workflow.custom_workflow import (
+    report_custom_workflow_result,
+    run_custom_workflow_from_config,
+    validate_workflow_from_config,
+)
 from qcchem.workflow.evidence_capsule import build_and_write_evidence_capsule
 from qcchem.workflow.evidence_agent import (
     append_ai_provenance_event,
@@ -103,6 +108,11 @@ def _delivery_outputs_from_result(result: dict[str, Any]) -> list[str]:
         "promotion_review_markdown",
         "plan_json",
         "status_json",
+        "workflow_result_json",
+        "workflow_report_markdown",
+        "workflow_graph_json",
+        "provenance_jsonl",
+        "registry_json",
     ):
         output = result.get(key)
         if isinstance(output, str) and output:
@@ -116,6 +126,38 @@ def _delivery_outputs_from_result(result: dict[str, Any]) -> list[str]:
             if isinstance(output, str) and output:
                 outputs.append(output)
     return sorted(set(outputs))
+
+
+def _delivery_extra_fields_from_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Preserve domain-specific delivery summaries for Workbench rendering."""
+    extras: dict[str, Any] = {}
+    workflow_summary = result.get("workflow_summary")
+    has_workflow_marker = isinstance(workflow_summary, dict) or any(
+        result.get(key)
+        for key in (
+            "workflow_name",
+            "workflow_status",
+            "workflow_result_json",
+            "workflow_report_markdown",
+            "acceptance_summary",
+        )
+    )
+    if not has_workflow_marker:
+        return extras
+    if isinstance(workflow_summary, dict):
+        extras["workflow_summary"] = workflow_summary
+    for key in (
+        "workflow_name",
+        "workflow_status",
+        "summary",
+        "acceptance_summary",
+        "workflow_result_json",
+        "workflow_report_markdown",
+    ):
+        value = result.get(key)
+        if value not in (None, "", [], {}):
+            extras["workflow_run_summary" if key == "summary" else key] = value
+    return extras
 
 
 def _execution_root_for_ticket(path: Path, ticket: AITaskTicket, action: dict[str, Any]) -> Path:
@@ -387,6 +429,65 @@ def _run_action_ticket(ticket: AITaskTicket, path: Path) -> dict[str, Any]:
             "linked_outputs": list((status.get("outputs") or {}).values()),
             "status_json": (status.get("outputs") or {}).get("json"),
             "report_markdown": (status.get("outputs") or {}).get("markdown"),
+        }
+    elif action_kind == "workflow_validate":
+        config = inputs.get("config") or inputs.get("workflow") or inputs.get("workflow_config") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        validation = validate_workflow_from_config(resolve_user_path(base_dir, str(config)))
+        output = output_root / "workflow_validation.json"
+        write_result_json(validation, output)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "workflow_validation": validation,
+            "linked_outputs": [str(output)],
+            "summary_json": str(output),
+        }
+    elif action_kind == "workflow_run":
+        config = inputs.get("config") or inputs.get("workflow") or inputs.get("workflow_config") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        result = run_custom_workflow_from_config(
+            resolve_user_path(base_dir, str(config)),
+            output_dir=resolve_user_path(base_dir, str(inputs["output_dir"])) if inputs.get("output_dir") else output_root,
+        )
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed" if result.status == "completed" else "blocked",
+            "delivery_kind": "artifact_bundle",
+            "action_kind": action_kind,
+            "workflow_name": result.workflow_name,
+            "workflow_status": result.status,
+            "artifact_root": str(result.artifact_root),
+            "summary": result.summary,
+            "acceptance_summary": result.acceptance_summary,
+            "linked_outputs": list(result.outputs.values()),
+            **result.outputs,
+        }
+    elif action_kind == "workflow_summarize":
+        target = inputs.get("result_json") or inputs.get("target") or (ticket.linked_artifacts[0] if ticket.linked_artifacts else "")
+        target_path = resolve_user_path(base_dir, str(target))
+        result_json = target_path / "workflow_result.json" if target_path.is_dir() else target_path
+        outputs = report_custom_workflow_result(result_json, output_path=output_root / "workflow_report.md")
+        payload_data = json.loads(result_json.read_text(encoding="utf-8"))
+        summary_path = output_root / "workflow_summary.json"
+        summary = {
+            "workflow_name": payload_data.get("workflow_name"),
+            "status": payload_data.get("status"),
+            "summary": payload_data.get("summary"),
+            "acceptance_summary": payload_data.get("acceptance_summary"),
+            "workflow_result_json": str(result_json),
+            **outputs,
+        }
+        write_result_json(summary, summary_path)
+        payload = {
+            "task_id": ticket.task_id,
+            "status": "completed",
+            "delivery_kind": "analysis_note",
+            "action_kind": action_kind,
+            "workflow_summary": summary,
+            "linked_outputs": [str(summary_path), outputs["workflow_report_markdown"]],
+            "summary_json": str(summary_path),
+            **outputs,
         }
     else:
         raise ValueError(f"Unsupported AI action kind: {action_kind}")
@@ -691,6 +792,7 @@ def _write_delivery(
     summary: str,
     outputs: list[str],
     evidence_summary: dict[str, Any] | None = None,
+    extra_fields: dict[str, Any] | None = None,
 ) -> dict[str, object]:
     delivery = AIDeliveryRecord(
         delivery_id=f"delivery-{uuid.uuid4().hex[:10]}",
@@ -700,11 +802,14 @@ def _write_delivery(
         linked_outputs=outputs,
         evidence_summary=evidence_summary,
     )
-    path = write_delivery_record(root, delivery.to_record())
+    record = delivery.to_record()
+    if extra_fields:
+        record.update(extra_fields)
+    path = write_delivery_record(root, record)
     return {
         "delivery_record": str(path),
-        "linked_outputs": delivery.linked_outputs,
-        "review_status": delivery.review_status,
+        "linked_outputs": record["linked_outputs"],
+        "review_status": record["review_status"],
     }
 
 
@@ -1052,6 +1157,7 @@ def run_ticket(path: Path) -> dict[str, object]:
                 if isinstance(result.get("evidence_summary"), dict)
                 else (result.get("evidence_graph") if isinstance(result.get("evidence_graph"), dict) else None)
             ),
+            extra_fields=_delivery_extra_fields_from_result(result),
         )
         completed_payload = dict(payload)
         completed_payload["status"] = AI_WORKSPACE_TICKET_STATUS_COMPLETED
@@ -1075,6 +1181,7 @@ def run_ticket(path: Path) -> dict[str, object]:
             evidence_summary=(result.get("summary") or {}).get("evidence_summary")
             if isinstance(result.get("summary"), dict)
             else None,
+            extra_fields=_delivery_extra_fields_from_result(result),
         )
         result["delivery_kind"] = delivery_kind
         _write_ticket_status(path, payload, AI_WORKSPACE_TICKET_STATUS_COMPLETED)

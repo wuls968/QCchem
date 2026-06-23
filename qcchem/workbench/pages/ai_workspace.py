@@ -16,7 +16,7 @@ from qcchem.workbench.components.cards import callout_card, metric_card, status_
 from qcchem.workbench.evidence_console import format_action_label
 
 
-def _ticket_card(record: dict[str, object]) -> html.Div:
+def build_ticket_card(record: dict[str, object]) -> html.Div:
     linked_artifacts = record.get("linked_artifacts") or []
     if not isinstance(linked_artifacts, list):
         linked_artifacts = []
@@ -53,7 +53,38 @@ def _ticket_card(record: dict[str, object]) -> html.Div:
     )
 
 
-def _delivery_card(record: dict[str, object]) -> html.Div:
+def _workflow_delivery_summary(record: dict[str, object]) -> dict[str, object]:
+    workflow_summary = record.get("workflow_summary") if isinstance(record.get("workflow_summary"), dict) else {}
+    run_summary = workflow_summary.get("summary") if isinstance(workflow_summary.get("summary"), dict) else {}
+    workflow_run_summary = record.get("workflow_run_summary")
+    if not run_summary and isinstance(workflow_run_summary, dict):
+        run_summary = workflow_run_summary
+    acceptance = workflow_summary.get("acceptance_summary") if isinstance(workflow_summary.get("acceptance_summary"), dict) else {}
+    record_acceptance = record.get("acceptance_summary")
+    if not acceptance and isinstance(record_acceptance, dict):
+        acceptance = record_acceptance
+    workflow_name = workflow_summary.get("workflow_name") or record.get("workflow_name")
+    status = workflow_summary.get("status") or record.get("workflow_status")
+    result_json = workflow_summary.get("workflow_result_json") or record.get("workflow_result_json")
+    report_markdown = workflow_summary.get("workflow_report_markdown") or record.get("workflow_report_markdown")
+    if not any([workflow_name, status, run_summary, acceptance, result_json, report_markdown]):
+        return {}
+    accepted = acceptance.get("accepted") if isinstance(acceptance, dict) else None
+    accepted_label = "accepted" if accepted is True else "not accepted" if accepted is False else "not reviewed"
+    return {
+        "workflow_name": workflow_name or "workflow",
+        "status": status or "unknown",
+        "accepted_label": accepted_label,
+        "completed_steps": (run_summary or {}).get("completed_steps", 0),
+        "failed_steps": (run_summary or {}).get("failed_steps", 0),
+        "generated_steps": (run_summary or {}).get("generated_steps", 0),
+        "recommended_action": (acceptance or {}).get("recommended_action") or "n/a",
+        "workflow_result_json": result_json or "n/a",
+        "workflow_report_markdown": report_markdown or "n/a",
+    }
+
+
+def build_delivery_card(record: dict[str, object]) -> html.Div:
     evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
     outputs = record.get("linked_outputs") or []
     if not isinstance(outputs, list):
@@ -67,6 +98,33 @@ def _delivery_card(record: dict[str, object]) -> html.Div:
     recommended_action_text = format_action_label(recommended_action)
     if str(recommended_action) != recommended_action_text:
         recommended_action_text = f"{recommended_action_text} ({recommended_action})"
+    workflow = _workflow_delivery_summary(record)
+    workflow_children: list[object] = []
+    if workflow:
+        workflow_children = [
+            html.P("Workflow summary", className="qcchem-ai-workspace-page__ticket-meta"),
+            html.Div(
+                className="qcchem-ai-workspace-page__ticket-grid",
+                children=[
+                    html.Div([html.Span("Workflow"), html.Strong(str(workflow["workflow_name"]))]),
+                    html.Div([html.Span("Status"), html.Strong(str(workflow["status"]))]),
+                    html.Div([html.Span("Acceptance"), html.Strong(str(workflow["accepted_label"]))]),
+                    html.Div(
+                        [
+                            html.Span("Steps"),
+                            html.Strong(
+                                f"{workflow['completed_steps']} completed / "
+                                f"{workflow['failed_steps']} failed / "
+                                f"{workflow['generated_steps']} generated"
+                            ),
+                        ]
+                    ),
+                    html.Div([html.Span("Workflow action"), html.Strong(str(workflow["recommended_action"]))]),
+                ],
+            ),
+            html.P(str(workflow["workflow_result_json"]), className="qcchem-card-note qcchem-card-note--compact"),
+            html.P(str(workflow["workflow_report_markdown"]), className="qcchem-card-note qcchem-card-note--compact"),
+        ]
     return html.Div(
         className="qcchem-ai-workspace-page__ticket",
         children=[
@@ -93,6 +151,7 @@ def _delivery_card(record: dict[str, object]) -> html.Div:
                     html.Div([html.Span("Evidence claim"), html.Strong(str(evidence.get("primary_scientific_claim") or "n/a"))]),
                 ],
             ),
+            *workflow_children,
             html.P("Limitation notes", className="qcchem-ai-workspace-page__ticket-meta"),
             html.P("; ".join(str(note) for note in limitation_notes) or "No limitation notes recorded.", className="qcchem-card-note qcchem-card-note--compact"),
             html.P(str(record.get("task_id", "")), className="qcchem-card-note qcchem-card-note--compact"),
@@ -100,19 +159,24 @@ def _delivery_card(record: dict[str, object]) -> html.Div:
     )
 
 
-def _lane(section_id: str, title: str, note: str, tickets: list[dict[str, object]]) -> html.Section:
-    body = [_ticket_card(ticket) for ticket in tickets] or [
-        html.Div("No persisted items in this lane yet.", className="qcchem-ai-workspace-page__empty-state")
+def build_lane_children(title: str, note: str, tickets: list[dict[str, object]]) -> list[object]:
+    return [
+        html.P("Task Lane", className="qcchem-panel__eyebrow"),
+        html.H2(title, className="qcchem-panel__title"),
+        html.P(note, className="qcchem-panel__note"),
+        html.Div(
+            [build_ticket_card(ticket) for ticket in tickets]
+            or [html.Div("No persisted items in this lane yet.", className="qcchem-ai-workspace-page__empty-state")],
+            className="qcchem-ai-workspace-page__placeholder",
+        ),
     ]
+
+
+def _lane(section_id: str, title: str, note: str, tickets: list[dict[str, object]]) -> html.Section:
     return html.Section(
         id=section_id,
         className="qcchem-ai-workspace-page__lane",
-        children=[
-            html.P("Task Lane", className="qcchem-panel__eyebrow"),
-            html.H2(title, className="qcchem-panel__title"),
-            html.P(note, className="qcchem-panel__note"),
-            html.Div(body, className="qcchem-ai-workspace-page__placeholder"),
-        ],
+        children=build_lane_children(title, note, tickets),
     )
 
 
@@ -240,7 +304,7 @@ def layout() -> html.Div:
                     html.Div(
                         id="qcchem-ai-delivery-history",
                         className="qcchem-ai-workspace-page__placeholder",
-                        children=[_delivery_card(delivery) for delivery in deliveries]
+                        children=[build_delivery_card(delivery) for delivery in deliveries]
                         or [html.Div("No persisted deliveries yet.", className="qcchem-ai-workspace-page__empty-state")],
                     ),
                 ],

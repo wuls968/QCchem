@@ -1,24 +1,68 @@
-"""Shot-based backend using BackendEstimatorV2 over AerSimulator."""
+"""Shot-based backend using a local statevector Pauli sampler."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 from typing import Any
 
 import numpy as np
-from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
-from qiskit.primitives import BackendEstimatorV2
-from qiskit.quantum_info import SparsePauliOp
-from qiskit_aer import AerSimulator
+from qiskit.quantum_info import SparsePauliOp, Statevector
 
 from qcchem.backends.base import BackendAdapter, BackendEstimate
-from qcchem.backends.noise import build_local_noise_model, effective_basis_gates
 from qcchem.core import BackendSpec
 
 
+def _positive_int_option(options: dict[str, Any], name: str, default: int | None) -> int | None:
+    """Return a positive Aer integer option with a conservative default."""
+    raw = options.get(name, default)
+    if raw is None:
+        return None
+    value = int(raw)
+    if value < 1:
+        raise ValueError(f"backend.runtime.options.{name} must be positive when provided.")
+    return value
+
+
+@dataclass(frozen=True)
+class _LocalSamplerOptions:
+    max_parallel_threads: int | None = 1
+    max_parallel_experiments: int | None = 1
+    max_parallel_shots: int | None = 1
+
+
+@dataclass(frozen=True)
+class _LocalSamplerBackend:
+    options: _LocalSamplerOptions
+    engine: str = "statevector_pauli_sampler"
+    native_aer: bool = False
+
+
+def _bind_circuit(circuit: QuantumCircuit, parameter_values: np.ndarray) -> QuantumCircuit:
+    parameter_array = np.asarray(parameter_values, dtype=float)
+    if not circuit.num_parameters:
+        return circuit
+    parameter_map = dict(zip(circuit.parameters, parameter_array, strict=True))
+    return circuit.assign_parameters(parameter_map, inplace=False)
+
+
+def _pauli_weight(label: str) -> int:
+    return sum(1 for char in label if char != "I")
+
+
+def _noise_attenuation(label: str, spec: BackendSpec) -> float:
+    if not spec.noise.enabled:
+        return 1.0
+    weight = _pauli_weight(label)
+    readout_factor = (1.0 - 2.0 * spec.noise.readout_error_probability) ** weight
+    one_qubit_factor = (1.0 - (4.0 * spec.noise.depolarizing_probability_1q / 3.0)) ** weight
+    two_qubit_factor = (1.0 - (16.0 * spec.noise.depolarizing_probability_2q / 15.0)) ** max(weight - 1, 0)
+    return float(readout_factor * one_qubit_factor * two_qubit_factor)
+
+
 class ShotEstimatorBackend(BackendAdapter):
-    """Shot-based estimator backend backed by AerSimulator."""
+    """Shot-based estimator backend backed by Python-side Pauli sampling."""
 
     backend_kind = "shot_estimator"
 
@@ -26,44 +70,22 @@ class ShotEstimatorBackend(BackendAdapter):
         if spec.shots is None:
             raise ValueError("shot_estimator backend requires 'shots' to be configured.")
         self.spec = spec
-        self._noise_model = build_local_noise_model(spec.noise)
-        self._noise_basis_gates = effective_basis_gates(spec.noise)
-        simulator_kwargs = {}
-        if self._noise_model is not None:
-            simulator_kwargs["noise_model"] = self._noise_model
-        self._backend = AerSimulator(**simulator_kwargs)
+        runtime_options = dict(spec.runtime.options or {})
+        sampler_options: dict[str, int | None] = {}
+        for option_name in (
+            "max_parallel_threads",
+            "max_parallel_experiments",
+            "max_parallel_shots",
+        ):
+            option_value = _positive_int_option(runtime_options, option_name, 1)
+            sampler_options[option_name] = option_value
+        self._backend = _LocalSamplerBackend(options=_LocalSamplerOptions(**sampler_options))
         self._evaluation_counter = 0
         self._sampling_offset = 100_000
-        self._transpiled_cache: dict[int, QuantumCircuit] = {}
 
     @property
     def precision(self) -> float:
         return 1.0 / math.sqrt(float(self.spec.shots))
-
-    def _build_estimator(self, seed: int | None) -> BackendEstimatorV2:
-        return BackendEstimatorV2(
-            backend=self._backend,
-            options={
-                "default_precision": self.precision,
-                "abelian_grouping": self.spec.abelian_grouping,
-                "seed_simulator": seed,
-            },
-        )
-
-    def _prepare_circuit(self, circuit: QuantumCircuit) -> QuantumCircuit:
-        cache_key = id(circuit)
-        prepared = self._transpiled_cache.get(cache_key)
-        if prepared is None:
-            if self._noise_basis_gates:
-                transpile_kwargs: dict[str, object] = {
-                    "basis_gates": self._noise_basis_gates,
-                    "optimization_level": 0,
-                }
-            else:
-                transpile_kwargs = {"backend": self._backend, "optimization_level": 0}
-            prepared = transpile(circuit, **transpile_kwargs)
-            self._transpiled_cache[cache_key] = prepared
-        return prepared
 
     def _single_estimate(
         self,
@@ -73,21 +95,47 @@ class ShotEstimatorBackend(BackendAdapter):
         *,
         seed: int | None,
     ) -> BackendEstimate:
-        estimator = self._build_estimator(seed)
-        prepared_circuit = self._prepare_circuit(circuit)
-        result = estimator.run(
-            [(prepared_circuit, operator, [np.asarray(parameter_values, dtype=float)])]
-        ).result()[0]
-        metadata: dict[str, Any] = dict(result.metadata)
+        bound_circuit = _bind_circuit(circuit, parameter_values)
+        state = Statevector.from_instruction(bound_circuit)
+        rng = np.random.default_rng(seed)
+        shots = int(self.spec.shots)
+        estimate = 0.0
+        variance = 0.0
+        term_count = 0
+        labels = operator.paulis.to_labels()
+        for label, coeff in zip(labels, operator.coeffs, strict=True):
+            term_count += 1
+            coeff_real = float(np.real(coeff))
+            pauli = SparsePauliOp.from_list([(label, 1.0)])
+            exact_expectation = float(np.real(state.expectation_value(pauli)))
+            attenuation = _noise_attenuation(label, self.spec)
+            effective_expectation = float(np.clip(exact_expectation * attenuation, -1.0, 1.0))
+            probability_one = float(np.clip((1.0 + effective_expectation) / 2.0, 0.0, 1.0))
+            sampled_ones = int(rng.binomial(shots, probability_one))
+            sampled_expectation = float((2.0 * sampled_ones / shots) - 1.0)
+            estimate += coeff_real * sampled_expectation
+            variance += (coeff_real**2) * max(1.0 - effective_expectation**2, 0.0) / shots
+        reported_std = float(math.sqrt(max(variance, 0.0)))
+        metadata: dict[str, Any] = {
+            "shots": shots,
+            "sampling_engine": self._backend.engine,
+            "native_aer": self._backend.native_aer,
+            "term_count": term_count,
+            "sampling_variance": float(variance),
+        }
         metadata.setdefault("shots", self.spec.shots)
         metadata["precision"] = self.precision
         metadata["abelian_grouping"] = self.spec.abelian_grouping
         metadata["noise_enabled"] = bool(self.spec.noise.enabled)
         metadata["noise_profile"] = self.spec.noise.profile
+        metadata["noise_application"] = "pauli_expectation_attenuation" if self.spec.noise.enabled else "none"
         metadata["runtime_service"] = self.spec.runtime.service
+        metadata["aer_max_parallel_threads"] = self._backend.options.max_parallel_threads
+        metadata["aer_max_parallel_experiments"] = self._backend.options.max_parallel_experiments
+        metadata["aer_max_parallel_shots"] = self._backend.options.max_parallel_shots
         return BackendEstimate(
-            value=float(np.real(result.data.evs[0])),
-            reported_std=float(np.real(result.data.stds[0])),
+            value=float(estimate),
+            reported_std=reported_std,
             metadata=metadata,
             seed=seed,
             shots=int(metadata.get("shots", self.spec.shots)),

@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from qcchem.core.evidence import summarize_artifact_payload
+from qcchem.io.artifact_index import build_artifact_index
 from qcchem.io.release_audit_config import (
     ReleaseAuditExploratoryAssetSpec,
     ReleaseAuditSpec,
@@ -404,6 +405,117 @@ def _audit_docs(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[st
             required=doc.required,
             summary="All release terms are present." if not missing else "Some release terms are missing.",
             details={"missing_terms": missing},
+    )
+
+
+def _audit_custom_workflow_extensions(*, repo_root: Path, checks: list[dict[str, Any]]) -> None:
+    workflow_examples = [
+        repo_root / "examples" / "workflows" / "h2_trust_first_workflow.yaml",
+        repo_root / "examples" / "workflows" / "research_os_workflow.yaml",
+        repo_root / "examples" / "workflows" / "branch_and_report_workflow.yaml",
+        repo_root / "examples" / "workflows" / "plugin_loop_workflow.yaml",
+    ]
+    plugin_example_files = [
+        repo_root / "examples" / "workflow_plugins" / "README.md",
+        repo_root / "examples" / "workflow_plugins" / "qcchem_workflow_echo_plugin" / "pyproject.toml",
+        repo_root
+        / "examples"
+        / "workflow_plugins"
+        / "qcchem_workflow_echo_plugin"
+        / "src"
+        / "qcchem_workflow_echo_plugin"
+        / "__init__.py",
+    ]
+    missing_examples = [
+        str(path.relative_to(repo_root))
+        for path in [*workflow_examples, *plugin_example_files]
+        if not path.exists()
+    ]
+    _check(
+        checks,
+        check_id="custom_workflows:examples_exist",
+        label="Custom workflow YAML and plugin examples exist",
+        passed=not missing_examples,
+        required=False,
+        summary="Custom workflow examples are present." if not missing_examples else "Some custom workflow examples are missing.",
+        details={"missing_examples": missing_examples},
+    )
+
+    try:
+        from qcchem.workflow.custom_workflow import validate_workflow_from_config, workflow_plugins_summary
+
+        h2_validation = validate_workflow_from_config(workflow_examples[0], include_installed=False)
+        plugins = workflow_plugins_summary(include_installed=False)
+        importable = True
+        import_error = ""
+    except Exception as exc:
+        h2_validation = {}
+        plugins = {}
+        importable = False
+        import_error = f"{type(exc).__name__}: {exc}"
+    _check(
+        checks,
+        check_id="custom_workflows:builtin_example_validates",
+        label="Built-in custom workflow example validates without installed plugins",
+        passed=importable and h2_validation.get("status") == "valid",
+        required=False,
+        summary=(
+            "Built-in workflow example validates."
+            if importable and h2_validation.get("status") == "valid"
+            else "Built-in workflow example failed validation."
+        ),
+        details={
+            "workflow": str(workflow_examples[0].relative_to(repo_root)),
+            "status": h2_validation.get("status"),
+            "error": import_error,
+        },
+    )
+
+    plugin_kinds = {item.get("kind") for item in plugins.get("plugins", [])} if isinstance(plugins, dict) else set()
+    expected_builtin_plugins = {"run_config", "capsule_validate", "claim_check", "compare_artifacts"}
+    missing_plugins = sorted(expected_builtin_plugins - plugin_kinds)
+    _check(
+        checks,
+        check_id="custom_workflows:builtin_plugins_registered",
+        label="Custom workflow built-in plugins are registered",
+        passed=not missing_plugins,
+        required=False,
+        summary="Built-in workflow plugins are registered." if not missing_plugins else "Some built-in workflow plugins are missing.",
+        details={"missing_plugins": missing_plugins},
+    )
+
+    index = build_artifact_index(repo_root / "artifacts")
+    workflow_entries = [
+        entry for entry in index.get("artifacts", []) if entry.get("artifact_kind") == "workflow"
+    ]
+    if workflow_entries:
+        incomplete = [
+            entry.get("artifact_name")
+            for entry in workflow_entries
+            if not (
+                entry.get("has_workflow_graph")
+                and entry.get("has_workflow_provenance")
+                and entry.get("has_workflow_registry")
+                and entry.get("has_report_markdown")
+            )
+        ]
+        _check(
+            checks,
+            check_id="custom_workflows:index_contract",
+            label="Workflow artifacts satisfy artifact-index contract",
+            passed=not incomplete,
+            required=False,
+            summary="Indexed workflow artifacts carry graph, provenance, registry, and report files."
+            if not incomplete
+            else "Some indexed workflow artifacts are incomplete.",
+            details={"workflow_artifacts": len(workflow_entries), "incomplete": incomplete},
+        )
+    else:
+        _skipped(
+            checks,
+            check_id="custom_workflows:index_contract",
+            label="Workflow artifacts satisfy artifact-index contract",
+            summary="No workflow_result.json artifacts exist under artifacts/ yet; artifact-index support is covered by tests.",
         )
 
 
@@ -599,6 +711,7 @@ def run_release_audit(
         _audit_exploratory_asset(asset, repo_root=resolved_repo_root, checks=checks, evidence_matrix=evidence_matrix)
 
     _audit_docs(spec, repo_root=resolved_repo_root, checks=checks)
+    _audit_custom_workflow_extensions(repo_root=resolved_repo_root, checks=checks)
     _audit_research_os_extensions(repo_root=resolved_repo_root, checks=checks, evidence_matrix=evidence_matrix)
 
     required_pass_count = sum(1 for check in checks if check["required"] and check["status"] == "passed")

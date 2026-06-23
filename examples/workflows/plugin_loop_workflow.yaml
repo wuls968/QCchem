@@ -1,0 +1,23 @@
+workflow:
+  version: "1"
+  name: plugin_loop_workflow
+  description: Demonstrate an installed entry-point plugin with bounded looping.
+  output_root: ../../artifacts/workflows/plugin_loop_workflow
+  limits:
+    max_steps: 12
+    max_iterations: 5
+  parameters:
+    target_iterations: 3
+  steps:
+    - id: adaptive_note
+      kind: echo_decision
+      loop:
+        while_output: continue
+        max_iterations: 5
+      inputs:
+        target_iterations: ${parameters.target_iterations}
+        message: Keep iterating until the plugin reports enough evidence.
+  acceptance:
+    required_steps:
+      - adaptive_note
+    fail_on_required_failure: true

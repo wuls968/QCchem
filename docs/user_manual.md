@@ -41,6 +41,7 @@ rewritten casually.
 | Evaluate benchmark acceptance | `qcchem benchmark accept artifacts/benchmark_suite_v1/benchmark_result.json` |
 | Run a study | `qcchem study run -c configs/studies/mini_comparison.yaml -o artifacts/mini_comparison_study_local` |
 | Run a scan | `qcchem scan run -c configs/scans/h2_short_scan.yaml -o artifacts/h2_short_scan_local` |
+| Run a custom workflow | `qcchem workflow run -c examples/workflows/h2_trust_first_workflow.yaml` |
 | Index artifacts | `qcchem artifacts index artifacts` |
 | Build an evidence capsule | `qcchem artifacts capsule artifacts/h2 -o artifacts/capsule_smoke/h2` |
 | Plan a research objective | `qcchem objective plan -c configs/objectives/h2_local_validation.yaml -o artifacts/objectives/h2_local_validation_plan` |
@@ -143,6 +144,15 @@ qcchem benchmark run \
   -o artifacts/benchmark_suite_v1_local
 ```
 
+For suites that mix quick gates and slow diagnostics, select a tagged subset:
+
+```bash
+qcchem benchmark run \
+  -c benchmarks/lr_ace_flagship_suite_v1.yaml \
+  --include-tag fast \
+  -o artifacts/lr_ace_flagship_fast
+```
+
 Study:
 
 ```bash
@@ -184,6 +194,26 @@ study:
 
 QCchem does not pad or truncate parameters when ansatz parameter counts differ.
 It falls back to the configured initial point and records the mismatch.
+
+## Custom Workflows
+
+Create, validate, and run a YAML-first workflow:
+
+```bash
+qcchem workflow template -o examples/workflows/local_workflow.yaml
+qcchem workflow validate -c examples/workflows/h2_trust_first_workflow.yaml
+qcchem workflow run -c examples/workflows/h2_trust_first_workflow.yaml
+qcchem workflow report artifacts/workflows/h2_trust_first_workflow/workflow_result.json
+qcchem workflow plugins
+```
+
+Workflow outputs live under the configured `workflow.output_root` and include
+`workflow_result.json`, `workflow_report.md`, `workflow_graph.json`,
+`step_outputs/`, `provenance.jsonl`, and `registry.json`.
+
+Installed Python plugins are discovered through the `qcchem.workflow_steps`
+entry point group. Treat installed plugins as trusted local code, but keep real
+runtime or hardware submission behind the existing QCchem confirmation gates.
 
 ## Preview Active-Space Recommendations
 
@@ -381,6 +411,28 @@ Use `quantum_evidence.json` for:
 - Sparse exact validation and lattice-QED observables when Pauli
   materialization is skipped.
 
+Local `shot_estimator` runs default to QCchem's Python statevector/Pauli shot
+sampler rather than native Aer C++ execution, so `shots`, seeds, repetitions,
+and uncertainty estimates remain reproducible in long pytest or notebook
+sessions. The Aer-compatible parallelism fields
+(`max_parallel_threads=1`, `max_parallel_experiments=1`,
+`max_parallel_shots=1`) remain bounded in metadata and config handling for
+native-Aer opt-in paths.
+
+CUDA-Q/MKL-Q execution is optional and uses the `cudaq` Python API at runtime;
+QCchem does not vendor `/Users/a0000/Documents/MKL-Q`. Use:
+
+- `backend.kind: cudaq_statevector` for deterministic observe-style estimates.
+- `backend.kind: cudaq_sample` with `backend.shots` for shot-based repeated
+  sampling and `sampled_result` artifacts.
+- `backend.runtime.options.target: mklq-cpu` by default, or explicit
+  `mklq-metal`, `qpp-cpu`, or `nvidia`.
+
+`mklq-metal` is recorded as experimental mixed Metal/CPU smoke evidence. Local
+CUDA-Q/MKL-Q simulator paths keep `hardware_verified == false`; reports and
+`result.json` store the CUDA-Q version, module path, target, available targets,
+GPU count, and evidence tier in `backend.metadata`.
+
 Use field sidecars for finite-cutoff QFT and cavity evidence:
 
 - Lattice-QED grid, matter/gauge qubits, U(1) link cutoff, Gauss-law
@@ -453,6 +505,7 @@ Read release-demo pages in this order:
 3. Benchmarks
 4. Hardware Campaign
 5. AI Workspace
+6. Workflow Studio
 
 The Workbench should lead with best evidence, trust tier, baseline strength,
 chemical accuracy status, runtime evidence status, hardware verification

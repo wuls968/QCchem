@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_STATUS_COMPLETED,
     AI_WORKSPACE_TICKET_STATUS_NEEDS_CONFIRMATION,
 )
-from qcchem.workflow.ai_store import list_ticket_records, workspace_root, write_ticket_record
+from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records, workspace_root, write_ticket_record
 from qcchem.workflow.ai_workspace import (
     accept_ticket,
     draft_ticket_from_form,
@@ -246,6 +247,67 @@ def test_ai_workspace_page_reads_completed_ticket_after_execution(tmp_path, monk
     assert "analysis-003" in str(completed_lane)
     assert "Compare hardware campaign" in str(completed_lane)
     assert "analysis-003" not in str(inbox_lane)
+
+
+@pytest.mark.integration
+def test_ai_workspace_delivery_renders_workflow_summary(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    workflow_root = tmp_path / "artifacts" / "workflows" / "demo_flow"
+    workflow_root.mkdir(parents=True)
+    (workflow_root / "workflow_result.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.workflow_run.v0.1-alpha",
+                "workflow_name": "demo_flow",
+                "status": "completed",
+                "summary": {"completed_steps": 2, "failed_steps": 0, "generated_steps": 1},
+                "acceptance_summary": {
+                    "accepted": True,
+                    "recommended_action": "promote_workflow_outputs",
+                    "blocking_failures": [],
+                    "warnings": [],
+                },
+                "outputs": {"workflow_report_markdown": str(workflow_root / "workflow_report.md")},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    ticket_root = workspace_root(tmp_path)
+    write_ticket_record(
+        ticket_root,
+        {
+            "task_id": "workflow-summary-001",
+            "task_type": "analysis",
+            "title": "Summarize workflow",
+            "request_text": "Summarize the demo workflow artifact",
+            "linked_artifacts": ["artifacts/workflows/demo_flow"],
+            "status": AI_WORKSPACE_TICKET_STATUS_ACCEPTED,
+            "action_plan": {
+                "action_id": "action-workflow-summary",
+                "action_kind": "workflow_summarize",
+                "inputs": {"target": "artifacts/workflows/demo_flow"},
+                "allowed": True,
+            },
+        },
+    )
+
+    run_ticket(ticket_root / "tickets" / "workflow-summary-001.json")
+    delivery = list_delivery_records(ticket_root)[0]
+    assert delivery["workflow_summary"]["workflow_name"] == "demo_flow"
+    assert delivery["workflow_summary"]["acceptance_summary"]["accepted"] is True
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    page = _resolve_layout(page_module.layout)
+    delivery_history = _find_component(page, "qcchem-ai-delivery-history")
+
+    assert delivery_history is not None
+    rendered = str(delivery_history)
+    assert "demo_flow" in rendered
+    assert "completed" in rendered
+    assert "accepted" in rendered
+    assert "2 completed / 0 failed / 1 generated" in rendered
+    assert "promote_workflow_outputs" in rendered
 
 
 @pytest.mark.integration

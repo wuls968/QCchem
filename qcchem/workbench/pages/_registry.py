@@ -162,6 +162,14 @@ def ensure_pages_registered() -> None:
         summary="Task-centric AI ticket surface for drafting, review lanes, and provider shell controls.",
         order=11,
     )
+    _register_page(
+        "qcchem.workbench.pages.workflow_studio",
+        path="/workflow-studio",
+        name="Workflow Studio",
+        title="Workflow Studio",
+        summary="Split Studio for YAML-first custom workflows, plugin palette, derived graph, and run artifacts.",
+        order=12,
+    )
 
 
 def build_validation_pages() -> list[html.Div]:

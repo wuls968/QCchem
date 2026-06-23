@@ -41,6 +41,9 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 `qcchem/workflow`
 : run、study、benchmark、scan、task 编排、runtime collect/rehydrate、hardware optimization candidate planning 和 registry 写出。
   `evidence_agent.py` 是 AI-native 科研中枢的本地规则层：它读取 bounded artifact set，生成 evidence graph、research action proposal、risk/cost gate、claim review 和 AI provenance event。
+  `custom_workflow.py` 是 YAML-first custom workflow runner；它通过内置 step 与
+  `qcchem.workflow_steps` entry-point 插件执行有界动态 workflow，并写出
+  `workflow_result.json`、`workflow_graph.json`、`provenance.jsonl` 和 step outputs。
 
 `qcchem/reporting`
 : run report 与 aggregate report 生成。
@@ -57,6 +60,8 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
   - `Decision Pages`: Overview / Result Confidence / Studies / Benchmarks / Hardware Campaign
   - `Mechanism Pages`: Structure-Orbitals / Active-Space-Compression / Mapping-Resources-Circuit / Runtime Monitoring
   - `Operational Pages`: AI Workspace / runtime collect entry / 后续 Compose-Run
+  - `Workflow Studio`: YAML source、plugin palette、derived graph 和 workflow run
+    artifacts 的 Split Studio 页面
 
 `examples/agents`
 : 面向 Codex/OpenClaw 等终端代理的最小任务模板。
@@ -118,6 +123,22 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 5. `risk_assessment` 与 `cost_estimate` 决定是否需要确认、是否阻断
 6. `run-ticket` 只路由到已有本地 workflow；真实 hardware submit 不在 v1 AI route 里
 7. 每次 evidence load、review、workflow start/complete/block 都追加到 `artifacts/ai_workspace/provenance/ai_provenance.jsonl`
+
+### Custom Workflow
+
+1. `qcchem workflow validate` 读取 `workflow:` YAML，解析 parameters、steps、
+   explicit references、limits 和 acceptance policy。
+2. `${steps.<id>.outputs.<key>}` 引用会形成隐式依赖，runner 在执行前检查重复
+   step id、未知依赖和基础环。
+3. step kind 先从 QCchem built-ins 查找，再从 `qcchem.workflow_steps` entry
+   point 插件查找；已安装插件按本地可信 Python 代码处理。
+4. 每个 step 只通过显式 `inputs` 与前序 step outputs 通信，避免共享 mutable
+   context 破坏 provenance。
+5. `loop.while_output` 和插件 `plan_next()` 支持有界动态 workflow；生成的 step
+   仍必须经过中心 runner 校验，且受 `max_steps`、`max_iterations` 和
+   `max_wall_time_seconds` 限制。
+6. workflow run 写出 `workflow_result.json`、`workflow_report.md`、
+   `workflow_graph.json`、`step_outputs/`、`provenance.jsonl` 和 `registry.json`。
 
 ### Hardware Optimization
 

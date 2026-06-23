@@ -25,7 +25,7 @@ def test_h2_shot_backend_records_sampling_statistics(tmp_path: Path) -> None:
     assert result.artifacts.exact_result_json.exists()
     assert result.quantum_evidence is not None
     assert result.quantum_evidence.sampling["available"] is True
-    assert result.quantum_evidence.sampling["source"] == "backend_measurement_circuits"
+    assert result.quantum_evidence.sampling["source"] == "statevector_sampler_from_final_state"
     assert result.quantum_evidence.sampling["shots_per_group"] == 4096
     sidecar = json.loads(result.artifacts.quantum_evidence_json.read_text(encoding="utf-8"))
     assert sidecar["sampling"]["group_counts"]

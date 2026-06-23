@@ -27,6 +27,8 @@ def _artifact_kind(path: Path) -> str:
         return "hardware_calibration"
     if name == "campaign_result.json":
         return "campaign"
+    if name == "workflow_result.json":
+        return "workflow"
     return "run"
 
 
@@ -50,8 +52,11 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or payload.get("study_name")
         or payload.get("scan_name")
         or payload.get("campaign_name")
+        or payload.get("workflow_name")
         or artifact_root.name
     )
+    acceptance_summary = payload.get("acceptance_summary") if isinstance(payload.get("acceptance_summary"), dict) else {}
+    workflow_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
     mtime = result_path.stat().st_mtime if result_path.exists() else None
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
@@ -59,9 +64,9 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "artifact_name": name,
         "result_json": str(result_path),
         "schema_version": payload.get("schema_version"),
-        "verification_status": payload.get("verification_status") or evidence.get("trust_tier"),
-        "trust_tier": evidence.get("trust_tier") or payload.get("verification_status"),
-        "recommended_action": evidence.get("recommended_action"),
+        "verification_status": payload.get("verification_status") or payload.get("status") or evidence.get("trust_tier"),
+        "trust_tier": evidence.get("trust_tier") or payload.get("verification_status") or payload.get("status"),
+        "recommended_action": evidence.get("recommended_action") or acceptance_summary.get("recommended_action"),
         "capsule_status": capsule.get("capsule_status"),
         "evidence_summary_complete": (
             capsule.get("evidence_summary_status") == "complete"
@@ -100,7 +105,8 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or (artifact_root / "benchmark_report.md").exists()
         or (artifact_root / "study_report.md").exists()
         or (artifact_root / "scan_report.md").exists()
-        or (artifact_root / "campaign_report.md").exists(),
+        or (artifact_root / "campaign_report.md").exists()
+        or (artifact_root / "workflow_report.md").exists(),
         "has_resolved_config": (artifact_root / "resolved_config.yaml").exists(),
         "has_runtime_submission": (artifact_root / "runtime_submission.json").exists(),
         "has_quantum_evidence": (artifact_root / "quantum_evidence.json").exists(),
@@ -132,8 +138,16 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             )
             if (artifact_root / name).exists()
         ),
-        "has_acceptance_summary": (artifact_root / "acceptance_summary.json").exists(),
+        "has_acceptance_summary": bool(acceptance_summary) or (artifact_root / "acceptance_summary.json").exists(),
         "has_hardware_error_diagnostic": isinstance(payload.get("hardware_error_diagnostic"), dict),
+        "workflow_status": payload.get("status") if kind == "workflow" else None,
+        "workflow_accepted": acceptance_summary.get("accepted") if kind == "workflow" else None,
+        "workflow_completed_steps": workflow_summary.get("completed_steps") if kind == "workflow" else None,
+        "workflow_failed_steps": workflow_summary.get("failed_steps") if kind == "workflow" else None,
+        "workflow_generated_steps": workflow_summary.get("generated_steps") if kind == "workflow" else None,
+        "has_workflow_graph": (artifact_root / "workflow_graph.json").exists(),
+        "has_workflow_provenance": (artifact_root / "provenance.jsonl").exists(),
+        "has_workflow_registry": (artifact_root / "registry.json").exists(),
         "mtime": mtime,
     }
     return entry
@@ -157,6 +171,7 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "scan_result.json",
         "hardware_calibration_summary.json",
         "campaign_result.json",
+        "workflow_result.json",
     }
     for result_json in sorted(path for path in resolved_root.rglob("*.json") if path.name in result_names):
         artifacts.append(build_artifact_index_entry(result_json, root=resolved_root))

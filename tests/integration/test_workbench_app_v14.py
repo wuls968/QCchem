@@ -3,7 +3,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 import importlib
 import json
+import os
 from pathlib import Path
+import re
 import subprocess
 import textwrap
 from types import SimpleNamespace
@@ -14,6 +16,22 @@ import pytest
 from qcchem.workbench.theme import SHARED_THEME_FAMILIES, THEME, css_var_map
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _bounded_native_subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    for name in (
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ):
+        env.setdefault(name, "1")
+    env.setdefault("OMP_WAIT_POLICY", "PASSIVE")
+    return env
+
+
 SCIENTIFIC_PAGE_MODULES = {
     "qcchem.workbench.pages.overview": ("/overview", "Campaign Overview", "build_overview_page"),
     "qcchem.workbench.pages.structure_orbitals": ("/structure-orbitals", "Structure and Orbitals", "build_structure_orbitals_page"),
@@ -718,6 +736,7 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
         check=True,
         capture_output=True,
         text=True,
+        env=_bounded_native_subprocess_env(),
     )
     payload = json.loads(result.stdout)
 
@@ -788,8 +807,10 @@ def test_shell_location_uses_spa_route_updates_for_direct_route_focus() -> None:
     assert shell_location.refresh is False
     assert page_focus("/hardware-campaign")["route_label"] == "Hardware Campaign"
     assert page_focus("/ai-workspace")["route_label"] == "AI Workspace"
+    assert page_focus("/workflow-studio")["route_label"] == "Workflow Studio"
     assert page_focus("/hardware-campaign")["route_label"] != page_focus("/overview")["route_label"]
     assert page_focus("/ai-workspace")["route_label"] != page_focus("/overview")["route_label"]
+    assert page_focus("/workflow-studio")["route_label"] != page_focus("/overview")["route_label"]
 
 
 @pytest.mark.integration
@@ -903,6 +924,22 @@ def test_prepare_workbench_reports_real_page_inventory_and_artifact_summary() ->
     assert summary["artifact_inventory"]["hardware_campaigns"] >= 1
     assert summary["artifact_inventory"]["featured_run"]
     assert summary["artifact_inventory"]["featured_hardware_campaign"]
+
+
+@pytest.mark.integration
+def test_workbench_docs_cover_registered_routes() -> None:
+    from qcchem.workbench.server import prepare_workbench
+
+    _app, summary = prepare_workbench(host="127.0.0.1", port=8051, debug=False)
+    docs = (REPO_ROOT / "docs" / "workbench.md").read_text(encoding="utf-8")
+    page_order_match = re.search(r"## Page Order\n\n(?P<body>.*?)(?=\n## )", docs, flags=re.S)
+
+    assert page_order_match is not None
+
+    documented_routes = re.findall(r"^\d+\. `([^`]+)`", page_order_match.group("body"), flags=re.M)
+    registered_routes = [str(page["path"]) for page in summary["pages"] if page["path"] != "/"]
+
+    assert documented_routes == registered_routes
 
 
 @pytest.mark.integration

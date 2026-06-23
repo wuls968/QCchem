@@ -24,11 +24,13 @@ The canonical landing route is `/overview`. The `/` route is kept as an alias fo
 4. `/mapping-resources` - Mapping, Resources, and Circuit
 5. `/runtime-monitoring` - Runtime Monitoring
 6. `/result-confidence` - Result Confidence Report
-7. `/studies` - Studies
-8. `/benchmarks` - Benchmarks
-9. `/scans` - Scans
-10. `/hardware-campaign` - Hardware Campaign
-11. `/ai-workspace` - AI Workspace
+7. `/lr-ace-method` - LR-ACE Method
+8. `/studies` - Studies
+9. `/benchmarks` - Benchmarks
+10. `/scans` - Scans
+11. `/hardware-campaign` - Hardware Campaign
+12. `/ai-workspace` - AI Workspace
+13. `/workflow-studio` - Workflow Studio
 
 ## Artifact Story
 
@@ -64,6 +66,10 @@ The Research OS surfaces are also read-only:
 - `/ai-workspace` shows ticket-mediated `claim_check`, `capsule_validate`,
   `promotion_review`, `objective_plan`, and `objective_status` actions and their
   delivery records.
+- `/workflow-studio` shows the YAML-first custom workflow surface: built-in and
+  installed plugins, derived graph, validation/export controls, and recent
+  `workflow_result.json` artifacts with acceptance, graph, provenance, registry,
+  and report status.
 
 ## Showcase Path
 
@@ -74,6 +80,7 @@ The recommended release-grade reading path is:
 3. `/benchmarks`
 4. `/hardware-campaign`
 5. `/ai-workspace`
+6. `/workflow-studio`
 
 The AI surface now includes:
 
@@ -90,10 +97,11 @@ This path is designed to answer, in order:
 - How does it compare against benchmark evidence?
 - What is the current hardware verification boundary?
 - What analysis or execution task should happen next?
+- Which custom workflow run produced durable artifacts, and is it accepted?
 
 ## Browser Smoke Checklist
 
-Before a release candidate, run the local server and open the five showcase
+Before a release candidate, run the local server and open the six showcase
 routes in a real browser:
 
 ```bash
@@ -109,6 +117,7 @@ Check each route directly, not only through in-app navigation:
 | `/benchmarks` | Benchmarks | Benchmark credibility bands |
 | `/hardware-campaign` | Hardware Campaign | Hardware Campaign |
 | `/ai-workspace` | AI Workspace | AI Workspace |
+| `/workflow-studio` | Workflow Studio | Workflow Studio |
 
 For every route, confirm:
 
@@ -141,6 +150,8 @@ The release-facing terms `baseline strength` and `hardware verification boundary
 - `/ai-workspace` is the evidence-first task hub: delivery/history entries carry evidence scope, limitations, review state, and recommended action.
 - `/ai-workspace` can execute local analysis-only AI tickets for claim compiler,
   evidence capsule, promotion gate, and research objective planning/status.
+- `/workflow-studio` is the custom workflow hub: workflow YAML, plugin registry,
+  graph, acceptance, provenance, and report paths stay visible together.
 
 ## Evidence Language
 
@@ -158,6 +169,9 @@ Workbench pages are expected to surface the same Evidence Core vocabulary as CLI
 - `claim compiler`
 - `promotion gate`
 - `research objective`
+- `workflow_result.json`
+- `workflow_graph.json`
+- `provenance.jsonl`
 
 ## Boundaries
 

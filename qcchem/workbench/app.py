@@ -3,11 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import dash
-from dash import Dash, Input, Output, State, ctx, dcc, html
+from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from qcchem.workbench.components.cards import callout_card
 from qcchem.workbench.components.layout import build_shell, ordered_pages, page_focus
 from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
+from qcchem.workbench.pages.ai_workspace import build_delivery_card, build_lane_children
+from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
     AI_WORKSPACE_TICKET_LANE_INBOX,
@@ -17,8 +19,9 @@ from qcchem.core.ai_workspace import (
 )
 from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records, workspace_root
 from qcchem.workflow.ai_workspace import handle_ticket_editor_action
+from qcchem.io.workflow_config import load_workflow_spec_from_text
+from qcchem.workflow.custom_workflow import validate_workflow_plugins
 from qcchem.workbench.components.assistant import build_ticket_preview_content
-from qcchem.workbench.evidence_console import format_action_label
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
@@ -53,97 +56,67 @@ def create_app() -> Dash:
     nav_pages = ordered_pages()
     nav_outputs = [Output(f"qcchem-nav-link--{index}", "className") for index, _page in enumerate(nav_pages)]
 
-    def _ticket_card(record: dict[str, object]) -> html.Div:
-        linked_artifacts = record.get("linked_artifacts") or []
-        if not isinstance(linked_artifacts, list):
-            linked_artifacts = []
-        evidence_context = record.get("evidence_context") if isinstance(record.get("evidence_context"), dict) else {}
-        action_plan = record.get("action_plan") if isinstance(record.get("action_plan"), dict) else {}
-        risk_assessment = record.get("risk_assessment") if isinstance(record.get("risk_assessment"), dict) else {}
-        return html.Div(
-            className="qcchem-ai-workspace-page__ticket",
-            children=[
-                html.Div(
-                    className="qcchem-ai-workspace-page__ticket-topline",
-                    children=[
-                        html.Strong(str(record.get("title", "Untitled Task"))),
-                        html.Span(str(record.get("status", "draft")).replace("_", " "), className="qcchem-context-bar__chip"),
-                    ],
-                ),
-                html.Div(str(record.get("task_type", "unknown")).title(), className="qcchem-ai-workspace-page__ticket-meta"),
-                html.P(str(record.get("plan_summary") or record.get("request_text") or "No task brief recorded."), className="qcchem-card-note"),
-                html.Div(
-                    className="qcchem-ai-workspace-page__ticket-grid",
-                    children=[
-                        html.Div([html.Span("Artifacts"), html.Strong(str(len(linked_artifacts)))]),
-                        html.Div([html.Span("Ticket"), html.Strong(str(record.get("task_id", "")))]),
-                        html.Div([html.Span("Trust"), html.Strong(str(evidence_context.get("trust_tier") or "n/a"))]),
-                        html.Div([html.Span("Action"), html.Strong(str(action_plan.get("action_kind") or "n/a"))]),
-                        html.Div([html.Span("Risk"), html.Strong(str(risk_assessment.get("risk_tier") or "standard"))]),
-                    ],
-                ),
-            ],
-        )
-
-    def _delivery_card(record: dict[str, object]) -> html.Div:
-        evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
-        outputs = record.get("linked_outputs") or []
-        if not isinstance(outputs, list):
-            outputs = []
-        limitation_notes = record.get("limitation_notes") or []
-        if isinstance(limitation_notes, str):
-            limitation_notes = [limitation_notes]
-        if not isinstance(limitation_notes, list):
-            limitation_notes = []
-        recommended_action = record.get("recommended_action") or evidence.get("recommended_action") or "n/a"
-        recommended_action_text = format_action_label(recommended_action)
-        if str(recommended_action) != recommended_action_text:
-            recommended_action_text = f"{recommended_action_text} ({recommended_action})"
-        return html.Div(
-            className="qcchem-ai-workspace-page__ticket",
-            children=[
-                html.Div(
-                    className="qcchem-ai-workspace-page__ticket-topline",
-                    children=[
-                        html.Strong(str(record.get("summary", "Untitled delivery"))),
-                        html.Span(str(record.get("review_status", "pending_review")), className="qcchem-context-bar__chip"),
-                    ],
-                ),
-                html.Div(str(record.get("delivery_kind", "delivery")), className="qcchem-ai-workspace-page__ticket-meta"),
-                html.Div(
-                    className="qcchem-ai-workspace-page__ticket-grid",
-                    children=[
-                        html.Div([html.Span("Trust tier"), html.Strong(str(evidence.get("trust_tier") or "n/a"))]),
-                        html.Div([html.Span("Next action"), html.Strong(recommended_action_text)]),
-                        html.Div([html.Span("Outputs"), html.Strong(str(len(outputs)))]),
-                    ],
-                ),
-                html.Div(
-                    className="qcchem-ai-workspace-page__ticket-grid",
-                    children=[
-                        html.Div([html.Span("Evidence scope"), html.Strong(str(record.get("evidence_scope") or "Artifact evidence not scoped"))]),
-                        html.Div([html.Span("Evidence claim"), html.Strong(str(evidence.get("primary_scientific_claim") or "n/a"))]),
-                    ],
-                ),
-                html.P("Limitation notes", className="qcchem-ai-workspace-page__ticket-meta"),
-                html.P("; ".join(str(note) for note in limitation_notes) or "No limitation notes recorded.", className="qcchem-card-note qcchem-card-note--compact"),
-            ],
-        )
-
-    def _lane_children(title: str, note: str, tickets: list[dict[str, object]]):
-        return [
-            html.P("Task Lane", className="qcchem-panel__eyebrow"),
-            html.H2(title, className="qcchem-panel__title"),
-            html.P(note, className="qcchem-panel__note"),
-            html.Div(
-                [_ticket_card(ticket) for ticket in tickets]
-                or [html.Div("No persisted items in this lane yet.", className="qcchem-ai-workspace-page__empty-state")],
-                className="qcchem-ai-workspace-page__placeholder",
-            ),
-        ]
-
     def _current_workspace_root() -> Path:
         return workspace_root(Path.cwd(), create=False)
+
+    def _studio_export_path(value: str | None) -> Path:
+        base = Path.cwd().resolve()
+        raw = Path(str(value or DEFAULT_WORKFLOW_STUDIO_EXPORT)).expanduser()
+        target = raw if raw.is_absolute() else base / raw
+        target = target.resolve()
+        if not target.is_relative_to(base):
+            raise ValueError("Workflow Studio export path must stay inside the current QCchem workspace.")
+        return target
+
+    @app.callback(
+        Output("qcchem-workflow-studio-graph", "children"),
+        Output("qcchem-workflow-studio-validation", "children"),
+        Output("qcchem-workflow-studio-export-status", "children"),
+        Input("qcchem-workflow-studio-yaml", "value"),
+        Input("qcchem-workflow-studio-validate", "n_clicks"),
+        Input("qcchem-workflow-studio-export", "n_clicks"),
+        State("qcchem-workflow-studio-export-path", "value"),
+    )
+    def _update_workflow_studio(
+        yaml_text: str | None,
+        _validate_clicks: int | None,
+        export_clicks: int | None,
+        export_path: str | None,
+    ):
+        triggered = ctx.triggered_id
+        export_status = "YAML export path is workspace-relative."
+        if triggered not in {None, "qcchem-workflow-studio-export"}:
+            export_status = no_update
+        if not str(yaml_text or "").strip():
+            return (
+                graph_nodes_from_steps([]),
+                html.Div("Workflow YAML is empty.", className="qcchem-workflow-studio__validation-error"),
+                export_status,
+            )
+        try:
+            source_path = _studio_export_path(export_path)
+            spec = load_workflow_spec_from_text(str(yaml_text), source_path=source_path)
+            plugins = validate_workflow_plugins(spec)
+            if triggered == "qcchem-workflow-studio-export" and export_clicks:
+                source_path.parent.mkdir(parents=True, exist_ok=True)
+                source_path.write_text(str(yaml_text), encoding="utf-8")
+                export_status = f"Exported YAML to {source_path}"
+            validation = html.Div(
+                className="qcchem-workflow-studio__validation-ok",
+                children=[
+                    html.Strong(f"Valid workflow: {spec.name}"),
+                    html.Span(f"{len(spec.steps)} steps"),
+                    html.Span(f"{len(plugins)} plugins resolved"),
+                    html.Span(f"max_steps={spec.limits.max_steps}, max_iterations={spec.limits.max_iterations}"),
+                ],
+            )
+            return graph_nodes_from_steps(spec.steps), validation, export_status
+        except Exception as exc:
+            return (
+                graph_nodes_from_steps([]),
+                html.Div(f"{type(exc).__name__}: {exc}", className="qcchem-workflow-studio__validation-error"),
+                f"Export blocked: {type(exc).__name__}: {exc}" if triggered == "qcchem-workflow-studio-export" else export_status,
+            )
 
     @app.callback(
         Output("qcchem-context-current-route", "children"),
@@ -351,7 +324,7 @@ def create_app() -> Dash:
     def _render_ticket_inbox(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         inbox = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_INBOX)
-        return _lane_children(
+        return build_lane_children(
             "Inbox",
             "New requests wait here for confirmation before any execution path is allowed.",
             inbox,
@@ -364,7 +337,7 @@ def create_app() -> Dash:
     def _render_ticket_running(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         running = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RUNNING)
-        return _lane_children(
+        return build_lane_children(
             "Running",
             "Active work stays separate from drafts so the shell can show motion without implying persistence.",
             running,
@@ -377,7 +350,7 @@ def create_app() -> Dash:
     def _render_ticket_submitted(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         submitted = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED)
-        return _lane_children(
+        return build_lane_children(
             "Submitted",
             "Submitted tickets surface here once review and delivery wiring are connected.",
             submitted,
@@ -390,7 +363,7 @@ def create_app() -> Dash:
     def _render_ticket_completed(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         completed = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_COMPLETED)
-        return _lane_children(
+        return build_lane_children(
             "Completed",
             "Completed tickets become reportable outcomes after state-backed delivery records land.",
             completed,
@@ -403,7 +376,7 @@ def create_app() -> Dash:
     def _render_ticket_returned(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         returned = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)
-        return _lane_children(
+        return build_lane_children(
             "Returned",
             "Returned tasks preserve scope corrections and cautionary notes instead of hiding them.",
             returned,
@@ -417,7 +390,7 @@ def create_app() -> Dash:
         root = _current_workspace_root()
         deliveries = list_delivery_records(root)
         return [
-            _delivery_card(delivery) for delivery in deliveries
+            build_delivery_card(delivery) for delivery in deliveries
         ] or [html.Div("No persisted deliveries yet.", className="qcchem-ai-workspace-page__empty-state")]
 
     return app

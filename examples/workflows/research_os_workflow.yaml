@@ -1,0 +1,38 @@
+workflow:
+  version: "1"
+  name: research_os_review_workflow
+  description: Plan a Research Objective, validate evidence, and review promotion language.
+  output_root: ../../artifacts/workflows/research_os_review_workflow
+  limits:
+    max_steps: 24
+    max_iterations: 4
+  parameters:
+    exploratory_target: validated_algorithm_candidate
+  steps:
+    - id: objective_plan
+      kind: objective_plan
+      inputs:
+        config: ../../configs/objectives/h2_local_validation.yaml
+    - id: capsule_h2
+      kind: capsule_validate
+      inputs:
+        artifact_root: ../../artifacts/h2
+    - id: claim_review
+      kind: claim_check
+      inputs:
+        targets:
+          - ../../artifacts/h2
+        claim_text: H2 local evidence supports a validated local exact-baseline claim, not a hardware claim.
+    - id: promotion_review
+      kind: promotion_review
+      continue_on_error: true
+      required_for_success: false
+      inputs:
+        artifact: ../../artifacts/h2_lr_ace/result.json
+        target: ${parameters.exploratory_target}
+  acceptance:
+    required_steps:
+      - objective_plan
+      - capsule_h2
+      - claim_review
+    fail_on_required_failure: true
