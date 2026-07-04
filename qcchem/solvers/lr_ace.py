@@ -19,6 +19,7 @@ from qiskit.circuit import Parameter
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.second_q.circuit.library import HartreeFock
+from qiskit.synthesis import LieTrotter
 from scipy.optimize import minimize
 from scipy.sparse import SparseEfficiencyWarning
 
@@ -264,17 +265,26 @@ class LRACESolver(BaseSolver):
         plan["profile"] = self._profile()
         plan["validation_mode"] = self._validation_mode()
         circuit = self._initial_state(operator.num_qubits)
+        selected_pauli_labels = [str(item["pauli"]) for item in plan["selected_generators"]]
+        circuit.metadata = {
+            **(circuit.metadata or {}),
+            "lr_ace_selected_paulis": selected_pauli_labels,
+        }
         parameters: list[Parameter] = []
         for index, generator in enumerate(plan["selected_generators"]):
             parameter = Parameter(f"theta_lr_ace_{index}")
             parameters.append(parameter)
-            circuit.append(
+            evolution = QuantumCircuit(operator.num_qubits)
+            evolution.append(
                 PauliEvolutionGate(
                     SparsePauliOp.from_list([(str(generator["pauli"]), 1.0)]),
                     time=parameter,
+                    synthesis=LieTrotter(reps=1),
                 ),
                 range(operator.num_qubits),
             )
+            # Keep statevector evaluation on synthesized gates instead of sparse matrix exponentials.
+            circuit.compose(evolution.decompose(reps=4), inplace=True)
         plan["ansatz_parameter_count"] = len(parameters)
         return circuit, plan
 

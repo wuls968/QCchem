@@ -12,6 +12,7 @@ from qiskit.quantum_info import SparsePauliOp, Statevector
 from scipy.optimize import minimize
 
 from qcchem.backends import BackendAdapter
+from qcchem.circuit_utils import statevector_ready_circuit
 from qcchem.qft.lattice_qed import LatticeQEDContext
 from qcchem.solvers.base import BaseSolver, SolverOutcome
 
@@ -115,9 +116,7 @@ class LatticeQEDGIVQESolver(BaseSolver):
         circuit: QuantumCircuit,
         parameter_values: list[float],
     ) -> dict[str, Any]:
-        values = np.asarray(parameter_values, dtype=float)
-        assignment = {parameter: value for parameter, value in zip(circuit.parameters, values)}
-        bound = circuit.assign_parameters(assignment, inplace=False)
+        bound = statevector_ready_circuit(circuit, parameter_values)
         state = np.asarray(Statevector.from_instruction(bound).data, dtype=complex)
         residuals: list[float] = []
         squared_residuals: list[float] = []

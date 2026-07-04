@@ -7,6 +7,7 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
 
 from qcchem.backends.base import BackendAdapter, BackendEstimate
+from qcchem.circuit_utils import statevector_ready_circuit
 from qcchem.core import BackendSpec
 
 
@@ -24,11 +25,7 @@ class StatevectorBackend(BackendAdapter):
         operator: SparsePauliOp,
         parameter_values: np.ndarray,
     ) -> BackendEstimate:
-        parameter_array = np.asarray(parameter_values, dtype=float)
-        bound_circuit = circuit
-        if circuit.num_parameters:
-            parameter_map = dict(zip(circuit.parameters, parameter_array, strict=True))
-            bound_circuit = circuit.assign_parameters(parameter_map, inplace=False)
+        bound_circuit = statevector_ready_circuit(circuit, parameter_values)
         state = Statevector.from_instruction(bound_circuit)
         expectation = state.expectation_value(operator)
         return BackendEstimate(

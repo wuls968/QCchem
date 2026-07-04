@@ -11,6 +11,7 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
 
 from qcchem.backends.base import BackendAdapter, BackendEstimate
+from qcchem.circuit_utils import statevector_ready_circuit
 from qcchem.core import BackendSpec
 
 
@@ -37,14 +38,6 @@ class _LocalSamplerBackend:
     options: _LocalSamplerOptions
     engine: str = "statevector_pauli_sampler"
     native_aer: bool = False
-
-
-def _bind_circuit(circuit: QuantumCircuit, parameter_values: np.ndarray) -> QuantumCircuit:
-    parameter_array = np.asarray(parameter_values, dtype=float)
-    if not circuit.num_parameters:
-        return circuit
-    parameter_map = dict(zip(circuit.parameters, parameter_array, strict=True))
-    return circuit.assign_parameters(parameter_map, inplace=False)
 
 
 def _pauli_weight(label: str) -> int:
@@ -95,7 +88,7 @@ class ShotEstimatorBackend(BackendAdapter):
         *,
         seed: int | None,
     ) -> BackendEstimate:
-        bound_circuit = _bind_circuit(circuit, parameter_values)
+        bound_circuit = statevector_ready_circuit(circuit, parameter_values)
         state = Statevector.from_instruction(bound_circuit)
         rng = np.random.default_rng(seed)
         shots = int(self.spec.shots)

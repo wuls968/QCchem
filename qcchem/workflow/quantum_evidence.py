@@ -11,6 +11,7 @@ import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import SparsePauliOp, Statevector
 
+from qcchem.circuit_utils import statevector_ready_circuit
 from qcchem.core import QuantumEvidenceSummary
 from qcchem.io.serialization import to_primitive
 
@@ -100,17 +101,6 @@ def _measurement_plan_payload(measurement: Any | None, *, pauli_skipped: bool) -
     return plan
 
 
-def _bind_circuit(circuit: QuantumCircuit, parameters: list[float]) -> QuantumCircuit:
-    if not circuit.num_parameters:
-        return circuit
-    values = np.asarray(parameters, dtype=float)
-    if len(values) != circuit.num_parameters:
-        raise ValueError(
-            f"Cannot bind evidence circuit: {len(values)} values for {circuit.num_parameters} parameters."
-        )
-    return circuit.assign_parameters(dict(zip(circuit.parameters, values, strict=True)), inplace=False)
-
-
 def _final_state(
     *,
     solver_outcome: Any,
@@ -123,7 +113,7 @@ def _final_state(
     parameters = getattr(solver_outcome, "optimal_parameters", []) or []
     if isinstance(circuit, QuantumCircuit):
         try:
-            bound = _bind_circuit(circuit, [float(value) for value in parameters])
+            bound = statevector_ready_circuit(circuit, [float(value) for value in parameters])
             return Statevector.from_instruction(bound), bound, notes
         except Exception as exc:  # pragma: no cover - defensive artifact path
             notes.append(f"final_state_from_ansatz_failed={type(exc).__name__}: {exc}")

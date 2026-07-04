@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from qiskit.quantum_info import SparsePauliOp
+from scipy.sparse import SparseEfficiencyWarning
 
 from qcchem.backends import StatevectorBackend
 from qcchem.core import (
@@ -93,6 +95,32 @@ def test_lr_ace_generator_plan_enumerates_deduplicated_candidate_pool() -> None:
     assert len(candidate_paulis) > len(plan["selected_generators"])
     assert len(candidate_paulis) == len(set(candidate_paulis))
     assert set(candidate_paulis) == {"XY", "YX"}
+
+
+def test_lr_ace_statevector_evaluation_avoids_sparse_matrix_expm_warning() -> None:
+    spec = SolverSpec(
+        kind="lr_ace",
+        ansatz=AnsatzSpec(kind="lr_ace", reps=1),
+        optimizer=OptimizerSpec(kind="COBYLA", maxiter=1),
+    )
+    solver = build_lr_ace_solver(
+        spec,
+        StatevectorBackend(BackendSpec(kind="statevector", seed=123)),
+        seed=123,
+    )
+    operator = SparsePauliOp.from_list(
+        [
+            ("II", -1.0),
+            ("XX", 0.20),
+        ]
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", SparseEfficiencyWarning)
+        outcome = solver.solve(operator)
+
+    assert outcome.evaluations >= 1
+    assert outcome.metadata["lr_ace"]["selected_factor_count"] == 1
 
 
 def test_precision_first_compression_disables_legacy_rank_times_six_truncation() -> None:
@@ -481,7 +509,7 @@ def test_lr_ace_residual_scan_prefers_measured_drop_over_coefficient_score() -> 
         backend_kind = "preference"
 
         def estimate_expectation(self, circuit, operator, parameter_values) -> float:
-            label = circuit.data[-1].operation.operator.paulis[0].to_label()
+            label = circuit.metadata["lr_ace_selected_paulis"][-1]
             return {"XY": -0.01, "IY": -0.30}.get(label, 0.0)
 
     operator = SparsePauliOp.from_list(

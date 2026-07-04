@@ -12,6 +12,7 @@ import scipy.sparse as sp
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
 
+from qcchem.circuit_utils import statevector_ready_circuit
 from qcchem.core import FieldArtifactPaths, FieldEvidenceSummary
 from qcchem.field_models.registry import FIELD_MODEL_REGISTRY
 from qcchem.io.serialization import to_primitive
@@ -60,17 +61,6 @@ def _expectation_pauli(operator: SparsePauliOp, state: np.ndarray) -> float:
     return _real(np.vdot(state, matrix @ state))
 
 
-def _bind_circuit(circuit: QuantumCircuit, parameters: list[float]) -> QuantumCircuit:
-    if not circuit.num_parameters:
-        return circuit
-    values = np.asarray(parameters, dtype=float)
-    if len(values) != circuit.num_parameters:
-        raise ValueError(
-            f"Cannot bind field-evidence circuit: {len(values)} values for {circuit.num_parameters} parameters."
-        )
-    return circuit.assign_parameters(dict(zip(circuit.parameters, values, strict=True)), inplace=False)
-
-
 def _state_from_solver_or_spectrum(
     *,
     solver_outcome: Any,
@@ -83,7 +73,10 @@ def _state_from_solver_or_spectrum(
     parameters = [float(value) for value in (getattr(solver_outcome, "optimal_parameters", []) or [])]
     if isinstance(circuit, QuantumCircuit):
         try:
-            state = np.asarray(Statevector.from_instruction(_bind_circuit(circuit, parameters)).data, dtype=complex)
+            state = np.asarray(
+                Statevector.from_instruction(statevector_ready_circuit(circuit, parameters)).data,
+                dtype=complex,
+            )
             if dimension is None or len(state) == int(dimension):
                 return state, "variational_final_state", notes
             notes.append(
