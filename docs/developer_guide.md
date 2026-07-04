@@ -61,7 +61,8 @@ Refresh a manifest-bound release sidecar with the explicit writer command:
 ```bash
 qcchem release acceptance-status \
   -c configs/release/trust_first_audit.yaml \
-  --strict
+  --strict \
+  --repair-plan
 ```
 
 ```bash
@@ -79,7 +80,9 @@ qcchem release accept-artifact \
 ```
 
 `acceptance-status` is read-only and can fail a gate with `--strict` when a
-manifest sidecar is missing, stale, unreadable, or blocked.
+manifest sidecar is missing, stale, unreadable, or blocked. Add `--repair-plan`
+to print the preview and refresh commands for every non-fresh sidecar; status
+JSON also includes `repair_plan` and `repair_plan_count`.
 `accept-artifact --dry-run` previews the same manifest-bound payload and current
 sidecar status without writing. `accept-artifact` without `--dry-run` writes the
 sibling `acceptance_summary.json`, refreshes `artifact_sha256`, derives trust

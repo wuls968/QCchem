@@ -48,7 +48,8 @@ explicit writer command rather than editing `acceptance_summary.json` by hand:
 ```bash
 qcchem release acceptance-status \
   -c configs/release/trust_first_audit.yaml \
-  --strict
+  --strict \
+  --repair-plan
 ```
 
 ```bash
@@ -69,9 +70,12 @@ qcchem release accept-artifact \
 blocked sidecars; with `--strict` it exits with code `2` when any manifest
 sidecar needs attention. For every non-fresh sidecar, the CLI prints a bounded
 `Sidecar issue:` line with the sidecar path plus the first error or contract
-failure reason when one is available. `accept-artifact --dry-run` builds the
-same manifest-bound payload and reports the current sidecar status without
-writing. `accept-artifact` without `--dry-run` writes the sibling
+failure reason when one is available. Add `--repair-plan` to print copyable
+preview and refresh commands for each non-fresh sidecar; the JSON status output
+also includes `repair_plan` and `repair_plan_count`.
+`accept-artifact --dry-run` builds the same manifest-bound payload and reports
+the current sidecar status without writing. `accept-artifact` without
+`--dry-run` writes the sibling
 `acceptance_summary.json` for one manifest entry, binds it to the exact
 release-audit check id, records the audited artifact hash, and reuses existing
 `release_boundaries` when overwriting unless new `--boundary` notes are

@@ -367,6 +367,7 @@ release_audit:
                 "--repo-root",
                 str(tmp_path),
                 "--strict",
+                "--repair-plan",
             ]
         )
         == 2
@@ -377,6 +378,12 @@ release_audit:
         "Sidecar issue: h2_anchor status=missing changed_fields=none "
         "sidecar=artifacts/h2/acceptance_summary.json (reason=sidecar_missing)"
     ) in stdout
+    assert "Release acceptance repair plan:" in stdout
+    assert "- h2_anchor status=missing issue=sidecar_missing sidecar=artifacts/h2/acceptance_summary.json" in stdout
+    assert "preview: qcchem release accept-artifact" in stdout
+    assert "--dry-run" in stdout
+    assert "repair: qcchem release accept-artifact" in stdout
+    assert "--overwrite" not in stdout
 
     assert (
         main(
@@ -437,6 +444,7 @@ release_audit:
                 "--repo-root",
                 str(tmp_path),
                 "--strict",
+                "--repair-plan",
             ]
         )
         == 2
@@ -445,6 +453,9 @@ release_audit:
     assert "Release acceptance sidecars: needs_update" in stdout
     assert "Sidecar issue: h2_anchor status=stale changed_fields=artifact_sha256" in stdout
     assert "(contract_failure_field=artifact_sha256" in stdout
+    assert "- h2_anchor status=stale issue=contract_failure:artifact_sha256" in stdout
+    assert "--dry-run" in stdout
+    assert "--overwrite" in stdout
 
     stale_sidecar_text = sidecar.read_text(encoding="utf-8")
     assert (

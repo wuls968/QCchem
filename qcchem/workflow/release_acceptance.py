@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -399,6 +400,126 @@ def _acceptance_sidecar_status_from_expected(
     }
 
 
+def _release_acceptance_manifest_command_path(config_path: Path | None, *, repo_root: Path) -> str | None:
+    if config_path is None:
+        return None
+    resolved_config_path = config_path.expanduser().resolve()
+    try:
+        return resolved_config_path.relative_to(repo_root.resolve()).as_posix()
+    except ValueError:
+        return str(resolved_config_path)
+
+
+def _release_acceptance_cli_command(
+    *,
+    config_path: Path | None,
+    repo_root: Path,
+    artifact_name: str,
+    dry_run: bool = False,
+    overwrite: bool = False,
+) -> str | None:
+    manifest_path = _release_acceptance_manifest_command_path(config_path, repo_root=repo_root)
+    if manifest_path is None:
+        return None
+    parts = [
+        "qcchem",
+        "release",
+        "accept-artifact",
+        "-c",
+        manifest_path,
+        "--name",
+        artifact_name,
+        "--repo-root",
+        str(repo_root),
+    ]
+    if dry_run:
+        parts.append("--dry-run")
+    if overwrite:
+        parts.append("--overwrite")
+    return " ".join(shlex.quote(str(part)) for part in parts)
+
+
+def _release_acceptance_repair_issue(item: dict[str, Any]) -> str:
+    status = item.get("status")
+    if status == "missing":
+        return "sidecar_missing"
+    error = item.get("error")
+    if error:
+        return str(error)
+    contract_failures = item.get("contract_failures")
+    if isinstance(contract_failures, list) and contract_failures:
+        first = next((failure for failure in contract_failures if isinstance(failure, dict)), None)
+        if first is None:
+            return f"contract_failure:{contract_failures[0]}"
+        field = first.get("field")
+        reason = first.get("reason")
+        if field and reason:
+            return f"contract_failure:{field}:{reason}"
+        if field:
+            return f"contract_failure:{field}"
+        if reason:
+            return f"contract_failure:{reason}"
+        return "contract_failure"
+    missing_fields = item.get("missing_fields")
+    if isinstance(missing_fields, list) and missing_fields:
+        return "missing_fields:" + ",".join(str(field) for field in missing_fields[:5])
+    return str(status or "unknown")
+
+
+def _release_acceptance_repair_plan(
+    items: list[dict[str, Any]],
+    *,
+    config_path: Path | None,
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    plan: list[dict[str, Any]] = []
+    for item in items:
+        if item.get("status") == "fresh":
+            continue
+        artifact_name = str(item.get("artifact_name") or "")
+        status = str(item.get("status") or "unknown")
+        entry = {
+            "artifact_name": artifact_name,
+            "artifact_kind": item.get("artifact_kind"),
+            "status": status,
+            "issue": _release_acceptance_repair_issue(item),
+            "artifact_path": item.get("artifact_path"),
+            "sidecar_path": item.get("sidecar_path"),
+            "changed_fields": list(item.get("changed_fields") or []),
+            "missing_fields": list(item.get("missing_fields") or []),
+            "contract_failures": list(item.get("contract_failures") or []),
+        }
+        if status == "blocked":
+            entry.update(
+                {
+                    "recommended_action": "repair_blocking_artifact_or_manifest_before_acceptance",
+                    "preview_command": None,
+                    "repair_command": None,
+                }
+            )
+        else:
+            repair_requires_overwrite = status in {"stale", "unreadable"}
+            entry.update(
+                {
+                    "recommended_action": "preview_release_sidecar_update_then_refresh",
+                    "preview_command": _release_acceptance_cli_command(
+                        config_path=config_path,
+                        repo_root=repo_root,
+                        artifact_name=artifact_name,
+                        dry_run=True,
+                    ),
+                    "repair_command": _release_acceptance_cli_command(
+                        config_path=config_path,
+                        repo_root=repo_root,
+                        artifact_name=artifact_name,
+                        overwrite=repair_requires_overwrite,
+                    ),
+                }
+            )
+        plan.append(entry)
+    return plan
+
+
 def release_acceptance_status_report(
     spec: ReleaseAuditSpec,
     *,
@@ -423,6 +544,11 @@ def release_acceptance_status_report(
         status_counts[status] = status_counts.get(status, 0) + 1
     stale_statuses = {"missing", "stale", "unreadable", "blocked"}
     requires_update = sum(status_counts.get(status, 0) for status in stale_statuses)
+    repair_plan = _release_acceptance_repair_plan(
+        items,
+        config_path=spec.source_path,
+        repo_root=resolved_repo_root,
+    )
     return {
         "schema_version": RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION,
         "status": "fresh" if requires_update == 0 else "needs_update",
@@ -431,6 +557,8 @@ def release_acceptance_status_report(
         "fresh_count": status_counts.get("fresh", 0),
         "requires_update_count": requires_update,
         "status_counts": dict(sorted(status_counts.items())),
+        "repair_plan": repair_plan,
+        "repair_plan_count": len(repair_plan),
         "items": items,
     }
 

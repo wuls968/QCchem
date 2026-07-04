@@ -95,6 +95,8 @@ def test_release_acceptance_writes_manifest_bound_sidecar(tmp_path: Path) -> Non
     assert report["status"] == "fresh"
     assert report["fresh_count"] == 1
     assert report["requires_update_count"] == 0
+    assert report["repair_plan_count"] == 0
+    assert report["repair_plan"] == []
     assert report["items"][0]["status"] == "fresh"
     assert report["items"][0]["changed_fields"] == []
 
@@ -138,6 +140,15 @@ def test_release_acceptance_status_reports_missing_sidecar(tmp_path: Path) -> No
     assert report["status_counts"] == {"missing": 1}
     assert report["items"][0]["status"] == "missing"
     assert "artifact_sha256" in report["items"][0]["missing_fields"]
+    assert report["repair_plan_count"] == 1
+    repair = report["repair_plan"][0]
+    assert repair["artifact_name"] == "h2_anchor"
+    assert repair["status"] == "missing"
+    assert repair["issue"] == "sidecar_missing"
+    assert repair["preview_command"] is not None
+    assert "--dry-run" in repair["preview_command"]
+    assert repair["repair_command"] is not None
+    assert "--overwrite" not in repair["repair_command"]
 
 
 def test_release_acceptance_status_reports_unreadable_sidecar(tmp_path: Path) -> None:
@@ -251,6 +262,13 @@ def test_release_acceptance_status_reports_stale_sidecar(tmp_path: Path) -> None
     assert report["items"][0]["status"] == "stale"
     assert "artifact_sha256" in report["items"][0]["changed_fields"]
     assert report["items"][0]["contract_failures"][0]["field"] == "artifact_sha256"
+    assert report["repair_plan_count"] == 1
+    repair = report["repair_plan"][0]
+    assert repair["artifact_name"] == "h2_anchor"
+    assert repair["status"] == "stale"
+    assert repair["issue"] == "contract_failure:artifact_sha256"
+    assert "--dry-run" in repair["preview_command"]
+    assert "--overwrite" in repair["repair_command"]
 
 
 def test_release_acceptance_rejects_unknown_manifest_name(tmp_path: Path) -> None:

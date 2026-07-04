@@ -422,6 +422,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Exit with code 2 when any manifest-bound sidecar is missing, stale, unreadable, or blocked.",
     )
+    release_acceptance_status.add_argument(
+        "--repair-plan",
+        action="store_true",
+        help="Print read-only preview and refresh commands for non-fresh sidecars.",
+    )
 
     validation_parser = subparsers.add_parser("validation", help="Validation harness commands.")
     validation_subparsers = validation_parser.add_subparsers(dest="validation_command", required=True)
@@ -779,6 +784,32 @@ def _release_acceptance_status_list_hint(value: object, *, limit: int = 5) -> st
     if remaining > 0:
         fields.append(f"+{remaining} more")
     return ",".join(fields)
+
+
+def _print_release_acceptance_repair_plan(report: dict[str, object]) -> None:
+    plan = report.get("repair_plan")
+    if not isinstance(plan, list) or not plan:
+        print("Release acceptance repair plan: none")
+        return
+
+    print("Release acceptance repair plan:")
+    for raw_item in plan:
+        if not isinstance(raw_item, dict):
+            continue
+        print(
+            f"- {raw_item.get('artifact_name')} "
+            f"status={raw_item.get('status')} "
+            f"issue={raw_item.get('issue')} "
+            f"sidecar={raw_item.get('sidecar_path')}"
+        )
+        preview_command = raw_item.get("preview_command")
+        repair_command = raw_item.get("repair_command")
+        if preview_command:
+            print(f"  preview: {preview_command}")
+        if repair_command:
+            print(f"  repair: {repair_command}")
+        if not preview_command and not repair_command:
+            print(f"  action: {raw_item.get('recommended_action')}")
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:
@@ -1327,6 +1358,8 @@ def main(argv: list[str] | None = None) -> int:
                     "Sidecar issue: "
                     f"{_release_acceptance_status_issue_line(item)}"
                 )
+            if args.repair_plan:
+                _print_release_acceptance_repair_plan(report)
             return 2 if args.strict and report["status"] != "fresh" else 0
 
     if args.command == "validation":
