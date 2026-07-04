@@ -170,6 +170,7 @@ jobs:
           for feature in (
               "warning_policy",
               "acceptance_commands",
+              "ci_acceptance_command_alignment",
               "acceptance_summary_source",
               "acceptance_schema_version",
               "acceptance_release_audit_check_id",

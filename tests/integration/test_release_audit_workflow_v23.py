@@ -148,6 +148,7 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
         "warning_policy",
         "acceptance_commands",
         "acceptance_command_remediation",
+        "ci_acceptance_command_alignment",
         "acceptance_summary_source",
         "acceptance_schema_version",
         "acceptance_artifact_sha256",

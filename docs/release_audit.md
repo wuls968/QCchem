@@ -243,6 +243,8 @@ The Trust-First profile verifies:
 - `pyproject.toml` version matches the manifest release version.
 - Configured `acceptance_commands` reference existing local pytest targets or
   benchmark config files for supported command forms.
+- When `.github/workflows/ci.yml` exists, its `Run tests` command is static and
+  listed in `acceptance_commands` so CI and the release manifest cannot drift.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.
@@ -312,9 +314,9 @@ The Trust-First profile verifies:
 The current release-readiness schema is `1.1`. It is additive over schema `1`
 and advertises added automation fields through `schema_features`, including
 triage summaries, warning policy results, acceptance command recipes and
-remediation hints, Evidence Matrix claim/baseline/error fields, Evidence Matrix
-review warnings, acceptance evidence bindings, acceptance status/count fields,
-and audit provenance.
+remediation hints, CI acceptance-command alignment, Evidence Matrix
+claim/baseline/error fields, Evidence Matrix review warnings, acceptance
+evidence bindings, acceptance status/count fields, and audit provenance.
 
 The JSON shape is intended for automation. `audit_provenance` records the UTC
 generation time, audited repository root, manifest path, and output directory so

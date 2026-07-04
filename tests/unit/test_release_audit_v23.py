@@ -48,6 +48,27 @@ def _write_release_fixture(root: Path) -> None:
     (tests / "test_release_audit_v23.py").write_text("# release audit fixture target\n", encoding="utf-8")
 
 
+def _write_ci_workflow(root: Path, command: str) -> None:
+    workflow = root / ".github" / "workflows" / "ci.yml"
+    workflow.parent.mkdir(parents=True, exist_ok=True)
+    workflow.write_text(
+        f"""
+name: CI
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: {command}
+""",
+        encoding="utf-8",
+    )
+
+
 def _write_artifact(path: Path, *, algorithm: str = "core", trust_tier: str = "exploratory") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -972,6 +993,46 @@ def test_release_audit_accepts_pytest_warning_filter_with_explicit_target(tmp_pa
     assert command_check["details"]["failures"] == []
 
 
+def test_release_audit_checks_ci_run_tests_command_matches_acceptance_commands(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(tmp_path, "python -m pytest tests/unit/test_release_audit_v23.py -q")
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    ci_check = next(check for check in summary["checks"] if check["id"] == "release_acceptance_commands:ci_alignment")
+    assert summary["status"] == "passed"
+    assert ci_check["status"] == "passed"
+    assert ci_check["required"] is True
+    assert ci_check["details"]["ci_commands"] == ["python -m pytest tests/unit/test_release_audit_v23.py -q"]
+    assert ci_check["details"]["failures"] == []
+
+
+def test_release_audit_fails_ci_run_tests_command_missing_from_acceptance_commands(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(tmp_path, "python -m pytest tests -q")
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    ci_check = next(check for check in summary["checks"] if check["id"] == "release_acceptance_commands:ci_alignment")
+    assert summary["status"] == "failed"
+    assert ci_check["status"] == "failed"
+    assert ci_check["required"] is True
+    assert ci_check["details"]["failures"] == [
+        {
+            "reason": "ci_command_missing_from_acceptance_commands",
+            "commands": ["python -m pytest tests -q"],
+        }
+    ]
+
+
 def test_release_audit_accepts_benchmark_acceptance_output_under_artifacts(tmp_path: Path) -> None:
     _write_release_fixture(tmp_path)
     artifact = tmp_path / "artifacts" / "qft" / "result.json"
@@ -1364,6 +1425,7 @@ def test_release_audit_matrix_reads_sidecar_acceptance_status(tmp_path: Path) ->
         "warning_policy",
         "acceptance_commands",
         "acceptance_command_remediation",
+        "ci_acceptance_command_alignment",
         "acceptance_summary_source",
         "acceptance_schema_version",
         "acceptance_artifact_path",

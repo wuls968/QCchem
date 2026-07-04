@@ -100,6 +100,9 @@ python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning
 `pyproject.toml` excludes tests marked `slow` or `stress` from the default
 gate. The default release/CI gate treats SciPy sparse efficiency warnings as
 failures so circuit/statevector regressions do not return as noisy test output.
+Keep the CI `Run tests` command listed in the
+`configs/release/trust_first_audit.yaml` `acceptance_commands` list; release
+audit fails when the two drift.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

@@ -32,6 +32,7 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "warning_policy",
     "acceptance_commands",
     "acceptance_command_remediation",
+    "ci_acceptance_command_alignment",
     "acceptance_summary_source",
     "acceptance_schema_version",
     "acceptance_artifact_path",
@@ -839,6 +840,107 @@ def _audit_acceptance_commands(spec: ReleaseAuditSpec, *, repo_root: Path, check
             else "Acceptance commands reference missing, unsafe, or unsupported local targets or outputs."
         ),
         details={"command_count": len(spec.acceptance_commands), "failures": failures},
+    )
+
+
+def _audit_ci_acceptance_alignment(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[str, Any]]) -> None:
+    workflow_relative_path = Path(".github") / "workflows" / "ci.yml"
+    workflow_path = repo_root / workflow_relative_path
+    if not workflow_path.exists():
+        _skipped(
+            checks,
+            check_id="release_acceptance_commands:ci_alignment",
+            label="CI test command is advertised as release acceptance evidence",
+            summary="No GitHub Actions CI workflow was found; CI command alignment was not checked.",
+            details={"workflow": workflow_relative_path.as_posix(), "step_name": "Run tests"},
+        )
+        return
+
+    failures: list[dict[str, Any]] = []
+    ci_commands: list[str] = []
+    try:
+        raw = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raw = None
+        failures.append(
+            {
+                "reason": "unreadable_ci_workflow",
+                "workflow": workflow_relative_path.as_posix(),
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+        )
+    jobs = raw.get("jobs") if isinstance(raw, dict) else None
+    if raw is not None and not isinstance(jobs, dict):
+        failures.append({"reason": "missing_ci_jobs", "workflow": workflow_relative_path.as_posix()})
+
+    if isinstance(jobs, dict):
+        for job_name, job in jobs.items():
+            if not isinstance(job, dict):
+                continue
+            steps = job.get("steps")
+            if not isinstance(steps, list):
+                continue
+            for step_index, step in enumerate(steps):
+                if not isinstance(step, dict) or step.get("name") != "Run tests":
+                    continue
+                command = step.get("run")
+                if not isinstance(command, str) or not command.strip():
+                    failures.append(
+                        {
+                            "reason": "empty_ci_run_tests_command",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                        }
+                    )
+                    continue
+                stripped = command.strip()
+                if "\n" in stripped:
+                    failures.append(
+                        {
+                            "reason": "multi_line_ci_run_tests_command",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "command": stripped,
+                        }
+                    )
+                    continue
+                if stripped not in ci_commands:
+                    ci_commands.append(stripped)
+
+    if raw is not None and not ci_commands:
+        failures.append({"reason": "missing_ci_run_tests_step", "workflow": workflow_relative_path.as_posix()})
+
+    static_failures = _annotate_acceptance_command_failures(
+        _acceptance_command_failures(ci_commands, repo_root=repo_root)
+    )
+    failures.extend({**failure, "reason": f"ci_{failure['reason']}"} for failure in static_failures)
+
+    missing_from_manifest = [command for command in ci_commands if command not in spec.acceptance_commands]
+    if missing_from_manifest:
+        failures.append(
+            {
+                "reason": "ci_command_missing_from_acceptance_commands",
+                "commands": missing_from_manifest,
+            }
+        )
+
+    _check(
+        checks,
+        check_id="release_acceptance_commands:ci_alignment",
+        label="CI test command is advertised as release acceptance evidence",
+        passed=not failures,
+        required=True,
+        summary=(
+            "CI Run tests commands are static and present in release acceptance_commands."
+            if not failures
+            else "CI Run tests commands are missing, unsafe, or not advertised by release acceptance_commands."
+        ),
+        details={
+            "workflow": workflow_relative_path.as_posix(),
+            "step_name": "Run tests",
+            "ci_commands": ci_commands,
+            "failures": failures,
+        },
     )
 
 
@@ -1987,6 +2089,7 @@ def run_release_audit(
     )
 
     _audit_acceptance_commands(spec, repo_root=resolved_repo_root, checks=checks)
+    _audit_ci_acceptance_alignment(spec, repo_root=resolved_repo_root, checks=checks)
 
     for artifact in spec.curated_artifacts:
         _audit_artifact(
