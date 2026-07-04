@@ -252,6 +252,47 @@ def test_benchmark_run_honors_strict_acceptance_exit_code(
     assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml")]) == 2
 
 
+def test_release_audit_cli_prints_nested_failure_reason(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    def _fake_release_audit_from_config(*args, **kwargs):
+        return {
+            "status": "failed",
+            "required_pass_count": 84,
+            "required_fail_count": 1,
+            "required_failed_checks": [
+                {
+                    "id": "release_acceptance_sidecars:ci_freshness_gate",
+                    "summary": "CI is missing or misconfigures the release acceptance sidecar freshness gate.",
+                    "details": {
+                        "failures": [
+                            {
+                                "reason": "missing_ci_acceptance_status_step",
+                                "workflow": ".github/workflows/ci.yml",
+                                "step_name": "Run release acceptance sidecar freshness",
+                            }
+                        ]
+                    },
+                }
+            ],
+            "warning_checks": [],
+        }
+
+    monkeypatch.setattr("qcchem.cli.main.run_release_audit_from_config", _fake_release_audit_from_config)
+
+    exit_code = main(["release", "audit", "-c", str(tmp_path / "release.yaml"), "-o", str(tmp_path / "audit")])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release audit completed: failed" in stdout
+    assert "release_acceptance_sidecars:ci_freshness_gate" in stdout
+    assert "failure_reason=missing_ci_acceptance_status_step" in stdout
+    assert "workflow=.github/workflows/ci.yml" in stdout
+    assert "step_name=Run release acceptance sidecar freshness" in stdout
+
+
 def test_release_accept_artifact_cli_writes_bound_sidecar(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

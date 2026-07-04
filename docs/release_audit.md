@@ -152,8 +152,9 @@ binding contract.
 
 On failure, read `release_readiness.md` first. It is the human review surface and
 points at the failed check names. The CLI also prints a bounded triage list of
-required failed check ids and warning check ids so CI logs expose the first
-actionable failure without opening the readiness files.
+required failed check ids and warning check ids, including the first nested
+failure or warning reason when available, so CI logs expose the first actionable
+failure without opening the readiness files.
 
 ## Manifest Shape
 

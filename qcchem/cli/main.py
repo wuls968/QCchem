@@ -646,7 +646,7 @@ def _print_release_audit_triage(summary: dict[str, object], *, limit: int = 5) -
         print("Required failed checks:")
         for check in required_failed[:limit]:
             if isinstance(check, dict):
-                print(f"- {check.get('id')}: {check.get('summary', '')}")
+                print(_release_audit_triage_line(check))
         remaining = len(required_failed) - limit
         if remaining > 0:
             print(f"- ... {remaining} more required failure(s)")
@@ -656,10 +656,55 @@ def _print_release_audit_triage(summary: dict[str, object], *, limit: int = 5) -
         print("Warning checks:")
         for check in warning_checks[:limit]:
             if isinstance(check, dict):
-                print(f"- {check.get('id')}: {check.get('summary', '')}")
+                print(_release_audit_triage_line(check))
         remaining = len(warning_checks) - limit
         if remaining > 0:
             print(f"- ... {remaining} more warning(s)")
+
+
+def _release_audit_triage_line(check: dict[str, object]) -> str:
+    line = f"- {check.get('id')}: {check.get('summary', '')}"
+    detail_hint = _release_audit_detail_hint(check.get("details"))
+    if detail_hint:
+        line += f" ({detail_hint})"
+    return line
+
+
+def _release_audit_detail_hint(details: object) -> str:
+    if not isinstance(details, dict):
+        return ""
+    fragments: list[str] = []
+    for key in ("reason", "remediation", "field", "workflow", "step_name", "job", "step_index"):
+        if key in details:
+            fragments.append(f"{key}={_release_audit_hint_value(details[key])}")
+    for list_key, prefix in (
+        ("failures", "failure"),
+        ("contract_failures", "contract_failure"),
+        ("blocking_failures", "blocking_failure"),
+        ("warnings", "warning"),
+    ):
+        value = details.get(list_key)
+        if not isinstance(value, list) or not value:
+            continue
+        first = next((item for item in value if isinstance(item, dict)), None)
+        if first is None:
+            first = value[0]
+        if isinstance(first, dict):
+            for key in ("reason", "remediation", "field", "workflow", "step_name", "job", "step_index"):
+                if key in first:
+                    label = f"{prefix}_{key}" if key == "reason" else key
+                    fragments.append(f"{label}={_release_audit_hint_value(first[key])}")
+        else:
+            fragments.append(f"{prefix}={_release_audit_hint_value(first)}")
+        break
+    return " ".join(fragments[:5])
+
+
+def _release_audit_hint_value(value: object, *, limit: int = 120) -> str:
+    text = str(value).replace("\n", " ").strip()
+    if len(text) > limit:
+        return text[: limit - 3] + "..."
+    return text
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:
