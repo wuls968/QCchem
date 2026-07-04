@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 import shlex
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -2016,7 +2016,7 @@ def run_release_audit(
     required_failed_checks = _check_summaries(checks, status="failed", required=True)
     warning_checks = _check_summaries(checks, status="warning")
     audit_provenance = {
-        "generated_at_utc": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "repo_root": str(resolved_repo_root),
         "manifest_path": _path_for_audit_provenance(spec.source_path, repo_root=resolved_repo_root),
         "output_dir": _path_for_audit_provenance(resolved_output_dir, repo_root=resolved_repo_root),

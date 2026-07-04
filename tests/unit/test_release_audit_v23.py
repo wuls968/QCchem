@@ -11,6 +11,14 @@ from qcchem.io.release_audit_config import load_release_audit_spec
 from qcchem.workflow.release_audit import run_release_audit
 
 
+def test_release_audit_datetime_utc_usage_is_python310_compatible() -> None:
+    source = Path("qcchem/workflow/release_audit.py").read_text(encoding="utf-8")
+
+    assert "from datetime import UTC" not in source
+    assert "datetime.now(UTC)" not in source
+    assert "timezone.utc" in source
+
+
 def _write_release_fixture(root: Path) -> None:
     (root / "pyproject.toml").write_text('[project]\nversion = "0.1.0a1"\n', encoding="utf-8")
     (root / "README.md").write_text(
