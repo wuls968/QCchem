@@ -674,9 +674,14 @@ def _release_audit_detail_hint(details: object) -> str:
     if not isinstance(details, dict):
         return ""
     fragments: list[str] = []
-    for key in ("reason", "remediation", "field", "workflow", "step_name", "job", "step_index"):
-        if key in details:
-            fragments.append(f"{key}={_release_audit_hint_value(details[key])}")
+    labels: set[str] = set()
+
+    def _append(label: str, value: object) -> None:
+        if label in labels:
+            return
+        labels.add(label)
+        fragments.append(f"{label}={_release_audit_hint_value(value)}")
+
     for list_key, prefix in (
         ("failures", "failure"),
         ("contract_failures", "contract_failure"),
@@ -693,10 +698,13 @@ def _release_audit_detail_hint(details: object) -> str:
             for key in ("reason", "remediation", "field", "workflow", "step_name", "job", "step_index"):
                 if key in first:
                     label = f"{prefix}_{key}" if key == "reason" else key
-                    fragments.append(f"{label}={_release_audit_hint_value(first[key])}")
+                    _append(label, first[key])
         else:
-            fragments.append(f"{prefix}={_release_audit_hint_value(first)}")
+            _append(prefix, first)
         break
+    for key in ("reason", "remediation", "field", "workflow", "step_name", "job", "step_index"):
+        if key in details:
+            _append(key, details[key])
     return " ".join(fragments[:5])
 
 
