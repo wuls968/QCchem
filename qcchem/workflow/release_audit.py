@@ -1133,6 +1133,7 @@ def _acceptance_contract_failures(
     artifact_path: Path,
     artifact_payload: dict[str, Any],
     repo_root: Path,
+    release_binding_required: bool,
 ) -> list[dict[str, Any]]:
     failures: list[dict[str, Any]] = []
     schema_version = acceptance.get("schema_version")
@@ -1147,6 +1148,15 @@ def _acceptance_contract_failures(
         return failures
 
     if schema_version != RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION:
+        if release_binding_required:
+            failures.append(
+                {
+                    "field": "schema_version",
+                    "expected": RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION,
+                    "actual": schema_version,
+                    "reason": "legacy_schema_missing_release_binding",
+                }
+            )
         return failures
 
     for field in ("blocking_failures", "warnings"):
@@ -1543,6 +1553,7 @@ def _audit_artifact(
             artifact_path=path,
             artifact_payload=evidence_payload,
             repo_root=repo_root,
+            release_binding_required=required or acceptance_required,
         )
         passed = accepted and not blocking_failures and not contract_failures
         _check(

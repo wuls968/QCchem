@@ -1838,7 +1838,7 @@ def test_release_audit_fails_unrecognized_acceptance_schema(tmp_path: Path, sche
     assert summary["evidence_matrix"][0]["acceptance_contract_failure_count"] == 1
 
 
-def test_release_audit_still_accepts_legacy_benchmark_acceptance_schema(tmp_path: Path) -> None:
+def test_release_audit_fails_required_artifact_with_legacy_benchmark_acceptance_schema(tmp_path: Path) -> None:
     _write_release_fixture(tmp_path)
     artifact = tmp_path / "artifacts" / "qft" / "result.json"
     _write_artifact(artifact, algorithm="qft")
@@ -1871,7 +1871,54 @@ def test_release_audit_still_accepts_legacy_benchmark_acceptance_schema(tmp_path
     summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
 
     acceptance_check = next(check for check in summary["checks"] if check["id"] == "curated_artifact:core_anchor:acceptance_summary")
+    assert summary["status"] == "failed"
+    assert acceptance_check["status"] == "failed"
+    assert acceptance_check["details"]["schema_version"] == "qcchem.benchmark_acceptance.v0.1-alpha"
+    assert acceptance_check["details"]["contract_failure_count"] == 1
+    assert acceptance_check["details"]["contract_failures"][0] == {
+        "field": "schema_version",
+        "expected": "qcchem.release_artifact_acceptance.v0.1-alpha",
+        "actual": "qcchem.benchmark_acceptance.v0.1-alpha",
+        "reason": "legacy_schema_missing_release_binding",
+    }
+
+
+def test_release_audit_still_allows_legacy_benchmark_acceptance_for_optional_artifact(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    (artifact.parent / "acceptance_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
+                "suite_name": "legacy_suite",
+                "accepted": True,
+                "blocking_failures": [],
+                "warnings": [],
+                "recommended_action": "promote_accepted_benchmark",
+            }
+        ),
+        encoding="utf-8",
+    )
+    spec = load_release_audit_spec(
+        _write_config(
+            tmp_path,
+            artifact=artifact,
+            artifact_required=False,
+            include_exploratory_artifact=False,
+            warning_policy=(
+                "  warning_policy:\n"
+                "    max_count: 0\n"
+                "    allowed_ids: []\n"
+            ),
+        )
+    )
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    acceptance_check = next(check for check in summary["checks"] if check["id"] == "curated_artifact:core_anchor:acceptance_summary")
     assert summary["status"] == "passed"
+    assert acceptance_check["required"] is False
     assert acceptance_check["status"] == "passed"
     assert acceptance_check["details"]["schema_version"] == "qcchem.benchmark_acceptance.v0.1-alpha"
     assert acceptance_check["details"]["contract_failure_count"] == 0

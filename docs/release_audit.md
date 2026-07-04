@@ -100,8 +100,10 @@ must also bind themselves to the exact release-audit check that consumes them:
 
 Older benchmark acceptance sidecars remain compatible only when they declare
 `schema_version: qcchem.benchmark_acceptance.v0.1-alpha`; they do not provide
-this release-audit binding contract. Missing or unknown acceptance schemas fail
-the release audit for required artifacts instead of being treated as compatible.
+this release-audit binding contract, so they cannot satisfy `required` or
+`acceptance_required` manifest entries. Missing or unknown acceptance schemas
+fail the release audit for required artifacts instead of being treated as
+compatible.
 
 Acceptance sidecars listed by the release manifest are release evidence, not
 generated scratch files. Generated readiness outputs such as

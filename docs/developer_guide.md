@@ -52,8 +52,9 @@ Sidecars using `schema_version:
 qcchem.release_artifact_acceptance.v0.1-alpha` must also be listed by the
 release manifest through their sibling artifact path. Historical
 `qcchem.benchmark_acceptance.v0.1-alpha` sidecars may remain with older
-benchmark evidence, but new release-artifact sidecars should not float outside
-`configs/release/trust_first_audit.yaml`.
+benchmark evidence, but they cannot satisfy `required` or
+`acceptance_required` manifest entries. New release-artifact sidecars should not
+float outside `configs/release/trust_first_audit.yaml`.
 
 Artifact indexes preserve both release-sidecar presence and parse status:
 `has_acceptance_summary` reports embedded acceptance data or a sibling
