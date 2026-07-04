@@ -203,7 +203,10 @@ def write_release_artifact_acceptance_summary(
     artifact_path = _resolve(resolved_repo_root, target["path"])
     output_path = artifact_path.parent / "acceptance_summary.json"
     if output_path.exists() and not overwrite:
-        raise FileExistsError(f"Release acceptance sidecar already exists: {output_path}")
+        raise FileExistsError(
+            "Release acceptance sidecar already exists: "
+            f"{output_path}. Use --overwrite to replace it or --dry-run to preview the update."
+        )
     boundaries = release_boundaries or _release_boundaries_from_existing(output_path)
     summary = build_release_artifact_acceptance_summary(
         artifact_path,
@@ -216,6 +219,53 @@ def write_release_artifact_acceptance_summary(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_result_json(summary, output_path)
     return summary, output_path
+
+
+def preview_release_artifact_acceptance_summary(
+    spec: ReleaseAuditSpec,
+    *,
+    artifact_name: str,
+    repo_root: Path | None = None,
+    release_boundaries: list[str] | None = None,
+) -> tuple[dict[str, Any], Path, dict[str, Any]]:
+    """Build the manifest-bound acceptance sidecar payload without writing it."""
+
+    default_repo_root = (
+        workspace_root_for_path(spec.source_path)
+        if spec.source_path is not None
+        else Path.cwd()
+    )
+    resolved_repo_root = (repo_root or default_repo_root).resolve()
+    target = resolve_release_acceptance_target(spec, artifact_name)
+    artifact_path = _resolve(resolved_repo_root, target["path"])
+    output_path = artifact_path.parent / "acceptance_summary.json"
+    boundaries = release_boundaries or _release_boundaries_from_existing(output_path)
+    summary = build_release_artifact_acceptance_summary(
+        artifact_path,
+        artifact_name=target["name"],
+        release_audit_check_id=target["check_id"],
+        repo_root=resolved_repo_root,
+        release_boundaries=boundaries,
+    )
+    summary, preserved_extra_fields = _summary_with_existing_extra_fields(summary, output_path)
+    artifact_payload = _payload_with_release_evidence(_read_json(artifact_path))
+    status = _acceptance_sidecar_status_from_expected(
+        target,
+        artifact_path=artifact_path,
+        sidecar_path=output_path,
+        expected=summary,
+        artifact_payload=artifact_payload,
+        repo_root=resolved_repo_root,
+        preserved_extra_fields=preserved_extra_fields,
+    )
+    return (
+        summary,
+        output_path,
+        {
+            **status,
+            "would_preserve_extra_fields": preserved_extra_fields,
+        },
+    )
 
 
 def _acceptance_sidecar_status(
@@ -257,6 +307,40 @@ def _acceptance_sidecar_status(
             "contract_failures": [],
         }
 
+    expected, preserved_extra_fields = _summary_with_existing_extra_fields(expected, sidecar_path)
+    return _acceptance_sidecar_status_from_expected(
+        target,
+        artifact_path=artifact_path,
+        sidecar_path=sidecar_path,
+        expected=expected,
+        artifact_payload=artifact_payload,
+        repo_root=repo_root,
+        preserved_extra_fields=preserved_extra_fields,
+    )
+
+
+def _acceptance_sidecar_status_from_expected(
+    target: dict[str, Any],
+    *,
+    artifact_path: Path,
+    sidecar_path: Path,
+    expected: dict[str, Any],
+    artifact_payload: dict[str, Any],
+    repo_root: Path,
+    preserved_extra_fields: list[str],
+) -> dict[str, Any]:
+    base = {
+        "artifact_name": target["name"],
+        "artifact_kind": target["kind"],
+        "artifact_path": _repo_relative_artifact_path(artifact_path, repo_root=repo_root)
+        if artifact_path.exists()
+        else target["path"].as_posix(),
+        "sidecar_path": _repo_relative_artifact_path(sidecar_path, repo_root=repo_root)
+        if sidecar_path.exists()
+        else (target["path"].parent / "acceptance_summary.json").as_posix(),
+        "release_audit_check_id": target["check_id"],
+    }
+
     if not sidecar_path.exists():
         return {
             **base,
@@ -266,7 +350,7 @@ def _acceptance_sidecar_status(
             "changed_fields": [],
             "missing_fields": sorted(expected),
             "extra_fields": [],
-            "preserved_extra_fields": [],
+            "preserved_extra_fields": preserved_extra_fields,
             "contract_failures": [],
         }
 
@@ -286,7 +370,6 @@ def _acceptance_sidecar_status(
             "contract_failures": [],
         }
 
-    expected, preserved_extra_fields = _summary_with_existing_extra_fields(expected, sidecar_path)
     changed_fields = sorted(
         key
         for key, value in expected.items()
@@ -385,5 +468,26 @@ def write_release_artifact_acceptance_summary_from_config(
         artifact_name=artifact_name,
         repo_root=repo_root,
         overwrite=overwrite,
+        release_boundaries=release_boundaries,
+    )
+
+
+def preview_release_artifact_acceptance_summary_from_config(
+    config_path: Path,
+    *,
+    artifact_name: str,
+    repo_root: Path | None = None,
+    release_boundaries: list[str] | None = None,
+) -> tuple[dict[str, Any], Path, dict[str, Any]]:
+    """Load a release manifest and preview one artifact acceptance sidecar."""
+
+    resolved_config_path = config_path.expanduser()
+    if not resolved_config_path.is_absolute() and repo_root is not None:
+        resolved_config_path = repo_root.expanduser() / resolved_config_path
+    spec = load_release_audit_spec(resolved_config_path)
+    return preview_release_artifact_acceptance_summary(
+        spec,
+        artifact_name=artifact_name,
+        repo_root=repo_root,
         release_boundaries=release_boundaries,
     )

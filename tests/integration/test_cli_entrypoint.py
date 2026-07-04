@@ -446,6 +446,31 @@ release_audit:
     assert "Sidecar issue: h2_anchor status=stale changed_fields=artifact_sha256" in stdout
     assert "(contract_failure_field=artifact_sha256" in stdout
 
+    stale_sidecar_text = sidecar.read_text(encoding="utf-8")
+    assert (
+        main(
+            [
+                "release",
+                "accept-artifact",
+                "-c",
+                str(config),
+                "--name",
+                "h2_anchor",
+                "--repo-root",
+                str(tmp_path),
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    stdout = capsys.readouterr().out
+    assert "Release acceptance sidecar dry run:" in stdout
+    assert "Current sidecar status: stale" in stdout
+    assert "Changed fields: artifact_sha256" in stdout
+    assert "Current sidecar detail: contract_failure_field=artifact_sha256" in stdout
+    assert "Release acceptance sidecar written" not in stdout
+    assert sidecar.read_text(encoding="utf-8") == stale_sidecar_text
+
     assert (
         main(
             [

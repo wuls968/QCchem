@@ -68,16 +68,25 @@ qcchem release acceptance-status \
 qcchem release accept-artifact \
   -c configs/release/trust_first_audit.yaml \
   --name h2_local_validated_anchor \
+  --dry-run
+```
+
+```bash
+qcchem release accept-artifact \
+  -c configs/release/trust_first_audit.yaml \
+  --name h2_local_validated_anchor \
   --overwrite
 ```
 
 `acceptance-status` is read-only and can fail a gate with `--strict` when a
-manifest sidecar is missing, stale, unreadable, or blocked. `accept-artifact`
-writes the sibling `acceptance_summary.json`, refreshes `artifact_sha256`,
-derives trust tier and runtime evidence status from the same release-readable
-evidence summary used by `qcchem release audit`, and preserves existing
-`release_boundaries` on overwrite unless `--boundary` is supplied. It refuses
-to replace an existing sidecar unless `--overwrite` is explicit.
+manifest sidecar is missing, stale, unreadable, or blocked.
+`accept-artifact --dry-run` previews the same manifest-bound payload and current
+sidecar status without writing. `accept-artifact` without `--dry-run` writes the
+sibling `acceptance_summary.json`, refreshes `artifact_sha256`, derives trust
+tier and runtime evidence status from the same release-readable evidence summary
+used by `qcchem release audit`, and preserves existing `release_boundaries` on
+overwrite unless `--boundary` is supplied. It refuses to replace an existing
+sidecar unless `--overwrite` is explicit.
 
 CI runs `qcchem release acceptance-status --strict` after the Trust-First
 release audit, so a regenerated curated artifact must have its manifest-bound

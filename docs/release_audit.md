@@ -55,6 +55,13 @@ qcchem release acceptance-status \
 qcchem release accept-artifact \
   -c configs/release/trust_first_audit.yaml \
   --name h2_local_validated_anchor \
+  --dry-run
+```
+
+```bash
+qcchem release accept-artifact \
+  -c configs/release/trust_first_audit.yaml \
+  --name h2_local_validated_anchor \
   --overwrite
 ```
 
@@ -62,7 +69,9 @@ qcchem release accept-artifact \
 blocked sidecars; with `--strict` it exits with code `2` when any manifest
 sidecar needs attention. For every non-fresh sidecar, the CLI prints a bounded
 `Sidecar issue:` line with the sidecar path plus the first error or contract
-failure reason when one is available. `accept-artifact` writes the sibling
+failure reason when one is available. `accept-artifact --dry-run` builds the
+same manifest-bound payload and reports the current sidecar status without
+writing. `accept-artifact` without `--dry-run` writes the sibling
 `acceptance_summary.json` for one manifest entry, binds it to the exact
 release-audit check id, records the audited artifact hash, and reuses existing
 `release_boundaries` when overwriting unless new `--boundary` notes are

@@ -7,6 +7,7 @@ import pytest
 
 from qcchem.io.release_audit_config import load_release_audit_spec
 from qcchem.workflow.release_acceptance import (
+    preview_release_artifact_acceptance_summary,
     release_acceptance_status_report,
     write_release_artifact_acceptance_summary,
 )
@@ -103,8 +104,27 @@ def test_release_acceptance_requires_overwrite_for_existing_sidecar(tmp_path: Pa
     spec = load_release_audit_spec(config)
     write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
 
-    with pytest.raises(FileExistsError, match="acceptance_summary.json"):
+    with pytest.raises(FileExistsError, match="--dry-run"):
         write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+
+
+def test_release_acceptance_preview_does_not_write_missing_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    sidecar = tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+
+    summary, output_path, status = preview_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+    )
+
+    assert output_path == sidecar
+    assert not sidecar.exists()
+    assert summary["artifact_name"] == "h2_anchor"
+    assert summary["artifact_path"] == "artifacts/h2/result.json"
+    assert status["status"] == "missing"
+    assert "artifact_sha256" in status["missing_fields"]
 
 
 def test_release_acceptance_status_reports_missing_sidecar(tmp_path: Path) -> None:
@@ -158,6 +178,37 @@ def test_release_acceptance_overwrite_preserves_existing_boundaries(tmp_path: Pa
 
     assert summary["artifact_sha256"] != stale
     assert summary["release_boundaries"] == ["Manual boundary note."]
+
+
+def test_release_acceptance_preview_reports_stale_without_writing(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    sidecar = tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+    write_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+        release_boundaries=["Manual boundary note."],
+    )
+    artifact = tmp_path / "artifacts" / "h2" / "result.json"
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    payload["energy"]["total_energy"] = -1.138
+    artifact.write_text(json.dumps(payload), encoding="utf-8")
+    before = sidecar.read_text(encoding="utf-8")
+
+    summary, output_path, status = preview_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+        release_boundaries=["Updated boundary note."],
+    )
+
+    assert output_path == sidecar
+    assert sidecar.read_text(encoding="utf-8") == before
+    assert summary["release_boundaries"] == ["Updated boundary note."]
+    assert status["status"] == "stale"
+    assert status["changed_fields"] == ["artifact_sha256", "release_boundaries"]
+    assert status["contract_failures"][0]["field"] == "artifact_sha256"
 
 
 def test_release_acceptance_preserves_existing_extra_fields(tmp_path: Path) -> None:

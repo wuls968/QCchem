@@ -52,6 +52,7 @@ rewritten casually.
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
 | Check release sidecars | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict` |
+| Preview release sidecar refresh | `qcchem release accept-artifact -c configs/release/trust_first_audit.yaml --name h2_local_validated_anchor --dry-run` |
 | Refresh release sidecar | `qcchem release accept-artifact -c configs/release/trust_first_audit.yaml --name h2_local_validated_anchor --overwrite` |
 
 Runtime-capable commands accept `--confirm-runtime-budget`, but real submission

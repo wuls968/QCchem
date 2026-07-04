@@ -152,6 +152,13 @@ def write_release_artifact_acceptance_summary_from_config(*args, **kwargs):
     )(*args, **kwargs)
 
 
+def preview_release_artifact_acceptance_summary_from_config(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.release_acceptance",
+        "preview_release_artifact_acceptance_summary_from_config",
+    )(*args, **kwargs)
+
+
 def release_acceptance_status_report_from_config(*args, **kwargs):
     return _load_attr(
         "qcchem.workflow.release_acceptance",
@@ -391,6 +398,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--overwrite",
         action="store_true",
         help="Replace an existing sibling acceptance_summary.json.",
+    )
+    release_accept.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview the sidecar payload and current sidecar status without writing.",
     )
     release_accept.add_argument(
         "--boundary",
@@ -1248,17 +1260,41 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if summary["status"] == "passed" else 2
         if args.release_command == "accept-artifact":
             try:
-                summary, output_path = write_release_artifact_acceptance_summary_from_config(
-                    args.config,
-                    artifact_name=args.name,
-                    repo_root=args.repo_root,
-                    overwrite=args.overwrite,
-                    release_boundaries=args.boundary or None,
-                )
+                if args.dry_run:
+                    summary, output_path, status = preview_release_artifact_acceptance_summary_from_config(
+                        args.config,
+                        artifact_name=args.name,
+                        repo_root=args.repo_root,
+                        release_boundaries=args.boundary or None,
+                    )
+                else:
+                    summary, output_path = write_release_artifact_acceptance_summary_from_config(
+                        args.config,
+                        artifact_name=args.name,
+                        repo_root=args.repo_root,
+                        overwrite=args.overwrite,
+                        release_boundaries=args.boundary or None,
+                    )
+                    status = {}
             except (FileExistsError, OSError, ValueError, yaml.YAMLError) as exc:
                 print(f"Release acceptance rejected: {exc}")
                 return 2
-            print(f"Release acceptance sidecar written to {output_path}")
+            if args.dry_run:
+                print(f"Release acceptance sidecar dry run: {output_path}")
+                print(f"Current sidecar status: {status.get('status')}")
+                print(
+                    "Changed fields: "
+                    f"{_release_acceptance_status_list_hint(status.get('changed_fields')) or 'none'}"
+                )
+                print(
+                    "Preserved extra fields: "
+                    f"{_release_acceptance_status_list_hint(status.get('would_preserve_extra_fields')) or 'none'}"
+                )
+                detail_hint = _release_acceptance_status_detail_hint(status)
+                if detail_hint:
+                    print(f"Current sidecar detail: {detail_hint}")
+            else:
+                print(f"Release acceptance sidecar written to {output_path}")
             print(f"Artifact: {summary['artifact_name']}")
             print(f"Trust tier: {summary['trust_tier']}")
             print(f"Runtime evidence status: {summary['runtime_evidence_status']}")
