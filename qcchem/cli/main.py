@@ -812,6 +812,37 @@ def _print_release_acceptance_repair_plan(report: dict[str, object]) -> None:
             print(f"  action: {raw_item.get('recommended_action')}")
 
 
+def _print_release_audit_sidecar_repair_triage(summary: dict[str, object]) -> None:
+    sidecars = summary.get("release_acceptance_sidecars")
+    if not isinstance(sidecars, dict):
+        return
+    plan = sidecars.get("repair_plan")
+    if not isinstance(plan, list) or not plan:
+        return
+    first = next((item for item in plan if isinstance(item, dict)), None)
+    if first is None:
+        return
+
+    print("Release sidecar repair:")
+    print(
+        f"- {first.get('artifact_name')} "
+        f"status={first.get('status')} "
+        f"issue={first.get('issue')} "
+        f"sidecar={first.get('sidecar_path')}"
+    )
+    preview_command = first.get("preview_command")
+    repair_command = first.get("repair_command")
+    if preview_command:
+        print(f"  preview: {preview_command}")
+    if repair_command:
+        print(f"  repair: {repair_command}")
+    if not preview_command and not repair_command:
+        print(f"  action: {first.get('recommended_action')}")
+    remaining_count = len([item for item in plan if isinstance(item, dict)]) - 1
+    if remaining_count > 0:
+        print(f"  more: {remaining_count} additional sidecar repair item(s); see release_readiness.md")
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1279,6 +1310,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Release audit completed: {summary['status']}")
             print(f"Required checks: {summary['required_pass_count']} passed, {summary['required_fail_count']} failed")
             _print_release_audit_triage(summary)
+            _print_release_audit_sidecar_repair_triage(summary)
             report_dir = output_dir or Path("artifacts") / "release_audit"
             if output_dir is None:
                 provenance = summary.get("audit_provenance") or {}

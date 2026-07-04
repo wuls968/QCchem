@@ -318,6 +318,30 @@ def test_release_audit_cli_returns_two_for_failed_required_check(
 
 
 @pytest.mark.integration
+def test_release_audit_cli_prints_sidecar_repair_triage(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    sidecar = tmp_path / "artifacts" / "qft" / "acceptance_summary.json"
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    payload["artifact_sha256"] = "0" * 64
+    sidecar.write_text(json.dumps(payload), encoding="utf-8")
+    output_dir = tmp_path / "release_audit_stale_sidecar"
+
+    exit_code = main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release audit completed: failed" in stdout
+    assert "Release sidecar repair:" in stdout
+    assert "- qft_anchor status=stale issue=contract_failure:artifact_sha256" in stdout
+    assert "preview: qcchem release accept-artifact" in stdout
+    assert "repair: qcchem release accept-artifact" in stdout
+    assert "--overwrite" in stdout
+
+
+@pytest.mark.integration
 def test_release_audit_cli_prints_warning_triage_for_warning_policy_failure(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

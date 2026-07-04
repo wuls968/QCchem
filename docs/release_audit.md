@@ -98,7 +98,9 @@ files for the release itself.
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
 blocked, `release_readiness.md` adds a `Release Sidecar Repair Plan` section
 with the same preview and refresh commands printed by
-`qcchem release acceptance-status --repair-plan`.
+`qcchem release acceptance-status --repair-plan`. The `release audit` CLI also
+prints the first repair-plan item directly to stdout so CI logs include one
+copyable next action without opening the generated Markdown report.
 
 Curated and exploratory artifact payloads must parse as JSON objects. If a
 configured artifact exists but is unreadable or not a JSON object, the audit
