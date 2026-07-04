@@ -79,6 +79,10 @@ evidence summary used by `qcchem release audit`, and preserves existing
 `release_boundaries` on overwrite unless `--boundary` is supplied. It refuses
 to replace an existing sidecar unless `--overwrite` is explicit.
 
+CI runs `qcchem release acceptance-status --strict` after the Trust-First
+release audit, so a regenerated curated artifact must have its manifest-bound
+sidecar refreshed before the release branch can pass.
+
 Artifact indexes preserve both release-sidecar presence and parse status:
 `has_acceptance_summary` reports embedded acceptance data or a sibling
 `acceptance_summary.json`, while `acceptance_summary_readable` and

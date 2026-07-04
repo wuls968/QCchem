@@ -273,6 +273,9 @@ The Trust-First profile verifies:
   benchmark config files for supported command forms.
 - When `.github/workflows/ci.yml` exists, its `Run tests` command is static and
   listed in `acceptance_commands` so CI and the release manifest cannot drift.
+- CI runs `qcchem release acceptance-status --strict` after the Trust-First
+  release audit so manifest-bound sidecars must stay fresh before generated-file
+  boundary checks pass.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.
@@ -408,5 +411,7 @@ git status --short --untracked-files=all -- .github artifacts README.md docs con
 Both commands should print nothing in a packaged release branch, except for
 ignored local outputs such as `artifacts/release_audit/` and
 `artifacts/workflows/`.
-CI also checks that release-audit outputs and workflow bundles match
-`.gitignore`, while manifest-derived `acceptance_summary.json` sidecars do not.
+CI also checks release acceptance sidecar freshness with
+`qcchem release acceptance-status --strict`, then confirms release-audit outputs
+and workflow bundles match `.gitignore`, while manifest-derived
+`acceptance_summary.json` sidecars do not.

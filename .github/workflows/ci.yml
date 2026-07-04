@@ -204,6 +204,14 @@ jobs:
             -c configs/release/trust_first_audit.yaml \
             -o artifacts/release_audit
 
+      - name: Run release acceptance sidecar freshness
+        run: |
+          set -euo pipefail
+          python -m qcchem.cli.main release acceptance-status \
+            -c configs/release/trust_first_audit.yaml \
+            --strict \
+            -o /tmp/qcchem-release-acceptance-status.json
+
       - name: Confirm release output ignore boundaries
         run: |
           set -euo pipefail

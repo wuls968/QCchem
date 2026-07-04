@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+import yaml
 
 from qcchem.backends.capabilities import describe_backend_capabilities
 from qcchem.backends.policy import resolve_execution_policy
@@ -391,6 +392,28 @@ def test_release_git_hygiene_keeps_outputs_ignored_and_sidecars_tracked() -> Non
         assert tracked.returncode == 0, f"{path} must be tracked as release evidence"
 
     assert orphan_release_acceptance_sidecars(REPO_ROOT, release_sidecars) == []
+
+
+def test_ci_runs_release_acceptance_sidecar_freshness_gate() -> None:
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Run release acceptance sidecar freshness"
+    ]
+
+    assert len(matches) == 1
+    command = matches[0]["run"]
+    assert isinstance(command, str)
+    assert [line.strip() for line in command.splitlines() if line.strip()] == [
+        "set -euo pipefail",
+        "python -m qcchem.cli.main release acceptance-status \\",
+        "-c configs/release/trust_first_audit.yaml \\",
+        "--strict \\",
+        "-o /tmp/qcchem-release-acceptance-status.json",
+    ]
 
 
 def test_manifest_release_acceptance_sidecars_share_handoff_contract() -> None:
