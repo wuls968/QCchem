@@ -94,6 +94,12 @@ Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
 files for the release itself.
 
+`release_readiness.json` includes a top-level `release_acceptance_sidecars`
+status report. When any manifest-bound sidecar is missing, stale, unreadable, or
+blocked, `release_readiness.md` adds a `Release Sidecar Repair Plan` section
+with the same preview and refresh commands printed by
+`qcchem release acceptance-status --repair-plan`.
+
 Curated and exploratory artifact payloads must parse as JSON objects. If a
 configured artifact exists but is unreadable or not a JSON object, the audit
 records a failed `:readable` check and still writes `release_readiness.json` and
@@ -290,9 +296,10 @@ The Trust-First profile verifies:
 - When `.github/workflows/ci.yml` exists, its `Run tests` command is static and
   listed in `acceptance_commands` so CI and the release manifest cannot drift.
 - The release audit statically confirms CI runs
-  `qcchem release acceptance-status --strict` after the Trust-First release
-  audit so manifest-bound sidecars must stay fresh before generated-file
-  boundary checks pass.
+  `qcchem release acceptance-status --strict --repair-plan` after the
+  Trust-First release audit so manifest-bound sidecars must stay fresh and CI
+  logs carry copyable repair commands before generated-file boundary checks
+  pass.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.
@@ -431,6 +438,6 @@ Both commands should print nothing in a packaged release branch, except for
 ignored local outputs such as `artifacts/release_audit/` and
 `artifacts/workflows/`.
 CI also checks release acceptance sidecar freshness with
-`qcchem release acceptance-status --strict`, then confirms release-audit outputs
-and workflow bundles match `.gitignore`, while manifest-derived
-`acceptance_summary.json` sidecars do not.
+`qcchem release acceptance-status --strict --repair-plan`, then confirms
+release-audit outputs and workflow bundles match `.gitignore`, while
+manifest-derived `acceptance_summary.json` sidecars do not.

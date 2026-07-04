@@ -46,14 +46,20 @@ def _write_release_acceptance(
         json.dumps(
             {
                 "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+                "artifact_name": release_audit_check_id.split(":")[1],
                 "artifact_path": artifact_path,
                 "artifact_sha256": artifact_sha256,
                 "release_audit_check_id": release_audit_check_id,
+                "acceptance_scope": "alpha_release_boundary",
                 "trust_tier": "exploratory",
                 "runtime_evidence_status": "none",
                 "accepted": True,
                 "blocking_failures": [],
                 "warnings": [],
+                "release_boundaries": [
+                    "Accepted as release-readable evidence with the declared trust tier.",
+                    "This sidecar does not promote the artifact beyond its evidence_summary boundary.",
+                ],
                 "recommended_action": "accept_release_artifact_with_declared_boundary",
             }
         ),
@@ -156,12 +162,16 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
         "acceptance_runtime_evidence_status",
         "acceptance_recommended_action",
         "acceptance_contract_failure_count",
+        "release_acceptance_sidecar_status",
+        "release_acceptance_repair_plan",
         "audit_provenance",
     }.issubset(set(summary["schema_features"]))
     assert summary["audit_provenance"]["generated_at_utc"].endswith("Z")
     assert summary["audit_provenance"]["repo_root"] == str(tmp_path.resolve())
     assert summary["audit_provenance"]["manifest_path"] == "configs/release/trust_first_audit.yaml"
     assert summary["audit_provenance"]["output_dir"] == "release_audit"
+    assert summary["release_acceptance_sidecars"]["status"] == "fresh"
+    assert summary["release_acceptance_sidecars"]["repair_plan_count"] == 0
     assert summary["acceptance_commands"] == ["python -m pytest tests/unit/test_release_audit_v23.py -q"]
     assert summary["required_fail_count"] == 0
     assert summary["required_failed_checks"] == []

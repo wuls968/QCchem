@@ -91,9 +91,10 @@ used by `qcchem release audit`, and preserves existing `release_boundaries` on
 overwrite unless `--boundary` is supplied. It refuses to replace an existing
 sidecar unless `--overwrite` is explicit.
 
-CI runs `qcchem release acceptance-status --strict` after the Trust-First
-release audit, so a regenerated curated artifact must have its manifest-bound
-sidecar refreshed before the release branch can pass.
+CI runs `qcchem release acceptance-status --strict --repair-plan` after the
+Trust-First release audit, so a regenerated curated artifact must have its
+manifest-bound sidecar refreshed before the release branch can pass and CI logs
+show the preview/refresh commands.
 
 Artifact indexes preserve both release-sidecar presence and parse status:
 `has_acceptance_summary` reports embedded acceptance data or a sibling

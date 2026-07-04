@@ -46,6 +46,8 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "acceptance_blocking_failure_count",
     "acceptance_warning_count",
     "acceptance_contract_failure_count",
+    "release_acceptance_sidecar_status",
+    "release_acceptance_repair_plan",
     "audit_provenance",
 ]
 RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION = "qcchem.release_artifact_acceptance.v0.1-alpha"
@@ -83,6 +85,7 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "python -m qcchem.cli.main release acceptance-status \\",
     "-c configs/release/trust_first_audit.yaml \\",
     "--strict \\",
+    "--repair-plan \\",
     "-o /tmp/qcchem-release-acceptance-status.json",
 )
 
@@ -1039,7 +1042,7 @@ def _audit_ci_acceptance_status_gate(*, repo_root: Path, checks: list[dict[str, 
         passed=not failures,
         required=True,
         summary=(
-            "CI runs release acceptance-status --strict with the Trust-First manifest."
+            "CI runs release acceptance-status --strict --repair-plan with the Trust-First manifest."
             if not failures
             else "CI is missing or misconfigures the release acceptance sidecar freshness gate."
         ),
@@ -1101,6 +1104,16 @@ def _acceptance_contract_repair_failures(summary: dict[str, Any]) -> list[dict[s
                 repair["reason"] = failure.get("reason")
             repairs.append(repair)
     return repairs
+
+
+def _release_acceptance_repair_plan_items(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    sidecars = summary.get("release_acceptance_sidecars")
+    if not isinstance(sidecars, dict):
+        return []
+    repair_plan = sidecars.get("repair_plan")
+    if not isinstance(repair_plan, list):
+        return []
+    return [item for item in repair_plan if isinstance(item, dict)]
 
 
 def _markdown_contract_value(value: Any) -> str:
@@ -2121,6 +2134,23 @@ def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
                 f"- warning_policy_unexpected_ids: `{json.dumps(unexpected_ids, sort_keys=True)}`",
             ]
         )
+    release_acceptance_sidecars = (
+        summary.get("release_acceptance_sidecars")
+        if isinstance(summary.get("release_acceptance_sidecars"), dict)
+        else {}
+    )
+    if release_acceptance_sidecars:
+        lines.extend(
+            [
+                f"- release_acceptance_sidecars_status: `{release_acceptance_sidecars.get('status')}`",
+                f"- release_acceptance_sidecars_fresh_count: `{release_acceptance_sidecars.get('fresh_count')}`",
+                (
+                    "- release_acceptance_sidecars_requires_update_count: "
+                    f"`{release_acceptance_sidecars.get('requires_update_count')}`"
+                ),
+                f"- release_acceptance_repair_plan_count: `{release_acceptance_sidecars.get('repair_plan_count')}`",
+            ]
+        )
     required_failed_checks = summary.get("required_failed_checks") or []
     if required_failed_checks:
         lines.extend(["", "## Required Failed Checks", ""])
@@ -2186,6 +2216,28 @@ def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
             )
             if failure.get("reason") is not None:
                 lines.append(f"  - reason: {_markdown_code_span(failure.get('reason'))}")
+    release_acceptance_repairs = _release_acceptance_repair_plan_items(summary)
+    if release_acceptance_repairs:
+        lines.extend(["", "## Release Sidecar Repair Plan", ""])
+        for item in release_acceptance_repairs:
+            lines.extend(
+                [
+                    (
+                        f"- {_markdown_code_span(item.get('artifact_name'))} "
+                        f"status={_markdown_code_span(item.get('status'))} "
+                        f"issue={_markdown_code_span(item.get('issue'))}"
+                    ),
+                    f"  - sidecar: {_markdown_code_span(item.get('sidecar_path'))}",
+                ]
+            )
+            preview_command = item.get("preview_command")
+            repair_command = item.get("repair_command")
+            if preview_command:
+                lines.append(f"  - preview: {_markdown_code_span(preview_command)}")
+            if repair_command:
+                lines.append(f"  - repair: {_markdown_code_span(repair_command)}")
+            if not preview_command and not repair_command:
+                lines.append(f"  - action: {_markdown_code_span(item.get('recommended_action'))}")
     lines.extend(["", "## Evidence Matrix", ""])
     for entry in summary["evidence_matrix"]:
         lines.extend(
@@ -2287,6 +2339,12 @@ def run_release_audit(
     failed_checks = _check_summaries(checks, status="failed")
     required_failed_checks = _check_summaries(checks, status="failed", required=True)
     warning_checks = _check_summaries(checks, status="warning")
+    from qcchem.workflow.release_acceptance import release_acceptance_status_report
+
+    release_acceptance_sidecars = release_acceptance_status_report(
+        spec,
+        repo_root=resolved_repo_root,
+    )
     audit_provenance = {
         "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "repo_root": str(resolved_repo_root),
@@ -2307,6 +2365,7 @@ def run_release_audit(
         "required_failed_checks": required_failed_checks,
         "warning_checks": warning_checks,
         "warning_policy": warning_policy_summary,
+        "release_acceptance_sidecars": release_acceptance_sidecars,
         "checks": checks,
         "evidence_matrix": evidence_matrix,
         "acceptance_commands": list(spec.acceptance_commands),

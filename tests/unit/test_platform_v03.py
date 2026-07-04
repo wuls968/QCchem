@@ -412,6 +412,7 @@ def test_ci_runs_release_acceptance_sidecar_freshness_gate() -> None:
         "python -m qcchem.cli.main release acceptance-status \\",
         "-c configs/release/trust_first_audit.yaml \\",
         "--strict \\",
+        "--repair-plan \\",
         "-o /tmp/qcchem-release-acceptance-status.json",
     ]
 

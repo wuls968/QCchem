@@ -62,6 +62,7 @@ def _write_ci_workflow(
         "python -m qcchem.cli.main release acceptance-status \\\n"
         "  -c configs/release/trust_first_audit.yaml \\\n"
         "  --strict \\\n"
+        "  --repair-plan \\\n"
         "  -o /tmp/qcchem-release-acceptance-status.json\n"
     )
     gate_step = (
@@ -235,14 +236,20 @@ def _write_acceptance_sidecar(
         json.dumps(
             {
                 "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+                "artifact_name": release_audit_check_id.split(":")[1],
                 "artifact_path": artifact_path,
                 "artifact_sha256": artifact_digest,
                 "release_audit_check_id": release_audit_check_id,
+                "acceptance_scope": "alpha_release_boundary",
                 "trust_tier": trust_tier,
                 "runtime_evidence_status": runtime_evidence_status,
                 "accepted": accepted,
                 "blocking_failures": blocking_failures or [],
                 "warnings": warnings or [],
+                "release_boundaries": [
+                    "Accepted as release-readable evidence with the declared trust tier.",
+                    "This sidecar does not promote the artifact beyond its evidence_summary boundary.",
+                ],
                 "recommended_action": recommended_action,
             }
         ),
@@ -1059,6 +1066,7 @@ def test_release_audit_checks_ci_acceptance_status_gate(tmp_path: Path) -> None:
                 "python -m qcchem.cli.main release acceptance-status \\",
                 "-c configs/release/trust_first_audit.yaml \\",
                 "--strict \\",
+                "--repair-plan \\",
                 "-o /tmp/qcchem-release-acceptance-status.json",
             ],
         }
@@ -1824,6 +1832,47 @@ def test_release_audit_fails_sidecar_with_stale_artifact_digest(tmp_path: Path) 
     assert len(failure["expected"]) == 64
     assert summary["evidence_matrix"][0]["acceptance_artifact_sha256"] == "0" * 64
     assert summary["evidence_matrix"][0]["acceptance_contract_failure_count"] == 1
+    sidecars = summary["release_acceptance_sidecars"]
+    assert sidecars["status"] == "needs_update"
+    assert sidecars["requires_update_count"] == 1
+    assert sidecars["repair_plan_count"] == 1
+    repair = sidecars["repair_plan"][0]
+    assert repair["artifact_name"] == "core_anchor"
+    assert repair["status"] == "stale"
+    assert repair["issue"] == "contract_failure:artifact_sha256"
+    assert "--dry-run" in repair["preview_command"]
+    assert "--overwrite" in repair["repair_command"]
+    report = (tmp_path / "out" / "release_readiness.md").read_text(encoding="utf-8")
+    assert "- release_acceptance_sidecars_status: `needs_update`" in report
+    assert "## Release Sidecar Repair Plan" in report
+    assert "- `core_anchor` status=`stale` issue=`contract_failure:artifact_sha256`" in report
+    assert "  - preview: `qcchem release accept-artifact" in report
+    assert "--overwrite" in report
+
+
+def test_release_audit_repair_plan_reports_missing_required_sidecar(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    acceptance_check = next(check for check in summary["checks"] if check["id"] == "curated_artifact:core_anchor:acceptance_summary")
+    assert summary["status"] == "failed"
+    assert acceptance_check["status"] == "failed"
+    sidecars = summary["release_acceptance_sidecars"]
+    assert sidecars["status"] == "needs_update"
+    assert sidecars["repair_plan_count"] == 1
+    repair = sidecars["repair_plan"][0]
+    assert repair["artifact_name"] == "core_anchor"
+    assert repair["status"] == "missing"
+    assert repair["issue"] == "sidecar_missing"
+    assert "--dry-run" in repair["preview_command"]
+    assert "--overwrite" not in repair["repair_command"]
+    report = (tmp_path / "out" / "release_readiness.md").read_text(encoding="utf-8")
+    assert "## Release Sidecar Repair Plan" in report
+    assert "- `core_anchor` status=`missing` issue=`sidecar_missing`" in report
 
 
 @pytest.mark.parametrize(
