@@ -967,6 +967,39 @@ def _acceptance_command_repair_failures(summary: dict[str, Any]) -> list[dict[st
     return []
 
 
+def _acceptance_contract_repair_failures(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    repairs: list[dict[str, Any]] = []
+    for check in summary.get("checks", []):
+        if not isinstance(check, dict):
+            continue
+        details = check.get("details")
+        if not isinstance(details, dict):
+            continue
+        failures = details.get("contract_failures")
+        if not isinstance(failures, list):
+            continue
+        for failure in failures:
+            if not isinstance(failure, dict):
+                continue
+            repair = {
+                "check_id": check.get("id"),
+                "field": failure.get("field"),
+                "expected": failure.get("expected"),
+                "actual": failure.get("actual"),
+                "source": details.get("source"),
+            }
+            if "reason" in failure:
+                repair["reason"] = failure.get("reason")
+            repairs.append(repair)
+    return repairs
+
+
+def _markdown_contract_value(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        return _markdown_code_span(json.dumps(value, sort_keys=True))
+    return _markdown_code_span(value)
+
+
 def _acceptance_items(payload: dict[str, Any], field: str) -> list[Any]:
     value = payload.get(field)
     if value is None:
@@ -2030,6 +2063,20 @@ def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
                     f"  - remediation: {remediation}",
                 ]
             )
+    acceptance_contract_failures = _acceptance_contract_repair_failures(summary)
+    if acceptance_contract_failures:
+        lines.extend(["", "## Acceptance Contract Repairs", ""])
+        for failure in acceptance_contract_failures:
+            lines.extend(
+                [
+                    f"- `{failure.get('check_id')}` field={_markdown_code_span(failure.get('field'))}",
+                    f"  - source: {_markdown_code_span(failure.get('source'))}",
+                    f"  - expected: {_markdown_contract_value(failure.get('expected'))}",
+                    f"  - actual: {_markdown_contract_value(failure.get('actual'))}",
+                ]
+            )
+            if failure.get("reason") is not None:
+                lines.append(f"  - reason: {_markdown_code_span(failure.get('reason'))}")
     lines.extend(["", "## Evidence Matrix", ""])
     for entry in summary["evidence_matrix"]:
         lines.extend(

@@ -338,15 +338,17 @@ warning-policy status, warning allow-list ids, unexpected warning ids, required
 failures, optional failures, and warnings before the evidence matrix so
 reviewers can jump directly to the actionable issue. Failed acceptance command
 recipes also get an `Acceptance Command Repairs` section with the rejected
-command, reason, and remediation. Its evidence matrix includes each artifact's runtime
-evidence status, hardware-verified case count, runtime submission status,
-review-warning count, review-warning details, acceptance schema version,
-acceptance check binding, acceptance trust tier, acceptance runtime evidence
-status, acceptance status, acceptance recommended action, acceptance
-blocking-failure count, acceptance warning count, and acceptance
-contract-failure count so reviewers do not need to inspect the JSON before
-spotting a weak runtime boundary, rejected sidecar, warning-bearing sidecar,
-missing handoff action, or misbound sidecar.
+command, reason, and remediation. Failed release-bound sidecar contracts get an
+`Acceptance Contract Repairs` section with the check id, sidecar source,
+field, expected value, actual value, and failure reason when one is available.
+Its evidence matrix includes each artifact's runtime evidence status,
+hardware-verified case count, runtime submission status, review-warning count,
+review-warning details, acceptance schema version, acceptance check binding,
+acceptance trust tier, acceptance runtime evidence status, acceptance status,
+acceptance recommended action, acceptance blocking-failure count, acceptance
+warning count, and acceptance contract-failure count so reviewers do not need to
+inspect the JSON before spotting a weak runtime boundary, rejected sidecar,
+warning-bearing sidecar, missing handoff action, or misbound sidecar.
 
 Evidence Matrix `review_warnings` are human review hints for weak or missing
 scientific support, such as `baseline_kind: none`, `baseline_strength: weak`,

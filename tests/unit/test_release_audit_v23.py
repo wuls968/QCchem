@@ -1669,6 +1669,11 @@ def test_release_audit_fails_sidecar_with_wrong_check_binding(tmp_path: Path) ->
     assert acceptance_check["details"]["contract_failure_count"] == 1
     assert acceptance_check["details"]["contract_failures"][0]["field"] == "release_audit_check_id"
     assert summary["evidence_matrix"][0]["acceptance_contract_failure_count"] == 1
+    report = (tmp_path / "out" / "release_readiness.md").read_text(encoding="utf-8")
+    assert "## Acceptance Contract Repairs" in report
+    assert "- `curated_artifact:core_anchor:acceptance_summary` field=`release_audit_check_id`" in report
+    assert "  - expected: `curated_artifact:core_anchor:acceptance_summary`" in report
+    assert "  - actual: `curated_artifact:other_anchor:acceptance_summary`" in report
 
 
 def test_release_audit_fails_sidecar_with_wrong_artifact_binding(tmp_path: Path) -> None:
@@ -1881,6 +1886,12 @@ def test_release_audit_fails_required_artifact_with_legacy_benchmark_acceptance_
         "actual": "qcchem.benchmark_acceptance.v0.1-alpha",
         "reason": "legacy_schema_missing_release_binding",
     }
+    report = (tmp_path / "out" / "release_readiness.md").read_text(encoding="utf-8")
+    assert "## Acceptance Contract Repairs" in report
+    assert "- `curated_artifact:core_anchor:acceptance_summary` field=`schema_version`" in report
+    assert "  - expected: `qcchem.release_artifact_acceptance.v0.1-alpha`" in report
+    assert "  - actual: `qcchem.benchmark_acceptance.v0.1-alpha`" in report
+    assert "  - reason: `legacy_schema_missing_release_binding`" in report
 
 
 def test_release_audit_still_allows_legacy_benchmark_acceptance_for_optional_artifact(tmp_path: Path) -> None:
