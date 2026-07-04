@@ -371,7 +371,12 @@ release_audit:
         )
         == 2
     )
-    assert "Release acceptance sidecars: needs_update" in capsys.readouterr().out
+    stdout = capsys.readouterr().out
+    assert "Release acceptance sidecars: needs_update" in stdout
+    assert (
+        "Sidecar issue: h2_anchor status=missing changed_fields=none "
+        "sidecar=artifacts/h2/acceptance_summary.json (reason=sidecar_missing)"
+    ) in stdout
 
     assert (
         main(
@@ -418,6 +423,28 @@ release_audit:
     assert status["status"] == "fresh"
     assert status["fresh_count"] == 1
     assert "Release acceptance sidecars: fresh" in capsys.readouterr().out
+
+    artifact_payload = json.loads(artifact.read_text(encoding="utf-8"))
+    artifact_payload["energy"]["total_energy"] = -1.138
+    artifact.write_text(json.dumps(artifact_payload), encoding="utf-8")
+    assert (
+        main(
+            [
+                "release",
+                "acceptance-status",
+                "-c",
+                str(config),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+            ]
+        )
+        == 2
+    )
+    stdout = capsys.readouterr().out
+    assert "Release acceptance sidecars: needs_update" in stdout
+    assert "Sidecar issue: h2_anchor status=stale changed_fields=artifact_sha256" in stdout
+    assert "(contract_failure_field=artifact_sha256" in stdout
 
     assert (
         main(

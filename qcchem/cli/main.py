@@ -715,6 +715,60 @@ def _release_audit_hint_value(value: object, *, limit: int = 120) -> str:
     return text
 
 
+def _release_acceptance_status_issue_line(item: dict[str, object]) -> str:
+    changed = _release_acceptance_status_list_hint(item.get("changed_fields")) or "none"
+    line = (
+        f"{item.get('artifact_name')} "
+        f"status={item.get('status')} "
+        f"changed_fields={changed} "
+        f"sidecar={item.get('sidecar_path')}"
+    )
+    detail_hint = _release_acceptance_status_detail_hint(item)
+    if detail_hint:
+        line += f" ({detail_hint})"
+    return line
+
+
+def _release_acceptance_status_detail_hint(item: dict[str, object]) -> str:
+    status = item.get("status")
+    if status == "missing":
+        return "reason=sidecar_missing"
+
+    error = item.get("error")
+    if error:
+        return f"error={_release_audit_hint_value(error)}"
+
+    contract_failures = item.get("contract_failures")
+    if isinstance(contract_failures, list) and contract_failures:
+        first = next((failure for failure in contract_failures if isinstance(failure, dict)), None)
+        if first is None:
+            return f"contract_failure={_release_audit_hint_value(contract_failures[0])}"
+        fragments: list[str] = []
+        for key in ("field", "reason", "expected", "actual"):
+            if key not in first:
+                continue
+            label = f"contract_failure_{key}" if key in {"field", "reason"} else key
+            fragments.append(f"{label}={_release_audit_hint_value(first[key])}")
+        if fragments:
+            return " ".join(fragments[:5])
+
+    missing = _release_acceptance_status_list_hint(item.get("missing_fields"))
+    if missing:
+        return f"missing_fields={missing}"
+
+    return ""
+
+
+def _release_acceptance_status_list_hint(value: object, *, limit: int = 5) -> str:
+    if not isinstance(value, list) or not value:
+        return ""
+    fields = [str(field) for field in value[:limit]]
+    remaining = len(value) - limit
+    if remaining > 0:
+        fields.append(f"+{remaining} more")
+    return ",".join(fields)
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1233,13 +1287,9 @@ def main(argv: list[str] | None = None) -> int:
             for item in report.get("items", []):
                 if not isinstance(item, dict) or item.get("status") == "fresh":
                     continue
-                changed = ",".join(str(field) for field in item.get("changed_fields", [])) or "none"
                 print(
                     "Sidecar issue: "
-                    f"{item.get('artifact_name')} "
-                    f"status={item.get('status')} "
-                    f"changed_fields={changed} "
-                    f"sidecar={item.get('sidecar_path')}"
+                    f"{_release_acceptance_status_issue_line(item)}"
                 )
             return 2 if args.strict and report["status"] != "fresh" else 0
 

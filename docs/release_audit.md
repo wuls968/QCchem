@@ -60,7 +60,9 @@ qcchem release accept-artifact \
 
 `acceptance-status` is read-only and reports missing, stale, unreadable, or
 blocked sidecars; with `--strict` it exits with code `2` when any manifest
-sidecar needs attention. `accept-artifact` writes the sibling
+sidecar needs attention. For every non-fresh sidecar, the CLI prints a bounded
+`Sidecar issue:` line with the sidecar path plus the first error or contract
+failure reason when one is available. `accept-artifact` writes the sibling
 `acceptance_summary.json` for one manifest entry, binds it to the exact
 release-audit check id, records the audited artifact hash, and reuses existing
 `release_boundaries` when overwriting unless new `--boundary` notes are
