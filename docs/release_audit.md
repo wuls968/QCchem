@@ -42,6 +42,23 @@ keeps copied-repository and temporary-fixture audits usable from outside the
 repository checkout and avoids accidental shadow manifests in the caller's
 current directory.
 
+To create or refresh a manifest-bound release acceptance sidecar, use the
+explicit writer command rather than editing `acceptance_summary.json` by hand:
+
+```bash
+qcchem release accept-artifact \
+  -c configs/release/trust_first_audit.yaml \
+  --name h2_local_validated_anchor \
+  --overwrite
+```
+
+The command writes the sibling `acceptance_summary.json` for the manifest entry,
+binds it to the exact release-audit check id, records the audited artifact hash,
+and reuses existing `release_boundaries` when overwriting unless new
+`--boundary` notes are supplied. It does not run chemistry or promote the
+artifact beyond its `evidence_summary` trust tier. Without `--overwrite`, it
+refuses to replace an existing sidecar.
+
 ## Outputs
 
 The command writes:

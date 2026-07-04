@@ -145,6 +145,13 @@ def run_release_audit_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.release_audit", "run_release_audit_from_config")(*args, **kwargs)
 
 
+def write_release_artifact_acceptance_summary_from_config(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.release_acceptance",
+        "write_release_artifact_acceptance_summary_from_config",
+    )(*args, **kwargs)
+
+
 def run_workbench_smoke_from_docs(*args, **kwargs):
     return _load_attr("qcchem.workbench.smoke", "run_workbench_smoke_from_docs")(*args, **kwargs)
 
@@ -366,6 +373,24 @@ def _build_parser() -> argparse.ArgumentParser:
     release_audit.add_argument("-c", "--config", type=Path, required=True)
     release_audit.add_argument("-o", "--output-dir", type=Path)
     release_audit.add_argument("--repo-root", type=Path, help="Repository root to audit; defaults to current directory.")
+    release_accept = release_subparsers.add_parser(
+        "accept-artifact",
+        help="Write a release-bound acceptance_summary.json for one manifest artifact.",
+    )
+    release_accept.add_argument("-c", "--config", type=Path, required=True)
+    release_accept.add_argument("--name", required=True, help="Artifact or artifact-backed exploratory asset name.")
+    release_accept.add_argument("--repo-root", type=Path, help="Repository root; defaults to the manifest workspace.")
+    release_accept.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing sibling acceptance_summary.json.",
+    )
+    release_accept.add_argument(
+        "--boundary",
+        action="append",
+        default=[],
+        help="Release-boundary note to record in the sidecar. Repeat for multiple notes.",
+    )
 
     validation_parser = subparsers.add_parser("validation", help="Validation harness commands.")
     validation_subparsers = validation_parser.add_subparsers(dest="validation_command", required=True)
@@ -1095,6 +1120,24 @@ def main(argv: list[str] | None = None) -> int:
                     report_dir = output_path if output_path.is_absolute() else Path(str(repo_root_text)) / output_path
             print(f"Report: {report_dir / 'release_readiness.md'}")
             return 0 if summary["status"] == "passed" else 2
+        if args.release_command == "accept-artifact":
+            try:
+                summary, output_path = write_release_artifact_acceptance_summary_from_config(
+                    args.config,
+                    artifact_name=args.name,
+                    repo_root=args.repo_root,
+                    overwrite=args.overwrite,
+                    release_boundaries=args.boundary or None,
+                )
+            except (FileExistsError, OSError, ValueError, yaml.YAMLError) as exc:
+                print(f"Release acceptance rejected: {exc}")
+                return 2
+            print(f"Release acceptance sidecar written to {output_path}")
+            print(f"Artifact: {summary['artifact_name']}")
+            print(f"Trust tier: {summary['trust_tier']}")
+            print(f"Runtime evidence status: {summary['runtime_evidence_status']}")
+            print(f"Recommended action: {summary['recommended_action']}")
+            return 0 if summary["accepted"] else 2
 
     if args.command == "validation":
         if args.validation_command == "qmmm":

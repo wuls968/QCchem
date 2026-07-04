@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from qcchem.io.release_audit_config import load_release_audit_spec
+from qcchem.workflow.release_acceptance import write_release_artifact_acceptance_summary
+from qcchem.workflow.release_audit import run_release_audit
+
+
+def _write_release_acceptance_fixture(root: Path) -> Path:
+    (root / "pyproject.toml").write_text('[project]\nversion = "0.1.0a1"\n', encoding="utf-8")
+    artifact = root / "artifacts" / "h2" / "result.json"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.result.v0.1-alpha",
+                "run_id": "h2-local",
+                "problem": {"molecule_name": "H2", "basis": "sto3g"},
+                "energy": {"total_energy": -1.137, "energy_units": "Hartree"},
+                "backend": {"kind": "statevector"},
+                "benchmark": {
+                    "absolute_error": 0.0,
+                    "absolute_error_threshold": 0.0016,
+                    "comparison_target": "exact diagonalization",
+                    "exact_available": True,
+                },
+                "chemical_accuracy": {
+                    "available": True,
+                    "meets_chemical_accuracy": True,
+                    "absolute_error_hartree": 0.0,
+                },
+                "verification_status": "validated",
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = root / "configs" / "release" / "trust_first_audit.yaml"
+    config.parent.mkdir(parents=True)
+    config.write_text(
+        """
+release_audit:
+  profile: trust_first
+  release_version: 0.1.0a1
+  curated_artifacts:
+    - name: h2_anchor
+      path: artifacts/h2/result.json
+      required: true
+  required_docs: []
+  acceptance_commands: []
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return config
+
+
+def test_release_acceptance_writes_manifest_bound_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+
+    summary, output_path = write_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+    )
+
+    assert output_path == tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+    assert summary["schema_version"] == "qcchem.release_artifact_acceptance.v0.1-alpha"
+    assert summary["artifact_name"] == "h2_anchor"
+    assert summary["artifact_path"] == "artifacts/h2/result.json"
+    assert summary["release_audit_check_id"] == "curated_artifact:h2_anchor:acceptance_summary"
+    assert summary["trust_tier"] == "validated"
+    assert summary["runtime_evidence_status"] == "none"
+    assert summary["accepted"] is True
+    assert summary["blocking_failures"] == []
+    assert summary["warnings"] == []
+
+    audit = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+    acceptance_check = next(
+        check
+        for check in audit["checks"]
+        if check["id"] == "curated_artifact:h2_anchor:acceptance_summary"
+    )
+    assert audit["status"] == "passed"
+    assert acceptance_check["status"] == "passed"
+    assert audit["evidence_matrix"][0]["acceptance_contract_failure_count"] == 0
+
+
+def test_release_acceptance_requires_overwrite_for_existing_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+
+    with pytest.raises(FileExistsError, match="acceptance_summary.json"):
+        write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+
+
+def test_release_acceptance_overwrite_preserves_existing_boundaries(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    sidecar = tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+    write_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+        release_boundaries=["Manual boundary note."],
+    )
+    artifact = tmp_path / "artifacts" / "h2" / "result.json"
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    payload["energy"]["total_energy"] = -1.138
+    artifact.write_text(json.dumps(payload), encoding="utf-8")
+    stale = json.loads(sidecar.read_text(encoding="utf-8"))["artifact_sha256"]
+
+    summary, _ = write_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+        overwrite=True,
+    )
+
+    assert summary["artifact_sha256"] != stale
+    assert summary["release_boundaries"] == ["Manual boundary note."]
+
+
+def test_release_acceptance_rejects_unknown_manifest_name(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+
+    with pytest.raises(ValueError, match="no artifact named 'missing'"):
+        write_release_artifact_acceptance_summary(spec, artifact_name="missing", repo_root=tmp_path)

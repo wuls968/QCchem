@@ -252,6 +252,87 @@ def test_benchmark_run_honors_strict_acceptance_exit_code(
     assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml")]) == 2
 
 
+def test_release_accept_artifact_cli_writes_bound_sidecar(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    (tmp_path / "pyproject.toml").write_text('[project]\nversion = "0.1.0a1"\n', encoding="utf-8")
+    artifact = tmp_path / "artifacts" / "h2" / "result.json"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.result.v0.1-alpha",
+                "run_id": "h2-local",
+                "problem": {"molecule_name": "H2", "basis": "sto3g"},
+                "energy": {"total_energy": -1.137, "energy_units": "Hartree"},
+                "backend": {"kind": "statevector"},
+                "benchmark": {"absolute_error": 0.0, "exact_available": True},
+                "chemical_accuracy": {"available": True, "meets_chemical_accuracy": True},
+                "verification_status": "validated",
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = tmp_path / "configs" / "release" / "trust_first_audit.yaml"
+    config.parent.mkdir(parents=True)
+    config.write_text(
+        """
+release_audit:
+  profile: trust_first
+  release_version: 0.1.0a1
+  curated_artifacts:
+    - name: h2_anchor
+      path: artifacts/h2/result.json
+      required: true
+  required_docs: []
+  acceptance_commands: []
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "release",
+                "accept-artifact",
+                "-c",
+                str(config),
+                "--name",
+                "h2_anchor",
+                "--repo-root",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    sidecar = artifact.parent / "acceptance_summary.json"
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    stdout = capsys.readouterr().out
+
+    assert "Release acceptance sidecar written" in stdout
+    assert payload["schema_version"] == "qcchem.release_artifact_acceptance.v0.1-alpha"
+    assert payload["artifact_path"] == "artifacts/h2/result.json"
+    assert payload["release_audit_check_id"] == "curated_artifact:h2_anchor:acceptance_summary"
+
+    assert (
+        main(
+            [
+                "release",
+                "accept-artifact",
+                "-c",
+                str(config),
+                "--name",
+                "h2_anchor",
+                "--repo-root",
+                str(tmp_path),
+            ]
+        )
+        == 2
+    )
+    assert "Release acceptance rejected" in capsys.readouterr().out
+
+
 def test_aggregate_workflow_cli_passes_overwrite_flags(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

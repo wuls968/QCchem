@@ -56,6 +56,21 @@ benchmark evidence, but they cannot satisfy `required` or
 `acceptance_required` manifest entries. New release-artifact sidecars should not
 float outside `configs/release/trust_first_audit.yaml`.
 
+Refresh a manifest-bound release sidecar with the explicit writer command:
+
+```bash
+qcchem release accept-artifact \
+  -c configs/release/trust_first_audit.yaml \
+  --name h2_local_validated_anchor \
+  --overwrite
+```
+
+The command writes the sibling `acceptance_summary.json`, refreshes
+`artifact_sha256`, derives trust tier and runtime evidence status from the same
+release-readable evidence summary used by `qcchem release audit`, and preserves
+existing `release_boundaries` on overwrite unless `--boundary` is supplied. It
+refuses to replace an existing sidecar unless `--overwrite` is explicit.
+
 Artifact indexes preserve both release-sidecar presence and parse status:
 `has_acceptance_summary` reports embedded acceptance data or a sibling
 `acceptance_summary.json`, while `acceptance_summary_readable` and
