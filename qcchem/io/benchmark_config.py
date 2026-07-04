@@ -9,7 +9,7 @@ from typing import Any
 import yaml
 
 from qcchem.core import BenchmarkAcceptanceSpec, BenchmarkCaseSpec, BenchmarkSuiteSpec
-from qcchem.io.config import _project_root, _require_mapping, resolve_user_path
+from qcchem.io.config import _require_mapping, resolve_project_path, resolve_user_path
 
 
 @dataclass(slots=True)
@@ -30,22 +30,21 @@ class HardwareCalibrationSuiteSpec:
     cases: list[HardwareCalibrationCaseSpec] = field(default_factory=list)
 
 
-def _load_benchmark_config_mapping(path: Path) -> dict[str, Any]:
+def _load_benchmark_config_mapping(path: Path) -> tuple[dict[str, Any], Path]:
     resolved_path = path if path.is_absolute() else resolve_user_path(Path.cwd(), str(path))
     raw = yaml.safe_load(resolved_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Benchmark-suite configuration must deserialize to a mapping.")
-    return raw
+    return raw, resolved_path
 
 
-def _resolve_project_path(value: str | Path) -> Path:
-    candidate = Path(str(value))
-    return candidate if candidate.is_absolute() else (_project_root() / candidate).resolve()
+def _resolve_benchmark_project_path(config_path: Path, value: str | Path) -> Path:
+    return resolve_project_path(config_path, value)
 
 
 def load_benchmark_suite_spec(path: Path) -> BenchmarkSuiteSpec:
     """Load a benchmark-suite specification from YAML."""
-    raw = _load_benchmark_config_mapping(path)
+    raw, resolved_path = _load_benchmark_config_mapping(path)
     suite_raw = _require_mapping(raw, "benchmark_suite")
     cases_raw = suite_raw.get("cases", [])
     if not isinstance(cases_raw, list) or not cases_raw:
@@ -58,7 +57,7 @@ def load_benchmark_suite_spec(path: Path) -> BenchmarkSuiteSpec:
         config_value = item.get("config")
         config_path = None
         if config_value is not None:
-            config_path = _resolve_project_path(config_value)
+            config_path = _resolve_benchmark_project_path(resolved_path, config_value)
         cases.append(
             BenchmarkCaseSpec(
                 name=str(item["name"]),
@@ -102,7 +101,7 @@ def load_benchmark_suite_spec(path: Path) -> BenchmarkSuiteSpec:
 
 def load_hardware_calibration_suite_spec(path: Path) -> HardwareCalibrationSuiteSpec:
     """Load a hardware-calibration dashboard specification from YAML."""
-    raw = _load_benchmark_config_mapping(path)
+    raw, resolved_path = _load_benchmark_config_mapping(path)
     suite_raw = _require_mapping(raw, "hardware_calibration_suite")
     cases_raw = suite_raw.get("cases", [])
     if not isinstance(cases_raw, list) or not cases_raw:
@@ -118,12 +117,13 @@ def load_hardware_calibration_suite_spec(path: Path) -> HardwareCalibrationSuite
         cases.append(
             HardwareCalibrationCaseSpec(
                 name=str(item["name"]),
-                result_json=_resolve_project_path(result_json_value),
+                result_json=_resolve_benchmark_project_path(resolved_path, result_json_value),
             )
         )
 
-    output_root = _resolve_project_path(
-        suite_raw.get("output_root", Path("artifacts") / str(suite_raw["name"]))
+    output_root = _resolve_benchmark_project_path(
+        resolved_path,
+        suite_raw.get("output_root", Path("artifacts") / str(suite_raw["name"])),
     )
     return HardwareCalibrationSuiteSpec(
         name=str(suite_raw["name"]),
@@ -135,7 +135,7 @@ def load_hardware_calibration_suite_spec(path: Path) -> HardwareCalibrationSuite
 
 def load_benchmark_entry_spec(path: Path) -> BenchmarkSuiteSpec | HardwareCalibrationSuiteSpec:
     """Load any config supported by the benchmark entry point."""
-    raw = _load_benchmark_config_mapping(path)
+    raw, _resolved_path = _load_benchmark_config_mapping(path)
     if "benchmark_suite" in raw:
         return load_benchmark_suite_spec(path)
     if "hardware_calibration_suite" in raw:

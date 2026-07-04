@@ -7,12 +7,12 @@ from pathlib import Path
 import yaml
 
 from qcchem.core import StudyRunSpec, StudySpec
-from qcchem.io.config import _parse_continuity, _project_root, _require_mapping
+from qcchem.io.config import _parse_continuity, _require_mapping, resolve_project_path, resolve_user_path
 
 
 def load_study_spec(path: Path) -> StudySpec:
     """Load a study specification from YAML."""
-    resolved_path = path if path.is_absolute() else (_project_root() / path).resolve()
+    resolved_path = path if path.is_absolute() else resolve_user_path(Path.cwd(), str(path))
     raw = yaml.safe_load(resolved_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Study configuration must deserialize to a mapping.")
@@ -25,9 +25,7 @@ def load_study_spec(path: Path) -> StudySpec:
     for item in runs_raw:
         if not isinstance(item, dict):
             raise ValueError("Each study run must be a mapping.")
-        config_path = Path(str(item["config"]))
-        if not config_path.is_absolute():
-            config_path = (_project_root() / config_path).resolve()
+        config_path = resolve_project_path(resolved_path, item["config"])
         runs.append(
             StudyRunSpec(
                 name=str(item["name"]),

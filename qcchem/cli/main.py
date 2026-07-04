@@ -145,6 +145,10 @@ def run_release_audit_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.release_audit", "run_release_audit_from_config")(*args, **kwargs)
 
 
+def run_workbench_smoke_from_docs(*args, **kwargs):
+    return _load_attr("qcchem.workbench.smoke", "run_workbench_smoke_from_docs")(*args, **kwargs)
+
+
 def run_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.runner", "run_from_config")(*args, **kwargs)
 
@@ -199,6 +203,11 @@ def _build_parser() -> argparse.ArgumentParser:
     study_run = study_subparsers.add_parser("run", help="Run a study from YAML config.")
     study_run.add_argument("-c", "--config", type=Path, required=True)
     study_run.add_argument("-o", "--output-dir", type=Path)
+    study_run.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty study output directory.",
+    )
     study_report = study_subparsers.add_parser("report", help="Regenerate a study report from JSON.")
     study_report.add_argument("result_json", type=Path)
     study_report.add_argument("-o", "--output", type=Path)
@@ -223,6 +232,11 @@ def _build_parser() -> argparse.ArgumentParser:
     benchmark_run.add_argument(
         "--confirm-runtime-budget",
         help="Required before any benchmark case can submit a real IBM Runtime job.",
+    )
+    benchmark_run.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty benchmark output directory.",
     )
     benchmark_report = benchmark_subparsers.add_parser("report", help="Regenerate a benchmark report from JSON.")
     benchmark_report.add_argument("result_json", type=Path)
@@ -279,6 +293,11 @@ def _build_parser() -> argparse.ArgumentParser:
     campaign_run = campaign_subparsers.add_parser("run", help="Run a campaign from YAML config.")
     campaign_run.add_argument("-c", "--config", type=Path, required=True)
     campaign_run.add_argument("-o", "--output-dir", type=Path)
+    campaign_run.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty campaign output directory.",
+    )
     campaign_report = campaign_subparsers.add_parser("report", help="Regenerate a campaign report from JSON.")
     campaign_report.add_argument("result_json", type=Path)
     campaign_report.add_argument("-o", "--output", type=Path)
@@ -291,6 +310,11 @@ def _build_parser() -> argparse.ArgumentParser:
     scan_run = scan_subparsers.add_parser("run", help="Run a scan from YAML config.")
     scan_run.add_argument("-c", "--config", type=Path, required=True)
     scan_run.add_argument("-o", "--output-dir", type=Path)
+    scan_run.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty scan output directory.",
+    )
     scan_report = scan_subparsers.add_parser("report", help="Regenerate a scan report from JSON.")
     scan_report.add_argument("result_json", type=Path)
     scan_report.add_argument("-o", "--output", type=Path)
@@ -311,6 +335,22 @@ def _build_parser() -> argparse.ArgumentParser:
     workbench_serve.add_argument("--host", default="127.0.0.1")
     workbench_serve.add_argument("--port", type=int, default=8050)
     workbench_serve.add_argument("--debug", action="store_true")
+    workbench_serve.add_argument(
+        "--artifact-root",
+        type=Path,
+        help="Artifact root to index; defaults to ./artifacts when present.",
+    )
+    workbench_smoke = workbench_subparsers.add_parser(
+        "smoke",
+        help="Validate the documented Workbench showcase routes without starting a server.",
+    )
+    workbench_smoke.add_argument("--docs", type=Path, default=Path("docs") / "workbench.md")
+    workbench_smoke.add_argument(
+        "--artifact-root",
+        type=Path,
+        help="Artifact root to render page evidence from; defaults to ./artifacts when present.",
+    )
+    workbench_smoke.add_argument("-o", "--output", type=Path, help="Optional JSON summary output path.")
 
     runtime_parser = subparsers.add_parser("runtime", help="Runtime artifact commands.")
     runtime_subparsers = runtime_parser.add_subparsers(dest="runtime_command", required=True)
@@ -366,6 +406,11 @@ def _build_parser() -> argparse.ArgumentParser:
     workflow_run = workflow_subparsers.add_parser("run", help="Run a custom workflow YAML file.")
     workflow_run.add_argument("-c", "--config", type=Path, required=True)
     workflow_run.add_argument("-o", "--output-dir", type=Path)
+    workflow_run.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty workflow output directory.",
+    )
     workflow_report = workflow_subparsers.add_parser("report", help="Regenerate a workflow Markdown report.")
     workflow_report.add_argument("result_json", type=Path)
     workflow_report.add_argument("-o", "--output", type=Path)
@@ -447,7 +492,7 @@ def _write_aggregate_from_json(result_json: Path, output: Path | None, *, kind: 
     return 0
 
 
-def _run_workbench_command(host: str, port: int, debug: bool) -> int:
+def _run_workbench_command(host: str, port: int, debug: bool, artifact_root: Path | None = None) -> int:
     try:
         workbench_server = importlib.import_module("qcchem.workbench.server")
     except ModuleNotFoundError as exc:
@@ -457,15 +502,120 @@ def _run_workbench_command(host: str, port: int, debug: bool) -> int:
         print('QCchem workbench requires optional UI dependencies. Install with: pip install -e ".[ui]"')
         return 2
 
-    if hasattr(workbench_server, "prepare_workbench") and hasattr(workbench_server, "launch_app"):
-        app, summary = workbench_server.prepare_workbench(host=host, port=port, debug=debug)
-        workbench_server.print_workbench_startup(summary)
-        workbench_server.launch_app(app, host=host, port=port, debug=debug)
-        return 0
+    try:
+        if hasattr(workbench_server, "prepare_workbench") and hasattr(workbench_server, "launch_app"):
+            app, summary = workbench_server.prepare_workbench(
+                host=host,
+                port=port,
+                debug=debug,
+                artifact_root=artifact_root,
+            )
+            workbench_server.print_workbench_startup(summary)
+            workbench_server.launch_app(app, host=host, port=port, debug=debug)
+            return 0
 
-    summary = workbench_server.serve_workbench(host=host, port=port, debug=debug)
+        summary = workbench_server.serve_workbench(host=host, port=port, debug=debug, artifact_root=artifact_root)
+    except (OSError, ValueError) as exc:
+        print(f"QCchem workbench rejected: {exc}")
+        return 2
     workbench_server.print_workbench_startup(summary)
     return 0
+
+
+def _workbench_smoke_failed_checks(item: dict[str, object]) -> str:
+    failed_checks = item.get("failed_checks")
+    if isinstance(failed_checks, list):
+        names = [str(name) for name in failed_checks]
+    else:
+        checks = item.get("checks")
+        names = [str(name) for name, passed in checks.items() if not passed] if isinstance(checks, dict) else []
+    return ",".join(names) if names else "unknown"
+
+
+def _print_workbench_smoke_failed_summary(summary: dict[str, object], *, limit: int = 8) -> None:
+    failed_checks = summary.get("failed_checks")
+    if not isinstance(failed_checks, list) or not failed_checks:
+        return
+    names = [str(name) for name in failed_checks]
+    line = ", ".join(names[:limit])
+    remaining = len(names) - limit
+    if remaining > 0:
+        line = f"{line}, ... {remaining} more"
+    print(f"Failed checks: {line}")
+
+
+def _run_workbench_smoke_command(docs_path: Path, output: Path | None, artifact_root: Path | None = None) -> int:
+    try:
+        summary = run_workbench_smoke_from_docs(docs_path, artifact_root=artifact_root)
+    except ModuleNotFoundError as exc:
+        optional_ui_modules = {"dash", "plotly", "pandas"}
+        if exc.name not in optional_ui_modules:
+            raise
+        print('QCchem workbench smoke requires optional UI dependencies. Install with: pip install -e ".[ui]"')
+        return 2
+    except (OSError, ValueError) as exc:
+        print(f"QCchem workbench smoke rejected: {exc}")
+        return 2
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        print(f"Workbench smoke summary written to {output}")
+
+    print(f"Workbench smoke completed: {summary['status']}")
+    print(f"Routes: {summary['passed_routes']} passed, {summary['failed_routes']} failed")
+    print(f"Registered pages: {summary['passed_pages']} passed, {summary['failed_pages']} failed")
+    _print_workbench_smoke_failed_summary(summary)
+    for route in summary.get("routes", []):
+        if not isinstance(route, dict) or route.get("status") == "passed":
+            continue
+        render_error = route.get("render_error")
+        print(
+            "Failed route: "
+            f"{route.get('route')} "
+            f"failed_checks={_workbench_smoke_failed_checks(route)} "
+            f"label={route.get('actual_active_label')!r} "
+            f"expected_label={route.get('expected_active_label')!r} "
+            f"expected_text={route.get('expected_text')!r} "
+            f"text_excerpt={route.get('text_excerpt')!r}"
+            + (f" render_error={render_error!r}" if render_error else "")
+        )
+    for page in summary.get("pages", []):
+        if not isinstance(page, dict) or page.get("status") == "passed":
+            continue
+        render_error = page.get("render_error")
+        print(
+            "Failed page: "
+            f"{page.get('path')} "
+            f"failed_checks={_workbench_smoke_failed_checks(page)} "
+            f"title={page.get('title')!r} "
+            f"route_label={page.get('route_label')!r} "
+            f"text_excerpt={page.get('text_excerpt')!r}"
+            + (f" render_error={render_error!r}" if render_error else "")
+        )
+    return 0 if summary["status"] == "passed" else 2
+
+
+def _print_release_audit_triage(summary: dict[str, object], *, limit: int = 5) -> None:
+    required_failed = summary.get("required_failed_checks")
+    if isinstance(required_failed, list) and required_failed:
+        print("Required failed checks:")
+        for check in required_failed[:limit]:
+            if isinstance(check, dict):
+                print(f"- {check.get('id')}: {check.get('summary', '')}")
+        remaining = len(required_failed) - limit
+        if remaining > 0:
+            print(f"- ... {remaining} more required failure(s)")
+
+    warning_checks = summary.get("warning_checks")
+    if isinstance(warning_checks, list) and warning_checks:
+        print("Warning checks:")
+        for check in warning_checks[:limit]:
+            if isinstance(check, dict):
+                print(f"- {check.get('id')}: {check.get('summary', '')}")
+        remaining = len(warning_checks) - limit
+        if remaining > 0:
+            print(f"- ... {remaining} more warning(s)")
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:
@@ -544,7 +694,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_dir=args.output_dir,
                 confirm_runtime_budget=args.confirm_runtime_budget,
             )
-        except ValueError as exc:
+        except (FileExistsError, ValueError) as exc:
             print(f"QCchem run rejected: {exc}")
             return 2
         print(f"QCchem run completed: {result.problem.molecule_name}")
@@ -671,7 +821,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "study":
         if args.study_command == "run":
-            result = run_study_from_config(args.config, output_dir=args.output_dir)
+            try:
+                result = run_study_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    overwrite=args.overwrite,
+                )
+            except FileExistsError as exc:
+                print(f"Study rejected: {exc}")
+                return 2
             print(f"Study completed: {result.study_name}")
             print(f"Runs: {result.summary.total_runs}")
             if result.evidence_summary is not None:
@@ -692,8 +850,9 @@ def main(argv: list[str] | None = None) -> int:
                     confirm_runtime_budget=args.confirm_runtime_budget,
                     include_tags=args.include_tag,
                     exclude_tags=args.exclude_tag,
+                    overwrite=args.overwrite,
                 )
-            except ValueError as exc:
+            except (FileExistsError, ValueError) as exc:
                 print(f"Benchmark suite rejected: {exc}")
                 return 2
             if isinstance(result, dict):
@@ -812,7 +971,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "campaign":
         if args.campaign_command == "run":
-            summary = run_campaign_from_config(args.config, output_dir=args.output_dir)
+            try:
+                summary = run_campaign_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    overwrite=args.overwrite,
+                )
+            except FileExistsError as exc:
+                print(f"Campaign rejected: {exc}")
+                return 2
             print(f"Campaign completed: {summary['campaign_name']}")
             print(f"Status: {summary['status']}")
             print(f"Artifacts: {summary['artifact_root']}")
@@ -830,7 +997,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "scan":
         if args.scan_command == "run":
-            result = run_scan_from_config(args.config, output_dir=args.output_dir)
+            try:
+                result = run_scan_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    overwrite=args.overwrite,
+                )
+            except FileExistsError as exc:
+                print(f"Scan rejected: {exc}")
+                return 2
             print(f"Scan completed: {result.scan_name}")
             print(f"Points: {result.summary.total_runs}")
             if result.evidence_summary is not None:
@@ -844,12 +1019,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "exploratory":
         if args.exploratory_command == "run":
-            result = run_from_config(
-                args.config,
-                output_dir=args.output_dir,
-                exploratory_command=True,
-                confirm_runtime_budget=args.confirm_runtime_budget,
-            )
+            try:
+                result = run_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    exploratory_command=True,
+                    confirm_runtime_budget=args.confirm_runtime_budget,
+                )
+            except (FileExistsError, ValueError) as exc:
+                print(f"QCchem exploratory run rejected: {exc}")
+                return 2
             print(f"QCchem exploratory run completed: {result.problem.molecule_name}")
             print(f"Verification status: {result.verification_status}")
             print(f"Module origin: {result.module_origin}")
@@ -875,7 +1054,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "workbench":
         if args.workbench_command == "serve":
-            return _run_workbench_command(args.host, args.port, args.debug)
+            return _run_workbench_command(args.host, args.port, args.debug, artifact_root=args.artifact_root)
+        if args.workbench_command == "smoke":
+            return _run_workbench_smoke_command(args.docs, args.output, artifact_root=args.artifact_root)
 
     if args.command == "runtime":
         if args.runtime_command == "collect":
@@ -889,15 +1070,30 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "release":
         if args.release_command == "audit":
-            summary = run_release_audit_from_config(
-                args.config,
-                output_dir=args.output_dir,
-                repo_root=args.repo_root,
-            )
+            output_dir = args.output_dir
+            if output_dir is None and args.repo_root is not None:
+                output_dir = args.repo_root / "artifacts" / "release_audit"
+            try:
+                summary = run_release_audit_from_config(
+                    args.config,
+                    output_dir=output_dir,
+                    repo_root=args.repo_root,
+                )
+            except (OSError, ValueError, yaml.YAMLError) as exc:
+                print(f"Release audit rejected: {exc}")
+                return 2
             print(f"Release audit completed: {summary['status']}")
             print(f"Required checks: {summary['required_pass_count']} passed, {summary['required_fail_count']} failed")
-            output_dir = args.output_dir or Path("artifacts") / "release_audit"
-            print(f"Report: {output_dir / 'release_readiness.md'}")
+            _print_release_audit_triage(summary)
+            report_dir = output_dir or Path("artifacts") / "release_audit"
+            if output_dir is None:
+                provenance = summary.get("audit_provenance") or {}
+                repo_root_text = provenance.get("repo_root")
+                output_dir_text = provenance.get("output_dir")
+                if repo_root_text and output_dir_text:
+                    output_path = Path(str(output_dir_text))
+                    report_dir = output_path if output_path.is_absolute() else Path(str(repo_root_text)) / output_path
+            print(f"Report: {report_dir / 'release_readiness.md'}")
             return 0 if summary["status"] == "passed" else 2
 
     if args.command == "validation":
@@ -964,8 +1160,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.workflow_command == "run":
             try:
-                result = run_custom_workflow_from_config(args.config, output_dir=args.output_dir)
-            except ValueError as exc:
+                result = run_custom_workflow_from_config(
+                    args.config,
+                    output_dir=args.output_dir,
+                    overwrite=args.overwrite,
+                )
+            except (FileExistsError, ValueError) as exc:
                 print(f"Workflow run rejected: {exc}")
                 return 2
             print(f"Workflow completed: {result.workflow_name}")

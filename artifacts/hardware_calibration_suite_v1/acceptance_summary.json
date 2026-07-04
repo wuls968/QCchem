@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "hardware_calibration_suite_v1",
+  "artifact_path": "artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "hardware_verified",
+  "runtime_evidence_status": "retrieved_result",
+  "release_audit_check_id": "curated_artifact:hardware_calibration_suite_v1:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable runtime plumbing and calibration evidence.",
+    "hardware_verified does not imply publication-grade chemistry validation."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "ea8ad41f19e4c48dbc87b7410da5af040ecae4369297513147e809577582e5e2"
+}

@@ -40,6 +40,10 @@ class _LRACEGenerator:
     reference_mixing_relevance: float
 
 
+class _OptimizationWallTimeExceeded(RuntimeError):
+    """Raised inside optimizer callbacks when the adaptive wall-time budget expires."""
+
+
 def _real_mixing_companion(pauli_label: str) -> str | None:
     """Turn an X/Y Hamiltonian factor into a real-amplitude mixing generator."""
     chars = list(pauli_label)
@@ -377,27 +381,42 @@ class LRACESolver(BaseSolver):
         operator: SparsePauliOp,
         initial_point: np.ndarray,
         maxiter: int,
+        deadline: float | None = None,
     ) -> tuple[float, list[float], bool, str, int, int]:
         evaluations = 0
+        last_energy: float | None = None
+        last_point = np.asarray(initial_point, dtype=float).copy()
 
         def objective(point: np.ndarray) -> float:
-            nonlocal evaluations
+            nonlocal evaluations, last_energy, last_point
+            if deadline is not None and evaluations > 0 and perf_counter() >= deadline:
+                raise _OptimizationWallTimeExceeded
             evaluations += 1
-            return self.backend.estimate_expectation(ansatz, operator, point)
+            last_point = np.asarray(point, dtype=float).copy()
+            last_energy = float(self.backend.estimate_expectation(ansatz, operator, point))
+            return last_energy
 
         if ansatz.num_parameters:
-            result = minimize(
-                objective,
-                x0=initial_point,
-                method=self.spec.optimizer.kind,
-                tol=self.spec.optimizer.tol,
-                options={"maxiter": maxiter},
-            )
-            energy = float(result.fun)
-            optimal = [float(value) for value in np.asarray(result.x)]
-            converged = bool(result.success)
-            message = str(result.message)
-            iterations = int(getattr(result, "nit", evaluations))
+            try:
+                result = minimize(
+                    objective,
+                    x0=initial_point,
+                    method=self.spec.optimizer.kind,
+                    tol=self.spec.optimizer.tol,
+                    options={"maxiter": maxiter},
+                )
+            except _OptimizationWallTimeExceeded:
+                energy = float("inf") if last_energy is None else float(last_energy)
+                optimal = [float(value) for value in last_point]
+                converged = False
+                message = "LR-ACE optimizer stopped after max_wall_time_seconds budget."
+                iterations = evaluations
+            else:
+                energy = float(result.fun)
+                optimal = [float(value) for value in np.asarray(result.x)]
+                converged = bool(result.success)
+                message = str(result.message)
+                iterations = int(getattr(result, "nit", evaluations))
         else:
             energy = float(objective(np.asarray([], dtype=float)))
             optimal = []
@@ -573,6 +592,7 @@ class LRACESolver(BaseSolver):
                         operator=operator,
                         initial_point=initial_point,
                         maxiter=maxiter,
+                        deadline=started + float(adaptive.max_wall_time_seconds),
                     )
                     total_evaluations += evaluations
                     exact_error = (
@@ -684,6 +704,7 @@ class LRACESolver(BaseSolver):
                 operator=operator,
                 initial_point=initial_point,
                 maxiter=maxiter_schedule[0],
+                deadline=started + float(adaptive.max_wall_time_seconds),
             )
             total_evaluations += evaluations
             best_ansatz = ansatz

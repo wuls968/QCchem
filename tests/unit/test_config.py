@@ -3,9 +3,13 @@ from pathlib import Path
 
 import pytest
 
+from qcchem.io.benchmark_config import load_benchmark_suite_spec
+from qcchem.io.campaign_config import load_campaign_spec
 from qcchem.io.config import load_run_spec
 from qcchem.io.scan_config import load_scan_spec
 from qcchem.io.study_config import load_study_spec
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_load_run_spec_from_yaml() -> None:
@@ -20,6 +24,7 @@ def test_load_run_spec_from_yaml() -> None:
     assert spec.benchmark.enabled is True
     assert spec.benchmark.exact_baseline_qubit_limit == 12
     assert spec.run.seed == 7
+    assert spec.run.output_dir == REPO_ROOT / "artifacts" / "h2"
 
 
 def test_load_aggregate_continuity_defaults() -> None:
@@ -32,6 +37,86 @@ def test_load_aggregate_continuity_defaults() -> None:
     assert study.continuity.enabled is False
     assert study.continuity.mode == "previous_optimal"
     assert study.continuity.on_parameter_mismatch == "fallback"
+
+
+def test_aggregate_config_paths_resolve_from_external_workspace(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    configs = workspace / "configs"
+    benchmarks = workspace / "benchmarks"
+    artifacts = workspace / "artifacts"
+    (configs / "studies").mkdir(parents=True)
+    (configs / "scans").mkdir(parents=True)
+    (configs / "campaign").mkdir(parents=True)
+    benchmarks.mkdir()
+    (artifacts / "h2").mkdir(parents=True)
+    (configs / "h2.yaml").write_text("molecule:\n  name: H2\n", encoding="utf-8")
+
+    benchmark_path = benchmarks / "suite.yaml"
+    benchmark_path.write_text(
+        """
+benchmark_suite:
+  name: external_suite
+  cases:
+    - name: h2
+      kind: run
+      config: configs/h2.yaml
+""",
+        encoding="utf-8",
+    )
+    study_path = configs / "studies" / "study.yaml"
+    study_path.write_text(
+        """
+study:
+  name: external_study
+  runs:
+    - name: h2
+      config: configs/h2.yaml
+""",
+        encoding="utf-8",
+    )
+    scan_path = configs / "scans" / "scan.yaml"
+    scan_path.write_text(
+        """
+scan:
+  name: external_scan
+  base_config: configs/h2.yaml
+  parameter:
+    name: bond_length
+    kind: bond_length
+    values: [0.7]
+""",
+        encoding="utf-8",
+    )
+    campaign_path = configs / "campaign" / "campaign.yaml"
+    campaign_path.write_text(
+        """
+campaign:
+  name: external_campaign
+  output_root: artifacts/campaign_out
+  entries:
+    - name: h2_artifact
+      kind: artifact
+      artifact: artifacts/h2
+    - name: suite
+      kind: benchmark
+      config: benchmarks/suite.yaml
+      output_dir: artifacts/suite_out
+""",
+        encoding="utf-8",
+    )
+
+    benchmark = load_benchmark_suite_spec(benchmark_path)
+    study = load_study_spec(study_path)
+    scan = load_scan_spec(scan_path)
+    campaign = load_campaign_spec(campaign_path)
+
+    assert benchmark.cases[0].config == configs / "h2.yaml"
+    assert study.runs[0].config == configs / "h2.yaml"
+    assert scan.base_config == configs / "h2.yaml"
+    assert campaign.output_root == artifacts / "campaign_out"
+    assert campaign.entries[0].artifact == artifacts / "h2"
+    assert campaign.entries[1].config == benchmarks / "suite.yaml"
+    assert campaign.entries[1].output_dir == artifacts / "suite_out"
 
 
 def test_load_study_continuity_from_yaml(tmp_path: Path) -> None:
@@ -232,7 +317,7 @@ def test_load_h2_runtime_micro_probe_v2_config() -> None:
     assert spec.backend.runtime.options["submit_real_job"] is True
     assert spec.backend.runtime.options["wait_for_result"] is False
     assert spec.backend.runtime.options["requires_action_time_confirmation"] is True
-    assert spec.run.output_dir == Path("artifacts/h2_runtime_micro_probe_v2")
+    assert spec.run.output_dir == REPO_ROOT / "artifacts" / "h2_runtime_micro_probe_v2"
     assert spec.exploratory.enabled is True
     assert "runtime_micro_probe" in spec.exploratory.modules
 
@@ -431,6 +516,7 @@ run:
     assert provenance["resolved_path"] == str(xyz_path.resolve())
     assert provenance["file_sha256"] == hashlib.sha256(xyz_text.encode("utf-8")).hexdigest()
     assert provenance["normalized_geometry_sha256"]
+    assert spec.run.output_dir == tmp_path / "artifacts" / "from_xyz"
 
 
 def test_load_run_spec_supports_explicit_structure_format(tmp_path: Path) -> None:

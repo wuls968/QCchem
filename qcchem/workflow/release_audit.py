@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import shlex
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,13 +14,65 @@ import yaml
 
 from qcchem.core.evidence import summarize_artifact_payload
 from qcchem.io.artifact_index import build_artifact_index
+from qcchem.io.config import workspace_root_for_path
 from qcchem.io.release_audit_config import (
     ReleaseAuditExploratoryAssetSpec,
     ReleaseAuditSpec,
+    ReleaseAuditWarningPolicy,
     load_release_audit_spec,
 )
 
-RELEASE_AUDIT_SCHEMA_VERSION = "1"
+RELEASE_AUDIT_SCHEMA_VERSION = "1.1"
+RELEASE_AUDIT_SCHEMA_FEATURES = [
+    "failed_checks",
+    "required_failed_checks",
+    "warning_checks",
+    "evidence_matrix_core_fields",
+    "evidence_matrix_review_warnings",
+    "warning_policy",
+    "acceptance_commands",
+    "acceptance_command_remediation",
+    "acceptance_summary_source",
+    "acceptance_schema_version",
+    "acceptance_artifact_path",
+    "acceptance_artifact_sha256",
+    "acceptance_release_audit_check_id",
+    "acceptance_trust_tier",
+    "acceptance_runtime_evidence_status",
+    "acceptance_status",
+    "acceptance_recommended_action",
+    "acceptance_blocking_failure_count",
+    "acceptance_warning_count",
+    "acceptance_contract_failure_count",
+    "audit_provenance",
+]
+RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION = "qcchem.release_artifact_acceptance.v0.1-alpha"
+LEGACY_BENCHMARK_ACCEPTANCE_SCHEMA_VERSION = "qcchem.benchmark_acceptance.v0.1-alpha"
+SUPPORTED_ACCEPTANCE_SCHEMA_VERSIONS = {
+    RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION,
+    LEGACY_BENCHMARK_ACCEPTANCE_SCHEMA_VERSION,
+}
+RELEASE_EVIDENCE_SUMMARY_REQUIRED_FIELDS = (
+    "primary_scientific_claim",
+    "primary_baseline",
+    "primary_error_metric",
+    "chemical_accuracy_status",
+    "runtime_evidence_status",
+    "trust_tier",
+    "recommended_action",
+)
+SHELL_CONTROL_TOKENS = ("<<<", "&&", "||", "|&", ">>", "<<", ";", "|", "&", ">", "<")
+SHELL_EXPANSION_TOKENS = ("$(", "${", "$", "`", "*", "?", "[")
+PYTEST_PATH_VALUE_OPTIONS = {"--basetemp", "--rootdir", "--junitxml"}
+PYTEST_VALUE_OPTIONS = PYTEST_PATH_VALUE_OPTIONS | {
+    "-k",
+    "-m",
+    "--capture",
+    "--color",
+    "--durations",
+    "--maxfail",
+    "--tb",
+}
 
 
 def _resolve(repo_root: Path, path: Path) -> Path:
@@ -29,6 +84,13 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a JSON object.")
     return payload
+
+
+def _read_optional_json_object(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        return _read_json(path), None
+    except Exception as exc:
+        return None, f"{type(exc).__name__}: {exc}"
 
 
 def _read_project_version(pyproject: Path) -> str | None:
@@ -101,16 +163,755 @@ def _warning(
     )
 
 
+def _apply_warning_policy(
+    checks: list[dict[str, Any]],
+    policy: ReleaseAuditWarningPolicy | None,
+) -> dict[str, Any] | None:
+    if policy is None:
+        return None
+
+    warning_ids = [check["id"] for check in checks if check["status"] == "warning"]
+    allowed_ids = set(policy.allowed_ids) if policy.allowed_ids is not None else None
+    unexpected_ids = sorted(set(warning_ids) - allowed_ids) if allowed_ids is not None else []
+    count_ok = policy.max_count is None or len(warning_ids) <= policy.max_count
+    passed = count_ok and not unexpected_ids
+    details = {
+        "max_count": policy.max_count,
+        "warning_count": len(warning_ids),
+        "allowed_ids": sorted(allowed_ids) if allowed_ids is not None else None,
+        "unexpected_ids": unexpected_ids,
+    }
+    _check(
+        checks,
+        check_id="release_warning_policy",
+        label="Release audit warnings satisfy configured policy",
+        passed=passed,
+        required=True,
+        summary=(
+            "Warning count and warning ids satisfy the release policy."
+            if passed
+            else "Release audit produced warnings outside the configured policy."
+        ),
+        details=details,
+    )
+    return {"status": "passed" if passed else "failed", **details}
+
+
+def _check_summaries(
+    checks: list[dict[str, Any]],
+    *,
+    status: str,
+    required: bool | None = None,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": check["id"],
+            "label": check["label"],
+            "status": check["status"],
+            "required": check["required"],
+            "summary": check.get("summary", ""),
+            "details": check.get("details", {}),
+        }
+        for check in checks
+        if check["status"] == status
+        and (required is None or check["required"] is required)
+    ]
+
+
+def _repo_target_issue(repo_root: Path, value: str, *, require_file: bool = False) -> dict[str, str] | None:
+    raw_path = value.split("::", 1)[0]
+    if raw_path == "":
+        return _empty_path_issue(repo_root, value)
+    path = Path(raw_path)
+    if path.is_absolute():
+        return {"target": value, "resolved": str(path.resolve()), "reason": "absolute_path"}
+    if raw_path.startswith("~"):
+        return {"target": value, "resolved": str(path.expanduser()), "reason": "home_directory_path"}
+    resolved = (repo_root / path).resolve()
+    resolved_repo_root = repo_root.resolve()
+    try:
+        resolved.relative_to(resolved_repo_root)
+    except ValueError:
+        return {"target": value, "resolved": str(resolved), "reason": "outside_repo"}
+    if ".." in path.parts:
+        return {"target": value, "resolved": str(resolved), "reason": "parent_directory_path"}
+    if not resolved.exists():
+        return {"target": value, "resolved": str(resolved), "reason": "missing"}
+    if require_file and not resolved.is_file():
+        return {"target": value, "resolved": str(resolved), "reason": "not_file"}
+    return None
+
+
+def _empty_path_issue(repo_root: Path, value: str = "") -> dict[str, str]:
+    return {"target": value, "resolved": str(repo_root.resolve()), "reason": "empty_path"}
+
+
+def _repo_path_safety_issue(repo_root: Path, value: str) -> dict[str, str] | None:
+    raw_path = value.split("::", 1)[0]
+    if raw_path == "":
+        return _empty_path_issue(repo_root, value)
+    path = Path(raw_path)
+    if path.is_absolute():
+        return {"target": value, "resolved": str(path.resolve()), "reason": "absolute_path"}
+    if raw_path.startswith("~"):
+        return {"target": value, "resolved": str(path.expanduser()), "reason": "home_directory_path"}
+    resolved = (repo_root / path).resolve()
+    try:
+        resolved.relative_to(repo_root.resolve())
+    except ValueError:
+        return {"target": value, "resolved": str(resolved), "reason": "outside_repo"}
+    if ".." in path.parts:
+        return {"target": value, "resolved": str(resolved), "reason": "parent_directory_path"}
+    return None
+
+
+def _repo_artifact_output_issue(repo_root: Path, value: str) -> dict[str, str] | None:
+    path = Path(value)
+    if value == "":
+        return _empty_path_issue(repo_root, value)
+    if path.is_absolute():
+        return {"target": value, "resolved": str(path.resolve()), "reason": "absolute_path"}
+    if value.startswith("~"):
+        return {"target": value, "resolved": str(path.expanduser()), "reason": "home_directory_path"}
+    resolved = (repo_root / path).resolve()
+    resolved_repo_root = repo_root.resolve()
+    try:
+        resolved.relative_to(resolved_repo_root)
+    except ValueError:
+        return {"target": value, "resolved": str(resolved), "reason": "outside_repo"}
+    if ".." in path.parts:
+        return {"target": value, "resolved": str(resolved), "reason": "parent_directory_path"}
+    if len(path.parts) < 2 or path.parts[0] != "artifacts":
+        return {"target": value, "resolved": str(resolved), "reason": "outside_artifacts"}
+    return None
+
+
+def _looks_like_repo_path(value: str) -> bool:
+    raw_path = value.split("::", 1)[0]
+    path = Path(raw_path)
+    top_level_roots = {"tests", "benchmarks", "configs", "docs", "examples"}
+    return (
+        path.is_absolute()
+        or raw_path.startswith("~")
+        or ".." in path.parts
+        or (bool(path.parts) and path.parts[0] in top_level_roots)
+        or raw_path.endswith((".py", ".yaml", ".yml", ".json", ".md"))
+    )
+
+
+def _shell_control_tokens(command: str) -> list[str]:
+    return _unquoted_shell_tokens(command, SHELL_CONTROL_TOKENS)
+
+
+def _shell_expansion_tokens(command: str) -> list[str]:
+    tokens: list[str] = []
+    quote: str | None = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if char == "\\":
+            index += 2
+            continue
+        if quote == "'":
+            if char == "'":
+                quote = None
+            index += 1
+            continue
+        if quote == '"':
+            if char == '"':
+                quote = None
+                index += 1
+                continue
+            for token in ("$(", "${", "$", "`"):
+                if command.startswith(token, index):
+                    tokens.append(token)
+                    index += len(token)
+                    break
+            else:
+                index += 1
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            index += 1
+            continue
+        for token in SHELL_EXPANSION_TOKENS:
+            if command.startswith(token, index):
+                tokens.append(token)
+                index += len(token)
+                break
+        else:
+            index += 1
+    return tokens
+
+
+def _unquoted_shell_tokens(command: str, candidates: tuple[str, ...]) -> list[str]:
+    tokens: list[str] = []
+    quote: str | None = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if char == "\\":
+            index += 2
+            continue
+        if quote is not None:
+            if char == quote:
+                quote = None
+            index += 1
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            index += 1
+            continue
+        for token in candidates:
+            if command.startswith(token, index):
+                tokens.append(token)
+                index += len(token)
+                break
+        else:
+            index += 1
+    return tokens
+
+
+def _protected_artifact_output_issue(
+    repo_root: Path,
+    value: str,
+    protected_artifact_roots: set[Path],
+) -> dict[str, str] | None:
+    if not protected_artifact_roots:
+        return None
+    resolved = (repo_root / Path(value)).resolve()
+    for protected_root in protected_artifact_roots:
+        protected = (repo_root / protected_root).resolve()
+        try:
+            relative = resolved.relative_to(protected)
+        except ValueError:
+            continue
+        if not relative.parts or relative.parts[0] != "preview_local":
+            return {
+                "target": value,
+                "resolved": str(resolved),
+                "reason": "protected_release_artifact_root",
+                "protected_root": protected_root.as_posix(),
+                "allowed_preview_root": (protected_root / "preview_local").as_posix(),
+            }
+    return None
+
+
+def _acceptance_command_failures(
+    commands: list[str],
+    *,
+    repo_root: Path,
+    protected_artifact_roots: set[Path] | None = None,
+) -> list[dict[str, Any]]:
+    protected_artifact_roots = protected_artifact_roots or set()
+    failures: list[dict[str, Any]] = []
+    for index, command in enumerate(commands):
+        try:
+            tokens = shlex.split(command)
+        except ValueError as exc:
+            failures.append({"index": index, "command": command, "reason": "parse_error", "error": str(exc)})
+            continue
+        if not tokens:
+            failures.append({"index": index, "command": command, "reason": "empty_command"})
+            continue
+        shell_tokens = _shell_control_tokens(command)
+        if shell_tokens:
+            failures.append(
+                {
+                    "index": index,
+                    "command": command,
+                    "reason": "shell_control_tokens",
+                    "tokens": shell_tokens,
+                }
+            )
+            continue
+        expansion_tokens = _shell_expansion_tokens(command)
+        if expansion_tokens:
+            failures.append(
+                {
+                    "index": index,
+                    "command": command,
+                    "reason": "shell_expansion_tokens",
+                    "tokens": expansion_tokens,
+                }
+            )
+            continue
+
+        python_module_pytest = len(tokens) >= 3 and tokens[0] in {"python", "python3"} and tokens[1:3] == ["-m", "pytest"]
+        if len(tokens) >= 3 and Path(tokens[0]).name in {"python", "python3"} and tokens[1:3] == ["-m", "pytest"] and not python_module_pytest:
+            failures.append(
+                {
+                    "index": index,
+                    "command": command,
+                    "reason": "nonportable_python_executable",
+                    "executable": tokens[0],
+                }
+            )
+            continue
+        if python_module_pytest or tokens[0] == "pytest":
+            args = tokens[3:] if python_module_pytest else tokens[1:]
+            option_path_issues: list[dict[str, str]] = []
+            option_value_positions: set[int] = set()
+            for position, arg in enumerate(args):
+                if arg.startswith("-") and "=" in arg:
+                    option, value = arg.split("=", 1)
+                    if option in PYTEST_PATH_VALUE_OPTIONS:
+                        issue = _repo_path_safety_issue(repo_root, value)
+                        if issue is not None:
+                            option_path_issues.append({"option": option, **issue})
+                    continue
+                if arg in PYTEST_VALUE_OPTIONS and position + 1 < len(args):
+                    value = args[position + 1]
+                    if value.startswith("-"):
+                        if arg in PYTEST_PATH_VALUE_OPTIONS:
+                            option_path_issues.append({"option": arg, **_empty_path_issue(repo_root)})
+                        continue
+                    option_value_positions.add(position + 1)
+                    if arg in PYTEST_PATH_VALUE_OPTIONS:
+                        issue = _repo_path_safety_issue(repo_root, value)
+                        if issue is not None:
+                            option_path_issues.append({"option": arg, **issue})
+                elif arg in PYTEST_PATH_VALUE_OPTIONS:
+                    option_path_issues.append({"option": arg, **_empty_path_issue(repo_root)})
+            if option_path_issues:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "unsafe_pytest_option_paths",
+                        "option_paths": option_path_issues,
+                    }
+                )
+                continue
+            path_args = [
+                arg
+                for position, arg in enumerate(args)
+                if position not in option_value_positions
+                and not arg.startswith("-")
+                and _looks_like_repo_path(arg)
+            ]
+            if not path_args:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "missing_pytest_targets",
+                        "missing_targets": [],
+                    }
+                )
+                continue
+            target_issues = [
+                issue
+                for arg in path_args
+                if (issue := _repo_target_issue(repo_root, arg)) is not None
+            ]
+            outside_targets = [issue for issue in target_issues if issue["reason"] == "outside_repo"]
+            absolute_targets = [issue for issue in target_issues if issue["reason"] == "absolute_path"]
+            home_targets = [issue for issue in target_issues if issue["reason"] == "home_directory_path"]
+            parent_targets = [issue for issue in target_issues if issue["reason"] == "parent_directory_path"]
+            missing_targets = [issue for issue in target_issues if issue["reason"] == "missing"]
+            if absolute_targets:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "absolute_pytest_targets",
+                        "absolute_targets": absolute_targets,
+                    }
+                )
+            elif home_targets:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "home_directory_pytest_targets",
+                        "home_directory_targets": home_targets,
+                    }
+                )
+            elif parent_targets:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "parent_directory_pytest_targets",
+                        "parent_directory_targets": parent_targets,
+                    }
+                )
+            elif outside_targets:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "outside_repo_pytest_targets",
+                        "outside_targets": outside_targets,
+                    }
+                )
+            elif missing_targets:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "missing_pytest_targets",
+                        "missing_targets": missing_targets,
+                    }
+                )
+            continue
+
+        if tokens[:3] == ["qcchem", "benchmark", "run"]:
+            config_values: list[str] = []
+            output_values: list[str] = []
+            unsupported_output_options: list[str] = []
+            for position, token in enumerate(tokens):
+                if token in {"-c", "--config"} and position + 1 < len(tokens):
+                    config_values.append(tokens[position + 1])
+                elif token.startswith("--config="):
+                    config_values.append(token.split("=", 1)[1])
+                elif token in {"-o", "--output-dir"} and position + 1 < len(tokens):
+                    output_values.append(tokens[position + 1])
+                elif token.startswith("--output-dir="):
+                    output_values.append(token.split("=", 1)[1])
+                elif token == "--output" or token.startswith("--output="):
+                    unsupported_output_options.append(token)
+            if unsupported_output_options:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "unsupported_benchmark_output_options",
+                        "options": unsupported_output_options,
+                        "supported": ["-o", "--output-dir"],
+                    }
+                )
+                continue
+            if not config_values:
+                failures.append({"index": index, "command": command, "reason": "missing_benchmark_config_option"})
+                continue
+            if len(config_values) > 1:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "multiple_benchmark_config_options",
+                        "config_values": config_values,
+                    }
+                )
+                continue
+            config_issues = [
+                issue
+                for value in config_values
+                if (issue := _repo_target_issue(repo_root, value, require_file=True)) is not None
+            ]
+            outside_configs = [issue for issue in config_issues if issue["reason"] == "outside_repo"]
+            absolute_configs = [issue for issue in config_issues if issue["reason"] == "absolute_path"]
+            home_configs = [issue for issue in config_issues if issue["reason"] == "home_directory_path"]
+            parent_configs = [issue for issue in config_issues if issue["reason"] == "parent_directory_path"]
+            empty_configs = [issue for issue in config_issues if issue["reason"] == "empty_path"]
+            missing_configs = [issue for issue in config_issues if issue["reason"] == "missing"]
+            not_file_configs = [issue for issue in config_issues if issue["reason"] == "not_file"]
+            if absolute_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "absolute_benchmark_configs",
+                        "absolute_configs": absolute_configs,
+                    }
+                )
+            elif home_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "home_directory_benchmark_configs",
+                        "home_directory_configs": home_configs,
+                    }
+                )
+            elif parent_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "parent_directory_benchmark_configs",
+                        "parent_directory_configs": parent_configs,
+                    }
+                )
+            elif empty_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "empty_benchmark_configs",
+                        "empty_configs": empty_configs,
+                    }
+                )
+            elif not_file_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "non_file_benchmark_configs",
+                        "non_file_configs": not_file_configs,
+                    }
+                )
+            elif outside_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "outside_repo_benchmark_configs",
+                        "outside_configs": outside_configs,
+                    }
+                )
+            elif missing_configs:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "missing_benchmark_configs",
+                        "missing_configs": missing_configs,
+                    }
+                )
+            elif not output_values:
+                failures.append({"index": index, "command": command, "reason": "missing_benchmark_output_option"})
+            elif len(output_values) > 1:
+                failures.append(
+                    {
+                        "index": index,
+                        "command": command,
+                        "reason": "multiple_benchmark_output_options",
+                        "output_values": output_values,
+                    }
+                )
+            else:
+                output_issues = [
+                    issue
+                    for value in output_values
+                    if (issue := _repo_artifact_output_issue(repo_root, value)) is not None
+                ]
+                outside_outputs = [issue for issue in output_issues if issue["reason"] == "outside_repo"]
+                absolute_outputs = [issue for issue in output_issues if issue["reason"] == "absolute_path"]
+                home_outputs = [issue for issue in output_issues if issue["reason"] == "home_directory_path"]
+                parent_outputs = [issue for issue in output_issues if issue["reason"] == "parent_directory_path"]
+                empty_outputs = [issue for issue in output_issues if issue["reason"] == "empty_path"]
+                non_artifacts_outputs = [issue for issue in output_issues if issue["reason"] == "outside_artifacts"]
+                protected_outputs = [
+                    issue
+                    for value in output_values
+                    if (issue := _protected_artifact_output_issue(repo_root, value, protected_artifact_roots)) is not None
+                ]
+                if absolute_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "absolute_benchmark_outputs",
+                            "absolute_outputs": absolute_outputs,
+                        }
+                    )
+                elif home_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "home_directory_benchmark_outputs",
+                            "home_directory_outputs": home_outputs,
+                        }
+                    )
+                elif parent_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "parent_directory_benchmark_outputs",
+                            "parent_directory_outputs": parent_outputs,
+                        }
+                    )
+                elif outside_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "outside_repo_benchmark_outputs",
+                            "outside_outputs": outside_outputs,
+                        }
+                    )
+                elif empty_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "empty_benchmark_outputs",
+                            "empty_outputs": empty_outputs,
+                        }
+                    )
+                elif non_artifacts_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "non_artifacts_benchmark_outputs",
+                            "non_artifacts_outputs": non_artifacts_outputs,
+                        }
+                    )
+                elif protected_outputs:
+                    failures.append(
+                        {
+                            "index": index,
+                            "command": command,
+                            "reason": "protected_release_artifact_outputs",
+                            "protected_outputs": protected_outputs,
+                        }
+                    )
+            continue
+
+        failures.append({"index": index, "command": command, "reason": "unsupported_command"})
+    return failures
+
+
+def _acceptance_failure_remediation(failure: dict[str, Any]) -> str:
+    reason = str(failure.get("reason") or "")
+    remediations = {
+        "parse_error": "Fix the shell-style quoting so the command can be parsed as one static recipe.",
+        "empty_command": "Replace the empty recipe with a supported pytest or benchmark acceptance command.",
+        "shell_control_tokens": "Split shell control operators into separate documented steps; acceptance_commands must contain one static command.",
+        "shell_expansion_tokens": "Replace shell expansion, variables, globs, or command substitution with concrete repository-relative paths.",
+        "nonportable_python_executable": "Use python or python3 literally instead of a machine-local interpreter path.",
+        "missing_pytest_targets": "Add at least one concrete pytest target such as tests/unit/... or tests.",
+        "absolute_pytest_targets": "Use repository-relative pytest targets instead of absolute paths.",
+        "home_directory_pytest_targets": "Use repository-relative pytest targets instead of home-directory paths.",
+        "parent_directory_pytest_targets": "Remove .. components from pytest targets and keep them inside the repository.",
+        "outside_repo_pytest_targets": "Move the pytest target into the audited repository or remove it from release acceptance.",
+        "unsafe_pytest_option_paths": "Use non-empty repository-relative values for pytest path options, without absolute, home, or .. paths.",
+        "unsupported_benchmark_output_options": "Use -o or --output-dir for qcchem benchmark run output directories.",
+        "missing_benchmark_config_option": "Add exactly one -c or --config benchmark suite path.",
+        "multiple_benchmark_config_options": "Keep exactly one benchmark config option in the acceptance recipe.",
+        "absolute_benchmark_configs": "Use a repository-relative benchmark config path.",
+        "home_directory_benchmark_configs": "Use a repository-relative benchmark config path instead of a home-directory path.",
+        "parent_directory_benchmark_configs": "Remove .. components from the benchmark config path.",
+        "empty_benchmark_configs": "Provide a non-empty benchmark config path.",
+        "non_file_benchmark_configs": "Point -c or --config at a benchmark config file, not a directory.",
+        "outside_repo_benchmark_configs": "Move the benchmark config into the audited repository or remove it from release acceptance.",
+        "missing_benchmark_configs": "Add the referenced benchmark config file or update the recipe to an existing one.",
+        "missing_benchmark_output_option": "Add exactly one -o or --output-dir under artifacts/.",
+        "multiple_benchmark_output_options": "Keep exactly one benchmark output option in the acceptance recipe.",
+        "absolute_benchmark_outputs": "Use a repository-relative benchmark output path under artifacts/.",
+        "home_directory_benchmark_outputs": "Use a repository-relative benchmark output path under artifacts/ instead of a home-directory path.",
+        "parent_directory_benchmark_outputs": "Remove .. components from the benchmark output path.",
+        "outside_repo_benchmark_outputs": "Keep benchmark outputs inside the audited repository under artifacts/.",
+        "empty_benchmark_outputs": "Provide a non-empty benchmark output path under artifacts/.",
+        "non_artifacts_benchmark_outputs": "Write benchmark outputs to a dedicated child directory under artifacts/.",
+        "protected_release_artifact_outputs": "Write regeneration recipes to the protected artifact's preview_local child, not the curated artifact root.",
+        "unsupported_command": "Use a supported release recipe: python -m pytest ... or qcchem benchmark run -c ... -o ...",
+    }
+    return remediations.get(reason, "Inspect this acceptance command and replace it with a supported static release recipe.")
+
+
+def _annotate_acceptance_command_failures(failures: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {**failure, "remediation": _acceptance_failure_remediation(failure)}
+        for failure in failures
+    ]
+
+
+def _audit_acceptance_commands(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[str, Any]]) -> None:
+    protected_artifact_roots = {artifact.path.parent for artifact in spec.curated_artifacts}
+    protected_artifact_roots.update(
+        asset.artifact.parent
+        for asset in spec.exploratory_assets
+        if asset.artifact is not None
+    )
+    failures = _acceptance_command_failures(
+        spec.acceptance_commands,
+        repo_root=repo_root,
+        protected_artifact_roots=protected_artifact_roots,
+    )
+    failures = _annotate_acceptance_command_failures(failures)
+    _check(
+        checks,
+        check_id="release_acceptance_commands:static_targets",
+        label="Release acceptance commands reference local targets and artifact outputs",
+        passed=not failures,
+        required=True,
+        summary=(
+            "Acceptance command targets and outputs are statically resolvable."
+            if not failures
+            else "Acceptance commands reference missing, unsafe, or unsupported local targets or outputs."
+        ),
+        details={"command_count": len(spec.acceptance_commands), "failures": failures},
+    )
+
+
+def _markdown_code_span(value: Any) -> str:
+    text = str(value)
+    max_backtick_run = max((len(match.group(0)) for match in re.finditer(r"`+", text)), default=0)
+    fence = "`" * (max_backtick_run + 1)
+    if "`" in text:
+        return f"{fence} {text} {fence}"
+    return f"{fence}{text}{fence}"
+
+
+def _acceptance_command_repair_failures(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    for check in summary.get("checks", []):
+        if not isinstance(check, dict) or check.get("id") != "release_acceptance_commands:static_targets":
+            continue
+        details = check.get("details")
+        if not isinstance(details, dict):
+            return []
+        failures = details.get("failures")
+        if not isinstance(failures, list):
+            return []
+        return [failure for failure in failures if isinstance(failure, dict)]
+    return []
+
+
+def _acceptance_items(payload: dict[str, Any], field: str) -> list[Any]:
+    value = payload.get(field)
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [{"reason": f"{field}_not_list", "value": value}]
+
+
 def _evidence_missing_fields(payload: dict[str, Any]) -> list[str]:
     evidence = payload.get("evidence_summary")
     if not isinstance(evidence, dict):
         return ["evidence_summary"]
     missing: list[str] = []
-    for key in ("trust_tier", "primary_baseline", "primary_error_metric", "recommended_action"):
+    for key in RELEASE_EVIDENCE_SUMMARY_REQUIRED_FIELDS:
         value = evidence.get(key)
         if value is None or value == "" or value == {}:
             missing.append(key)
     return missing
+
+
+def _evidence_review_warnings(evidence: dict[str, Any]) -> list[dict[str, Any]]:
+    warnings: list[dict[str, Any]] = []
+    baseline = evidence.get("primary_baseline") if isinstance(evidence.get("primary_baseline"), dict) else {}
+    baseline_kind = baseline.get("baseline_kind")
+    baseline_strength = baseline.get("baseline_strength")
+    if baseline_kind in {None, "", "none", "unavailable"} or baseline_strength in {None, "", "weak"}:
+        warnings.append(
+            {
+                "reason": "weak_or_missing_baseline",
+                "baseline_kind": baseline_kind,
+                "baseline_strength": baseline_strength,
+            }
+        )
+
+    error_metric = evidence.get("primary_error_metric") if isinstance(evidence.get("primary_error_metric"), dict) else {}
+    if error_metric.get("value") is None:
+        warnings.append(
+            {
+                "reason": "missing_error_metric_value",
+                "metric_kind": error_metric.get("metric_kind"),
+            }
+        )
+
+    claim = evidence.get("primary_scientific_claim")
+    if isinstance(claim, str) and "None" in claim:
+        warnings.append({"reason": "claim_contains_null_placeholder"})
+    return warnings
 
 
 def _runtime_boundary_failure(payload: dict[str, Any]) -> str | None:
@@ -124,19 +925,292 @@ def _runtime_boundary_failure(payload: dict[str, Any]) -> str | None:
     return "hardware_verified_without_retrieved_runtime_result"
 
 
-def _artifact_matrix_entry(name: str, kind: str, path: Path, payload: dict[str, Any]) -> dict[str, Any]:
+def _runtime_evidence_status(payload: dict[str, Any]) -> str | None:
     evidence = payload.get("evidence_summary") or {}
+    if isinstance(evidence, dict) and evidence.get("runtime_evidence_status"):
+        return str(evidence.get("runtime_evidence_status"))
+
+    runtime_submission = payload.get("runtime_submission")
+    if not isinstance(runtime_submission, dict):
+        return None
+    if runtime_submission.get("submitted") and runtime_submission.get("succeeded"):
+        return "retrieved_result"
+    if runtime_submission.get("submitted"):
+        return "submitted"
+    if runtime_submission.get("attempted"):
+        return "runtime_attempt"
+    return "none"
+
+
+def _hardware_verified_cases(payload: dict[str, Any]) -> list[Any]:
+    evidence = payload.get("evidence_summary") or {}
+    execution_evidence = evidence.get("execution_evidence") if isinstance(evidence, dict) else {}
+    cases = execution_evidence.get("hardware_verified_cases") if isinstance(execution_evidence, dict) else None
+    if cases is None:
+        summary = payload.get("summary")
+        cases = summary.get("hardware_verified_cases") if isinstance(summary, dict) else None
+    return cases if isinstance(cases, list) else []
+
+
+def _is_hardware_campaign_payload(payload: dict[str, Any]) -> bool:
+    evidence = payload.get("evidence_summary") or {}
+    identity = evidence.get("result_identity") if isinstance(evidence, dict) else {}
+    if isinstance(identity, dict) and identity.get("artifact_kind") == "hardware_campaign":
+        return True
+    summary = payload.get("summary")
+    return (
+        bool(payload.get("suite_name"))
+        and isinstance(payload.get("cases"), list)
+        and isinstance(summary, dict)
+        and "runtime_evidence_status_counts" in summary
+    )
+
+
+def _runtime_evidence_boundary_failure(payload: dict[str, Any]) -> str | None:
+    evidence = payload.get("evidence_summary") or {}
+    if not isinstance(evidence, dict) or evidence.get("trust_tier") != "hardware_verified":
+        return None
+
+    runtime_status = _runtime_evidence_status(payload)
+    if runtime_status != "retrieved_result":
+        return "hardware_verified_trust_without_retrieved_runtime_evidence"
+
+    if _is_hardware_campaign_payload(payload):
+        if not _hardware_verified_cases(payload):
+            return "hardware_campaign_without_hardware_verified_cases"
+        return None
+
+    if payload.get("hardware_verified") is not True:
+        return "hardware_verified_trust_without_top_level_runtime_marker"
+    if _runtime_boundary_failure(payload) is not None:
+        return "hardware_verified_trust_without_top_level_runtime_submission"
+    return None
+
+
+def _artifact_path_for_report(path: Path, *, repo_root: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        return str(path)
+
+
+def _path_for_audit_provenance(path: Path | None, *, repo_root: Path) -> str | None:
+    if path is None:
+        return None
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(repo_root.resolve()))
+    except ValueError:
+        return str(resolved)
+
+
+def _repo_relative_path_issue(value: str) -> str | None:
+    path = Path(value)
+    if path.is_absolute():
+        return "absolute_path"
+    if value.startswith("~"):
+        return "home_directory_path"
+    if ".." in path.parts:
+        return "parent_directory_path"
+    return None
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _acceptance_contract_failures(
+    acceptance: dict[str, Any],
+    *,
+    expected_check_id: str,
+    artifact_path: Path,
+    artifact_payload: dict[str, Any],
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+    schema_version = acceptance.get("schema_version")
+    if schema_version not in SUPPORTED_ACCEPTANCE_SCHEMA_VERSIONS:
+        failures.append(
+            {
+                "field": "schema_version",
+                "expected": sorted(SUPPORTED_ACCEPTANCE_SCHEMA_VERSIONS),
+                "actual": schema_version,
+            }
+        )
+        return failures
+
+    if schema_version != RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION:
+        return failures
+
+    for field in ("blocking_failures", "warnings"):
+        value = acceptance.get(field)
+        if not isinstance(value, list):
+            failures.append(
+                {
+                    "field": field,
+                    "expected": "list",
+                    "actual": value,
+                    "reason": "missing_or_not_list",
+                }
+            )
+
+    recommended_action = acceptance.get("recommended_action")
+    if not isinstance(recommended_action, str) or not recommended_action.strip():
+        failures.append(
+            {
+                "field": "recommended_action",
+                "expected": "non_empty_string",
+                "actual": recommended_action,
+            }
+        )
+
+    actual_check_id = acceptance.get("release_audit_check_id")
+    if actual_check_id != expected_check_id:
+        failures.append(
+            {
+                "field": "release_audit_check_id",
+                "expected": expected_check_id,
+                "actual": actual_check_id,
+            }
+        )
+
+    actual_artifact_path = acceptance.get("artifact_path")
+    expected_artifact_path = _artifact_path_for_report(artifact_path, repo_root=repo_root)
+    if not isinstance(actual_artifact_path, str) or not actual_artifact_path.strip():
+        failures.append(
+            {
+                "field": "artifact_path",
+                "expected": expected_artifact_path,
+                "actual": actual_artifact_path,
+            }
+        )
+    else:
+        path_issue = _repo_relative_path_issue(actual_artifact_path)
+        if path_issue is not None:
+            failures.append(
+                {
+                    "field": "artifact_path",
+                    "expected": expected_artifact_path,
+                    "actual": actual_artifact_path,
+                    "reason": path_issue,
+                }
+            )
+        raw_path = Path(actual_artifact_path).expanduser()
+        resolved_path = raw_path.resolve() if raw_path.is_absolute() else (repo_root / raw_path).resolve()
+        if resolved_path != artifact_path.resolve():
+            failures.append(
+                {
+                    "field": "artifact_path",
+                    "expected": expected_artifact_path,
+                    "actual": actual_artifact_path,
+                }
+            )
+
+    expected_artifact_sha256 = _file_sha256(artifact_path)
+    actual_artifact_sha256 = acceptance.get("artifact_sha256")
+    if not isinstance(actual_artifact_sha256, str) or not actual_artifact_sha256.strip():
+        failures.append(
+            {
+                "field": "artifact_sha256",
+                "expected": expected_artifact_sha256,
+                "actual": actual_artifact_sha256,
+            }
+        )
+    elif actual_artifact_sha256 != expected_artifact_sha256:
+        failures.append(
+            {
+                "field": "artifact_sha256",
+                "expected": expected_artifact_sha256,
+                "actual": actual_artifact_sha256,
+            }
+        )
+
+    evidence = artifact_payload.get("evidence_summary") or {}
+    expected_trust_tier = evidence.get("trust_tier") if isinstance(evidence, dict) else None
+    actual_trust_tier = acceptance.get("trust_tier")
+    if actual_trust_tier != expected_trust_tier:
+        failures.append(
+            {
+                "field": "trust_tier",
+                "expected": expected_trust_tier,
+                "actual": actual_trust_tier,
+            }
+        )
+
+    expected_runtime_status = _runtime_evidence_status(artifact_payload)
+    actual_runtime_status = acceptance.get("runtime_evidence_status")
+    if expected_runtime_status is not None and actual_runtime_status != expected_runtime_status:
+        failures.append(
+            {
+                "field": "runtime_evidence_status",
+                "expected": expected_runtime_status,
+                "actual": actual_runtime_status,
+            }
+        )
+    elif expected_runtime_status is None and actual_runtime_status not in {None, ""}:
+        failures.append(
+            {
+                "field": "runtime_evidence_status",
+                "expected": expected_runtime_status,
+                "actual": actual_runtime_status,
+            }
+        )
+    return failures
+
+
+def _artifact_matrix_entry(
+    name: str,
+    kind: str,
+    path: Path,
+    payload: dict[str, Any],
+    *,
+    acceptance: dict[str, Any] | None = None,
+    acceptance_source: str | None = None,
+    acceptance_contract_failures: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    evidence = payload.get("evidence_summary") or {}
+    raw_acceptance_payload = acceptance if acceptance is not None else payload.get("acceptance_summary")
+    acceptance_payload = raw_acceptance_payload if isinstance(raw_acceptance_payload, dict) else {}
+    acceptance_blocking_failures = _acceptance_items(acceptance_payload, "blocking_failures")
+    acceptance_warnings = _acceptance_items(acceptance_payload, "warnings")
+    contract_failures = acceptance_contract_failures or []
+    runtime_status = _runtime_evidence_status(payload)
+    hardware_cases = _hardware_verified_cases(payload)
+    review_warnings = _evidence_review_warnings(evidence) if isinstance(evidence, dict) else []
     return {
         "name": name,
         "kind": kind,
         "path": str(path),
         "verification_status": payload.get("verification_status"),
+        "primary_scientific_claim": evidence.get("primary_scientific_claim"),
+        "primary_baseline": evidence.get("primary_baseline"),
+        "primary_error_metric": evidence.get("primary_error_metric"),
+        "chemical_accuracy_status": evidence.get("chemical_accuracy_status"),
         "trust_tier": evidence.get("trust_tier"),
         "recommended_action": evidence.get("recommended_action"),
         "hardware_verified": payload.get("hardware_verified", False),
+        "runtime_evidence_status": runtime_status,
+        "review_warning_count": len(review_warnings),
+        "review_warnings": review_warnings,
+        "hardware_verified_case_count": len(hardware_cases),
         "runtime_submission_status": (payload.get("runtime_submission") or {}).get("status")
         or (payload.get("runtime_submission") or {}).get("failure_category"),
-        "acceptance_status": (payload.get("acceptance_summary") or {}).get("accepted"),
+        "acceptance_summary_source": acceptance_source,
+        "acceptance_schema_version": acceptance_payload.get("schema_version"),
+        "acceptance_artifact_path": acceptance_payload.get("artifact_path"),
+        "acceptance_artifact_sha256": acceptance_payload.get("artifact_sha256"),
+        "acceptance_release_audit_check_id": acceptance_payload.get("release_audit_check_id"),
+        "acceptance_trust_tier": acceptance_payload.get("trust_tier"),
+        "acceptance_runtime_evidence_status": acceptance_payload.get("runtime_evidence_status"),
+        "acceptance_status": acceptance_payload.get("accepted"),
+        "acceptance_recommended_action": acceptance_payload.get("recommended_action"),
+        "acceptance_blocking_failure_count": len(acceptance_blocking_failures),
+        "acceptance_warning_count": len(acceptance_warnings),
+        "acceptance_contract_failure_count": len(contract_failures),
     }
 
 
@@ -181,13 +1255,15 @@ def _risk_notes(payload: dict[str, Any]) -> list[Any]:
     return notes
 
 
-def classify_exploratory_config(path: Path) -> str:
-    """Classify a configured exploratory asset without executing it."""
+def _classify_exploratory_config(path: Path) -> tuple[str, str | None]:
     if not path.exists():
-        return "missing"
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return "missing", None
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        return "unreadable", f"{type(exc).__name__}: {exc}"
     if not isinstance(raw, dict):
-        return "unknown"
+        return "unknown", None
     solver = raw.get("solver") or {}
     problem = raw.get("problem") or {}
     exploratory = raw.get("exploratory") or {}
@@ -195,23 +1271,30 @@ def classify_exploratory_config(path: Path) -> str:
     qft = (problem.get("qft") or {}) if isinstance(problem, dict) else {}
     solver_kind = str(solver.get("kind", "")).strip() if isinstance(solver, dict) else ""
     if isinstance(qft, dict) and qft.get("enabled"):
-        return "qft"
+        return "qft", None
     if solver_kind.startswith("lattice_qed") or solver_kind == "qft_dynamics_audit":
-        return "qft"
+        return "qft", None
     if solver_kind == "lr_ace":
-        return "lr_ace"
+        return "lr_ace", None
     if "tc_qsci" in modules:
-        return "tc_qsci"
+        return "tc_qsci", None
     tc_qsci = raw.get("tc_qsci") or {}
     if isinstance(tc_qsci, dict) and tc_qsci.get("enabled"):
-        return "tc_qsci"
-    return "unknown"
+        return "tc_qsci", None
+    return "unknown", None
+
+
+def classify_exploratory_config(path: Path) -> str:
+    """Classify a configured exploratory asset without executing it."""
+    classified, _error = _classify_exploratory_config(path)
+    return classified
 
 
 def _audit_artifact(
     *,
     name: str,
     path: Path,
+    repo_root: Path,
     required: bool,
     kind: str,
     checks: list[dict[str, Any]],
@@ -239,9 +1322,24 @@ def _audit_artifact(
         required=required,
         summary=str(path),
     )
-    payload = _read_json(path)
+    payload, payload_read_error = _read_optional_json_object(path)
+    _check(
+        checks,
+        check_id=f"{id_prefix}:{name}:readable",
+        label=f"{name} artifact is readable JSON",
+        passed=payload_read_error is None,
+        required=required,
+        summary=(
+            "Artifact payload is a readable JSON object."
+            if payload_read_error is None
+            else "Artifact payload must be a readable JSON object."
+        ),
+        details={"path": str(path), "error": payload_read_error},
+    )
+    if payload is None:
+        return None
+
     evidence_payload = _payload_with_release_evidence(payload)
-    evidence_matrix.append(_artifact_matrix_entry(name, kind, path, evidence_payload))
 
     missing = _evidence_missing_fields(evidence_payload)
     _check(
@@ -266,44 +1364,132 @@ def _audit_artifact(
         else "hardware_verified is inconsistent with runtime_submission.",
         details={"failure": runtime_failure},
     )
-    acceptance = payload.get("acceptance_summary") or evidence_payload.get("acceptance_summary")
+    runtime_evidence_failure = _runtime_evidence_boundary_failure(evidence_payload)
+    _check(
+        checks,
+        check_id=f"{id_prefix}:{name}:runtime_evidence_boundary",
+        label=f"{name} runtime evidence boundary is explicit",
+        passed=runtime_evidence_failure is None,
+        required=required,
+        summary=(
+            "Runtime evidence status is consistent with the declared trust tier."
+            if runtime_evidence_failure is None
+            else "hardware_verified trust tier is missing retrieved runtime evidence."
+        ),
+        details={
+            "failure": runtime_evidence_failure,
+            "runtime_evidence_status": _runtime_evidence_status(evidence_payload),
+            "hardware_verified_case_count": len(_hardware_verified_cases(evidence_payload)),
+        },
+    )
+    acceptance_check_id = f"{id_prefix}:{name}:acceptance_summary"
     sidecar_acceptance_path = path.parent / "acceptance_summary.json"
-    if not isinstance(acceptance, dict) and sidecar_acceptance_path.exists():
-        acceptance = _read_json(sidecar_acceptance_path)
+    acceptance_read_error: str | None = None
+    embedded_acceptance = payload.get("acceptance_summary") or evidence_payload.get("acceptance_summary")
+    if sidecar_acceptance_path.exists():
+        acceptance, acceptance_read_error = _read_optional_json_object(sidecar_acceptance_path)
+        acceptance_source = "sidecar" if isinstance(acceptance, dict) else None
+    else:
+        acceptance = embedded_acceptance
+        acceptance_source = "embedded" if isinstance(acceptance, dict) else None
     if not isinstance(acceptance, dict):
-        if acceptance_required:
+        if acceptance_read_error is not None:
+            if required or acceptance_required:
+                _check(
+                    checks,
+                    check_id=acceptance_check_id,
+                    label=f"{name} acceptance summary is readable",
+                    passed=False,
+                    required=True,
+                    summary="Acceptance summary sidecar must be a readable JSON object.",
+                    details={"path": str(sidecar_acceptance_path), "error": acceptance_read_error},
+                )
+            else:
+                _warning(
+                    checks,
+                    check_id=acceptance_check_id,
+                    label=f"{name} acceptance summary is unreadable",
+                    summary="Acceptance summary sidecar is present but could not be read as a JSON object.",
+                    details={"path": str(sidecar_acceptance_path), "error": acceptance_read_error},
+                )
+        elif required or acceptance_required:
             _check(
                 checks,
-                check_id=f"{id_prefix}:{name}:acceptance_summary",
+                check_id=acceptance_check_id,
                 label=f"{name} acceptance summary is present",
                 passed=False,
                 required=True,
-                summary="Acceptance summary is required but missing.",
+                summary="Acceptance summary is required for this artifact but missing.",
                 details={"path": str(sidecar_acceptance_path)},
             )
         else:
             _warning(
                 checks,
-                check_id=f"{id_prefix}:{name}:acceptance_summary",
+                check_id=acceptance_check_id,
                 label=f"{name} acceptance summary is missing",
                 summary="Acceptance summary is not present; release audit treats this as a warning unless required.",
                 details={"path": str(sidecar_acceptance_path)},
             )
     else:
-        accepted = bool(acceptance.get("accepted"))
+        accepted = acceptance.get("accepted") is True
+        blocking_failures = _acceptance_items(acceptance, "blocking_failures")
+        acceptance_warnings = _acceptance_items(acceptance, "warnings")
+        contract_failures = _acceptance_contract_failures(
+            acceptance,
+            expected_check_id=acceptance_check_id,
+            artifact_path=path,
+            artifact_payload=evidence_payload,
+            repo_root=repo_root,
+        )
+        passed = accepted and not blocking_failures and not contract_failures
         _check(
             checks,
-            check_id=f"{id_prefix}:{name}:acceptance_summary",
+            check_id=acceptance_check_id,
             label=f"{name} acceptance summary is accepted",
-            passed=accepted,
-            required=acceptance_required,
+            passed=passed,
+            required=required or acceptance_required,
             summary=(
-                "Acceptance summary is present and accepted."
-                if accepted
-                else "Acceptance summary is present but not accepted."
+                "Acceptance summary is present, bound to this artifact, accepted, and has no blocking failures."
+                if passed
+                else "Acceptance summary is missing strict accepted=true, contains blocking failures, or is not bound to this artifact."
             ),
-            details={"recommended_action": acceptance.get("recommended_action")},
+            details={
+                "schema_version": acceptance.get("schema_version"),
+                "artifact_path": acceptance.get("artifact_path"),
+                "artifact_sha256": acceptance.get("artifact_sha256"),
+                "release_audit_check_id": acceptance.get("release_audit_check_id"),
+                "trust_tier": acceptance.get("trust_tier"),
+                "runtime_evidence_status": acceptance.get("runtime_evidence_status"),
+                "accepted": acceptance.get("accepted"),
+                "source": acceptance_source,
+                "blocking_failure_count": len(blocking_failures),
+                "warning_count": len(acceptance_warnings),
+                "contract_failure_count": len(contract_failures),
+                "recommended_action": acceptance.get("recommended_action"),
+                "blocking_failures": blocking_failures,
+                "warnings": acceptance_warnings,
+                "contract_failures": contract_failures,
+            },
         )
+        if acceptance_warnings:
+            _warning(
+                checks,
+                check_id=f"{id_prefix}:{name}:acceptance_warnings",
+                label=f"{name} acceptance summary has warnings",
+                summary="Acceptance summary is accepted but still carries warnings for release review.",
+                details={"warnings": acceptance_warnings},
+            )
+    evidence_matrix.append(
+        _artifact_matrix_entry(
+            name,
+            kind,
+            path,
+            evidence_payload,
+            acceptance=acceptance if isinstance(acceptance, dict) else None,
+            acceptance_source=acceptance_source,
+            acceptance_contract_failures=contract_failures if isinstance(acceptance, dict) else None,
+        )
+    )
     return evidence_payload
 
 
@@ -315,7 +1501,7 @@ def _audit_exploratory_asset(
     evidence_matrix: list[dict[str, Any]],
 ) -> None:
     config_path = _resolve(repo_root, asset.config)
-    classified = classify_exploratory_config(config_path)
+    classified, classify_error = _classify_exploratory_config(config_path)
     _check(
         checks,
         check_id=f"exploratory_asset:{asset.name}:config",
@@ -323,7 +1509,7 @@ def _audit_exploratory_asset(
         passed=classified == asset.kind,
         required=asset.required,
         summary=f"classified={classified}, expected={asset.kind}",
-        details={"config": str(config_path)},
+        details={"config": str(config_path), "error": classify_error},
     )
 
     if asset.artifact is None:
@@ -339,13 +1525,14 @@ def _audit_exploratory_asset(
     payload = _audit_artifact(
         name=asset.name,
         path=artifact_path,
+        repo_root=repo_root,
         required=asset.required,
         kind=asset.kind,
         checks=checks,
-            evidence_matrix=evidence_matrix,
-            id_prefix="exploratory_asset",
-            acceptance_required=False,
-        )
+        evidence_matrix=evidence_matrix,
+        id_prefix="exploratory_asset",
+        acceptance_required=False,
+    )
     if payload is None:
         return
 
@@ -395,7 +1582,19 @@ def _audit_docs(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[st
                 details={"path": str(path)},
             )
             continue
-        text = path.read_text(encoding="utf-8").lower()
+        try:
+            text = path.read_text(encoding="utf-8").lower()
+        except (OSError, UnicodeError) as exc:
+            _check(
+                checks,
+                check_id=f"doc:{doc.path}:readable",
+                label=f"{doc.path} is readable text",
+                passed=False,
+                required=doc.required,
+                summary="Document exists but could not be read as UTF-8 text.",
+                details={"path": str(path), "error": f"{type(exc).__name__}: {exc}"},
+            )
+            continue
         missing = [term for term in doc.terms if term.lower() not in text]
         _check(
             checks,
@@ -634,30 +1833,120 @@ def _audit_research_os_extensions(*, repo_root: Path, checks: list[dict[str, Any
 
 
 def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
+    audit_provenance = summary.get("audit_provenance") if isinstance(summary.get("audit_provenance"), dict) else {}
     lines = [
         "# QCchem Release Readiness Audit",
         "",
         "- output: `release_readiness.md`",
+        f"- schema_version: `{summary['schema_version']}`",
+        f"- schema_features: `{', '.join(summary.get('schema_features', []))}`",
         f"- profile: `{summary['profile']}`",
         f"- release_version: `{summary['release_version']}`",
+        f"- generated_at_utc: `{audit_provenance.get('generated_at_utc')}`",
+        f"- repo_root: `{audit_provenance.get('repo_root')}`",
+        f"- manifest_path: `{audit_provenance.get('manifest_path')}`",
+        f"- output_dir: `{audit_provenance.get('output_dir')}`",
         f"- status: `{summary['status']}`",
         f"- recommended_action: `{summary['recommended_action']}`",
         f"- required_pass_count: `{summary['required_pass_count']}`",
         f"- required_fail_count: `{summary['required_fail_count']}`",
         f"- warning_count: `{summary.get('warning_count', 0)}`",
-        "",
-        "## Evidence Matrix",
-        "",
     ]
+    warning_policy = summary.get("warning_policy")
+    if isinstance(warning_policy, dict):
+        allowed_ids = warning_policy.get("allowed_ids")
+        unexpected_ids = warning_policy.get("unexpected_ids") or []
+        lines.extend(
+            [
+                f"- warning_policy_status: `{warning_policy.get('status')}`",
+                f"- warning_policy_max_count: `{warning_policy.get('max_count')}`",
+                f"- warning_policy_unexpected_count: `{len(warning_policy.get('unexpected_ids') or [])}`",
+                f"- warning_policy_allowed_ids: `{json.dumps(allowed_ids, sort_keys=True)}`",
+                f"- warning_policy_unexpected_ids: `{json.dumps(unexpected_ids, sort_keys=True)}`",
+            ]
+        )
+    required_failed_checks = summary.get("required_failed_checks") or []
+    if required_failed_checks:
+        lines.extend(["", "## Required Failed Checks", ""])
+        for check in required_failed_checks:
+            lines.extend(
+                [
+                    f"- `{check['id']}`",
+                    f"  - summary: {check.get('summary', '')}",
+                    f"  - details: `{json.dumps(check.get('details', {}), sort_keys=True)}`",
+                ]
+            )
+    required_failed_ids = {item.get("id") for item in required_failed_checks}
+    failed_checks = [
+        check
+        for check in summary.get("failed_checks", [])
+        if check.get("id") not in required_failed_ids
+    ]
+    if failed_checks:
+        lines.extend(["", "## Optional Failed Checks", ""])
+        for check in failed_checks:
+            lines.extend(
+                [
+                    f"- `{check['id']}` required=`{check['required']}`",
+                    f"  - summary: {check.get('summary', '')}",
+                    f"  - details: `{json.dumps(check.get('details', {}), sort_keys=True)}`",
+                ]
+            )
+    warning_checks = summary.get("warning_checks") or []
+    if warning_checks:
+        lines.extend(["", "## Warning Checks", ""])
+        for check in warning_checks:
+            lines.extend(
+                [
+                    f"- `{check['id']}`",
+                    f"  - summary: {check.get('summary', '')}",
+                    f"  - details: `{json.dumps(check.get('details', {}), sort_keys=True)}`",
+                ]
+            )
+    acceptance_command_failures = _acceptance_command_repair_failures(summary)
+    if acceptance_command_failures:
+        lines.extend(["", "## Acceptance Command Repairs", ""])
+        for failure in acceptance_command_failures:
+            reason = failure.get("reason", "unknown")
+            remediation = failure.get("remediation") or _acceptance_failure_remediation(failure)
+            lines.extend(
+                [
+                    f"- command[{failure.get('index')}]: {_markdown_code_span(failure.get('command', ''))}",
+                    f"  - reason: {_markdown_code_span(reason)}",
+                    f"  - remediation: {remediation}",
+                ]
+            )
+    lines.extend(["", "## Evidence Matrix", ""])
     for entry in summary["evidence_matrix"]:
         lines.extend(
             [
                 f"### {entry['name']}",
                 "",
                 f"- kind: `{entry['kind']}`",
+                f"- primary_scientific_claim: {_markdown_code_span(entry.get('primary_scientific_claim'))}",
+                f"- primary_baseline: {_markdown_code_span(json.dumps(entry.get('primary_baseline'), sort_keys=True))}",
+                f"- primary_error_metric: {_markdown_code_span(json.dumps(entry.get('primary_error_metric'), sort_keys=True))}",
+                f"- chemical_accuracy_status: `{entry.get('chemical_accuracy_status')}`",
                 f"- trust_tier: `{entry.get('trust_tier')}`",
                 f"- recommended_action: `{entry.get('recommended_action')}`",
+                f"- review_warning_count: `{entry.get('review_warning_count', 0)}`",
+                f"- review_warnings: {_markdown_code_span(json.dumps(entry.get('review_warnings') or [], sort_keys=True))}",
                 f"- hardware_verified: `{entry.get('hardware_verified')}`",
+                f"- runtime_evidence_status: `{entry.get('runtime_evidence_status')}`",
+                f"- hardware_verified_case_count: `{entry.get('hardware_verified_case_count', 0)}`",
+                f"- runtime_submission_status: `{entry.get('runtime_submission_status')}`",
+                f"- acceptance_summary_source: `{entry.get('acceptance_summary_source')}`",
+                f"- acceptance_schema_version: `{entry.get('acceptance_schema_version')}`",
+                f"- acceptance_artifact_path: `{entry.get('acceptance_artifact_path')}`",
+                f"- acceptance_artifact_sha256: `{entry.get('acceptance_artifact_sha256')}`",
+                f"- acceptance_release_audit_check_id: `{entry.get('acceptance_release_audit_check_id')}`",
+                f"- acceptance_trust_tier: `{entry.get('acceptance_trust_tier')}`",
+                f"- acceptance_runtime_evidence_status: `{entry.get('acceptance_runtime_evidence_status')}`",
+                f"- acceptance_status: `{entry.get('acceptance_status')}`",
+                f"- acceptance_recommended_action: `{entry.get('acceptance_recommended_action')}`",
+                f"- acceptance_blocking_failure_count: `{entry.get('acceptance_blocking_failure_count', 0)}`",
+                f"- acceptance_warning_count: `{entry.get('acceptance_warning_count', 0)}`",
+                f"- acceptance_contract_failure_count: `{entry.get('acceptance_contract_failure_count', 0)}`",
                 f"- path: `{entry.get('path')}`",
                 "",
             ]
@@ -678,7 +1967,8 @@ def run_release_audit(
     output_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Run the Trust-First release audit and write readiness artifacts."""
-    resolved_repo_root = (repo_root or Path.cwd()).resolve()
+    default_repo_root = workspace_root_for_path(spec.source_path) if spec.source_path is not None else Path.cwd()
+    resolved_repo_root = (repo_root or default_repo_root).resolve()
     resolved_output_dir = (output_dir or resolved_repo_root / "artifacts" / "release_audit").resolve()
     resolved_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -695,10 +1985,13 @@ def run_release_audit(
         summary=f"pyproject={project_version}, expected={spec.release_version}",
     )
 
+    _audit_acceptance_commands(spec, repo_root=resolved_repo_root, checks=checks)
+
     for artifact in spec.curated_artifacts:
         _audit_artifact(
             name=artifact.name,
             path=_resolve(resolved_repo_root, artifact.path),
+            repo_root=resolved_repo_root,
             required=artifact.required,
             kind="curated",
             checks=checks,
@@ -713,19 +2006,35 @@ def run_release_audit(
     _audit_docs(spec, repo_root=resolved_repo_root, checks=checks)
     _audit_custom_workflow_extensions(repo_root=resolved_repo_root, checks=checks)
     _audit_research_os_extensions(repo_root=resolved_repo_root, checks=checks, evidence_matrix=evidence_matrix)
+    warning_policy_summary = _apply_warning_policy(checks, spec.warning_policy)
 
     required_pass_count = sum(1 for check in checks if check["required"] and check["status"] == "passed")
     required_fail_count = sum(1 for check in checks if check["required"] and check["status"] == "failed")
     warning_count = sum(1 for check in checks if check["status"] == "warning")
     status = "passed" if required_fail_count == 0 else "failed"
+    failed_checks = _check_summaries(checks, status="failed")
+    required_failed_checks = _check_summaries(checks, status="failed", required=True)
+    warning_checks = _check_summaries(checks, status="warning")
+    audit_provenance = {
+        "generated_at_utc": datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "repo_root": str(resolved_repo_root),
+        "manifest_path": _path_for_audit_provenance(spec.source_path, repo_root=resolved_repo_root),
+        "output_dir": _path_for_audit_provenance(resolved_output_dir, repo_root=resolved_repo_root),
+    }
     summary = {
         "schema_version": RELEASE_AUDIT_SCHEMA_VERSION,
+        "schema_features": RELEASE_AUDIT_SCHEMA_FEATURES,
         "profile": spec.profile,
         "release_version": spec.release_version,
+        "audit_provenance": audit_provenance,
         "status": status,
         "required_pass_count": required_pass_count,
         "required_fail_count": required_fail_count,
         "warning_count": warning_count,
+        "failed_checks": failed_checks,
+        "required_failed_checks": required_failed_checks,
+        "warning_checks": warning_checks,
+        "warning_policy": warning_policy_summary,
         "checks": checks,
         "evidence_matrix": evidence_matrix,
         "acceptance_commands": list(spec.acceptance_commands),
@@ -750,5 +2059,8 @@ def run_release_audit_from_config(
     repo_root: Path | None = None,
 ) -> dict[str, Any]:
     """Load and run a release audit manifest."""
-    spec = load_release_audit_spec(config_path)
+    resolved_config_path = config_path.expanduser()
+    if not resolved_config_path.is_absolute() and repo_root is not None:
+        resolved_config_path = repo_root.expanduser() / resolved_config_path
+    spec = load_release_audit_spec(resolved_config_path)
     return run_release_audit(spec, repo_root=repo_root, output_dir=output_dir)

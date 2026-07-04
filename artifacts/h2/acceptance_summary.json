@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "h2_local_validated_anchor",
+  "artifact_path": "artifacts/h2/result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "exploratory",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:h2_local_validated_anchor:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable local evidence with the declared trust tier.",
+    "This sidecar does not promote the artifact beyond its evidence_summary boundary."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "74d2c2a3227aaa469f9e4744d3f440b53aa88b4524d4089d6babb9f97017061d"
+}

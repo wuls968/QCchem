@@ -23,16 +23,34 @@ Start the local workbench:
 qcchem workbench serve
 ```
 
+Run that command from the repository root so the Workbench reads `./artifacts`.
+If you launch an installed wheel from another directory, use:
+
+```bash
+qcchem workbench serve --artifact-root /path/to/QCchem/artifacts
+```
+
+Missing explicit artifact roots are rejected so a release demo cannot silently
+fall back to sample data.
+
 Before a release demo, run:
 
 ```bash
+qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json
+
 qcchem release audit \
   -c configs/release/trust_first_audit.yaml \
   -o artifacts/release_audit
 ```
 
+If the smoke command is launched from outside the checkout, add
+`--artifact-root /path/to/QCchem/artifacts` so it renders the release evidence
+instead of sample fallback data.
+Missing explicit artifact roots fail the smoke gate with exit code `2`.
+
 The release audit reads local docs, configs, and artifacts only. It performs no
-runtime submission.
+runtime submission. The Workbench smoke command checks the documented showcase
+routes and writes ignored local diagnostic JSON for CI triage.
 
 Do not use the showcase to upgrade a claim. If a page shows `hardware_verified`,
 QFT finite-cutoff evidence, LR-ACE flagship evidence, or TC-QSCI exploratory
@@ -133,10 +151,12 @@ Use this page to answer:
 
 The release line is artifact-first: a workflow is reviewable only when its
 result, graph, provenance, registry, and report sidecars travel together. The
-curated demo path should inspect
-`artifacts/workflows/research_os_review_workflow/workflow_result.json` and its
-sidecars; plugin execution does not imply hardware/runtime permission unless a
-separate runtime artifact proves that boundary.
+tracked demo source is `examples/workflows/research_os_workflow.yaml`. When run
+locally, it may write `artifacts/workflows/research_os_review_workflow/`; those
+generated outputs are local review evidence until their paths are normalized and
+the full sidecar set is intentionally promoted as a tracked release fixture.
+Plugin execution does not imply hardware/runtime permission unless a separate
+runtime artifact proves that boundary.
 
 ## 7. Research OS Artifacts
 
@@ -212,7 +232,7 @@ LR-ACE flagship:
 ```bash
 qcchem run -c configs/lr_ace/h2_flagship.yaml
 qcchem run -c configs/lr_ace/lih_active_flagship.yaml
-qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1
+qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1/preview_local --overwrite
 
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
 qcchem exploratory run -c configs/exploratory/lih_active_lr_ace.yaml
@@ -221,7 +241,8 @@ qcchem exploratory run -c configs/exploratory/lih_active_lr_ace.yaml
 Boundary: LR-ACE flagship artifacts may be validated only through the
 trust-first validation gate. Legacy exploratory LR-ACE local gates and runtime
 probes remain exploratory algorithm evidence, not publication-grade method
-validation.
+validation. Preview outputs let you regenerate the suite without overwriting the
+curated release artifact until you intentionally refresh that evidence bundle.
 
 TC-QSCI:
 
@@ -244,7 +265,7 @@ The release-grade artifact set is:
 - `artifacts/mini_comparison_study/study_result.json`
 - `artifacts/h2_short_scan/scan_result.json`
 - `artifacts/hardware_calibration_suite_v1/hardware_calibration_summary.json`
-- `artifacts/workflows/research_os_review_workflow/workflow_result.json`
+- `examples/workflows/research_os_workflow.yaml`
 - `examples/ai_workspace/tickets/analysis_h2_campaign.json`
 - `configs/objectives/h2_local_validation.yaml`
 - `configs/objectives/lih_compression_trust_loop.yaml`

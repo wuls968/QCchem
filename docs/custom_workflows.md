@@ -13,6 +13,10 @@ qcchem workflow report artifacts/workflows/h2_trust_first_workflow/workflow_resu
 qcchem workflow plugins
 ```
 
+`workflow run` rejects an existing non-empty `workflow.output_root` by default.
+Add `--overwrite` only when you intend to replace the whole workflow artifact
+bundle, including `step_outputs/` and `provenance.jsonl`.
+
 Workbench exposes the same protocol at `/workflow-studio`. The visual graph and
 inspector derive from YAML; the YAML file remains the version-controlled source
 of truth.

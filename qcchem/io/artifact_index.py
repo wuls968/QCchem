@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+_GENERATED_ARTIFACT_DIR_NAMES = {"preview_local"}
+_MAX_SKIPPED_GENERATED_RESULT_PATHS = 20
+
 
 def _safe_read_json(path: Path) -> dict[str, Any]:
     try:
@@ -13,6 +16,16 @@ def _safe_read_json(path: Path) -> dict[str, Any]:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _read_json_object_with_error(path: Path) -> tuple[dict[str, Any], str | None]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {}, f"{type(exc).__name__}: {exc}"
+    if not isinstance(payload, dict):
+        return {}, "JSON payload is not an object."
+    return payload, None
 
 
 def _artifact_kind(path: Path) -> str:
@@ -30,6 +43,38 @@ def _artifact_kind(path: Path) -> str:
     if name == "workflow_result.json":
         return "workflow"
     return "run"
+
+
+def _generated_artifact_skip_reason(result_path: Path, *, root: Path) -> str | None:
+    try:
+        relative_parts = result_path.relative_to(root).parts
+    except ValueError:
+        relative_parts = result_path.parts
+    parent_parts = relative_parts[:-1]
+    for name in _GENERATED_ARTIFACT_DIR_NAMES:
+        if name in parent_parts:
+            return name
+    return None
+
+
+def _empty_artifact_index(
+    root: Path,
+    *,
+    root_exists: bool,
+    root_is_dir: bool,
+    index_error: str | None = None,
+) -> dict[str, object]:
+    return {
+        "artifact_root": str(root),
+        "artifact_root_exists": root_exists,
+        "artifact_root_is_dir": root_is_dir,
+        "index_error": index_error,
+        "total_artifacts": 0,
+        "skipped_generated_artifacts": 0,
+        "skipped_generated_result_paths": [],
+        "skipped_generated_result_paths_truncated": False,
+        "artifacts": [],
+    }
 
 
 def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -> dict[str, object]:
@@ -55,7 +100,21 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or payload.get("workflow_name")
         or artifact_root.name
     )
-    acceptance_summary = payload.get("acceptance_summary") if isinstance(payload.get("acceptance_summary"), dict) else {}
+    embedded_acceptance_summary = (
+        payload.get("acceptance_summary")
+        if isinstance(payload.get("acceptance_summary"), dict)
+        else {}
+    )
+    acceptance_summary_error: str | None = None
+    sidecar_acceptance_path = artifact_root / "acceptance_summary.json"
+    if sidecar_acceptance_path.exists():
+        acceptance_summary, acceptance_summary_error = _read_json_object_with_error(sidecar_acceptance_path)
+        acceptance_summary_readable = acceptance_summary_error is None
+        acceptance_summary_source = "sidecar" if acceptance_summary_readable else None
+    else:
+        acceptance_summary = embedded_acceptance_summary
+        acceptance_summary_source = "embedded" if embedded_acceptance_summary else None
+        acceptance_summary_readable = bool(embedded_acceptance_summary)
     workflow_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
     mtime = result_path.stat().st_mtime if result_path.exists() else None
     entry = {
@@ -138,7 +197,11 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             )
             if (artifact_root / name).exists()
         ),
-        "has_acceptance_summary": bool(acceptance_summary) or (artifact_root / "acceptance_summary.json").exists(),
+        "has_acceptance_summary": bool(embedded_acceptance_summary) or sidecar_acceptance_path.exists(),
+        "acceptance_summary_path": str(sidecar_acceptance_path) if sidecar_acceptance_path.exists() else None,
+        "acceptance_summary_source": acceptance_summary_source,
+        "acceptance_summary_readable": acceptance_summary_readable,
+        "acceptance_summary_error": acceptance_summary_error,
         "has_hardware_error_diagnostic": isinstance(payload.get("hardware_error_diagnostic"), dict),
         "workflow_status": payload.get("status") if kind == "workflow" else None,
         "workflow_accepted": acceptance_summary.get("accepted") if kind == "workflow" else None,
@@ -158,11 +221,14 @@ def build_artifact_index(root: Path) -> dict[str, object]:
     resolved_root = Path(root).resolve()
     artifacts: list[dict[str, object]] = []
     if not resolved_root.exists():
-        return {
-            "artifact_root": str(resolved_root),
-            "total_artifacts": 0,
-            "artifacts": artifacts,
-        }
+        return _empty_artifact_index(resolved_root, root_exists=False, root_is_dir=False)
+    if not resolved_root.is_dir():
+        return _empty_artifact_index(
+            resolved_root,
+            root_exists=True,
+            root_is_dir=False,
+            index_error="Artifact root is not a directory.",
+        )
 
     result_names = {
         "result.json",
@@ -173,11 +239,24 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "campaign_result.json",
         "workflow_result.json",
     }
+    skipped_generated_paths: list[str] = []
+    skipped_generated_count = 0
     for result_json in sorted(path for path in resolved_root.rglob("*.json") if path.name in result_names):
+        if _generated_artifact_skip_reason(result_json, root=resolved_root) is not None:
+            skipped_generated_count += 1
+            if len(skipped_generated_paths) < _MAX_SKIPPED_GENERATED_RESULT_PATHS:
+                skipped_generated_paths.append(str(result_json))
+            continue
         artifacts.append(build_artifact_index_entry(result_json, root=resolved_root))
 
     return {
         "artifact_root": str(resolved_root),
+        "artifact_root_exists": True,
+        "artifact_root_is_dir": True,
+        "index_error": None,
         "total_artifacts": len(artifacts),
+        "skipped_generated_artifacts": skipped_generated_count,
+        "skipped_generated_result_paths": skipped_generated_paths,
+        "skipped_generated_result_paths_truncated": skipped_generated_count > len(skipped_generated_paths),
         "artifacts": artifacts,
     }

@@ -15,6 +15,7 @@ from qcchem.core import WorkflowRunResult, WorkflowSpec, WorkflowStepResult, Wor
 from qcchem.io.serialization import to_primitive
 from qcchem.io.workflow_config import load_workflow_spec, validate_workflow_spec, workflow_template
 from qcchem.reporting import write_result_json
+from qcchem.workflow.common import prepare_clean_output_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.workflow_plugins import (
     WorkflowExecutionContext,
@@ -439,13 +440,17 @@ def _build_acceptance(spec: WorkflowSpec, results: dict[str, WorkflowStepResult]
     }
 
 
-def run_custom_workflow(spec: WorkflowSpec, *, output_dir: Path | None = None) -> WorkflowRunResult:
+def run_custom_workflow(
+    spec: WorkflowSpec,
+    *,
+    output_dir: Path | None = None,
+    overwrite: bool = False,
+) -> WorkflowRunResult:
     """Run one validated custom workflow spec and write its artifact bundle."""
     spec = deepcopy(spec)
     registry = workflow_plugin_registry()
     validate_workflow_plugins(spec, registry)
-    root = (output_dir or spec.output_root).resolve()
-    root.mkdir(parents=True, exist_ok=True)
+    root = prepare_clean_output_root(output_dir or spec.output_root, workflow_name="Workflow", overwrite=overwrite)
     provenance_path = root / "provenance.jsonl"
     if provenance_path.exists():
         provenance_path.unlink()
@@ -644,9 +649,14 @@ def run_custom_workflow(spec: WorkflowSpec, *, output_dir: Path | None = None) -
     return result
 
 
-def run_custom_workflow_from_config(path: Path, *, output_dir: Path | None = None) -> WorkflowRunResult:
+def run_custom_workflow_from_config(
+    path: Path,
+    *,
+    output_dir: Path | None = None,
+    overwrite: bool = False,
+) -> WorkflowRunResult:
     """Load and run a custom workflow config."""
-    return run_custom_workflow(load_workflow_spec(path), output_dir=output_dir)
+    return run_custom_workflow(load_workflow_spec(path), output_dir=output_dir, overwrite=overwrite)
 
 
 def report_custom_workflow_result(result_json: Path, *, output_path: Path | None = None) -> dict[str, Any]:

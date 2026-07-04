@@ -100,11 +100,14 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
     verification_status = _normalize_status(payload.get("verification_status"), default="exploratory")
     runtime_status = runtime_evidence_status(runtime_submission, payload.get("hardware_evidence_tier"))
     chem_status = chemical_accuracy_status(chemical)
+    if chem_status == "unavailable" and benchmark.get("meets_threshold") is not None:
+        chem_status = "met" if benchmark.get("meets_threshold") is True else "not_met"
     runtime_acc_status = chemical_accuracy_status(runtime_chemical)
 
-    baseline_kind = "exact" if exact.get("available") else "none"
-    baseline_source = str(exact.get("source") or "exact_diagonalization" if exact.get("available") else "unavailable")
-    baseline_strength = "strong" if exact.get("available") else "weak"
+    exact_available = bool(exact.get("available") or benchmark.get("exact_available"))
+    baseline_kind = "exact" if exact_available else "none"
+    baseline_source = str((exact.get("source") or "exact_diagonalization") if exact_available else "unavailable")
+    baseline_strength = "strong" if exact_available else "weak"
     baseline = build_baseline_descriptor(
         baseline_kind=baseline_kind,
         baseline_source=baseline_source,
@@ -374,7 +377,12 @@ def build_benchmark_suite_evidence_summary(payload: dict[str, Any]) -> EvidenceS
         key=lambda case: float(case.get("absolute_error") or 0.0),
         default=None,
     )
-    trust_tier = _aggregate_trust_tier(summary.get("status_counts") or {})
+    status_counts = summary.get("status_counts") or {}
+    trust_tier = (
+        "exploratory"
+        if {"validated", "unstable"}.issubset(status_counts)
+        else _aggregate_trust_tier(status_counts)
+    )
     recommended_action = (
         "promote_validated_result"
         if trust_tier == "validated"
@@ -558,9 +566,9 @@ def build_hardware_campaign_evidence_summary(payload: dict[str, Any]) -> tuple[E
 def summarize_artifact_payload(payload: dict[str, Any], *, artifact_kind: str | None = None) -> dict[str, Any]:
     normalized = to_primitive(payload)
     detected_kind = artifact_kind or (
-        "benchmark_suite" if "suite_name" in normalized and "cases" in normalized and "summary" in normalized and "dashboard_summary" in normalized
-        else "hardware_campaign" if "suite_name" in normalized and "cases" in normalized and "summary" in normalized
+        "hardware_campaign" if "suite_name" in normalized and "cases" in normalized and "summary" in normalized
         and "runtime_evidence_status_counts" in (normalized.get("summary") or {})
+        else "benchmark_suite" if "suite_name" in normalized and "cases" in normalized and "summary" in normalized
         else "study" if "study_name" in normalized
         else "scan" if "scan_name" in normalized
         else "run"

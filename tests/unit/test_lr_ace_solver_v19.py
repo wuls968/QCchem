@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 from qiskit.quantum_info import SparsePauliOp
 
@@ -387,6 +388,44 @@ def test_lr_ace_adaptive_solver_runs_schedule_and_records_provenance() -> None:
     assert [stage["optimizer_maxiter"] for stage in adaptive["stages"]] == [3, 5]
     assert adaptive["best_stage_index"] in {0, 1}
     assert adaptive["trust_label"] in {"passed_compressed_with_budget", "ansatz_limited"}
+
+
+def test_lr_ace_optimizer_returns_last_evaluation_when_deadline_expires(monkeypatch: pytest.MonkeyPatch) -> None:
+    class ProbeBackend:
+        def estimate_expectation(self, ansatz, operator, parameter_values) -> float:
+            return float(parameter_values[0]) + 1.0
+
+    def fake_minimize(objective, *, x0, method, tol, options):
+        objective(np.asarray([0.25]))
+        objective(np.asarray([0.50]))
+        raise AssertionError("deadline should stop the optimizer before this point")
+
+    times = iter([2.0])
+    spec = SimpleNamespace(
+        ansatz=SimpleNamespace(kind="lr_ace", reps=1),
+        optimizer=SimpleNamespace(kind="COBYLA", maxiter=10, tol=None),
+        initial_point="zeros",
+        lr_ace_adaptive=SimpleNamespace(enabled=False),
+    )
+    solver = build_lr_ace_solver(spec, ProbeBackend(), seed=123)
+
+    monkeypatch.setattr("qcchem.solvers.lr_ace.minimize", fake_minimize)
+    monkeypatch.setattr("qcchem.solvers.lr_ace.perf_counter", lambda: next(times))
+
+    energy, optimal, converged, message, iterations, evaluations = solver._optimize(
+        ansatz=SimpleNamespace(num_parameters=1),
+        operator=SparsePauliOp.from_list([("I", 0.0)]),
+        initial_point=np.asarray([0.0]),
+        maxiter=10,
+        deadline=1.0,
+    )
+
+    assert energy == pytest.approx(1.25)
+    assert optimal == pytest.approx([0.25])
+    assert converged is False
+    assert "max_wall_time_seconds" in message
+    assert iterations == 1
+    assert evaluations == 1
 
 
 def test_lr_ace_residual_guided_adaptive_expansion_records_selected_generators() -> None:

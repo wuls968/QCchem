@@ -152,6 +152,12 @@ The filter changes which cases run; it does not change case configs,
 acceptance rules, energies, baselines, or trust-tier language. The resulting
 `benchmark_result.json` records `calibration_summary.case_filter` and
 `dashboard_summary.case_filter` with selected and skipped cases.
+Benchmark suite outputs refuse to replace an existing non-empty directory by
+default. Add `--overwrite` only when you intentionally want to replace the
+previous aggregate bundle. The output guard refuses root/home paths, the
+repository root, top-level `artifacts/`, and source-tree paths outside
+`artifacts/` before creating or replacing outputs. It also rejects symlinked
+output paths before overwrite deletion can follow the link.
 
 ## QFT / lattice-QED benchmark suites
 

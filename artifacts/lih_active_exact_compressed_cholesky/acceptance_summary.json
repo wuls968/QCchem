@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "lih_cholesky_compression_anchor",
+  "artifact_path": "artifacts/lih_active_exact_compressed_cholesky/result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "validated",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:lih_cholesky_compression_anchor:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable validated Cholesky-compression evidence.",
+    "This sidecar does not replace the artifact evidence_summary or exact-baseline checks."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "333ba4984f40ddc16336f50118aae2a1b3ef9cf528aac9cccd16e1b0f6d8360b"
+}

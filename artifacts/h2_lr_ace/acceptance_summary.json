@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "lr_ace_h2_local_gate",
+  "artifact_path": "artifacts/h2_lr_ace/result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "exploratory",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "exploratory_asset:lr_ace_h2_local_gate:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable LR-ACE exploratory evidence.",
+    "This sidecar preserves the exploratory boundary and does not promote LR-ACE to validated."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "2625a02f010e8a1ac330daabe1d53c1bff5abd1a30536f8d8ee5b12332307c20"
+}

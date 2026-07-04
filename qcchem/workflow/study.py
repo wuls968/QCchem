@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 from qcchem.core import RunRecord, StudyArtifactPaths, StudyResult, StudySummary
@@ -12,7 +11,7 @@ from qcchem.io.study_config import load_study_spec
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report
 from qcchem.core.evidence import build_study_evidence_summary
-from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
+from qcchem.workflow.common import clone_spec_with_overrides, prepare_clean_output_root
 from qcchem.workflow.continuity import (
     attach_initial_point_candidate,
     build_continuity_record,
@@ -26,10 +25,7 @@ SCHEMA_VERSION = "qcchem.study.v0.3-alpha"
 
 
 def _prepare_study_artifacts(root: Path, overwrite: bool) -> StudyArtifactPaths:
-    resolved_root = resolve_artifact_root(root)
-    if resolved_root.exists() and overwrite:
-        shutil.rmtree(resolved_root)
-    resolved_root.mkdir(parents=True, exist_ok=True)
+    resolved_root = prepare_clean_output_root(root, workflow_name="Study", overwrite=overwrite)
     return StudyArtifactPaths(
         root=resolved_root,
         study_result_json=resolved_root / "study_result.json",
@@ -38,10 +34,16 @@ def _prepare_study_artifacts(root: Path, overwrite: bool) -> StudyArtifactPaths:
     )
 
 
-def run_study_from_spec(spec, *, source_config: str, output_dir: Path | None = None) -> StudyResult:
+def run_study_from_spec(
+    spec,
+    *,
+    source_config: str,
+    output_dir: Path | None = None,
+    overwrite: bool = False,
+) -> StudyResult:
     """Run a study from an already-parsed StudySpec."""
     study_root = output_dir or Path("artifacts") / spec.name
-    artifacts = _prepare_study_artifacts(Path(study_root), overwrite=True)
+    artifacts = _prepare_study_artifacts(Path(study_root), overwrite=overwrite)
 
     run_records: list[RunRecord] = []
     registry_entries = []
@@ -139,7 +141,7 @@ def run_study_from_spec(spec, *, source_config: str, output_dir: Path | None = N
     return result
 
 
-def run_study_from_config(path: Path, output_dir: Path | None = None) -> StudyResult:
+def run_study_from_config(path: Path, output_dir: Path | None = None, *, overwrite: bool = False) -> StudyResult:
     """Load and run a study configuration."""
     spec = load_study_spec(path)
-    return run_study_from_spec(spec, source_config=str(path), output_dir=output_dir)
+    return run_study_from_spec(spec, source_config=str(path), output_dir=output_dir, overwrite=overwrite)

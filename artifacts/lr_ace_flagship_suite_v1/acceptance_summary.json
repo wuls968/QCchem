@@ -1,18 +1,28 @@
 {
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "lr_ace_flagship_suite_v1",
+  "artifact_path": "artifacts/lr_ace_flagship_suite_v1/benchmark_result.json",
   "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "validated",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:lr_ace_flagship_suite_v1:acceptance_summary",
   "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable LR-ACE flagship benchmark-suite evidence with the declared trust tier.",
+    "LR-ACE flagship is gate-dependent local method evidence, not a blanket publication-grade algorithm claim."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
   "case_count": 5,
+  "required_files": [
+    "result.json"
+  ],
   "policy": {
     "fail_on_runtime_accuracy_promotion": true,
     "require_evidence_summary": true,
     "require_runtime_sidecar_for_hardware_verified": true,
     "strict_exit_code": true
   },
-  "recommended_action": "promote_accepted_benchmark",
-  "required_files": [
-    "result.json"
-  ],
-  "schema_version": "qcchem.benchmark_acceptance.v0.1-alpha",
-  "suite_name": "lr_ace_flagship_suite_v1",
-  "warnings": []
+  "artifact_sha256": "f31cf869977aa98a73c18d03b12b43f943b5c796a88b0ea752ebc2810a92c930"
 }

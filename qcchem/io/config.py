@@ -103,6 +103,61 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def workspace_root_for_path(path: Path) -> Path:
+    """Infer the user workspace that owns a config path.
+
+    Source checkouts can use ``_project_root()``, but installed wheels live under
+    ``site-packages``. Configs passed by absolute path should keep resolving
+    repo-relative entries against the workspace that contains that config.
+    """
+    resolved = path.expanduser().resolve()
+    start = resolved if resolved.is_dir() else resolved.parent
+    for base in (start, *start.parents):
+        if (base / ".git").exists():
+            return base
+        if (base / "pyproject.toml").is_file() and (base / "qcchem").is_dir():
+            return base
+        if (base / "configs").is_dir() and (
+            (base / "benchmarks").is_dir()
+            or (base / "artifacts").is_dir()
+            or (base / "examples").is_dir()
+        ):
+            return base
+    return _project_root()
+
+
+def output_root_for_config_path(path: Path) -> Path:
+    """Return the workspace root that should own relative output paths.
+
+    Input references may intentionally fall back to the QCchem checkout so small
+    ad hoc configs can reuse bundled examples. Output paths are different: when
+    a standalone config lives outside a recognized workspace, relative outputs
+    should stay next to that config instead of polluting the package checkout.
+    """
+    resolved = path.expanduser().resolve()
+    start = resolved if resolved.is_dir() else resolved.parent
+    for base in (start, *start.parents):
+        if (base / ".git").exists():
+            return base
+        if (base / "pyproject.toml").is_file() and (base / "qcchem").is_dir():
+            return base
+        if (base / "configs").is_dir() and (
+            (base / "benchmarks").is_dir()
+            or (base / "artifacts").is_dir()
+            or (base / "examples").is_dir()
+        ):
+            return base
+    return start
+
+
+def resolve_project_path(base_dir: Path, value: str | Path) -> Path:
+    """Resolve a project-relative path from a config-owned workspace."""
+    candidate = Path(str(value)).expanduser()
+    if candidate.is_absolute():
+        return candidate
+    return (workspace_root_for_path(base_dir) / candidate).resolve()
+
+
 def resolve_user_path(base_dir: Path, value: str) -> Path:
     """Resolve a user-specified path relative to a base directory or project root."""
     candidate = Path(value).expanduser()
@@ -111,14 +166,19 @@ def resolve_user_path(base_dir: Path, value: str) -> Path:
     local = (base_dir / candidate).resolve()
     if local.exists():
         return local
-    return (_project_root() / candidate).resolve()
+    return resolve_project_path(base_dir, candidate)
+
+
+def resolve_output_path(config_path: Path, value: str | Path) -> Path:
+    """Resolve a run output path against the config-owned output workspace."""
+    candidate = Path(str(value)).expanduser()
+    if candidate.is_absolute():
+        return candidate
+    return (output_root_for_config_path(config_path) / candidate).resolve()
 
 
 def _resolve_path(base_dir: Path, value: str) -> Path:
-    candidate = (base_dir / value).resolve()
-    if candidate.exists():
-        return candidate
-    return (_project_root() / value).resolve()
+    return resolve_user_path(base_dir, value)
 
 
 def _require_mapping(data: dict[str, Any], key: str) -> dict[str, Any]:
@@ -1716,7 +1776,7 @@ def load_run_spec(path: Path) -> RunSpec:
         hardware_optimization=_parse_hardware_optimization(raw),
         run=RunConfig(
             seed=int(run_raw.get("seed", 7)),
-            output_dir=Path(run_raw.get("output_dir", "artifacts")),
+            output_dir=resolve_output_path(resolved_path, run_raw.get("output_dir", "artifacts")),
             overwrite=bool(run_raw.get("overwrite", False)),
             exports=_parse_artifact_exports(run_raw),
         ),

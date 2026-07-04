@@ -927,6 +927,115 @@ def test_prepare_workbench_reports_real_page_inventory_and_artifact_summary() ->
 
 
 @pytest.mark.integration
+def test_workbench_artifact_root_defaults_to_current_workspace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, resolve_workbench_artifact_root
+
+    workspace = tmp_path / "workspace"
+    artifact_root = workspace / "artifacts"
+    artifact_root.mkdir(parents=True)
+    monkeypatch.chdir(workspace)
+    monkeypatch.delenv(WORKBENCH_ARTIFACT_ROOT_ENV, raising=False)
+
+    assert resolve_workbench_artifact_root() == artifact_root.resolve()
+
+
+@pytest.mark.integration
+def test_workbench_artifact_root_rejects_missing_explicit_path(tmp_path: Path) -> None:
+    from qcchem.workbench.data import resolve_workbench_artifact_root
+
+    missing_root = tmp_path / "missing-artifacts"
+
+    with pytest.raises(ValueError, match="artifact root does not exist"):
+        resolve_workbench_artifact_root(missing_root)
+
+
+@pytest.mark.integration
+def test_prepare_workbench_accepts_explicit_artifact_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV
+    from qcchem.workbench.server import prepare_workbench
+
+    artifact_root = tmp_path / "artifacts"
+    run_root = artifact_root / "custom_run"
+    run_root.mkdir(parents=True)
+    (run_root / "result.json").write_text("{}", encoding="utf-8")
+    (run_root / "report.md").write_text("# report\n", encoding="utf-8")
+    monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, "")
+
+    _app, summary = prepare_workbench(
+        host="127.0.0.1",
+        port=8051,
+        debug=False,
+        artifact_root=artifact_root,
+    )
+
+    assert summary["artifact_root"] == str(artifact_root.resolve())
+    assert summary["artifact_inventory"]["artifact_root_exists"] is True
+    assert summary["artifact_inventory"]["run_result_roots"] == 1
+    assert summary["artifact_inventory"]["report_markdown_roots"] == 1
+    assert os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] == str(artifact_root.resolve())
+
+
+@pytest.mark.integration
+def test_prepare_workbench_skips_nested_preview_local_inventory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV
+    from qcchem.workbench.server import prepare_workbench
+
+    artifact_root = tmp_path / "artifacts"
+    curated = artifact_root / "curated_run"
+    preview = curated / "preview_local"
+    preview.mkdir(parents=True)
+    (curated / "result.json").write_text("{}", encoding="utf-8")
+    (curated / "report.md").write_text("# report\n", encoding="utf-8")
+    (curated / "runtime_submission.json").write_text("{}", encoding="utf-8")
+    (preview / "result.json").write_text("{}", encoding="utf-8")
+    (preview / "report.md").write_text("# preview\n", encoding="utf-8")
+    (preview / "runtime_submission.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, "")
+
+    _app, summary = prepare_workbench(
+        host="127.0.0.1",
+        port=8051,
+        debug=False,
+        artifact_root=artifact_root,
+    )
+    inventory = summary["artifact_inventory"]
+
+    assert inventory["artifact_root_exists"] is True
+    assert inventory["artifact_root_is_dir"] is True
+    assert inventory["inventory_error"] is None
+    assert inventory["run_result_roots"] == 1
+    assert inventory["report_markdown_roots"] == 1
+    assert inventory["runtime_submission_sidecars"] == 1
+    assert inventory["skipped_generated_artifacts"] == 1
+    assert inventory["featured_run"] == str(curated / "result.json")
+
+
+@pytest.mark.integration
+def test_workbench_artifact_inventory_reports_file_root(tmp_path: Path) -> None:
+    from qcchem.workbench import server
+
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.write_text("not a directory", encoding="utf-8")
+
+    inventory = server._artifact_inventory(artifact_root)
+
+    assert inventory["artifact_root_exists"] is True
+    assert inventory["artifact_root_is_dir"] is False
+    assert inventory["inventory_error"] == "Artifact root is not a directory."
+    assert inventory["run_result_roots"] == 0
+    assert inventory["skipped_generated_artifacts"] == 0
+
+
+@pytest.mark.integration
 def test_workbench_docs_cover_registered_routes() -> None:
     from qcchem.workbench.server import prepare_workbench
 
@@ -940,6 +1049,380 @@ def test_workbench_docs_cover_registered_routes() -> None:
     registered_routes = [str(page["path"]) for page in summary["pages"] if page["path"] != "/"]
 
     assert documented_routes == registered_routes
+
+
+@pytest.mark.integration
+def test_workbench_smoke_checklist_matches_rendered_pages() -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    summary = run_workbench_smoke_from_docs(REPO_ROOT / "docs" / "workbench.md")
+
+    assert summary["status"] == "passed"
+    assert summary["scope"] == "component_tree"
+    assert summary["failed_checks"] == []
+    assert summary["route_count"] == 6
+    assert summary["failed_routes"] == 0
+    assert summary["page_count"] == 14
+    assert summary["failed_pages"] == 0
+    assert "/overview" in summary["registered_routes"]
+    assert [route["route"] for route in summary["routes"]] == [
+        "/overview",
+        "/result-confidence",
+        "/benchmarks",
+        "/hardware-campaign",
+        "/ai-workspace",
+        "/workflow-studio",
+    ]
+    assert all(route["checks"]["registered"] for route in summary["routes"])
+    assert all(route["checks"]["active_label"] for route in summary["routes"])
+    assert all(route["checks"]["expected_text"] for route in summary["routes"])
+    assert all(route["page_title"] for route in summary["routes"])
+    assert all(route["text_excerpt"] for route in summary["routes"])
+    assert all(route["failed_checks"] == [] for route in summary["routes"])
+    assert all(page["checks"]["nonblank"] for page in summary["pages"])
+    assert all(page["checks"]["not_placeholder"] for page in summary["pages"])
+    assert all(page["checks"]["active_label"] for page in summary["pages"])
+    assert all(page["checks"]["title_text"] for page in summary["pages"])
+    assert all(page["text_excerpt"] for page in summary["pages"])
+    assert all(page["failed_checks"] == [] for page in summary["pages"])
+
+
+@pytest.mark.integration
+def test_workbench_smoke_summary_records_artifact_root() -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    artifact_root = REPO_ROOT / "artifacts"
+    summary = run_workbench_smoke_from_docs(
+        REPO_ROOT / "docs" / "workbench.md",
+        artifact_root=artifact_root,
+    )
+
+    assert summary["status"] == "passed"
+    assert summary["artifact_root"] == str(artifact_root.resolve())
+
+
+@pytest.mark.integration
+def test_workbench_smoke_collects_text_from_top_level_component_lists() -> None:
+    from dash import html
+
+    from qcchem.workbench.smoke import _collect_text
+
+    assert _collect_text([html.Div("Alpha"), html.Div(["Beta", html.Span("Gamma")])]) == "Alpha Beta Gamma"
+
+
+@pytest.mark.integration
+def test_workbench_smoke_reports_documented_text_drift(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | `/overview` | Overview | Text that should not exist |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    summary = run_workbench_smoke_from_docs(docs)
+
+    assert summary["status"] == "failed"
+    assert summary["failed_checks"] == ["route:/overview:expected_text"]
+    assert summary["failed_routes"] == 1
+    assert summary["failed_pages"] == 0
+    route = summary["routes"][0]
+    assert route["route"] == "/overview"
+    assert route["checks"]["registered"] is True
+    assert route["checks"]["active_label"] is True
+    assert route["checks"]["expected_text"] is False
+    assert route["failed_checks"] == ["expected_text"]
+    assert route["text_excerpt"]
+    assert "Text that should not exist" not in route["text_excerpt"]
+
+
+@pytest.mark.integration
+def test_workbench_smoke_reports_missing_documented_route_with_registered_routes(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | `/missing-route` | Missing | Missing page text |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    summary = run_workbench_smoke_from_docs(docs)
+    route = summary["routes"][0]
+
+    assert summary["status"] == "failed"
+    assert "/overview" in summary["registered_routes"]
+    assert route["route"] == "/missing-route"
+    assert route["checks"]["registered"] is False
+    assert "registered" in route["failed_checks"]
+    assert route["page_title"] is None
+    assert route["text_excerpt"] == ""
+
+
+@pytest.mark.integration
+def test_workbench_smoke_reports_layout_render_errors(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from qcchem.cli.main import main
+    from qcchem.workbench import app as workbench_app
+
+    def broken_layout() -> object:
+        raise RuntimeError("broken overview render")
+
+    fake_app = SimpleNamespace(
+        page_registry={
+            "overview": {
+                "path": "/overview",
+                "name": "overview",
+                "title": "Overview",
+                "order": 0,
+                "layout": broken_layout,
+            }
+        }
+    )
+    monkeypatch.setattr(workbench_app, "create_app", lambda: fake_app)
+    docs = tmp_path / "workbench.md"
+    output = tmp_path / "workbench_smoke.json"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | `/overview` | Overview | Current defended claim |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    exit_code = main(["workbench", "smoke", "--docs", str(docs), "-o", str(output)])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "Failed checks: route:/overview:rendered" in stdout
+    assert "Failed route: /overview failed_checks=rendered,nonblank,expected_text" in stdout
+    assert "render_error='RuntimeError: broken overview render'" in stdout
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert "route:/overview:rendered" in payload["failed_checks"]
+    assert "page:/overview:rendered" in payload["failed_checks"]
+    route = payload["routes"][0]
+    page = payload["pages"][0]
+    assert route["checks"]["registered"] is True
+    assert route["checks"]["rendered"] is False
+    assert route["render_error"] == "RuntimeError: broken overview render"
+    assert page["checks"]["rendered"] is False
+    assert page["render_error"] == "RuntimeError: broken overview render"
+
+
+@pytest.mark.integration
+def test_workbench_smoke_rejects_malformed_checklist_route_row(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | /overview | Overview | Current defended claim |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="malformed route row"):
+        run_workbench_smoke_from_docs(docs)
+
+
+@pytest.mark.integration
+def test_workbench_smoke_rejects_duplicate_documented_routes(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | `/overview` | Overview | Current defended claim |
+            | `/overview` | Overview | Current defended claim |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="duplicate route: /overview"):
+        run_workbench_smoke_from_docs(docs)
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_uses_docs_checklist(capsys: pytest.CaptureFixture[str]) -> None:
+    from qcchem.cli.main import main
+
+    exit_code = main(["workbench", "smoke", "--docs", str(REPO_ROOT / "docs" / "workbench.md")])
+
+    assert exit_code == 0
+    stdout = capsys.readouterr().out
+    assert "Workbench smoke completed: passed" in stdout
+    assert "Routes: 6 passed, 0 failed" in stdout
+    assert "Registered pages: 14 passed, 0 failed" in stdout
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_reports_failed_check_names(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from qcchem.cli.main import main
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        textwrap.dedent(
+            """
+            # Probe
+
+            ## Browser Smoke Checklist
+
+            | Route | Active route label | Route-specific text to confirm |
+            | --- | --- | --- |
+            | `/overview` | Overview | Text that should not exist |
+            """
+        ).strip(),
+        encoding="utf-8",
+    )
+
+    exit_code = main(["workbench", "smoke", "--docs", str(docs)])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "Workbench smoke completed: failed" in stdout
+    assert "Failed checks: route:/overview:expected_text" in stdout
+    assert "Failed route: /overview failed_checks=expected_text" in stdout
+    assert "text_excerpt=" in stdout
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_rejects_missing_docs_path(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from qcchem.cli.main import main
+
+    exit_code = main(["workbench", "smoke", "--docs", str(tmp_path / "missing_workbench.md")])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench smoke rejected:" in stdout
+    assert "missing_workbench.md" in stdout
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_rejects_missing_artifact_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from qcchem.cli.main import main
+
+    exit_code = main(
+        [
+            "workbench",
+            "smoke",
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--artifact-root",
+            str(tmp_path / "missing-artifacts"),
+        ]
+    )
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench smoke rejected:" in stdout
+    assert "artifact root does not exist" in stdout
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_can_write_json_summary(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from qcchem.cli.main import main
+
+    output = tmp_path / "workbench_smoke.json"
+    exit_code = main(
+        [
+            "workbench",
+            "smoke",
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "-o",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert payload["schema_version"] == "qcchem.workbench_smoke.v0.1-alpha"
+    assert payload["failed_checks"] == []
+    assert payload["route_count"] == 6
+    assert payload["failed_routes"] == 0
+    assert payload["page_count"] == 14
+    assert payload["failed_pages"] == 0
+    assert "/overview" in payload["registered_routes"]
+    assert payload["routes"][0]["text_excerpt"]
+    assert payload["pages"][0]["text_excerpt"]
+    assert "Workbench smoke summary written" in capsys.readouterr().out
+
+
+@pytest.mark.integration
+def test_workbench_smoke_cli_accepts_artifact_root(tmp_path: Path) -> None:
+    from qcchem.cli.main import main
+
+    output = tmp_path / "workbench_smoke.json"
+    exit_code = main(
+        [
+            "workbench",
+            "smoke",
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--artifact-root",
+            str(REPO_ROOT / "artifacts"),
+            "-o",
+            str(output),
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert payload["artifact_root"] == str((REPO_ROOT / "artifacts").resolve())
 
 
 @pytest.mark.integration
@@ -992,8 +1475,13 @@ def test_workbench_server_main_prepares_prints_and_launches(monkeypatch: pytest.
     fake_app = object()
     events: list[tuple[str, object]] = []
 
-    def _fake_prepare(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
-        events.append(("prepare", (host, port, debug)))
+    def _fake_prepare(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
+        events.append(("prepare", (host, port, debug, artifact_root)))
         return fake_app, {
             "url": "http://0.0.0.0:9011",
             "pages": 2,
@@ -1019,7 +1507,7 @@ def test_workbench_server_main_prepares_prints_and_launches(monkeypatch: pytest.
 
     assert exit_code == 0
     assert events == [
-        ("prepare", ("0.0.0.0", 9011, True)),
+        ("prepare", ("0.0.0.0", 9011, True, None)),
         ("launch", (fake_app, "0.0.0.0", 9011, True)),
     ]
     stdout = capsys.readouterr().out

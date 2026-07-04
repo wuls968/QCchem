@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,12 +8,12 @@ version = "0.1.0a1"
 description = "Research-grade quantum chemistry workflow scaffold built on Qiskit and Qiskit Nature."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   { name = "QCchem Contributors" }
 ]
 classifiers = [
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -59,12 +59,16 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ["qcchem*"]
 
+[tool.setuptools.package-data]
+"qcchem.workbench" = ["assets/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["-m", "not slow"]
+addopts = ["-m", "not slow and not stress"]
 markers = [
   "integration: integration tests requiring the quantum chemistry stack",
-  "slow: exploratory stress tests that are validated outside the default CI gate",
+  "slow: bounded opt-in checks that exercise expensive or exploratory paths",
+  "stress: long-running exploratory stress tests validated outside the default CI gate",
 ]
 filterwarnings = [
   "ignore:The class ``qiskit\\..*`` is deprecated.*:DeprecationWarning",

@@ -1,15 +1,25 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from typing import Any
 
 import dash
 
 from qcchem.workbench.app import create_app
+from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, resolve_workbench_artifact_root
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_ROOT = REPO_ROOT / "artifacts"
+_GENERATED_ARTIFACT_DIR_NAMES = {"preview_local"}
+_INVENTORY_RESULT_FILENAMES = {
+    "result.json",
+    "benchmark_result.json",
+    "study_result.json",
+    "scan_result.json",
+    "hardware_calibration_summary.json",
+}
 
 
 def _find_first_existing(*paths: Path) -> str | None:
@@ -19,27 +29,68 @@ def _find_first_existing(*paths: Path) -> str | None:
     return None
 
 
+def _is_nested_generated_artifact_file(path: Path, *, root: Path) -> bool:
+    try:
+        relative_parts = path.relative_to(root).parts
+    except ValueError:
+        relative_parts = path.parts
+    parent_parts = relative_parts[:-1]
+    return any(name in parent_parts for name in _GENERATED_ARTIFACT_DIR_NAMES)
+
+
 def _artifact_files(root: Path, filename: str) -> list[Path]:
-    return sorted(path for path in root.rglob(filename) if path.is_file())
+    return sorted(
+        path
+        for path in root.rglob(filename)
+        if path.is_file() and not _is_nested_generated_artifact_file(path, root=root)
+    )
+
+
+def _empty_artifact_inventory(
+    *,
+    root_exists: bool,
+    root_is_dir: bool,
+    inventory_error: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "artifact_root_exists": root_exists,
+        "artifact_root_is_dir": root_is_dir,
+        "inventory_error": inventory_error,
+        "run_result_roots": 0,
+        "benchmark_suites": 0,
+        "study_results": 0,
+        "scan_results": 0,
+        "hardware_campaigns": 0,
+        "report_markdown_roots": 0,
+        "runtime_submission_sidecars": 0,
+        "skipped_generated_artifacts": 0,
+        "featured_run": None,
+        "featured_benchmark": None,
+        "featured_study": None,
+        "featured_scan": None,
+        "featured_hardware_campaign": None,
+    }
+
+
+def _count_skipped_generated_artifacts(root: Path) -> int:
+    return sum(
+        1
+        for path in root.rglob("*.json")
+        if path.is_file()
+        and path.name in _INVENTORY_RESULT_FILENAMES
+        and _is_nested_generated_artifact_file(path, root=root)
+    )
 
 
 def _artifact_inventory(root: Path) -> dict[str, Any]:
     if not root.exists():
-        return {
-            "artifact_root_exists": False,
-            "run_result_roots": 0,
-            "benchmark_suites": 0,
-            "study_results": 0,
-            "scan_results": 0,
-            "hardware_campaigns": 0,
-            "report_markdown_roots": 0,
-            "runtime_submission_sidecars": 0,
-            "featured_run": None,
-            "featured_benchmark": None,
-            "featured_study": None,
-            "featured_scan": None,
-            "featured_hardware_campaign": None,
-        }
+        return _empty_artifact_inventory(root_exists=False, root_is_dir=False)
+    if not root.is_dir():
+        return _empty_artifact_inventory(
+            root_exists=True,
+            root_is_dir=False,
+            inventory_error="Artifact root is not a directory.",
+        )
 
     run_results = _artifact_files(root, "result.json")
     benchmark_results = _artifact_files(root, "benchmark_result.json")
@@ -51,6 +102,8 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
 
     return {
         "artifact_root_exists": True,
+        "artifact_root_is_dir": True,
+        "inventory_error": None,
         "run_result_roots": len(run_results),
         "benchmark_suites": len(benchmark_results),
         "study_results": len(study_results),
@@ -58,6 +111,7 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
         "hardware_campaigns": len(hardware_campaigns),
         "report_markdown_roots": len(report_markdowns),
         "runtime_submission_sidecars": len(runtime_sidecars),
+        "skipped_generated_artifacts": _count_skipped_generated_artifacts(root),
         "featured_run": _find_first_existing(
             root / "h2_runtime_hardware_probe_puccd_layout" / "result.json",
             root / "h2" / "result.json",
@@ -104,34 +158,60 @@ def _page_inventory(page_registry: dict[str, Any]) -> list[dict[str, Any]]:
     return pages
 
 
-def build_workbench_summary(app: Any, *, host: str, port: int, debug: bool) -> dict[str, Any]:
+def build_workbench_summary(
+    app: Any,
+    *,
+    host: str,
+    port: int,
+    debug: bool,
+    artifact_root: Path | None = None,
+) -> dict[str, Any]:
     page_registry = getattr(app, "page_registry", dash.page_registry)
     pages = _page_inventory(page_registry)
     page_paths = [page["path"] for page in pages]
-    artifact_inventory = _artifact_inventory(DEFAULT_ARTIFACT_ROOT)
+    resolved_artifact_root = resolve_workbench_artifact_root(artifact_root)
+    artifact_inventory = _artifact_inventory(resolved_artifact_root)
     return {
         "url": f"http://{host}:{port}",
         "pages": pages,
         "page_count": len(pages),
         "page_paths": page_paths,
         "default_route": "/overview",
-        "artifact_root": str(DEFAULT_ARTIFACT_ROOT),
+        "artifact_root": str(resolved_artifact_root),
         "artifact_inventory": artifact_inventory,
         "debug": debug,
     }
 
 
-def prepare_workbench(host: str = "127.0.0.1", port: int = 8050, debug: bool = False) -> tuple[Any, dict[str, Any]]:
+def prepare_workbench(
+    host: str = "127.0.0.1",
+    port: int = 8050,
+    debug: bool = False,
+    artifact_root: Path | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    resolved_artifact_root = resolve_workbench_artifact_root(artifact_root)
+    os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] = str(resolved_artifact_root)
     app = create_app()
-    return app, build_workbench_summary(app, host=host, port=port, debug=debug)
+    return app, build_workbench_summary(
+        app,
+        host=host,
+        port=port,
+        debug=debug,
+        artifact_root=resolved_artifact_root,
+    )
 
 
 def launch_app(app: Any, *, host: str, port: int, debug: bool) -> None:
     app.run(host=host, port=port, debug=debug)
 
 
-def serve_workbench(host: str = "127.0.0.1", port: int = 8050, debug: bool = False) -> dict[str, Any]:
-    app, summary = prepare_workbench(host=host, port=port, debug=debug)
+def serve_workbench(
+    host: str = "127.0.0.1",
+    port: int = 8050,
+    debug: bool = False,
+    artifact_root: Path | None = None,
+) -> dict[str, Any]:
+    app, summary = prepare_workbench(host=host, port=port, debug=debug, artifact_root=artifact_root)
     launch_app(app, host=host, port=port, debug=debug)
     return summary
 
@@ -166,12 +246,26 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8050)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument(
+        "--artifact-root",
+        type=Path,
+        help="Artifact root to index; defaults to ./artifacts when present.",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
-    app, summary = prepare_workbench(host=args.host, port=args.port, debug=args.debug)
+    try:
+        app, summary = prepare_workbench(
+            host=args.host,
+            port=args.port,
+            debug=args.debug,
+            artifact_root=args.artifact_root,
+        )
+    except (OSError, ValueError) as exc:
+        print(f"QCchem workbench rejected: {exc}")
+        return 2
     print_workbench_startup(summary)
     launch_app(app, host=args.host, port=args.port, debug=args.debug)
     return 0

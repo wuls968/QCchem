@@ -14,6 +14,17 @@ pip install -e ".[ui]"
 qcchem workbench serve
 ```
 
+By default the server reads `./artifacts` from the current working directory
+when that directory exists. For an installed wheel launched outside the checkout,
+point it at the evidence root explicitly:
+
+```bash
+qcchem workbench serve --artifact-root /path/to/QCchem/artifacts
+```
+
+Explicit artifact roots must exist and be directories; missing paths are
+rejected instead of falling back to sample data.
+
 The canonical landing route is `/overview`. The `/` route is kept as an alias for compatibility, but the startup summary and page ordering are anchored to `/overview`.
 
 ## Page Order
@@ -41,6 +52,8 @@ At startup, the server summary reads the repo's artifact inventory and reports:
 - how many artifact roots are indexed
 - how many already have report markdown
 - how many carry `runtime_submission.json` sidecars
+- how many generated `preview_local` result artifacts were skipped from the
+  startup inventory
 - a few featured evidence roots such as `h2_runtime_hardware_probe`, `h2_runtime_hardware_probe_puccd_layout`, `lih_active_runtime_hardware_probe_v2`, and `hardware_calibration_suite_v1`
 
 That makes the workbench a navigation layer over QCchem's existing evidence, not a second source of truth.
@@ -51,6 +64,10 @@ the CLI:
 ```bash
 qcchem artifacts index artifacts
 ```
+
+The default output, `artifacts/artifact_index.json`, is local generated state and
+is ignored by git. Commit curated artifact payloads and release sidecars, not the
+regenerated index snapshot.
 
 Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
 indexed artifacts when they exist. The built-in sample models remain only as
@@ -108,6 +125,39 @@ routes in a real browser:
 qcchem workbench serve --host 127.0.0.1 --port 8065
 ```
 
+If the command is run outside the repository root, add
+`--artifact-root /path/to/QCchem/artifacts` so the browser demo reads the release
+evidence rather than an empty installed package directory.
+
+The CI-friendly component-tree gate checks the same documented route table plus
+every registered Dash page for nonblank, non-placeholder rendered content
+without starting a server or browser:
+
+```bash
+qcchem workbench smoke --docs docs/workbench.md
+```
+
+When running this smoke gate outside the repository root, pass the same evidence
+root used by the server:
+
+```bash
+qcchem workbench smoke --docs /path/to/QCchem/docs/workbench.md --artifact-root /path/to/QCchem/artifacts
+```
+
+The smoke gate rejects a missing explicit artifact root with exit code `2`.
+
+Use `-o artifacts/workbench_smoke.json` when you want a machine-readable handoff.
+The JSON includes a top-level `failed_checks` summary using
+`route:/path:check` and `page:/path:check` ids, plus per-route and per-page
+`failed_checks`, `registered_routes`, page titles, route labels, the resolved
+`artifact_root`, bounded `text_excerpt` fields, and `render_error` fields for
+page layout exceptions so CI logs can show whether a failure came from an
+unregistered route, an active-label mismatch, rendered content drift, or a
+component render failure. A missing docs file or malformed checklist is rejected
+with exit code `2`, not a traceback.
+When the smoke gate fails, the CLI prints the same top-level failed-check ids
+before the per-route and per-page diagnostics.
+
 Check each route directly, not only through in-app navigation:
 
 | Route | Active route label | Route-specific text to confirm |
@@ -119,12 +169,20 @@ Check each route directly, not only through in-app navigation:
 | `/ai-workspace` | AI Workspace | AI Workspace |
 | `/workflow-studio` | Workflow Studio | Workflow Studio |
 
+Keep route paths in backticks and list each route once. The component-tree
+smoke command rejects malformed or duplicate route rows instead of silently
+skipping them.
+
 For every route, confirm:
 
 - the page loads without a blank shell
 - the shell `Active route` label matches the route above
 - route-specific content appears in the main page area
 - the browser console has no errors after the page settles
+
+When automating this checklist, normalize whitespace and case before comparing
+visible text. Some compact labels are uppercased by CSS in the browser while the
+component-tree smoke command checks the underlying source text.
 
 ### Evidence Summary first
 
@@ -175,6 +233,11 @@ Workbench pages are expected to surface the same Evidence Core vocabulary as CLI
 
 ## Boundaries
 
-- Validated: startup summary, page registry ordering, and the `/overview` landing route.
+- Validated: startup summary, page registry ordering, every registered page's
+  nonblank/non-placeholder component tree, the `/overview` landing route, and
+  the documented showcase route table through `qcchem workbench smoke`.
 - Preview: live artifact picker controls. The pages now choose indexed repo artifacts by default, but the selector UI is still read-only and conservative.
-- Not in scope: starting a background web server inside tests. The integration tests build the app and summary without launching a browser server.
+- Not in scope for CI: starting a background browser server or checking browser
+  console logs. The integration tests build the app and summary without launching
+  a browser server; run the real browser checklist manually before release
+  candidates.

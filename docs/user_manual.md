@@ -49,6 +49,7 @@ rewritten casually.
 | Review exploratory promotion | `qcchem promote exploratory --artifact artifacts/h2_lr_ace/result.json --target validated_algorithm_candidate -o artifacts/promotion/h2_lr_ace` |
 | Collect a Runtime result | `qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout` |
 | Serve the Workbench | `qcchem workbench serve` |
+| Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
 
 Runtime-capable commands accept `--confirm-runtime-budget`, but real submission
@@ -62,6 +63,13 @@ Run from a YAML config:
 ```bash
 qcchem run -c configs/h2.yaml -o artifacts/h2_local
 ```
+
+Use dedicated artifact directories for outputs. QCchem refuses root/home paths,
+the repository root, top-level `artifacts/`, or source-tree paths outside
+`artifacts/` before it creates or replaces outputs.
+Relative `run.output_dir` values are resolved under the workspace that owns the
+config file. If you run a standalone YAML outside the checkout, its `artifacts/`
+directory is created beside that YAML unless you pass `-o`.
 
 Inspect before running:
 
@@ -172,7 +180,10 @@ qcchem scan run \
 Aggregate workflows preserve underlying run artifacts and add suite-level JSON,
 Markdown reports, tables, registries, and acceptance summaries. Read aggregate
 reports as best-evidence summaries first, then drill into individual case
-artifacts.
+artifacts. Existing non-empty aggregate output directories are rejected by
+default; rerun with `--overwrite` only when you intentionally want to replace
+that output bundle. Output paths with existing symlink components are rejected
+before replacement so overwrite runs cannot follow a link into another directory.
 
 VQE scan workflows use chemical continuity by default. The first point uses the
 configured `solver.initial_point`, the second uses the previous VQE optimum, and
@@ -210,6 +221,11 @@ qcchem workflow plugins
 Workflow outputs live under the configured `workflow.output_root` and include
 `workflow_result.json`, `workflow_report.md`, `workflow_graph.json`,
 `step_outputs/`, `provenance.jsonl`, and `registry.json`.
+
+`workflow run` refuses to replace an existing non-empty output directory by
+default. Use `--overwrite` only for a deliberate rerun of that workflow bundle.
+Symlinked output paths are rejected before replacement for the same data-loss
+reason.
 
 Installed Python plugins are discovered through the `qcchem.workflow_steps`
 entry point group. Treat installed plugins as trusted local code, but keep real
@@ -492,6 +508,17 @@ Start:
 qcchem workbench serve
 ```
 
+The server reads `./artifacts` from the current working directory when present.
+When launching an installed wheel from outside the checkout, pass the evidence
+root explicitly:
+
+```bash
+qcchem workbench serve --artifact-root /path/to/QCchem/artifacts
+```
+
+Missing explicit artifact roots are rejected instead of silently rendering
+sample fallback data.
+
 Default route:
 
 ```text
@@ -511,6 +538,20 @@ The Workbench should lead with best evidence, trust tier, baseline strength,
 chemical accuracy status, runtime evidence status, hardware verification
 boundary, exploratory boundary, and recommended next action before raw algorithm
 settings.
+
+Before release handoff, run the component-tree smoke gate:
+
+```bash
+qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json
+```
+
+Outside the checkout, include `--artifact-root /path/to/QCchem/artifacts` so the
+smoke gate renders the same evidence root as the browser server.
+Missing explicit artifact roots are rejected with exit code `2`.
+
+The JSON summary is local diagnostic output. It is intentionally ignored by git
+and includes route labels, registered routes, failed checks, and bounded text
+excerpts for CI triage.
 
 ## Release Audit
 
@@ -536,7 +577,10 @@ Before publishing release-facing docs, also run:
 
 ```bash
 git diff --check
-git diff --name-only -- artifacts
+git diff --name-only -- .github artifacts README.md docs configs qcchem tests pyproject.toml
+git status --short --untracked-files=all -- .github artifacts README.md docs configs qcchem tests pyproject.toml
 ```
 
-The second command should print nothing for a documentation-only change.
+The last two commands should print nothing except intentionally ignored local
+outputs such as `artifacts/artifact_index.json`,
+`artifacts/workbench_smoke.json`, and `artifacts/release_audit/`.

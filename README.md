@@ -122,6 +122,7 @@ placeholder boundary map.
 | Collect a Runtime result | `qcchem runtime collect <artifact_dir>` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml` |
 | Serve Workbench | `qcchem workbench serve` |
+| Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.
@@ -137,6 +138,13 @@ A normal run writes a directory under `artifacts/` with:
 - `exact_result.json`: exact baseline when available.
 - `quantum_evidence.json`: Pauli, trajectory, constraint, resource, and error
   evidence when materialized.
+
+Output paths must be dedicated artifact directories. QCchem refuses root/home
+paths, the repository root, the top-level `artifacts/` directory, and
+source-tree paths outside `artifacts/` before it creates or replaces outputs.
+Relative `run.output_dir` values resolve under the workspace that owns the
+config file; a standalone external YAML writes next to that YAML instead of back
+into the QCchem checkout.
 
 Field-model runs also write the `field_*.json` sidecar family for registry,
 Hamiltonian sectors, observables, dynamics, constraints, resources, and error
@@ -205,7 +213,8 @@ qcchem scan run -c configs/scans/h2_short_scan.yaml -o artifacts/h2_short_scan_l
 ```
 
 Aggregate workflows preserve case-level artifacts and add suite/study/scan JSON,
-Markdown, tables, registries, and acceptance summaries.
+Markdown, tables, registries, and acceptance summaries. They refuse to replace a
+non-empty output directory unless you rerun with `--overwrite`.
 
 ### Research OS
 
@@ -242,7 +251,9 @@ Custom workflows use YAML as the source of truth, write
 `workflow_result.json`, `workflow_report.md`, `workflow_graph.json`,
 `provenance.jsonl`, `registry.json`, and step outputs, and can load installed
 Python step plugins from the `qcchem.workflow_steps` entry point group. The
-Workbench `/workflow-studio` page reads the same protocol.
+Workbench `/workflow-studio` page reads the same protocol. `workflow run` and
+`campaign run` also reject existing non-empty output directories by default; add
+`--overwrite` only when replacing that whole output bundle is intentional.
 
 ### Exploratory Research Assets
 
@@ -288,8 +299,9 @@ python -m pytest
 git diff --check
 ```
 
-The default pytest gate excludes tests marked `slow`. Run exploratory stress
-checks explicitly with `python -m pytest -m slow -q`.
+The default pytest gate excludes tests marked `slow` or `stress`. Run bounded
+slow-smoke checks explicitly with `python -m pytest -m slow -q`; reserve
+`python -m pytest -m stress -q` for long exploratory stress cases.
 
 Run the release gate:
 

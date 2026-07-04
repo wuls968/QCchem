@@ -15,6 +15,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_result_json
 from qcchem.workflow.acceptance import accept_benchmark_result, build_benchmark_acceptance_summary
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
+from qcchem.workflow.common import prepare_clean_output_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.runner import run_spec
 from qcchem.workflow.scan import run_scan_from_config
@@ -182,11 +183,10 @@ def _write_campaign_report(payload: dict[str, Any], output_path: Path) -> None:
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def run_campaign(spec: CampaignSpec) -> dict[str, Any]:
+def run_campaign(spec: CampaignSpec, *, overwrite: bool = False) -> dict[str, Any]:
     """Run a campaign and write aggregate artifacts."""
 
-    root = spec.output_root.resolve()
-    root.mkdir(parents=True, exist_ok=True)
+    root = prepare_clean_output_root(spec.output_root, workflow_name="Campaign", overwrite=overwrite)
     entries = [_run_entry(entry, root) for entry in spec.entries]
     acceptance = _build_campaign_acceptance(entries)
     registry_entries: list[RegistryEntry] = [
@@ -241,11 +241,16 @@ def run_campaign(spec: CampaignSpec) -> dict[str, Any]:
     return payload
 
 
-def run_campaign_from_config(config_path: Path, *, output_dir: Path | None = None) -> dict[str, Any]:
+def run_campaign_from_config(
+    config_path: Path,
+    *,
+    output_dir: Path | None = None,
+    overwrite: bool = False,
+) -> dict[str, Any]:
     spec = load_campaign_spec(config_path)
     if output_dir is not None:
         spec.output_root = output_dir
-    return run_campaign(spec)
+    return run_campaign(spec, overwrite=overwrite)
 
 
 def report_campaign_result(result_json: Path, *, output_path: Path | None = None) -> dict[str, Any]:

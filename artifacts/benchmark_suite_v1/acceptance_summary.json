@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "benchmark_suite_v1",
+  "artifact_path": "artifacts/benchmark_suite_v1/benchmark_result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "exploratory",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:benchmark_suite_v1:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable benchmark-suite evidence with the declared trust tier.",
+    "Suite acceptance here means release-boundary readiness, not universal chemistry validation."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "dc69f1a17b6dbd4a358fe42dbfe181df60344c9918490fd9e55b7c025b02cbd4"
+}

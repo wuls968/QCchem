@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "lih_nevpt2_compression_anchor",
+  "artifact_path": "artifacts/lih_auto_compressed_nevpt2/result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "validated",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:lih_nevpt2_compression_anchor:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable validated compression and correction evidence.",
+    "This sidecar does not replace the artifact evidence_summary or exact-baseline checks."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "8907fd57c96209b2555af7a87968e775dd00955fa54c578abea7e61399a540bf"
+}

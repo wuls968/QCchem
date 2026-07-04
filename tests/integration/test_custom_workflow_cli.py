@@ -69,6 +69,17 @@ workflow:
     assert (tmp_path / "workflow_out" / "provenance.jsonl").exists()
     assert (tmp_path / "workflow_out" / "registry.json").exists()
 
+    sentinel = tmp_path / "workflow_out" / "keep.txt"
+    sentinel.write_text("keep", encoding="utf-8")
+    assert main(["workflow", "run", "-c", str(workflow)]) == 2
+    assert sentinel.read_text(encoding="utf-8") == "keep"
+    assert "Workflow run rejected:" in capsys.readouterr().out
+
+    assert main(["workflow", "run", "-c", str(workflow), "--overwrite"]) == 0
+    assert not sentinel.exists()
+    assert result_json.exists()
+    capsys.readouterr()
+
     report = tmp_path / "workflow_report_copy.md"
     assert main(["workflow", "report", str(result_json), "-o", str(report)]) == 0
     assert report.exists()

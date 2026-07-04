@@ -9,7 +9,7 @@ jobs:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     env:
-      PYTEST_ADDOPTS: "-m 'not slow'"
+      PYTEST_ADDOPTS: "-m 'not slow and not stress'"
     strategy:
       fail-fast: false
       matrix:
@@ -26,11 +26,254 @@ jobs:
 
       - name: Install package and test dependencies
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,ui,ai,runtime]"
+          python -m pip check
 
       - name: Compile package
         run: python -m compileall qcchem
 
+      - name: Build wheel and smoke installed package
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/qcchem-wheel /tmp/qcchem-wheel-install /tmp/qcchem-wheel-smoke.json /tmp/qcchem-wheel-release-audit
+          python -m pip wheel . --no-deps -w /tmp/qcchem-wheel
+          wheel="$(find /tmp/qcchem-wheel -maxdepth 1 -type f -name '*.whl' | head -n 1)"
+          test -n "$wheel"
+          python -m pip install --dry-run --ignore-installed "${wheel}[dev,ui,runtime]" \
+            >/tmp/qcchem-wheel-dependency-plan.txt
+          python - <<'PY'
+          from pathlib import Path
+
+          plan = Path("/tmp/qcchem-wheel-dependency-plan.txt").read_text(encoding="utf-8")
+          required = ("QCchem-0.1.0a1", "dash-", "qiskit-aer", "qiskit-ibm-runtime")
+          missing = [item for item in required if item not in plan]
+          if missing:
+              raise SystemExit(f"Wheel dependency dry-run missed expected packages: {missing}")
+          print("Wheel dependency dry-run includes dev/ui/runtime extras.")
+          PY
+          python - <<'PY'
+          from email.parser import Parser
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path("/tmp/qcchem-wheel").glob("*.whl"))
+          with ZipFile(wheel) as zf:
+              names = set(zf.namelist())
+              required = {
+                  "qcchem/workbench/assets/theme.css",
+                  "qcchem/workbench/assets/3dmol-bridge.js",
+                  "qcchem/workbench/assets/assistant-window.js",
+                  "qcchem/workbench/assets/qcchem-logo.png",
+                  "qcchem/workbench/assets/favicon.ico",
+                  "qcchem/workbench/assets/favicon.png",
+              }
+              missing = sorted(required - names)
+              if missing:
+                  raise SystemExit(f"Wheel is missing release assets: {missing}")
+              entry_points_name = next(
+                  (name for name in names if name.endswith(".dist-info/entry_points.txt")),
+                  None,
+              )
+              if entry_points_name is None:
+                  raise SystemExit("Wheel is missing entry_points.txt")
+              entry_points = zf.read(entry_points_name).decode()
+              for script in ("qcchem =", "qcchem-workbench ="):
+                  if script not in entry_points:
+                      raise SystemExit(f"Wheel is missing console script: {script}")
+              metadata_name = next(
+                  (name for name in names if name.endswith(".dist-info/METADATA")),
+                  None,
+              )
+              if metadata_name is None:
+                  raise SystemExit("Wheel is missing METADATA")
+              metadata = Parser().parsestr(zf.read(metadata_name).decode())
+              extras = set(metadata.get_all("Provides-Extra", []))
+              requires = metadata.get_all("Requires-Dist", []) or []
+              if "ai" not in extras:
+                  raise SystemExit("Wheel metadata is missing ai extra")
+              if not any(req.startswith("openai") and 'extra == "ai"' in req for req in requires):
+                  raise SystemExit("Wheel metadata is missing openai requirement for ai extra")
+          PY
+          python -m pip install --no-deps --target /tmp/qcchem-wheel-install "$wheel"
+          cd /tmp
+          PYTHONPATH=/tmp/qcchem-wheel-install python - <<'PY'
+          from importlib import resources
+          from pathlib import Path
+
+          import qcchem
+
+          target = Path("/tmp/qcchem-wheel-install").resolve()
+          package_file = Path(qcchem.__file__).resolve()
+          if not package_file.is_relative_to(target):
+              raise SystemExit(f"qcchem imported from checkout instead of wheel target: {package_file}")
+
+          for asset in (
+              "theme.css",
+              "3dmol-bridge.js",
+              "assistant-window.js",
+              "qcchem-logo.png",
+              "favicon.ico",
+              "favicon.png",
+          ):
+              path = resources.files("qcchem.workbench").joinpath("assets", asset)
+              if not path.is_file():
+                  raise SystemExit(f"Installed wheel is missing Workbench asset: {asset}")
+          PY
+          test -x /tmp/qcchem-wheel-install/bin/qcchem
+          test -x /tmp/qcchem-wheel-install/bin/qcchem-workbench
+          PYTHONPATH=/tmp/qcchem-wheel-install /tmp/qcchem-wheel-install/bin/qcchem --help >/dev/null
+          PYTHONPATH=/tmp/qcchem-wheel-install /tmp/qcchem-wheel-install/bin/qcchem-workbench --help >/dev/null
+          PYTHONPATH=/tmp/qcchem-wheel-install python - <<'PY'
+          import os
+          from pathlib import Path
+
+          from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV
+          from qcchem.workbench.server import prepare_workbench
+
+          artifact_root = Path(os.environ["GITHUB_WORKSPACE"]) / "artifacts"
+          _app, summary = prepare_workbench(
+              host="127.0.0.1",
+              port=8050,
+              debug=False,
+              artifact_root=artifact_root,
+          )
+          if Path(summary["artifact_root"]) != artifact_root.resolve():
+              raise SystemExit(f"Workbench used unexpected artifact root: {summary['artifact_root']}")
+          inventory = summary["artifact_inventory"]
+          if inventory["run_result_roots"] < 1 or inventory["benchmark_suites"] < 1:
+              raise SystemExit(f"Installed Workbench did not index release artifacts: {inventory}")
+          if os.environ.get(WORKBENCH_ARTIFACT_ROOT_ENV) != str(artifact_root.resolve()):
+              raise SystemExit("Workbench artifact-root environment was not set for page layouts")
+          PY
+          PYTHONPATH=/tmp/qcchem-wheel-install /tmp/qcchem-wheel-install/bin/qcchem workbench smoke \
+            --docs "$GITHUB_WORKSPACE/docs/workbench.md" \
+            --artifact-root "$GITHUB_WORKSPACE/artifacts" \
+            -o /tmp/qcchem-wheel-smoke.json
+          PYTHONPATH=/tmp/qcchem-wheel-install /tmp/qcchem-wheel-install/bin/qcchem release audit \
+            --repo-root "$GITHUB_WORKSPACE" \
+            -c configs/release/trust_first_audit.yaml \
+            -o /tmp/qcchem-wheel-release-audit
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          readiness = Path("/tmp/qcchem-wheel-release-audit/release_readiness.json")
+          summary = json.loads(readiness.read_text(encoding="utf-8"))
+          if summary.get("status") != "passed":
+              raise SystemExit(f"Installed wheel release audit did not pass: {summary.get('status')}")
+          if summary.get("required_fail_count") != 0:
+              raise SystemExit(f"Installed wheel release audit had required failures: {summary.get('required_fail_count')}")
+          schema_features = set(summary.get("schema_features", []))
+          for feature in (
+              "warning_policy",
+              "acceptance_commands",
+              "acceptance_summary_source",
+              "acceptance_schema_version",
+              "acceptance_release_audit_check_id",
+              "acceptance_runtime_evidence_status",
+              "acceptance_recommended_action",
+              "acceptance_contract_failure_count",
+              "audit_provenance",
+          ):
+              if feature not in schema_features:
+                  raise SystemExit(f"Installed wheel release audit missing schema feature: {feature}")
+          expected_repo_root = str(Path(os.environ["GITHUB_WORKSPACE"]).resolve())
+          actual_repo_root = summary.get("audit_provenance", {}).get("repo_root")
+          if actual_repo_root != expected_repo_root:
+              raise SystemExit(f"Installed wheel release audit used unexpected repo root: {actual_repo_root}")
+          PY
+
       - name: Run tests
         run: python -m pytest
+
+      - name: Run Workbench release smoke
+        run: |
+          set -euo pipefail
+          python -m qcchem.cli.main workbench smoke \
+            --docs docs/workbench.md \
+            -o artifacts/workbench_smoke.json
+
+      - name: Run Trust-First release audit
+        run: |
+          set -euo pipefail
+          python -m qcchem.cli.main release audit \
+            -c configs/release/trust_first_audit.yaml \
+            -o artifacts/release_audit
+
+      - name: Confirm release output ignore boundaries
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+
+          from qcchem.io.release_audit_config import load_release_audit_spec
+          from qcchem.io.release_git_hygiene import (
+              manifest_acceptance_sidecar_paths,
+              orphan_release_acceptance_sidecars,
+              release_generated_output_paths,
+          )
+
+          def git(*args: str) -> subprocess.CompletedProcess[str]:
+              return subprocess.run(
+                  ("git", *args),
+                  check=False,
+                  text=True,
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.PIPE,
+              )
+
+          for path in release_generated_output_paths():
+              if git("check-ignore", "--no-index", "-q", path).returncode != 0:
+                  raise SystemExit(f"{path} should stay ignored as local generated output")
+
+          spec = load_release_audit_spec(Path("configs/release/trust_first_audit.yaml"))
+          release_sidecars = manifest_acceptance_sidecar_paths(spec)
+
+          for sidecar in sorted(release_sidecars, key=str):
+              path = sidecar.as_posix()
+              if git("check-ignore", "--no-index", "-q", path).returncode != 1:
+                  raise SystemExit(f"{path} must not match .gitignore")
+              if git("ls-files", "--error-unmatch", path).returncode != 0:
+                  raise SystemExit(f"{path} must be tracked as release evidence")
+
+          orphan_release_sidecars = orphan_release_acceptance_sidecars(Path.cwd(), release_sidecars)
+          if orphan_release_sidecars:
+              formatted = ", ".join(path.as_posix() for path in orphan_release_sidecars)
+              raise SystemExit(
+                  "Release-artifact acceptance sidecars must be manifest-bound; "
+                  f"orphan sidecars: {formatted}"
+              )
+          PY
+
+      - name: Confirm generated files are not tracked
+        run: |
+          set -euo pipefail
+          tracked_generated="$(
+            git ls-files \
+              '*__pycache__*' \
+              '*.pyc' \
+              '*.pyo' \
+              '.DS_Store' \
+              '*/.DS_Store' \
+              'build/**' \
+              'dist/**' \
+              '*.egg-info' \
+              '*.egg-info/**' \
+              '**/*.egg-info' \
+              '**/*.egg-info/**'
+          )"
+          if [ -n "$tracked_generated" ]; then
+            echo "Generated files must not be tracked:"
+            echo "$tracked_generated"
+            exit 1
+          fi
+
+      - name: Confirm release audit did not rewrite or create release files
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- .github artifacts README.md docs configs qcchem tests pyproject.toml
+          test -z "$(git status --short --untracked-files=all -- .github artifacts README.md docs configs qcchem tests pyproject.toml)"

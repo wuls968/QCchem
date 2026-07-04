@@ -67,4 +67,5 @@ qcchem campaign accept artifacts/trust_loop_mini_campaign/campaign_result.json
 ```
 
 输出包括 `campaign_result.json`、`campaign_report.md`、`registry.json`、
-`artifact_index.json` 和 `acceptance_summary.json`。
+`artifact_index.json` 和 `acceptance_summary.json`。`campaign run` 默认拒绝覆盖已有非空
+campaign 输出目录；确认要替换整套 campaign bundle 时再加 `--overwrite`。

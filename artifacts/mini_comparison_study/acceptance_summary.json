@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "mini_comparison_study",
+  "artifact_path": "artifacts/mini_comparison_study/study_result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "validated",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:mini_comparison_study:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable validated study aggregate evidence.",
+    "This sidecar does not replace the study evidence_summary or case-level artifacts."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "44ff24a0f4e821c88e26d149c41abc9c591637daab8359a09d66f57ce6b89f9d"
+}

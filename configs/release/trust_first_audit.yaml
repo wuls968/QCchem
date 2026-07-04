@@ -1,6 +1,9 @@
 release_audit:
   profile: trust_first
   release_version: 0.1.0a1
+  warning_policy:
+    max_count: 0
+    allowed_ids: []
   curated_artifacts:
     - name: h2_local_validated_anchor
       path: artifacts/h2/result.json
@@ -88,4 +91,5 @@ release_audit:
     - python -m pytest tests/integration/test_trust_first_release_v16.py -q
     - python -m pytest tests/integration/test_lattice_qed_workflow_v20.py tests/integration/test_lattice_qed_dynamics_workflow_v21.py tests/integration/test_lattice_qed_sparse_engine_workflow_v22.py -q
     - python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py tests/integration/test_h2_workflow.py -q
-    - qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1
+    - python -m pytest -m slow tests/integration/test_lr_ace_workflow_v19.py -q
+    - qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1/preview_local --overwrite

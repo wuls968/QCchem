@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 from qcchem.core import CampaignEntrySpec, CampaignSpec
-from qcchem.io.config import _project_root, _require_mapping, resolve_user_path
+from qcchem.io.config import _require_mapping, resolve_project_path, resolve_user_path
 
 
 SUPPORTED_CAMPAIGN_ENTRY_KINDS = {
@@ -21,11 +21,10 @@ SUPPORTED_CAMPAIGN_ENTRY_KINDS = {
 }
 
 
-def _resolve_project_path(value: str | Path | None) -> Path | None:
+def _resolve_campaign_project_path(config_path: Path, value: str | Path | None) -> Path | None:
     if value in {None, ""}:
         return None
-    candidate = Path(str(value))
-    return candidate if candidate.is_absolute() else (_project_root() / candidate).resolve()
+    return resolve_project_path(config_path, value)
 
 
 def load_campaign_spec(path: Path) -> CampaignSpec:
@@ -56,9 +55,9 @@ def load_campaign_spec(path: Path) -> CampaignSpec:
             CampaignEntrySpec(
                 name=name,
                 kind=kind,
-                config=_resolve_project_path(item.get("config")),
-                artifact=_resolve_project_path(item.get("artifact")),
-                output_dir=_resolve_project_path(item.get("output_dir")),
+                config=_resolve_campaign_project_path(resolved_path, item.get("config")),
+                artifact=_resolve_campaign_project_path(resolved_path, item.get("artifact")),
+                output_dir=_resolve_campaign_project_path(resolved_path, item.get("output_dir")),
                 allow_runtime_submission=bool(item.get("allow_runtime_submission", False)),
                 tags=[str(value) for value in item.get("tags", [])],
             )
@@ -66,7 +65,10 @@ def load_campaign_spec(path: Path) -> CampaignSpec:
     return CampaignSpec(
         name=str(data["name"]),
         description=str(data.get("description", "")),
-        output_root=_resolve_project_path(data.get("output_root")) or (_project_root() / "artifacts" / str(data["name"])),
+        output_root=_resolve_campaign_project_path(
+            resolved_path,
+            data.get("output_root", Path("artifacts") / str(data["name"])),
+        ),
         entries=entries,
         tags=[str(value) for value in data.get("tags", [])],
     )

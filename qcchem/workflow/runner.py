@@ -90,6 +90,7 @@ from qcchem.workflow.tasks import (
     required_exact_states,
 )
 from qcchem.workflow.calibration import build_calibration_summary
+from qcchem.workflow.common import guard_output_path_symlinks, guard_output_target
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 from qcchem.workflow.field_evidence import build_and_write_field_evidence
 from qcchem.workflow.quantum_evidence import build_and_write_quantum_evidence
@@ -126,14 +127,23 @@ def _project_root() -> Path:
 def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool, hdf5: bool) -> ArtifactPaths:
     resolved_root = root.expanduser()
     if not resolved_root.is_absolute():
-        resolved_root = (_project_root() / resolved_root).resolve()
-    if resolved_root.exists() and overwrite:
-        shutil.rmtree(resolved_root)
-    if resolved_root.exists() and any(resolved_root.iterdir()) and not overwrite:
-        raise FileExistsError(
-            f"Artifact directory '{resolved_root}' already exists and is not empty. "
-            "Set run.overwrite=true or use a new output directory."
-        )
+        resolved_root = _project_root() / resolved_root
+    guard_output_path_symlinks(resolved_root, workflow_name="Run")
+    resolved_root = resolved_root.resolve()
+    guard_output_target(resolved_root, workflow_name="Run")
+    if resolved_root.exists():
+        if not resolved_root.is_dir():
+            raise FileExistsError(
+                f"Artifact path '{resolved_root}' already exists and is not a directory. "
+                "Choose a new output directory."
+            )
+        if overwrite:
+            shutil.rmtree(resolved_root)
+        elif any(resolved_root.iterdir()):
+            raise FileExistsError(
+                f"Artifact directory '{resolved_root}' already exists and is not empty. "
+                "Set run.overwrite=true or use a new output directory."
+            )
     resolved_root.mkdir(parents=True, exist_ok=True)
     return ArtifactPaths(
         root=resolved_root,

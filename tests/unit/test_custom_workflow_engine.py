@@ -158,6 +158,36 @@ workflow:
     assert second.status == "completed"
 
 
+def test_workflow_rejects_existing_output_without_overwrite(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _patch_registry(monkeypatch)
+    workflow = tmp_path / "workflow.yaml"
+    workflow.write_text(
+        """
+workflow:
+  version: "1"
+  name: overwrite_guard
+  output_root: out
+  steps:
+    - id: echo
+      kind: echo
+""",
+        encoding="utf-8",
+    )
+    spec = load_workflow_spec(workflow)
+
+    first = run_custom_workflow(spec)
+    sentinel = Path(first.artifact_root) / "keep.txt"
+    sentinel.write_text("keep", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="already exists and is not empty"):
+        run_custom_workflow(spec)
+
+    assert sentinel.read_text(encoding="utf-8") == "keep"
+    second = run_custom_workflow(spec, overwrite=True)
+    assert second.status == "completed"
+    assert not sentinel.exists()
+
+
 def test_workflow_rejects_invalid_dynamic_step_before_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _patch_registry(monkeypatch)
     workflow = tmp_path / "workflow.yaml"

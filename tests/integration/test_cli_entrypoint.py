@@ -40,6 +40,73 @@ def test_python_module_cli_entrypoint_runs_and_writes_artifacts(tmp_path: Path) 
     assert (output_dir / "report.md").exists()
 
 
+@pytest.mark.integration
+def test_run_cli_resolves_relative_output_dir_against_external_config_workspace(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config = tmp_path / "external_h2.yaml"
+    artifact_name = f"external_h2_{tmp_path.name}"
+    config.write_text(
+        f"""
+molecule:
+  name: H2-external-output
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  basis: sto3g
+solver:
+  kind: exact
+run:
+  output_dir: artifacts/{artifact_name}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    assert main(["run", "-c", str(config)]) == 0
+
+    stdout = capsys.readouterr().out
+    assert "QCchem run completed: H2-external-output" in stdout
+    assert (tmp_path / "artifacts" / artifact_name / "result.json").exists()
+    assert not (REPO_ROOT / "artifacts" / artifact_name).exists()
+
+
+def test_run_cli_reports_output_guard_rejections(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    def _reject_output(*args, **kwargs):
+        raise FileExistsError("output path is inside the QCchem source tree outside artifacts")
+
+    monkeypatch.setattr("qcchem.cli.main.run_from_config", _reject_output)
+
+    assert main(["run", "-c", str(tmp_path / "config.yaml"), "-o", "qcchem/tmp-output"]) == 2
+
+    stdout = capsys.readouterr().out
+    assert "QCchem run rejected:" in stdout
+    assert "source tree outside artifacts" in stdout
+
+
+def test_exploratory_run_cli_reports_output_guard_rejections(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    def _reject_output(*args, **kwargs):
+        raise FileExistsError("output path is inside the QCchem source tree outside artifacts")
+
+    monkeypatch.setattr("qcchem.cli.main.run_from_config", _reject_output)
+
+    assert main(["exploratory", "run", "-c", str(tmp_path / "config.yaml"), "-o", "qcchem/tmp-output"]) == 2
+
+    stdout = capsys.readouterr().out
+    assert "QCchem exploratory run rejected:" in stdout
+    assert "source tree outside artifacts" in stdout
+
+
 def test_runtime_collect_cli_reports_polled_status(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -185,6 +252,107 @@ def test_benchmark_run_honors_strict_acceptance_exit_code(
     assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml")]) == 2
 
 
+def test_aggregate_workflow_cli_passes_overwrite_flags(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, bool] = {}
+
+    def _fake_study(config: Path, output_dir: Path | None = None, *, overwrite: bool = False):
+        captured["study"] = overwrite
+        return SimpleNamespace(
+            study_name="study",
+            summary=SimpleNamespace(total_runs=1),
+            evidence_summary=None,
+            artifacts=SimpleNamespace(root=output_dir or tmp_path / "study"),
+        )
+
+    def _fake_benchmark(config: Path, output_dir: Path | None = None, **kwargs):
+        captured["benchmark"] = bool(kwargs.get("overwrite"))
+        return SimpleNamespace(
+            suite_name="suite",
+            summary=SimpleNamespace(total_cases=1, status_counts={"validated": 1}),
+            evidence_summary=None,
+            artifacts=SimpleNamespace(root=output_dir or tmp_path / "benchmark"),
+            acceptance_summary={"accepted": True, "blocking_failures": []},
+        )
+
+    def _fake_scan(config: Path, output_dir: Path | None = None, *, overwrite: bool = False):
+        captured["scan"] = overwrite
+        return SimpleNamespace(
+            scan_name="scan",
+            summary=SimpleNamespace(total_runs=1),
+            evidence_summary=None,
+            artifacts=SimpleNamespace(root=output_dir or tmp_path / "scan"),
+        )
+
+    def _fake_campaign(config: Path, output_dir: Path | None = None, *, overwrite: bool = False):
+        captured["campaign"] = overwrite
+        return {
+            "campaign_name": "campaign",
+            "status": "accepted",
+            "artifact_root": str(output_dir or tmp_path / "campaign"),
+            "acceptance_summary": {"accepted": True},
+        }
+
+    def _fake_workflow(config: Path, output_dir: Path | None = None, *, overwrite: bool = False):
+        captured["workflow"] = overwrite
+        return SimpleNamespace(
+            workflow_name="workflow",
+            status="completed",
+            artifact_root=output_dir or tmp_path / "workflow",
+            outputs={"workflow_report_markdown": str(tmp_path / "workflow" / "workflow_report.md")},
+        )
+
+    monkeypatch.setattr("qcchem.cli.main.run_study_from_config", _fake_study)
+    monkeypatch.setattr("qcchem.cli.main.run_benchmark_suite_from_config", _fake_benchmark)
+    monkeypatch.setattr("qcchem.cli.main.run_scan_from_config", _fake_scan)
+    monkeypatch.setattr("qcchem.cli.main.run_campaign_from_config", _fake_campaign)
+    monkeypatch.setattr("qcchem.cli.main.run_custom_workflow_from_config", _fake_workflow)
+
+    assert main(["study", "run", "-c", str(tmp_path / "study.yaml"), "--overwrite"]) == 0
+    assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml"), "--overwrite"]) == 0
+    assert main(["scan", "run", "-c", str(tmp_path / "scan.yaml"), "--overwrite"]) == 0
+    assert main(["campaign", "run", "-c", str(tmp_path / "campaign.yaml"), "--overwrite"]) == 0
+    assert main(["workflow", "run", "-c", str(tmp_path / "workflow.yaml"), "--overwrite"]) == 0
+    assert captured == {
+        "study": True,
+        "benchmark": True,
+        "scan": True,
+        "campaign": True,
+        "workflow": True,
+    }
+
+
+def test_aggregate_workflow_cli_reports_existing_output_rejections(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _raise_existing_output(*args, **kwargs):
+        assert kwargs.get("overwrite") is False
+        raise FileExistsError("output directory already exists and is not empty")
+
+    monkeypatch.setattr("qcchem.cli.main.run_study_from_config", _raise_existing_output)
+    monkeypatch.setattr("qcchem.cli.main.run_benchmark_suite_from_config", _raise_existing_output)
+    monkeypatch.setattr("qcchem.cli.main.run_scan_from_config", _raise_existing_output)
+    monkeypatch.setattr("qcchem.cli.main.run_campaign_from_config", _raise_existing_output)
+    monkeypatch.setattr("qcchem.cli.main.run_custom_workflow_from_config", _raise_existing_output)
+
+    assert main(["study", "run", "-c", str(tmp_path / "study.yaml")]) == 2
+    assert main(["benchmark", "run", "-c", str(tmp_path / "suite.yaml")]) == 2
+    assert main(["scan", "run", "-c", str(tmp_path / "scan.yaml")]) == 2
+    assert main(["campaign", "run", "-c", str(tmp_path / "campaign.yaml")]) == 2
+    assert main(["workflow", "run", "-c", str(tmp_path / "workflow.yaml")]) == 2
+
+    stdout = capsys.readouterr().out
+    assert "Study rejected: output directory already exists and is not empty" in stdout
+    assert "Benchmark suite rejected: output directory already exists and is not empty" in stdout
+    assert "Scan rejected: output directory already exists and is not empty" in stdout
+    assert "Campaign rejected: output directory already exists and is not empty" in stdout
+    assert "Workflow run rejected: output directory already exists and is not empty" in stdout
+
+
 def test_campaign_artifact_only_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     artifact_root = tmp_path / "artifacts" / "h2"
     artifact_root.mkdir(parents=True)
@@ -220,9 +388,16 @@ campaign:
     assert result_path.exists()
     assert main(["campaign", "report", str(result_path)]) == 0
     assert main(["campaign", "accept", str(result_path)]) == 0
+    sentinel = tmp_path / "campaign_out" / "keep.txt"
+    sentinel.write_text("keep", encoding="utf-8")
+    assert main(["campaign", "run", "-c", str(config)]) == 2
+    assert sentinel.read_text(encoding="utf-8") == "keep"
+    assert main(["campaign", "run", "-c", str(config), "--overwrite"]) == 0
+    assert not sentinel.exists()
     stdout = capsys.readouterr().out
     assert "Campaign completed: mini_campaign" in stdout
     assert "Campaign acceptance: accepted" in stdout
+    assert "Campaign rejected:" in stdout
 
 
 def test_workbench_cli_reports_startup(
@@ -232,11 +407,17 @@ def test_workbench_cli_reports_startup(
     fake_app = object()
     events: list[tuple[str, object]] = []
 
-    def _fake_prepare_workbench(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
+    def _fake_prepare_workbench(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
         assert host == "127.0.0.1"
         assert port == 8050
         assert debug is False
-        events.append(("prepare", (host, port, debug)))
+        assert artifact_root is None
+        events.append(("prepare", (host, port, debug, artifact_root)))
         return fake_app, {"url": "http://127.0.0.1:8050", "pages": 10}
 
     def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
@@ -249,7 +430,12 @@ def test_workbench_cli_reports_startup(
         print(f"URL: {summary['url']}")
         print(f"Pages: {summary['pages']}")
 
-    def _unexpected_serve_workbench(host: str, port: int, debug: bool) -> dict[str, object]:
+    def _unexpected_serve_workbench(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> dict[str, object]:
         raise AssertionError("CLI startup should use prepare_workbench and launch_app sequencing")
 
     monkeypatch.setattr(
@@ -266,7 +452,7 @@ def test_workbench_cli_reports_startup(
 
     assert exit_code == 0
     assert events == [
-        ("prepare", ("127.0.0.1", 8050, False)),
+        ("prepare", ("127.0.0.1", 8050, False, None)),
         ("print", "http://127.0.0.1:8050"),
         ("launch", ("127.0.0.1", 8050, False)),
     ]
@@ -292,16 +478,68 @@ def test_workbench_cli_reports_missing_optional_dependencies(
     assert 'pip install -e ".[ui]"' in stdout
 
 
+def test_workbench_cli_passes_artifact_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_app = object()
+    captured: dict[str, object] = {}
+
+    def _fake_prepare_workbench(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
+        captured["artifact_root"] = artifact_root
+        return fake_app, {"url": f"http://{host}:{port}", "pages": 1}
+
+    def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
+        assert app is fake_app
+
+    monkeypatch.setattr(
+        "qcchem.cli.main.importlib.import_module",
+        lambda name: SimpleNamespace(
+            prepare_workbench=_fake_prepare_workbench,
+            launch_app=_fake_launch_app,
+            print_workbench_startup=lambda summary: None,
+        ),
+    )
+
+    exit_code = main(["workbench", "serve", "--artifact-root", str(tmp_path / "artifacts")])
+
+    assert exit_code == 0
+    assert captured["artifact_root"] == tmp_path / "artifacts"
+
+
+def test_workbench_cli_rejects_missing_artifact_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(["workbench", "serve", "--artifact-root", str(tmp_path / "missing-artifacts")])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench rejected:" in stdout
+    assert "artifact root does not exist" in stdout
+
+
 def test_workbench_script_reports_startup(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     fake_app = object()
 
-    def _fake_prepare_workbench(host: str, port: int, debug: bool) -> tuple[object, dict[str, object]]:
+    def _fake_prepare_workbench(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
         assert host == "0.0.0.0"
         assert port == 9001
         assert debug is True
+        assert artifact_root is None
         return fake_app, {"url": "http://0.0.0.0:9001", "pages": 10}
 
     def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
@@ -319,3 +557,43 @@ def test_workbench_script_reports_startup(
     stdout = capsys.readouterr().out
     assert "QCchem workbench ready" in stdout
     assert "http://0.0.0.0:9001" in stdout
+
+
+def test_workbench_script_passes_artifact_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_app = object()
+    captured: dict[str, object] = {}
+
+    def _fake_prepare_workbench(
+        host: str,
+        port: int,
+        debug: bool,
+        artifact_root: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
+        captured["artifact_root"] = artifact_root
+        return fake_app, {"url": f"http://{host}:{port}", "pages": 10}
+
+    def _fake_launch_app(app: object, *, host: str, port: int, debug: bool) -> None:
+        assert app is fake_app
+
+    monkeypatch.setattr("qcchem.workbench.server.prepare_workbench", _fake_prepare_workbench)
+    monkeypatch.setattr("qcchem.workbench.server.launch_app", _fake_launch_app)
+
+    exit_code = workbench_main(["--artifact-root", str(tmp_path / "artifacts")])
+
+    assert exit_code == 0
+    assert captured["artifact_root"] == tmp_path / "artifacts"
+
+
+def test_workbench_script_rejects_missing_artifact_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = workbench_main(["--artifact-root", str(tmp_path / "missing-artifacts")])
+
+    assert exit_code == 2
+    stdout = capsys.readouterr().out
+    assert "QCchem workbench rejected:" in stdout
+    assert "artifact root does not exist" in stdout

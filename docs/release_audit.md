@@ -35,6 +35,13 @@ qcchem release audit \
   --repo-root /path/to/QCchem
 ```
 
+If `--repo-root` is provided, relative `-c` paths are resolved against that repo
+root rather than the current shell directory. When `-o` is omitted in this mode,
+readiness outputs are written under `<repo-root>/artifacts/release_audit/`. This
+keeps copied-repository and temporary-fixture audits usable from outside the
+repository checkout and avoids accidental shadow manifests in the caller's
+current directory.
+
 ## Outputs
 
 The command writes:
@@ -46,13 +53,79 @@ Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
 files for the release itself.
 
+Curated and exploratory artifact payloads must parse as JSON objects. If a
+configured artifact exists but is unreadable or not a JSON object, the audit
+records a failed `:readable` check and still writes `release_readiness.json` and
+`release_readiness.md` for handoff.
+
+Exploratory asset configs must parse as YAML mappings before they can be
+classified as QFT, LR-ACE, or TC-QSCI. Unreadable exploratory config YAML is
+reported as `classified=unreadable` in the config check instead of aborting the
+audit.
+
+Required docs must be readable UTF-8 text. If a configured doc path exists but
+cannot be read, for example because it points at a directory, the audit records a
+failed `doc:<path>:readable` check and still writes readiness outputs.
+
+Curated release artifacts may also carry an `acceptance_summary.json` sidecar in
+the same artifact directory. That sidecar records release-boundary acceptance for
+the artifact as-is; it must not promote an exploratory or hardware-plumbing
+artifact beyond the trust tier declared in `evidence_summary`. For release audit
+purposes, acceptance requires a strict JSON `accepted: true` value and an empty
+`blocking_failures` list. Sidecar `warnings` become release-audit warnings and
+are governed by the configured `warning_policy`. The sidecar must parse as a
+JSON object; unreadable or non-object sidecars are reported as release-audit
+failures for required artifacts. When both a result payload and a sibling
+`acceptance_summary.json` provide acceptance summaries, the release audit and
+artifact index treat the sibling sidecar as the release-evidence source.
+
+Sidecars using `schema_version: qcchem.release_artifact_acceptance.v0.1-alpha`
+must also bind themselves to the exact release-audit check that consumes them:
+
+- `artifact_path` must resolve to the artifact being audited.
+- `artifact_path` must be repository-relative; absolute paths, `~`, and `..`
+  components are rejected even if they resolve to the same artifact on the
+  current machine.
+- `artifact_sha256` must match the audited artifact file bytes, so a sidecar
+  becomes stale when the artifact is regenerated without refreshing acceptance.
+- `release_audit_check_id` must match the check id, for example
+  `curated_artifact:h2_local_validated_anchor:acceptance_summary`.
+- `trust_tier` must match the artifact's release-readable evidence summary.
+- `runtime_evidence_status` must match the artifact's release-readable runtime
+  evidence status, including derived legacy summaries.
+- `blocking_failures` and `warnings` must be JSON arrays, even when empty.
+- `recommended_action` must be a non-empty string for release handoff.
+- `artifact_name`, `acceptance_scope`, and `release_boundaries` should be
+  present so manifest-bound sidecars provide a uniform human handoff contract.
+
+Older benchmark acceptance sidecars remain compatible only when they declare
+`schema_version: qcchem.benchmark_acceptance.v0.1-alpha`; they do not provide
+this release-audit binding contract. Missing or unknown acceptance schemas fail
+the release audit for required artifacts instead of being treated as compatible.
+
+Acceptance sidecars listed by the release manifest are release evidence, not
+generated scratch files. Generated readiness outputs such as
+`artifacts/release_audit/release_readiness.json` and workflow run bundles under
+`artifacts/workflows/` should stay ignored, while manifest-derived sibling
+`acceptance_summary.json` files should remain trackable and present in
+`git ls-files`. Sidecars using
+`schema_version: qcchem.release_artifact_acceptance.v0.1-alpha` must be bound to
+the release manifest; CI rejects orphan release-artifact sidecars so accepted
+release evidence cannot drift outside `configs/release/trust_first_audit.yaml`.
+Older `qcchem.benchmark_acceptance.v0.1-alpha` sidecars can remain with
+historical benchmark evidence, but they do not satisfy the release-artifact
+binding contract.
+
 ## Exit Codes
 
 - `0`: all required checks passed.
-- `2`: at least one required check failed.
+- `2`: the manifest could not be read or parsed, or at least one required
+  check failed.
 
 On failure, read `release_readiness.md` first. It is the human review surface and
-points at the failed check names.
+points at the failed check names. The CLI also prints a bounded triage list of
+required failed check ids and warning check ids so CI logs expose the first
+actionable failure without opening the readiness files.
 
 ## Manifest Shape
 
@@ -62,6 +135,9 @@ The default manifest is `configs/release/trust_first_audit.yaml`:
 release_audit:
   profile: trust_first
   release_version: 0.1.0a1
+  warning_policy:
+    max_count: 0
+    allowed_ids: []
   curated_artifacts:
     - name: h2_local_validated_anchor
       path: artifacts/h2/result.json
@@ -94,21 +170,100 @@ Supported exploratory asset kinds:
 - `lr_ace`
 - `tc_qsci`
 
+Boolean manifest fields such as `required` and `acceptance_required` must use
+YAML booleans (`true` or `false`), not quoted strings.
+Scalar identity and path fields such as `profile`, `release_version`,
+`curated_artifacts.name`, `curated_artifacts.path`, `exploratory_assets.name`,
+`exploratory_assets.kind`, `exploratory_assets.config`,
+`exploratory_assets.artifact`, and `required_docs.path` must be strings, not
+numbers or booleans that can be coerced into ambiguous check ids or paths.
+Path fields must also be repository-relative. Absolute paths, `~` home paths,
+and `..` parent-directory components are rejected so the audit cannot read
+machine-local files outside the release checkout.
+Optional path fields such as `exploratory_assets.artifact` may be omitted, but
+they must be non-empty strings when present; an empty string is rejected instead
+of silently disabling artifact evidence checks.
+List entries in `required_docs.terms`, `warning_policy.allowed_ids`, and
+`acceptance_commands` must be non-empty strings; the loader rejects numeric,
+boolean, null, or empty-string entries instead of coercing them. Surrounding
+whitespace is stripped before use. Warning allow-list ids and acceptance command
+recipes must also be unique so the release policy and advertised evidence
+commands remain unambiguous.
+The fields that generate audit check ids must be unique inside their manifest
+section: `curated_artifacts.name`, `exploratory_assets.name`, and
+`required_docs.path`. Duplicate entries are rejected before the audit runs so
+sidecar bindings and readiness reports cannot become ambiguous.
+`acceptance_commands` are recorded release-evidence recipes, not commands run by
+the audit. The audit parses supported command forms (`python -m pytest ...` /
+`pytest ...` and `qcchem benchmark run -c ... -o ...`) and fails if referenced
+pytest targets or benchmark config files are missing or resolve outside the
+audited repository root. Benchmark recipes must declare exactly one
+`-c`/`--config` file and exactly one `-o`/`--output-dir` directory under
+`artifacts/`; the output directory does not need to exist before the recipe
+runs, but it must be a repository-relative artifact path. Absolute paths, `~`
+home paths, and `..` parent-directory components are rejected for these
+referenced targets and outputs too. Empty config or output option values are
+reported as empty path values instead of being treated as the repository root.
+Benchmark config targets must be files, not directories. Acceptance recipes must
+be reproducible from the release checkout, not from sibling scratch files or
+machine-local paths.
+Benchmark acceptance recipes must not write directly to a manifest-protected
+release artifact root, whether curated or exploratory, such as
+`artifacts/lr_ace_flagship_suite_v1`; an interrupted run could otherwise leave
+release evidence half-deleted. Use an ignored preview output such as
+`artifacts/lr_ace_flagship_suite_v1/preview_local` for repeatable regeneration
+checks. Add `--overwrite` to preview-output recipes when the same preview
+directory should be refreshed, then refresh the curated artifact in a deliberate
+release-update pass.
+Python pytest recipes must use `python` or `python3` literally, not
+machine-local interpreter paths such as `/usr/bin/python3` or `.venv/bin/python`.
+They must name at least one concrete pytest target such as `tests/unit/...` or
+`tests`, rather than relying on default test discovery. Pytest option values
+that encode paths, for example `--basetemp=/tmp/...` or `--basetemp /tmp/...`,
+must be non-empty and must not point at absolute, home-directory,
+parent-directory, or repo-external locations.
+Values consumed by pytest options, including `-m`, `-k`, `--basetemp`, and
+`--junitxml`, do not count as explicit pytest targets; list the target path as a
+separate argument.
+They must also be single supported commands; shell control tokens such as `&&`,
+`;`, pipes, and redirections are rejected instead of being treated as part of a
+release recipe. Shell expansion and glob syntax such as `$VAR`, `$(...)`,
+backticks, `*`, and `?` are rejected too; release recipes should name concrete
+local targets. Malformed shell-style quoting is reported as a static parse
+failure so the audit still writes `release_readiness.json` and
+`release_readiness.md` for handoff.
+
 ## Checks
 
 The Trust-First profile verifies:
 
 - `pyproject.toml` version matches the manifest release version.
+- Configured `acceptance_commands` reference existing local pytest targets or
+  benchmark config files for supported command forms.
 - Required curated artifacts exist.
+- Configured artifacts parse as JSON objects, with unreadable payloads reported
+  as failed checks instead of aborting the audit.
+- Required curated artifacts either embed or sit beside an accepted
+  `acceptance_summary.json` with no blocking failures.
 - Curated artifacts expose the required `evidence_summary` fields, or the audit
   can derive a read-only release summary from legacy artifact payloads:
-  - `trust_tier`
+  - `primary_scientific_claim`
   - `primary_baseline`
   - `primary_error_metric`
+  - `chemical_accuracy_status`
+  - `runtime_evidence_status`
+  - `trust_tier`
   - `recommended_action`
 - Runtime preview or disabled submissions are not mislabeled as
   `hardware_verified`.
+- Artifacts whose evidence summary declares `trust_tier: hardware_verified`
+  also expose `runtime_evidence_status: retrieved_result`. Hardware campaigns
+  must list at least one `hardware_verified_cases` entry; ordinary run artifacts
+  must also carry top-level `hardware_verified: true` plus a retrieved
+  `runtime_submission`.
 - QFT, LR-ACE, and TC-QSCI assets remain inside the exploratory boundary.
+- Exploratory asset config files parse as YAML mappings and classify as their
+  manifest-declared kind; unreadable YAML becomes a failed config check.
 - QFT language remains finite-cutoff lattice-QED / sparse projected
   physical-sector evidence, not continuum chemistry accuracy.
 - Sparse exact QFT evidence keeps the three-layer accuracy boundary:
@@ -120,6 +275,10 @@ The Trust-First profile verifies:
   `projected_matrix_sha256`, `basis_hash`, and explicit sparse/exploratory
   measurement-cost scope.
 - Required docs contain the release language needed for the Trust-First Release.
+- Required docs that exist are readable UTF-8 text; unreadable doc paths become
+  failed checks instead of aborting the audit.
+- Configured warning policy bounds known release warnings by count and check id,
+  so new warnings fail CI instead of silently accumulating.
 - Research OS docs and examples exist for research objective, evidence capsule,
   claim compiler, and promotion gate workflows.
 - Optional Research OS checks confirm new CLI workflow functions are importable
@@ -130,17 +289,63 @@ The Trust-First profile verifies:
 `release_readiness.json` contains:
 
 - `schema_version`
+- `schema_features`
 - `profile`
 - `release_version`
+- `audit_provenance`
 - `status`
 - `required_pass_count`
 - `required_fail_count`
+- `warning_count`
+- `failed_checks`
+- `required_failed_checks`
+- `warning_checks`
+- `warning_policy`
+- `acceptance_commands`
 - `checks`
 - `evidence_matrix`
 - `recommended_action`
 
-The JSON shape is intended for automation. The Markdown companion is intended
-for release review and handoff.
+The current release-readiness schema is `1.1`. It is additive over schema `1`
+and advertises added automation fields through `schema_features`, including
+triage summaries, warning policy results, acceptance command recipes and
+remediation hints, Evidence Matrix claim/baseline/error fields, Evidence Matrix
+review warnings, acceptance evidence bindings, acceptance status/count fields,
+and audit provenance.
+
+The JSON shape is intended for automation. `audit_provenance` records the UTC
+generation time, audited repository root, manifest path, and output directory so
+reviewers can identify exactly which checkout and manifest produced the
+readiness files. `failed_checks` and `warning_checks` are compact triage views
+over the full `checks` list; `required_failed_checks` is the gating subset that
+determines the release-audit exit status. Each entry preserves the stable check
+id, required flag, summary, and details for CI and release tooling.
+`acceptance_commands` records the static validation recipes from the manifest
+for reproducible handoff; release audit validates supported local targets but
+does not execute those commands. When a recipe is rejected, its failure details
+include a `reason` plus a short `remediation` hint so maintainers can repair the
+manifest without reverse-engineering parser internals. The Markdown companion is
+intended for release review and handoff. It prints schema version, advertised
+schema features, provenance including the audited repository root,
+warning-policy status, warning allow-list ids, unexpected warning ids, required
+failures, optional failures, and warnings before the evidence matrix so
+reviewers can jump directly to the actionable issue. Failed acceptance command
+recipes also get an `Acceptance Command Repairs` section with the rejected
+command, reason, and remediation. Its evidence matrix includes each artifact's runtime
+evidence status, hardware-verified case count, runtime submission status,
+review-warning count, review-warning details, acceptance schema version,
+acceptance check binding, acceptance trust tier, acceptance runtime evidence
+status, acceptance status, acceptance recommended action, acceptance
+blocking-failure count, acceptance warning count, and acceptance
+contract-failure count so reviewers do not need to inspect the JSON before
+spotting a weak runtime boundary, rejected sidecar, warning-bearing sidecar,
+missing handoff action, or misbound sidecar.
+
+Evidence Matrix `review_warnings` are human review hints for weak or missing
+scientific support, such as `baseline_kind: none`, `baseline_strength: weak`,
+missing primary error values, or placeholder `None` text in a claim. They do not
+enter `warning_checks` and are not governed by `warning_policy`; use the formal
+warning channel only for release-gating warning policy decisions.
 
 ## Operating Rules
 
@@ -158,10 +363,15 @@ for release review and handoff.
   the user manual is the task guide, verified scope is the claim-boundary
   reference, and release showcase is the demo path.
 - If full pytest runs before the audit, confirm it did not rewrite tracked
-  artifacts:
+  release files or leave required sidecars untracked:
 
 ```bash
-git diff --name-only -- artifacts/lih_active_vqe
+git diff --name-only -- .github artifacts README.md docs configs qcchem tests pyproject.toml
+git status --short --untracked-files=all -- .github artifacts README.md docs configs qcchem tests pyproject.toml
 ```
 
-The command should print nothing.
+Both commands should print nothing in a packaged release branch, except for
+ignored local outputs such as `artifacts/release_audit/` and
+`artifacts/workflows/`.
+CI also checks that release-audit outputs and workflow bundles match
+`.gitignore`, while manifest-derived `acceptance_summary.json` sidecars do not.

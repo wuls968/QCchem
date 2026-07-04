@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from qcchem.io.artifact_index import build_artifact_index
 from qcchem.reporting.hardware_campaign import build_hardware_campaign_summary
 from qcchem.workbench.viewmodels import build_run_view_model
+
+WORKBENCH_ARTIFACT_ROOT_ENV = "QCCHEM_WORKBENCH_ARTIFACT_ROOT"
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -133,8 +136,36 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
     return bundle
 
 
-def _repo_artifact_root() -> Path:
-    return Path(__file__).resolve().parents[2] / "artifacts"
+def _validate_explicit_artifact_root(path: Path) -> None:
+    if not path.exists():
+        raise ValueError(f"Workbench artifact root does not exist: {path}")
+    if not path.is_dir():
+        raise ValueError(f"Workbench artifact root is not a directory: {path}")
+
+
+def resolve_workbench_artifact_root(artifact_root: Path | str | None = None) -> Path:
+    """Resolve the Workbench artifact root.
+
+    Prefer an explicit root, then the environment used by CLI/server startup,
+    then the current workspace's artifacts directory. The package-relative
+    fallback keeps empty installed workspaces usable.
+    """
+    if artifact_root is not None:
+        root = Path(artifact_root).expanduser().resolve()
+        _validate_explicit_artifact_root(root)
+        return root
+
+    env_root = os.environ.get(WORKBENCH_ARTIFACT_ROOT_ENV)
+    if env_root is not None and env_root.strip():
+        root = Path(env_root).expanduser().resolve()
+        _validate_explicit_artifact_root(root)
+        return root
+
+    cwd_artifacts = Path.cwd() / "artifacts"
+    if cwd_artifacts.exists():
+        return cwd_artifacts.resolve()
+
+    return (Path(__file__).resolve().parents[2] / "artifacts").resolve()
 
 
 def _preferred_entry(entries: list[dict[str, Any]], *, kinds: set[str]) -> dict[str, Any] | None:
@@ -157,7 +188,7 @@ def _preferred_entry(entries: list[dict[str, Any]], *, kinds: set[str]) -> dict[
 def load_featured_run_view_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
     """Load the best available run artifact for workbench pages."""
 
-    root = artifact_root or _repo_artifact_root()
+    root = resolve_workbench_artifact_root(artifact_root)
     index = build_artifact_index(root)
     entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"run"})
     if not entry:
@@ -172,7 +203,7 @@ def load_featured_run_view_model(artifact_root: Path | None = None) -> dict[str,
 
 
 def load_featured_benchmark_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
-    root = artifact_root or _repo_artifact_root()
+    root = resolve_workbench_artifact_root(artifact_root)
     index = build_artifact_index(root)
     entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"benchmark_suite"})
     if not entry:
@@ -185,7 +216,7 @@ def load_featured_benchmark_model(artifact_root: Path | None = None) -> dict[str
 
 
 def load_featured_hardware_campaign_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
-    root = artifact_root or _repo_artifact_root()
+    root = resolve_workbench_artifact_root(artifact_root)
     index = build_artifact_index(root)
     entry = _preferred_entry(list(index.get("artifacts") or []), kinds={"hardware_calibration"})
     if not entry:
@@ -212,7 +243,7 @@ def _latest_json(root: Path, pattern: str) -> dict[str, Any] | None:
 
 def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, Any]:
     """Load latest Research OS review artifacts for workbench summaries."""
-    root = artifact_root or _repo_artifact_root()
+    root = resolve_workbench_artifact_root(artifact_root)
     objective_status = _latest_json(root, "objectives/**/objective_status.json")
     objective_plan = _latest_json(root, "objectives/**/objective_plan.json")
     claim_review = _latest_json(root, "claim_reviews/**/claim_review.json")

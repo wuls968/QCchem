@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import shutil
 from pathlib import Path
 
 import numpy as np
@@ -15,7 +14,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.io.scan_config import load_scan_spec
 from qcchem.reporting import write_result_json
 from qcchem.reporting.aggregate import write_aggregate_report
-from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
+from qcchem.workflow.common import clone_spec_with_overrides, prepare_clean_output_root
 from qcchem.workflow.continuity import (
     attach_initial_point_candidate,
     build_continuity_record,
@@ -28,11 +27,8 @@ from qcchem.workflow.runner import run_spec
 SCHEMA_VERSION = "qcchem.scan.v0.3-alpha"
 
 
-def _prepare_scan_artifacts(root: Path) -> ScanArtifactPaths:
-    resolved_root = resolve_artifact_root(root)
-    if resolved_root.exists():
-        shutil.rmtree(resolved_root)
-    resolved_root.mkdir(parents=True, exist_ok=True)
+def _prepare_scan_artifacts(root: Path, *, overwrite: bool) -> ScanArtifactPaths:
+    resolved_root = prepare_clean_output_root(root, workflow_name="Scan", overwrite=overwrite)
     return ScanArtifactPaths(
         root=resolved_root,
         result_json=resolved_root / "scan_result.json",
@@ -53,10 +49,16 @@ def _apply_bond_distance(spec, atom_indices: tuple[int, int], value: float, axis
     spec.molecule.geometry[atom_indices[1]].coords = (float(target[0]), float(target[1]), float(target[2]))
 
 
-def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = None) -> ScanResult:
+def run_scan_from_spec(
+    spec,
+    *,
+    source_config: str,
+    output_dir: Path | None = None,
+    overwrite: bool = False,
+) -> ScanResult:
     """Run a 1D scan from an already-parsed ScanSpec."""
     scan_root = output_dir or Path("artifacts") / spec.name
-    artifacts = _prepare_scan_artifacts(Path(scan_root))
+    artifacts = _prepare_scan_artifacts(Path(scan_root), overwrite=overwrite)
     points_root = artifacts.root / "points"
     points_root.mkdir(parents=True, exist_ok=True)
 
@@ -206,7 +208,7 @@ def run_scan_from_spec(spec, *, source_config: str, output_dir: Path | None = No
     return result
 
 
-def run_scan_from_config(path: Path, output_dir: Path | None = None) -> ScanResult:
+def run_scan_from_config(path: Path, output_dir: Path | None = None, *, overwrite: bool = False) -> ScanResult:
     """Load and run a scan configuration."""
     spec = load_scan_spec(path)
-    return run_scan_from_spec(spec, source_config=str(path), output_dir=output_dir)
+    return run_scan_from_spec(spec, source_config=str(path), output_dir=output_dir, overwrite=overwrite)

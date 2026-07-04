@@ -1,0 +1,18 @@
+{
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "artifact_name": "h2_short_scan",
+  "artifact_path": "artifacts/h2_short_scan/scan_result.json",
+  "accepted": true,
+  "acceptance_scope": "alpha_release_boundary",
+  "trust_tier": "validated",
+  "runtime_evidence_status": "none",
+  "release_audit_check_id": "curated_artifact:h2_short_scan:acceptance_summary",
+  "blocking_failures": [],
+  "warnings": [],
+  "release_boundaries": [
+    "Accepted as release-readable validated scan aggregate evidence.",
+    "This sidecar does not replace the scan evidence_summary or point-level artifacts."
+  ],
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "artifact_sha256": "29451cae4d54a73ec2d277d12904c8995b04ba7a998bfca982f08dd1f90bd5d6"
+}

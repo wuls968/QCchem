@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import math
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +36,7 @@ from qcchem.core.evidence import (
     build_benchmark_suite_evidence_summary,
     build_hardware_campaign_evidence_summary,
 )
-from qcchem.workflow.common import clone_spec_with_overrides, resolve_artifact_root
+from qcchem.workflow.common import clone_spec_with_overrides, prepare_clean_output_root
 from qcchem.workflow.registry import make_registry_entry, write_registry
 from qcchem.workflow.acceptance import build_benchmark_acceptance_summary
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
@@ -69,11 +68,8 @@ def run_pbc_qmmm_validation(*args, **kwargs):
     return impl(*args, **kwargs)
 
 
-def _prepare_benchmark_artifacts(root: Path) -> BenchmarkArtifactPaths:
-    resolved_root = resolve_artifact_root(root)
-    if resolved_root.exists():
-        shutil.rmtree(resolved_root)
-    resolved_root.mkdir(parents=True, exist_ok=True)
+def _prepare_benchmark_artifacts(root: Path, *, overwrite: bool) -> BenchmarkArtifactPaths:
+    resolved_root = prepare_clean_output_root(root, workflow_name="Benchmark suite", overwrite=overwrite)
     return BenchmarkArtifactPaths(
         root=resolved_root,
         result_json=resolved_root / "benchmark_result.json",
@@ -828,10 +824,11 @@ def run_benchmark_suite_from_spec(
     confirm_runtime_budget: str | None = None,
     include_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
     exclude_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+    overwrite: bool = False,
 ) -> BenchmarkSuiteResult:
     """Run a benchmark suite from an already-parsed spec."""
     suite_root = output_dir or Path("artifacts") / spec.name
-    artifacts = _prepare_benchmark_artifacts(Path(suite_root))
+    artifacts = _prepare_benchmark_artifacts(Path(suite_root), overwrite=overwrite)
     cases_root = artifacts.root / "cases"
     cases_root.mkdir(parents=True, exist_ok=True)
     selected_cases, case_filter_summary = _select_benchmark_cases(
@@ -1048,10 +1045,14 @@ def build_hardware_calibration_suite(
     result_json_paths: list[Path],
     *,
     output_root: Path,
+    overwrite: bool = False,
 ) -> dict[str, Any]:
     """Build a compact hardware-calibration dashboard from run result artifacts."""
-    resolved_output_root = resolve_artifact_root(output_root)
-    resolved_output_root.mkdir(parents=True, exist_ok=True)
+    resolved_output_root = prepare_clean_output_root(
+        output_root,
+        workflow_name="Hardware calibration suite",
+        overwrite=overwrite,
+    )
 
     cases: list[dict[str, Any]] = []
     for result_json_path in result_json_paths:
@@ -1090,10 +1091,12 @@ def _run_hardware_calibration_suite_from_spec(
     spec: HardwareCalibrationSuiteSpec,
     *,
     output_dir: Path | None = None,
+    overwrite: bool = False,
 ) -> dict[str, Any]:
     return build_hardware_calibration_suite(
         [case.result_json for case in spec.cases],
         output_root=(output_dir or spec.output_root),
+        overwrite=overwrite,
     )
 
 
@@ -1104,11 +1107,12 @@ def run_benchmark_suite_from_config(
     confirm_runtime_budget: str | None = None,
     include_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
     exclude_tags: str | list[str] | tuple[str, ...] | set[str] | None = None,
+    overwrite: bool = False,
 ) -> BenchmarkSuiteResult | dict[str, Any]:
     """Load and run a benchmark suite from YAML."""
     spec = load_benchmark_entry_spec(path)
     if isinstance(spec, HardwareCalibrationSuiteSpec):
-        return _run_hardware_calibration_suite_from_spec(spec, output_dir=output_dir)
+        return _run_hardware_calibration_suite_from_spec(spec, output_dir=output_dir, overwrite=overwrite)
     return run_benchmark_suite_from_spec(
         spec,
         source_config=str(path),
@@ -1116,4 +1120,5 @@ def run_benchmark_suite_from_config(
         confirm_runtime_budget=confirm_runtime_budget,
         include_tags=include_tags,
         exclude_tags=exclude_tags,
+        overwrite=overwrite,
     )

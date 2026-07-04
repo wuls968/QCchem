@@ -64,6 +64,82 @@ def test_scan_workflow_generates_point_runs_and_scan_table(tmp_path: Path) -> No
     assert "Scan Summary" in regenerated
 
 
+def test_aggregate_workflows_reject_existing_output_without_overwrite(tmp_path: Path) -> None:
+    benchmark_config = tmp_path / "benchmark.yaml"
+    benchmark_config.write_text(
+        """
+benchmark_suite:
+  name: reject_existing_benchmark
+  cases:
+    - name: h2
+      kind: run
+      config: configs/h2.yaml
+        """.strip(),
+        encoding="utf-8",
+    )
+    study_config = tmp_path / "study.yaml"
+    study_config.write_text(
+        """
+study:
+  name: reject_existing_study
+  runs:
+    - name: h2
+      config: configs/h2.yaml
+        """.strip(),
+        encoding="utf-8",
+    )
+    scan_config = tmp_path / "scan.yaml"
+    scan_config.write_text(
+        """
+scan:
+  name: reject_existing_scan
+  base_config: configs/h2.yaml
+  parameter:
+    name: bond_length
+    kind: bond_distance
+    values: [0.735]
+        """.strip(),
+        encoding="utf-8",
+    )
+
+    cases = [
+        (
+            lambda output_dir: run_benchmark_suite_from_config(
+                benchmark_config,
+                output_dir=output_dir,
+                overwrite=False,
+            ),
+            "benchmark",
+        ),
+        (
+            lambda output_dir: run_study_from_config(
+                study_config,
+                output_dir=output_dir,
+                overwrite=False,
+            ),
+            "study",
+        ),
+        (
+            lambda output_dir: run_scan_from_config(
+                scan_config,
+                output_dir=output_dir,
+                overwrite=False,
+            ),
+            "scan",
+        ),
+    ]
+    for runner, label in cases:
+        output_dir = tmp_path / f"{label}-existing"
+        output_dir.mkdir()
+        sentinel = output_dir / "keep.txt"
+        sentinel.write_text("keep", encoding="utf-8")
+
+        with pytest.raises(FileExistsError, match="already exists and is not empty"):
+            runner(output_dir)
+
+        assert sentinel.read_text(encoding="utf-8") == "keep"
+
+
 @pytest.mark.integration
 def test_vqe_scan_uses_linear_predictor_after_previous_point(tmp_path: Path) -> None:
     scan_config = tmp_path / "h2_vqe_scan.yaml"
