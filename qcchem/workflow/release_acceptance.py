@@ -24,6 +24,7 @@ DEFAULT_RELEASE_BOUNDARIES = [
     "Accepted as release-readable evidence with the declared trust tier.",
     "This sidecar does not promote the artifact beyond its evidence_summary boundary.",
 ]
+RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION = "qcchem.release_artifact_acceptance_status.v0.1-alpha"
 
 
 def _repo_relative_artifact_path(artifact_path: Path, *, repo_root: Path) -> str:
@@ -49,6 +50,21 @@ def _release_boundaries_from_existing(path: Path) -> list[str] | None:
         if isinstance(item, str) and item.strip()
     ]
     return cleaned or None
+
+
+def _summary_with_existing_extra_fields(summary: dict[str, Any], path: Path) -> tuple[dict[str, Any], list[str]]:
+    if not path.exists():
+        return summary, []
+    try:
+        existing = _read_json(path)
+    except Exception:
+        return summary, []
+    extras = {
+        key: value
+        for key, value in existing.items()
+        if key not in summary
+    }
+    return {**extras, **summary}, sorted(extras)
 
 
 def _release_acceptance_targets(spec: ReleaseAuditSpec) -> list[dict[str, Any]]:
@@ -196,9 +212,158 @@ def write_release_artifact_acceptance_summary(
         repo_root=resolved_repo_root,
         release_boundaries=boundaries,
     )
+    summary, _preserved_extra_fields = _summary_with_existing_extra_fields(summary, output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_result_json(summary, output_path)
     return summary, output_path
+
+
+def _acceptance_sidecar_status(
+    target: dict[str, Any],
+    *,
+    repo_root: Path,
+) -> dict[str, Any]:
+    artifact_path = _resolve(repo_root, target["path"])
+    sidecar_path = artifact_path.parent / "acceptance_summary.json"
+    base = {
+        "artifact_name": target["name"],
+        "artifact_kind": target["kind"],
+        "artifact_path": _repo_relative_artifact_path(artifact_path, repo_root=repo_root)
+        if artifact_path.exists()
+        else target["path"].as_posix(),
+        "sidecar_path": _repo_relative_artifact_path(sidecar_path, repo_root=repo_root)
+        if sidecar_path.exists()
+        else (target["path"].parent / "acceptance_summary.json").as_posix(),
+        "release_audit_check_id": target["check_id"],
+    }
+    try:
+        expected = build_release_artifact_acceptance_summary(
+            artifact_path,
+            artifact_name=target["name"],
+            release_audit_check_id=target["check_id"],
+            repo_root=repo_root,
+            release_boundaries=_release_boundaries_from_existing(sidecar_path),
+        )
+        artifact_payload = _payload_with_release_evidence(_read_json(artifact_path))
+    except Exception as exc:
+        return {
+            **base,
+            "status": "blocked",
+            "error": f"{type(exc).__name__}: {exc}",
+            "changed_fields": [],
+            "missing_fields": [],
+            "extra_fields": [],
+            "preserved_extra_fields": [],
+            "contract_failures": [],
+        }
+
+    if not sidecar_path.exists():
+        return {
+            **base,
+            "status": "missing",
+            "expected_artifact_sha256": expected.get("artifact_sha256"),
+            "sidecar_artifact_sha256": None,
+            "changed_fields": [],
+            "missing_fields": sorted(expected),
+            "extra_fields": [],
+            "preserved_extra_fields": [],
+            "contract_failures": [],
+        }
+
+    try:
+        existing = _read_json(sidecar_path)
+    except Exception as exc:
+        return {
+            **base,
+            "status": "unreadable",
+            "error": f"{type(exc).__name__}: {exc}",
+            "expected_artifact_sha256": expected.get("artifact_sha256"),
+            "sidecar_artifact_sha256": None,
+            "changed_fields": [],
+            "missing_fields": [],
+            "extra_fields": [],
+            "preserved_extra_fields": [],
+            "contract_failures": [],
+        }
+
+    expected, preserved_extra_fields = _summary_with_existing_extra_fields(expected, sidecar_path)
+    changed_fields = sorted(
+        key
+        for key, value in expected.items()
+        if existing.get(key) != value
+    )
+    missing_fields = sorted(key for key in expected if key not in existing)
+    extra_fields = sorted(key for key in existing if key not in expected)
+    contract_failures = _acceptance_contract_failures(
+        existing,
+        expected_check_id=target["check_id"],
+        artifact_path=artifact_path,
+        artifact_payload=artifact_payload,
+        repo_root=repo_root,
+        release_binding_required=True,
+    )
+    status = "fresh" if not changed_fields and not extra_fields and not contract_failures else "stale"
+    return {
+        **base,
+        "status": status,
+        "expected_artifact_sha256": expected.get("artifact_sha256"),
+        "sidecar_artifact_sha256": existing.get("artifact_sha256"),
+        "changed_fields": changed_fields,
+        "missing_fields": missing_fields,
+        "extra_fields": extra_fields,
+        "preserved_extra_fields": preserved_extra_fields,
+        "contract_failures": contract_failures,
+    }
+
+
+def release_acceptance_status_report(
+    spec: ReleaseAuditSpec,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    """Report whether manifest-bound release acceptance sidecars are fresh."""
+
+    default_repo_root = (
+        workspace_root_for_path(spec.source_path)
+        if spec.source_path is not None
+        else Path.cwd()
+    )
+    resolved_repo_root = (repo_root or default_repo_root).resolve()
+    items = [
+        _acceptance_sidecar_status(target, repo_root=resolved_repo_root)
+        for target in _release_acceptance_targets(spec)
+        if target["path"] is not None
+    ]
+    status_counts: dict[str, int] = {}
+    for item in items:
+        status = str(item.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    stale_statuses = {"missing", "stale", "unreadable", "blocked"}
+    requires_update = sum(status_counts.get(status, 0) for status in stale_statuses)
+    return {
+        "schema_version": RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION,
+        "status": "fresh" if requires_update == 0 else "needs_update",
+        "repo_root": str(resolved_repo_root),
+        "total_sidecars": len(items),
+        "fresh_count": status_counts.get("fresh", 0),
+        "requires_update_count": requires_update,
+        "status_counts": dict(sorted(status_counts.items())),
+        "items": items,
+    }
+
+
+def release_acceptance_status_report_from_config(
+    config_path: Path,
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, Any]:
+    """Load a release manifest and report release sidecar freshness."""
+
+    resolved_config_path = config_path.expanduser()
+    if not resolved_config_path.is_absolute() and repo_root is not None:
+        resolved_config_path = repo_root.expanduser() / resolved_config_path
+    spec = load_release_audit_spec(resolved_config_path)
+    return release_acceptance_status_report(spec, repo_root=repo_root)
 
 
 def write_release_artifact_acceptance_summary_from_config(

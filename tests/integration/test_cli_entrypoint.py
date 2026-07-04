@@ -295,6 +295,22 @@ release_audit:
         main(
             [
                 "release",
+                "acceptance-status",
+                "-c",
+                str(config),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+            ]
+        )
+        == 2
+    )
+    assert "Release acceptance sidecars: needs_update" in capsys.readouterr().out
+
+    assert (
+        main(
+            [
+                "release",
                 "accept-artifact",
                 "-c",
                 str(config),
@@ -314,6 +330,28 @@ release_audit:
     assert payload["schema_version"] == "qcchem.release_artifact_acceptance.v0.1-alpha"
     assert payload["artifact_path"] == "artifacts/h2/result.json"
     assert payload["release_audit_check_id"] == "curated_artifact:h2_anchor:acceptance_summary"
+
+    status_output = tmp_path / "acceptance_status.json"
+    assert (
+        main(
+            [
+                "release",
+                "acceptance-status",
+                "-c",
+                str(config),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+                "-o",
+                str(status_output),
+            ]
+        )
+        == 0
+    )
+    status = json.loads(status_output.read_text(encoding="utf-8"))
+    assert status["status"] == "fresh"
+    assert status["fresh_count"] == 1
+    assert "Release acceptance sidecars: fresh" in capsys.readouterr().out
 
     assert (
         main(

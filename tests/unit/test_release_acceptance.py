@@ -6,7 +6,10 @@ from pathlib import Path
 import pytest
 
 from qcchem.io.release_audit_config import load_release_audit_spec
-from qcchem.workflow.release_acceptance import write_release_artifact_acceptance_summary
+from qcchem.workflow.release_acceptance import (
+    release_acceptance_status_report,
+    write_release_artifact_acceptance_summary,
+)
 from qcchem.workflow.release_audit import run_release_audit
 
 
@@ -87,6 +90,12 @@ def test_release_acceptance_writes_manifest_bound_sidecar(tmp_path: Path) -> Non
     assert audit["status"] == "passed"
     assert acceptance_check["status"] == "passed"
     assert audit["evidence_matrix"][0]["acceptance_contract_failure_count"] == 0
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+    assert report["status"] == "fresh"
+    assert report["fresh_count"] == 1
+    assert report["requires_update_count"] == 0
+    assert report["items"][0]["status"] == "fresh"
+    assert report["items"][0]["changed_fields"] == []
 
 
 def test_release_acceptance_requires_overwrite_for_existing_sidecar(tmp_path: Path) -> None:
@@ -96,6 +105,32 @@ def test_release_acceptance_requires_overwrite_for_existing_sidecar(tmp_path: Pa
 
     with pytest.raises(FileExistsError, match="acceptance_summary.json"):
         write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+
+
+def test_release_acceptance_status_reports_missing_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    assert report["status"] == "needs_update"
+    assert report["requires_update_count"] == 1
+    assert report["status_counts"] == {"missing": 1}
+    assert report["items"][0]["status"] == "missing"
+    assert "artifact_sha256" in report["items"][0]["missing_fields"]
+
+
+def test_release_acceptance_status_reports_unreadable_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    sidecar = tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+    sidecar.write_text("{not-json", encoding="utf-8")
+
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    assert report["status"] == "needs_update"
+    assert report["items"][0]["status"] == "unreadable"
+    assert "JSONDecodeError" in report["items"][0]["error"]
 
 
 def test_release_acceptance_overwrite_preserves_existing_boundaries(tmp_path: Path) -> None:
@@ -123,6 +158,48 @@ def test_release_acceptance_overwrite_preserves_existing_boundaries(tmp_path: Pa
 
     assert summary["artifact_sha256"] != stale
     assert summary["release_boundaries"] == ["Manual boundary note."]
+
+
+def test_release_acceptance_preserves_existing_extra_fields(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    sidecar = tmp_path / "artifacts" / "h2" / "acceptance_summary.json"
+    write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    payload["case_count"] = 1
+    payload["policy"] = {"strict_exit_code": True}
+    sidecar.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    assert report["status"] == "fresh"
+    assert report["items"][0]["preserved_extra_fields"] == ["case_count", "policy"]
+    summary, _ = write_release_artifact_acceptance_summary(
+        spec,
+        artifact_name="h2_anchor",
+        repo_root=tmp_path,
+        overwrite=True,
+    )
+    assert summary["case_count"] == 1
+    assert summary["policy"] == {"strict_exit_code": True}
+
+
+def test_release_acceptance_status_reports_stale_sidecar(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    write_release_artifact_acceptance_summary(spec, artifact_name="h2_anchor", repo_root=tmp_path)
+    artifact = tmp_path / "artifacts" / "h2" / "result.json"
+    payload = json.loads(artifact.read_text(encoding="utf-8"))
+    payload["energy"]["total_energy"] = -1.139
+    artifact.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    assert report["status"] == "needs_update"
+    assert report["status_counts"] == {"stale": 1}
+    assert report["items"][0]["status"] == "stale"
+    assert "artifact_sha256" in report["items"][0]["changed_fields"]
+    assert report["items"][0]["contract_failures"][0]["field"] == "artifact_sha256"
 
 
 def test_release_acceptance_rejects_unknown_manifest_name(tmp_path: Path) -> None:

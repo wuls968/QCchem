@@ -152,6 +152,13 @@ def write_release_artifact_acceptance_summary_from_config(*args, **kwargs):
     )(*args, **kwargs)
 
 
+def release_acceptance_status_report_from_config(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.release_acceptance",
+        "release_acceptance_status_report_from_config",
+    )(*args, **kwargs)
+
+
 def run_workbench_smoke_from_docs(*args, **kwargs):
     return _load_attr("qcchem.workbench.smoke", "run_workbench_smoke_from_docs")(*args, **kwargs)
 
@@ -390,6 +397,18 @@ def _build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Release-boundary note to record in the sidecar. Repeat for multiple notes.",
+    )
+    release_acceptance_status = release_subparsers.add_parser(
+        "acceptance-status",
+        help="Report whether manifest-bound release acceptance sidecars are fresh.",
+    )
+    release_acceptance_status.add_argument("-c", "--config", type=Path, required=True)
+    release_acceptance_status.add_argument("--repo-root", type=Path, help="Repository root; defaults to the manifest workspace.")
+    release_acceptance_status.add_argument("-o", "--output", type=Path, help="Optional JSON status output path.")
+    release_acceptance_status.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with code 2 when any manifest-bound sidecar is missing, stale, unreadable, or blocked.",
     )
 
     validation_parser = subparsers.add_parser("validation", help="Validation harness commands.")
@@ -1138,6 +1157,38 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Runtime evidence status: {summary['runtime_evidence_status']}")
             print(f"Recommended action: {summary['recommended_action']}")
             return 0 if summary["accepted"] else 2
+        if args.release_command == "acceptance-status":
+            try:
+                report = release_acceptance_status_report_from_config(
+                    args.config,
+                    repo_root=args.repo_root,
+                )
+            except (OSError, ValueError, yaml.YAMLError) as exc:
+                print(f"Release acceptance status rejected: {exc}")
+                return 2
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+                print(f"Release acceptance status written to {args.output}")
+            print(f"Release acceptance sidecars: {report['status']}")
+            print(
+                "Sidecars: "
+                f"{report['fresh_count']} fresh, "
+                f"{report['requires_update_count']} require update, "
+                f"{report['total_sidecars']} total"
+            )
+            for item in report.get("items", []):
+                if not isinstance(item, dict) or item.get("status") == "fresh":
+                    continue
+                changed = ",".join(str(field) for field in item.get("changed_fields", [])) or "none"
+                print(
+                    "Sidecar issue: "
+                    f"{item.get('artifact_name')} "
+                    f"status={item.get('status')} "
+                    f"changed_fields={changed} "
+                    f"sidecar={item.get('sidecar_path')}"
+                )
+            return 2 if args.strict and report["status"] != "fresh" else 0
 
     if args.command == "validation":
         if args.validation_command == "qmmm":
