@@ -427,6 +427,10 @@ def test_release_manifest_advertises_bounded_lr_ace_slow_smoke_not_stress() -> N
     spec = load_release_audit_spec(REPO_ROOT / "configs" / "release" / "trust_first_audit.yaml")
 
     assert "python -m pytest -m slow tests/integration/test_lr_ace_workflow_v19.py -q" in spec.acceptance_commands
+    assert (
+        "python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning"
+        in spec.acceptance_commands
+    )
     assert not any("-m stress" in command for command in spec.acceptance_commands)
 
 

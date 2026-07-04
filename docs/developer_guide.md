@@ -94,11 +94,13 @@ python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration
 Default suite:
 
 ```bash
-python -m pytest -q
+python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning
 ```
 
 `pyproject.toml` excludes tests marked `slow` or `stress` from the default
-gate. Slow tests are bounded opt-in checks for expensive or exploratory paths:
+gate. The default release/CI gate treats SciPy sparse efficiency warnings as
+failures so circuit/statevector regressions do not return as noisy test output.
+Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash
 python -m pytest -m slow -q
@@ -153,6 +155,9 @@ Current filtered warnings cover:
 - `Instruction.condition`
 - `qiskit.providers.models`
 - `NLocal`
+
+SciPy `SparseEfficiencyWarning` is not filtered; the default release gate runs
+with that warning category promoted to an error.
 
 ## Artifact Isolation In Tests
 
@@ -237,7 +242,7 @@ Before declaring a release candidate:
 ```bash
 set -euo pipefail
 python -m compileall -q qcchem
-python -m pytest -q
+python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning
 rm -rf /tmp/qcchem-wheel-check
 python -m pip wheel . --no-deps -w /tmp/qcchem-wheel-check
 wheel="$(find /tmp/qcchem-wheel-check -maxdepth 1 -type f -name '*.whl' | head -n 1)"

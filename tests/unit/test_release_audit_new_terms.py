@@ -24,6 +24,7 @@ def test_release_audit_manifest_tracks_research_os_docs() -> None:
     commands = "\n".join(spec.acceptance_commands)
     assert "test_custom_workflow_config.py" in commands
     assert "test_custom_workflow_cli.py" in commands
+    assert "SparseEfficiencyWarning" in commands
 
 
 def test_release_audit_runs_research_os_optional_checks(tmp_path: Path) -> None:

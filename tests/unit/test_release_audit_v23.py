@@ -950,6 +950,28 @@ def test_release_audit_accepts_non_path_pytest_options_with_equals(tmp_path: Pat
     assert command_check["details"]["failures"] == []
 
 
+def test_release_audit_accepts_pytest_warning_filter_with_explicit_target(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    config = _write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False)
+    payload = config.read_text(encoding="utf-8")
+    payload = payload.replace(
+        "    - python -m pytest tests/unit/test_release_audit_v23.py -q",
+        "    - python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning",
+    )
+    config.write_text(payload, encoding="utf-8")
+    spec = load_release_audit_spec(config)
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    command_check = next(check for check in summary["checks"] if check["id"] == "release_acceptance_commands:static_targets")
+    assert summary["status"] == "passed"
+    assert command_check["status"] == "passed"
+    assert command_check["details"]["failures"] == []
+
+
 def test_release_audit_accepts_benchmark_acceptance_output_under_artifacts(tmp_path: Path) -> None:
     _write_release_fixture(tmp_path)
     artifact = tmp_path / "artifacts" / "qft" / "result.json"

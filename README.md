@@ -295,12 +295,13 @@ Run the core checks:
 
 ```bash
 python -m compileall qcchem
-python -m pytest
+python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning
 git diff --check
 ```
 
-The default pytest gate excludes tests marked `slow` or `stress`. Run bounded
-slow-smoke checks explicitly with `python -m pytest -m slow -q`; reserve
+The default pytest gate excludes tests marked `slow` or `stress` and treats
+SciPy sparse efficiency warnings as failures. Run bounded slow-smoke checks
+explicitly with `python -m pytest -m slow -q`. Reserve
 `python -m pytest -m stress -q` for long exploratory stress cases.
 
 Run the release gate:

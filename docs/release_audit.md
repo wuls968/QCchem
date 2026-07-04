@@ -162,6 +162,7 @@ release_audit:
       required: true
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
+    - python -m pytest tests -q -W error::scipy.sparse._base.SparseEfficiencyWarning
 ```
 
 Supported exploratory asset kinds:
@@ -197,7 +198,9 @@ sidecar bindings and readiness reports cannot become ambiguous.
 the audit. The audit parses supported command forms (`python -m pytest ...` /
 `pytest ...` and `qcchem benchmark run -c ... -o ...`) and fails if referenced
 pytest targets or benchmark config files are missing or resolve outside the
-audited repository root. Benchmark recipes must declare exactly one
+audited repository root. Pytest recipes may include non-path options such as
+`-W` warning filters, but they still need at least one explicit repository-local
+target. Benchmark recipes must declare exactly one
 `-c`/`--config` file and exactly one `-o`/`--output-dir` directory under
 `artifacts/`; the output directory does not need to exist before the recipe
 runs, but it must be a repository-relative artifact path. Absolute paths, `~`

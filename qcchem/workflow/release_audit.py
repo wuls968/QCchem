@@ -65,6 +65,7 @@ SHELL_CONTROL_TOKENS = ("<<<", "&&", "||", "|&", ">>", "<<", ";", "|", "&", ">",
 SHELL_EXPANSION_TOKENS = ("$(", "${", "$", "`", "*", "?", "[")
 PYTEST_PATH_VALUE_OPTIONS = {"--basetemp", "--rootdir", "--junitxml"}
 PYTEST_VALUE_OPTIONS = PYTEST_PATH_VALUE_OPTIONS | {
+    "-W",
     "-k",
     "-m",
     "--capture",
