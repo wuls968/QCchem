@@ -171,6 +171,7 @@ jobs:
               "warning_policy",
               "acceptance_commands",
               "ci_acceptance_command_alignment",
+              "ci_acceptance_status_gate",
               "acceptance_summary_source",
               "acceptance_schema_version",
               "acceptance_release_audit_check_id",

@@ -48,9 +48,31 @@ def _write_release_fixture(root: Path) -> None:
     (tests / "test_release_audit_v23.py").write_text("# release audit fixture target\n", encoding="utf-8")
 
 
-def _write_ci_workflow(root: Path, command: str) -> None:
+def _write_ci_workflow(
+    root: Path,
+    command: str,
+    *,
+    include_acceptance_status_gate: bool = True,
+    acceptance_status_command: str | None = None,
+) -> None:
     workflow = root / ".github" / "workflows" / "ci.yml"
     workflow.parent.mkdir(parents=True, exist_ok=True)
+    gate_command = acceptance_status_command or (
+        "set -euo pipefail\n"
+        "python -m qcchem.cli.main release acceptance-status \\\n"
+        "  -c configs/release/trust_first_audit.yaml \\\n"
+        "  --strict \\\n"
+        "  -o /tmp/qcchem-release-acceptance-status.json\n"
+    )
+    gate_step = (
+        "\n"
+        "      - name: Run release acceptance sidecar freshness\n"
+        "        run: |\n"
+        + "\n".join(f"          {line}" for line in gate_command.splitlines())
+        + "\n"
+        if include_acceptance_status_gate
+        else ""
+    )
     workflow.write_text(
         f"""
 name: CI
@@ -64,6 +86,7 @@ jobs:
     steps:
       - name: Run tests
         run: {command}
+{gate_step}
 """,
         encoding="utf-8",
     )
@@ -1011,6 +1034,94 @@ def test_release_audit_checks_ci_run_tests_command_matches_acceptance_commands(t
     assert ci_check["details"]["failures"] == []
 
 
+def test_release_audit_checks_ci_acceptance_status_gate(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(tmp_path, "python -m pytest tests/unit/test_release_audit_v23.py -q")
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    gate_check = next(
+        check for check in summary["checks"] if check["id"] == "release_acceptance_sidecars:ci_freshness_gate"
+    )
+    assert summary["status"] == "passed"
+    assert gate_check["status"] == "passed"
+    assert gate_check["required"] is True
+    assert gate_check["details"]["matching_steps"] == [
+        {
+            "job": "test",
+            "step_index": 1,
+            "command_lines": [
+                "set -euo pipefail",
+                "python -m qcchem.cli.main release acceptance-status \\",
+                "-c configs/release/trust_first_audit.yaml \\",
+                "--strict \\",
+                "-o /tmp/qcchem-release-acceptance-status.json",
+            ],
+        }
+    ]
+    assert gate_check["details"]["failures"] == []
+
+
+def test_release_audit_fails_when_ci_acceptance_status_gate_is_missing(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        include_acceptance_status_gate=False,
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    gate_check = next(
+        check for check in summary["checks"] if check["id"] == "release_acceptance_sidecars:ci_freshness_gate"
+    )
+    assert summary["status"] == "failed"
+    assert gate_check["status"] == "failed"
+    assert gate_check["required"] is True
+    assert gate_check["details"]["failures"] == [
+        {
+            "reason": "missing_ci_acceptance_status_step",
+            "workflow": ".github/workflows/ci.yml",
+            "step_name": "Run release acceptance sidecar freshness",
+        }
+    ]
+
+
+def test_release_audit_fails_when_ci_acceptance_status_gate_lacks_strict(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        acceptance_status_command=(
+            "set -euo pipefail\n"
+            "python -m qcchem.cli.main release acceptance-status \\\n"
+            "  -c configs/release/trust_first_audit.yaml \\\n"
+            "  -o /tmp/qcchem-release-acceptance-status.json\n"
+        ),
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    gate_check = next(
+        check for check in summary["checks"] if check["id"] == "release_acceptance_sidecars:ci_freshness_gate"
+    )
+    assert summary["status"] == "failed"
+    assert gate_check["status"] == "failed"
+    assert gate_check["details"]["failures"][0]["reason"] == "ci_acceptance_status_command_mismatch"
+
+
 def test_release_audit_fails_ci_run_tests_command_missing_from_acceptance_commands(tmp_path: Path) -> None:
     _write_release_fixture(tmp_path)
     _write_ci_workflow(tmp_path, "python -m pytest tests -q")
@@ -1426,6 +1537,7 @@ def test_release_audit_matrix_reads_sidecar_acceptance_status(tmp_path: Path) ->
         "acceptance_commands",
         "acceptance_command_remediation",
         "ci_acceptance_command_alignment",
+        "ci_acceptance_status_gate",
         "acceptance_summary_source",
         "acceptance_schema_version",
         "acceptance_artifact_path",

@@ -273,8 +273,9 @@ The Trust-First profile verifies:
   benchmark config files for supported command forms.
 - When `.github/workflows/ci.yml` exists, its `Run tests` command is static and
   listed in `acceptance_commands` so CI and the release manifest cannot drift.
-- CI runs `qcchem release acceptance-status --strict` after the Trust-First
-  release audit so manifest-bound sidecars must stay fresh before generated-file
+- The release audit statically confirms CI runs
+  `qcchem release acceptance-status --strict` after the Trust-First release
+  audit so manifest-bound sidecars must stay fresh before generated-file
   boundary checks pass.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
@@ -338,6 +339,7 @@ The Trust-First profile verifies:
 - `warning_checks`
 - `warning_policy`
 - `acceptance_commands`
+- `schema_features`
 - `checks`
 - `evidence_matrix`
 - `recommended_action`
@@ -345,7 +347,8 @@ The Trust-First profile verifies:
 The current release-readiness schema is `1.1`. It is additive over schema `1`
 and advertises added automation fields through `schema_features`, including
 triage summaries, warning policy results, acceptance command recipes and
-remediation hints, CI acceptance-command alignment, Evidence Matrix
+remediation hints, CI acceptance-command alignment, CI acceptance-status
+freshness gate coverage, Evidence Matrix
 claim/baseline/error fields, Evidence Matrix review warnings, acceptance
 evidence bindings, acceptance status/count fields, and audit provenance.
 

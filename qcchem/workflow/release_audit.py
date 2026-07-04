@@ -33,6 +33,7 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "acceptance_commands",
     "acceptance_command_remediation",
     "ci_acceptance_command_alignment",
+    "ci_acceptance_status_gate",
     "acceptance_summary_source",
     "acceptance_schema_version",
     "acceptance_artifact_path",
@@ -75,6 +76,15 @@ PYTEST_VALUE_OPTIONS = PYTEST_PATH_VALUE_OPTIONS | {
     "--maxfail",
     "--tb",
 }
+CI_WORKFLOW_RELATIVE_PATH = Path(".github") / "workflows" / "ci.yml"
+CI_ACCEPTANCE_STATUS_STEP_NAME = "Run release acceptance sidecar freshness"
+CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
+    "set -euo pipefail",
+    "python -m qcchem.cli.main release acceptance-status \\",
+    "-c configs/release/trust_first_audit.yaml \\",
+    "--strict \\",
+    "-o /tmp/qcchem-release-acceptance-status.json",
+)
 
 
 def _resolve(repo_root: Path, path: Path) -> Path:
@@ -843,8 +853,34 @@ def _audit_acceptance_commands(spec: ReleaseAuditSpec, *, repo_root: Path, check
     )
 
 
+def _ci_step_command_lines(command: str) -> list[str]:
+    return [line.strip() for line in command.splitlines() if line.strip()]
+
+
+def _ci_workflow_jobs(
+    workflow_path: Path,
+    workflow_relative_path: Path,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    failures: list[dict[str, Any]] = []
+    try:
+        raw = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return None, [
+            {
+                "reason": "unreadable_ci_workflow",
+                "workflow": workflow_relative_path.as_posix(),
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+        ]
+    jobs = raw.get("jobs") if isinstance(raw, dict) else None
+    if not isinstance(jobs, dict):
+        failures.append({"reason": "missing_ci_jobs", "workflow": workflow_relative_path.as_posix()})
+        return None, failures
+    return jobs, failures
+
+
 def _audit_ci_acceptance_alignment(spec: ReleaseAuditSpec, *, repo_root: Path, checks: list[dict[str, Any]]) -> None:
-    workflow_relative_path = Path(".github") / "workflows" / "ci.yml"
+    workflow_relative_path = CI_WORKFLOW_RELATIVE_PATH
     workflow_path = repo_root / workflow_relative_path
     if not workflow_path.exists():
         _skipped(
@@ -858,20 +894,8 @@ def _audit_ci_acceptance_alignment(spec: ReleaseAuditSpec, *, repo_root: Path, c
 
     failures: list[dict[str, Any]] = []
     ci_commands: list[str] = []
-    try:
-        raw = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        raw = None
-        failures.append(
-            {
-                "reason": "unreadable_ci_workflow",
-                "workflow": workflow_relative_path.as_posix(),
-                "error": f"{type(exc).__name__}: {exc}",
-            }
-        )
-    jobs = raw.get("jobs") if isinstance(raw, dict) else None
-    if raw is not None and not isinstance(jobs, dict):
-        failures.append({"reason": "missing_ci_jobs", "workflow": workflow_relative_path.as_posix()})
+    jobs, workflow_failures = _ci_workflow_jobs(workflow_path, workflow_relative_path)
+    failures.extend(workflow_failures)
 
     if isinstance(jobs, dict):
         for job_name, job in jobs.items():
@@ -907,7 +931,7 @@ def _audit_ci_acceptance_alignment(spec: ReleaseAuditSpec, *, repo_root: Path, c
                 if stripped not in ci_commands:
                     ci_commands.append(stripped)
 
-    if raw is not None and not ci_commands:
+    if jobs is not None and not ci_commands:
         failures.append({"reason": "missing_ci_run_tests_step", "workflow": workflow_relative_path.as_posix()})
 
     static_failures = _annotate_acceptance_command_failures(
@@ -939,6 +963,91 @@ def _audit_ci_acceptance_alignment(spec: ReleaseAuditSpec, *, repo_root: Path, c
             "workflow": workflow_relative_path.as_posix(),
             "step_name": "Run tests",
             "ci_commands": ci_commands,
+            "failures": failures,
+        },
+    )
+
+
+def _audit_ci_acceptance_status_gate(*, repo_root: Path, checks: list[dict[str, Any]]) -> None:
+    workflow_relative_path = CI_WORKFLOW_RELATIVE_PATH
+    workflow_path = repo_root / workflow_relative_path
+    if not workflow_path.exists():
+        _skipped(
+            checks,
+            check_id="release_acceptance_sidecars:ci_freshness_gate",
+            label="CI checks release acceptance sidecar freshness",
+            summary="No GitHub Actions CI workflow was found; sidecar freshness gate was not checked.",
+            details={"workflow": workflow_relative_path.as_posix(), "step_name": CI_ACCEPTANCE_STATUS_STEP_NAME},
+        )
+        return
+
+    failures: list[dict[str, Any]] = []
+    matching_steps: list[dict[str, Any]] = []
+    jobs, workflow_failures = _ci_workflow_jobs(workflow_path, workflow_relative_path)
+    failures.extend(workflow_failures)
+    if isinstance(jobs, dict):
+        for job_name, job in jobs.items():
+            if not isinstance(job, dict):
+                continue
+            steps = job.get("steps")
+            if not isinstance(steps, list):
+                continue
+            for step_index, step in enumerate(steps):
+                if not isinstance(step, dict) or step.get("name") != CI_ACCEPTANCE_STATUS_STEP_NAME:
+                    continue
+                command = step.get("run")
+                entry = {
+                    "job": str(job_name),
+                    "step_index": step_index,
+                    "command_lines": _ci_step_command_lines(command) if isinstance(command, str) else [],
+                }
+                matching_steps.append(entry)
+                if not isinstance(command, str) or not command.strip():
+                    failures.append(
+                        {
+                            "reason": "empty_ci_acceptance_status_command",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                        }
+                    )
+                    continue
+                command_lines = _ci_step_command_lines(command)
+                if tuple(command_lines) != CI_ACCEPTANCE_STATUS_COMMAND_LINES:
+                    failures.append(
+                        {
+                            "reason": "ci_acceptance_status_command_mismatch",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "expected_command_lines": list(CI_ACCEPTANCE_STATUS_COMMAND_LINES),
+                            "actual_command_lines": command_lines,
+                        }
+                    )
+
+    if jobs is not None and not matching_steps:
+        failures.append(
+            {
+                "reason": "missing_ci_acceptance_status_step",
+                "workflow": workflow_relative_path.as_posix(),
+                "step_name": CI_ACCEPTANCE_STATUS_STEP_NAME,
+            }
+        )
+
+    _check(
+        checks,
+        check_id="release_acceptance_sidecars:ci_freshness_gate",
+        label="CI checks release acceptance sidecar freshness",
+        passed=not failures,
+        required=True,
+        summary=(
+            "CI runs release acceptance-status --strict with the Trust-First manifest."
+            if not failures
+            else "CI is missing or misconfigures the release acceptance sidecar freshness gate."
+        ),
+        details={
+            "workflow": workflow_relative_path.as_posix(),
+            "step_name": CI_ACCEPTANCE_STATUS_STEP_NAME,
+            "expected_command_lines": list(CI_ACCEPTANCE_STATUS_COMMAND_LINES),
+            "matching_steps": matching_steps,
             "failures": failures,
         },
     )
@@ -2148,6 +2257,7 @@ def run_release_audit(
 
     _audit_acceptance_commands(spec, repo_root=resolved_repo_root, checks=checks)
     _audit_ci_acceptance_alignment(spec, repo_root=resolved_repo_root, checks=checks)
+    _audit_ci_acceptance_status_gate(repo_root=resolved_repo_root, checks=checks)
 
     for artifact in spec.curated_artifacts:
         _audit_artifact(

@@ -399,6 +399,8 @@ for feature in (
     "evidence_matrix_review_warnings",
     "warning_policy",
     "acceptance_commands",
+    "ci_acceptance_command_alignment",
+    "ci_acceptance_status_gate",
     "acceptance_summary_source",
     "acceptance_schema_version",
     "acceptance_artifact_sha256",
