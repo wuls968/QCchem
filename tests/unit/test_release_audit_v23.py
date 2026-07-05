@@ -79,7 +79,7 @@ def _write_ci_workflow(
         "\n"
         "      - name: Upload release diagnostics\n"
         "        if: always()\n"
-        "        uses: actions/upload-artifact@v4\n"
+        "        uses: actions/upload-artifact@v7\n"
         "        with:\n"
         "          name: qcchem-release-diagnostics-${{ matrix.python-version }}\n"
         "          if-no-files-found: ignore\n"
@@ -1113,7 +1113,7 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
         {
             "job": "test",
             "step_index": 2,
-            "uses": "actions/upload-artifact@v4",
+            "uses": "actions/upload-artifact@v7",
             "if_condition": "always()",
             "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
             "paths": [

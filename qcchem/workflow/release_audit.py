@@ -90,7 +90,7 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "-o /tmp/qcchem-release-acceptance-status.json",
 )
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
-CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v4"
+CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v7"
 CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
 CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/workbench_smoke.json",
