@@ -26,6 +26,16 @@ python -m qcchem.cli.main release audit \
   -o artifacts/release_audit
 ```
 
+After an audit has written outputs, summarize the existing handoff without
+rerunning the audit:
+
+```bash
+qcchem release status \
+  --audit-dir artifacts/release_audit \
+  --strict \
+  -o artifacts/release_audit/release_status.json
+```
+
 Use `--repo-root` when auditing a copied fixture or temporary repository:
 
 ```bash
@@ -99,13 +109,20 @@ files for the release itself.
 handoff: they point back to `release_readiness.*`, summarize the release status,
 and, inside GitHub Actions, record the current run URL plus the diagnostic
 artifact name. CI uploads those handoff files, readiness files, Workbench smoke
-JSON, and release sidecar freshness JSON as `qcchem-release-diagnostics-*`
-artifacts so failed runs keep their handoff bundle without tracking generated
-outputs in git.
+JSON, compact `release_status.json` summaries, and release sidecar freshness JSON
+as `qcchem-release-diagnostics-*` artifacts so failed runs keep their handoff
+bundle without tracking generated outputs in git.
 The CLI prints both `Report: <...>/release_readiness.md` and
 `Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact
 `Diagnostic artifact:` name and the `Artifact listing:` API URL recorded in
 `release_handoff.json`.
+`qcchem release status` reads the existing `release_readiness.json` and
+`release_handoff.json` files and prints the current status, first required
+failure or warning, sidecar status, handoff path, and diagnostic artifact
+pointer. With `--strict`, it exits with code `2` unless the summarized audit
+status is `passed`; missing or unreadable audit outputs always exit with
+code `2`. When `-o` is supplied, it writes a compact
+`qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

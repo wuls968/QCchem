@@ -38,6 +38,7 @@ must remain trackable release evidence:
 ```bash
 git check-ignore --no-index -q artifacts/release_audit/release_readiness.json
 git check-ignore --no-index -q artifacts/release_audit/release_handoff.json
+git check-ignore --no-index -q artifacts/release_audit/release_status.json
 git check-ignore --no-index -q artifacts/artifact_index.json
 git check-ignore --no-index -q artifacts/workbench_smoke.json
 git check-ignore --no-index -q artifacts/workflows/research_os_review_workflow/workflow_result.json
@@ -46,7 +47,7 @@ git check-ignore --no-index -q .playwright-cli/probe.yml
 git ls-files --error-unmatch artifacts/h2/acceptance_summary.json
 ```
 
-The first seven commands should succeed because those paths are generated local
+The first eight commands should succeed because those paths are generated local
 outputs. A release sidecar such as `artifacts/h2/acceptance_summary.json` should
 not match `.gitignore`; `git ls-files --error-unmatch` should find it.
 Sidecars using `schema_version:
@@ -96,6 +97,10 @@ CI runs `qcchem release acceptance-status --strict --repair-plan` after the
 Trust-First release audit, so a regenerated curated artifact must have its
 manifest-bound sidecar refreshed before the release branch can pass and CI logs
 show the preview/refresh commands.
+Use `qcchem release status --audit-dir artifacts/release_audit --strict` after a
+local audit when a script needs the compact handoff state without rerunning the
+audit. Add `-o artifacts/release_audit/release_status.json` only for local or CI
+handoff bundles; that file is generated output and should stay ignored.
 
 Artifact indexes preserve both release-sidecar presence and parse status:
 `has_acceptance_summary` reports embedded acceptance data or a sibling
@@ -149,7 +154,8 @@ CI must also keep the `Upload release diagnostics` step after the Workbench
 smoke, Trust-First release audit, and release acceptance freshness gates. The
 step uses `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
 `artifacts/release_audit/release_readiness.*`,
-`artifacts/release_audit/release_handoff.*`, and the release sidecar freshness
+`artifacts/release_audit/release_handoff.*`,
+`artifacts/release_audit/release_status.json`, and the release sidecar freshness
 JSON as downloadable GitHub Actions artifacts. The job-level
 `QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME` environment variable must match the
 uploaded artifact name so `release_handoff.json` records the exact artifact

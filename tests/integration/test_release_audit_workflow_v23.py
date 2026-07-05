@@ -212,6 +212,70 @@ def test_release_audit_cli_prints_ci_diagnostic_artifact_hint(
 
 
 @pytest.mark.integration
+def test_release_status_cli_summarizes_existing_audit_outputs(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    status_json = tmp_path / "release_status.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+    exit_code = main(["release", "status", "--audit-dir", str(output_dir), "-o", str(status_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Release status: passed" in stdout
+    assert f"Report: {output_dir / 'release_readiness.md'}" in stdout
+    assert f"Handoff: {output_dir / 'release_handoff.md'}" in stdout
+    assert f"Status JSON: {status_json}" in stdout
+    status = json.loads(status_json.read_text(encoding="utf-8"))
+    assert status["schema_version"] == "qcchem.release_status.v0.1-alpha"
+    assert status["status"] == "passed"
+    assert status["required_fail_count"] == 0
+    assert status["release_acceptance_sidecars_status"] == "fresh"
+    assert status["first_required_failure"] is None
+    assert status["first_sidecar_repair"] is None
+    assert status["release_handoff"]["markdown"] == str(output_dir / "release_handoff.md")
+
+
+@pytest.mark.integration
+def test_release_status_cli_reports_missing_outputs(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    audit_dir = tmp_path / "missing_release_audit"
+
+    exit_code = main(["release", "status", "--audit-dir", str(audit_dir)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release status unavailable: missing outputs" in stdout
+    assert "release_readiness.json" in stdout
+    assert "release_handoff.json" in stdout
+
+
+@pytest.mark.integration
+def test_release_status_cli_strict_fails_for_failed_audit(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path, bad_artifact=True)
+    output_dir = tmp_path / "release_audit_failed"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 2
+    capsys.readouterr()
+
+    exit_code = main(["release", "status", "--audit-dir", str(output_dir), "--strict"])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release status: failed" in stdout
+    assert "First required failure: curated_artifact:qft_anchor:evidence_summary" in stdout
+    assert "Required checks:" in stdout
+
+
+@pytest.mark.integration
 def test_release_audit_cli_resolves_relative_manifest_against_repo_root(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -9,6 +9,8 @@ from pathlib import Path
 
 import yaml
 
+RELEASE_STATUS_SCHEMA_VERSION = "qcchem.release_status.v0.1-alpha"
+
 
 def _load_attr(module_name: str, attribute: str):
     return getattr(importlib.import_module(module_name), attribute)
@@ -387,6 +389,27 @@ def _build_parser() -> argparse.ArgumentParser:
     release_audit.add_argument("-c", "--config", type=Path, required=True)
     release_audit.add_argument("-o", "--output-dir", type=Path)
     release_audit.add_argument("--repo-root", type=Path, help="Repository root to audit; defaults to current directory.")
+    release_status = release_subparsers.add_parser(
+        "status",
+        help="Summarize existing release audit handoff outputs without rerunning the audit.",
+    )
+    release_status.add_argument(
+        "--audit-dir",
+        type=Path,
+        default=Path("artifacts") / "release_audit",
+        help="Directory containing release_readiness.json and release_handoff.json.",
+    )
+    release_status.add_argument(
+        "--repo-root",
+        type=Path,
+        help="Repository root used to resolve a relative --audit-dir.",
+    )
+    release_status.add_argument("-o", "--output", type=Path, help="Optional compact JSON status output path.")
+    release_status.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with code 2 when the summarized release audit status is not passed.",
+    )
     release_accept = release_subparsers.add_parser(
         "accept-artifact",
         help="Write a release-bound acceptance_summary.json for one manifest artifact.",
@@ -880,6 +903,201 @@ def _print_release_audit_handoff_summary(output_dir: Path) -> None:
         print(f"Artifact listing: {artifact_listing_url}")
 
 
+def _release_status_audit_dir(audit_dir: Path, repo_root: Path | None) -> Path:
+    if audit_dir.is_absolute():
+        return audit_dir
+    if repo_root is not None:
+        return repo_root / audit_dir
+    return audit_dir
+
+
+def _compact_release_audit_check(check: object) -> dict[str, object] | None:
+    if not isinstance(check, dict):
+        return None
+    compact: dict[str, object] = {
+        "id": check.get("id"),
+        "summary": check.get("summary"),
+    }
+    detail_hint = _release_audit_detail_hint(check.get("details"))
+    if detail_hint:
+        compact["detail_hint"] = detail_hint
+    return compact
+
+
+def _compact_release_sidecar_repair(item: object) -> dict[str, object] | None:
+    if not isinstance(item, dict):
+        return None
+    return {
+        "artifact_name": item.get("artifact_name"),
+        "status": item.get("status"),
+        "issue": item.get("issue"),
+        "sidecar_path": item.get("sidecar_path"),
+        "preview_command": item.get("preview_command"),
+        "repair_command": item.get("repair_command"),
+    }
+
+
+def _first_compact_release_check(value: object) -> dict[str, object] | None:
+    if not isinstance(value, list):
+        return None
+    for item in value:
+        compact = _compact_release_audit_check(item)
+        if compact is not None:
+            return compact
+    return None
+
+
+def _first_compact_sidecar_repair(value: object) -> dict[str, object] | None:
+    if not isinstance(value, list):
+        return None
+    for item in value:
+        compact = _compact_release_sidecar_repair(item)
+        if compact is not None:
+            return compact
+    return None
+
+
+def _read_release_status_json(path: Path, *, label: str) -> dict[str, object]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must be a JSON object: {path}")
+    return payload
+
+
+def _build_release_status_summary(audit_dir: Path) -> dict[str, object]:
+    readiness_json = audit_dir / "release_readiness.json"
+    readiness_md = audit_dir / "release_readiness.md"
+    handoff_json = audit_dir / "release_handoff.json"
+    handoff_md = audit_dir / "release_handoff.md"
+    missing = [path.name for path in (readiness_json, handoff_json) if not path.exists()]
+    base: dict[str, object] = {
+        "schema_version": RELEASE_STATUS_SCHEMA_VERSION,
+        "audit_dir": str(audit_dir),
+        "release_readiness": {
+            "json": str(readiness_json),
+            "markdown": str(readiness_md),
+        },
+        "release_handoff": {
+            "json": str(handoff_json),
+            "markdown": str(handoff_md),
+        },
+    }
+    if missing:
+        base.update(
+            {
+                "status": "missing_outputs",
+                "recommended_action": "run_release_audit",
+                "missing_files": missing,
+            }
+        )
+        return base
+
+    try:
+        readiness = _read_release_status_json(readiness_json, label="release_readiness.json")
+        handoff = _read_release_status_json(handoff_json, label="release_handoff.json")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        base.update(
+            {
+                "status": "unreadable_outputs",
+                "recommended_action": "rerun_release_audit",
+                "error": str(exc),
+            }
+        )
+        return base
+
+    sidecars = readiness.get("release_acceptance_sidecars")
+    sidecar_status = sidecars.get("status") if isinstance(sidecars, dict) else None
+    repair_plan = sidecars.get("repair_plan") if isinstance(sidecars, dict) else None
+    diagnostic_artifacts = handoff.get("diagnostic_artifacts")
+    ci = handoff.get("ci")
+    base.update(
+        {
+            "status": readiness.get("status"),
+            "recommended_action": readiness.get("recommended_action"),
+            "required_pass_count": readiness.get("required_pass_count"),
+            "required_fail_count": readiness.get("required_fail_count"),
+            "warning_count": readiness.get("warning_count"),
+            "release_acceptance_sidecars_status": sidecar_status,
+            "release_acceptance_sidecars_repair_plan_count": (
+                sidecars.get("repair_plan_count") if isinstance(sidecars, dict) else None
+            ),
+            "ci": ci if isinstance(ci, dict) else {},
+            "diagnostic_artifacts": diagnostic_artifacts if isinstance(diagnostic_artifacts, dict) else {},
+            "first_required_failure": _first_compact_release_check(readiness.get("required_failed_checks")),
+            "first_warning": _first_compact_release_check(readiness.get("warning_checks")),
+            "first_sidecar_repair": _first_compact_sidecar_repair(repair_plan),
+        }
+    )
+    return base
+
+
+def _print_release_status_summary(summary: dict[str, object]) -> None:
+    status = summary.get("status")
+    print(f"Release status: {status}")
+    print(f"Audit dir: {summary.get('audit_dir')}")
+    missing = summary.get("missing_files")
+    if isinstance(missing, list) and missing:
+        print("Release status unavailable: missing outputs")
+        print(f"Missing outputs: {', '.join(str(item) for item in missing)}")
+        return
+    error = summary.get("error")
+    if error:
+        print("Release status unavailable: unreadable outputs")
+        print(f"Error: {error}")
+        return
+
+    required_pass_count = summary.get("required_pass_count")
+    required_fail_count = summary.get("required_fail_count")
+    print(f"Required checks: {required_pass_count} passed, {required_fail_count} failed")
+    sidecar_status = summary.get("release_acceptance_sidecars_status")
+    if sidecar_status:
+        print(f"Release acceptance sidecars: {sidecar_status}")
+
+    release_readiness = summary.get("release_readiness")
+    if isinstance(release_readiness, dict):
+        print(f"Report: {release_readiness.get('markdown')}")
+    release_handoff = summary.get("release_handoff")
+    if isinstance(release_handoff, dict):
+        print(f"Handoff: {release_handoff.get('markdown')}")
+
+    first_required_failure = summary.get("first_required_failure")
+    if isinstance(first_required_failure, dict) and first_required_failure.get("id"):
+        line = f"First required failure: {first_required_failure.get('id')}"
+        if first_required_failure.get("summary"):
+            line += f": {first_required_failure.get('summary')}"
+        if first_required_failure.get("detail_hint"):
+            line += f" ({first_required_failure.get('detail_hint')})"
+        print(line)
+
+    first_warning = summary.get("first_warning")
+    if isinstance(first_warning, dict) and first_warning.get("id"):
+        line = f"First warning: {first_warning.get('id')}"
+        if first_warning.get("summary"):
+            line += f": {first_warning.get('summary')}"
+        if first_warning.get("detail_hint"):
+            line += f" ({first_warning.get('detail_hint')})"
+        print(line)
+
+    first_sidecar_repair = summary.get("first_sidecar_repair")
+    if isinstance(first_sidecar_repair, dict) and first_sidecar_repair.get("artifact_name"):
+        print(
+            "First sidecar repair: "
+            f"{first_sidecar_repair.get('artifact_name')} "
+            f"status={first_sidecar_repair.get('status')} "
+            f"issue={first_sidecar_repair.get('issue')} "
+            f"sidecar={first_sidecar_repair.get('sidecar_path')}"
+        )
+
+    diagnostic_artifacts = summary.get("diagnostic_artifacts")
+    if isinstance(diagnostic_artifacts, dict):
+        artifact_names = diagnostic_artifacts.get("names")
+        if isinstance(artifact_names, list) and artifact_names:
+            print(f"Diagnostic artifact: {', '.join(str(name) for name in artifact_names)}")
+        artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
+        if isinstance(artifact_listing_url, str) and artifact_listing_url:
+            print(f"Artifact listing: {artifact_listing_url}")
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1352,6 +1570,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Report: {report_dir / 'release_readiness.md'}")
             _print_release_audit_handoff_summary(report_dir)
             return 0 if summary["status"] == "passed" else 2
+        if args.release_command == "status":
+            audit_dir = _release_status_audit_dir(args.audit_dir, args.repo_root)
+            summary = _build_release_status_summary(audit_dir)
+            _print_release_status_summary(summary)
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+                print(f"Status JSON: {args.output}")
+            if summary.get("status") in {"missing_outputs", "unreadable_outputs"}:
+                return 2
+            if args.strict and summary.get("status") != "passed":
+                return 2
+            return 0
         if args.release_command == "accept-artifact":
             try:
                 if args.dry_run:

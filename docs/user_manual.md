@@ -51,6 +51,7 @@ rewritten casually.
 | Serve the Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
+| Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
 | Check release sidecars | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict` |
 | Plan release sidecar repairs | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict --repair-plan` |
 | Preview release sidecar refresh | `qcchem release accept-artifact -c configs/release/trust_first_audit.yaml --name h2_local_validated_anchor --dry-run` |
@@ -580,6 +581,10 @@ failure, read `release_handoff.md` first for the compact run/artifact entrypoint
 then `release_readiness.md` for failed check names and recommended actions.
 The CLI prints both generated paths; in GitHub Actions it also prints the exact
 `qcchem-release-diagnostics-*` artifact name and artifact listing API URL.
+After running the audit, use `qcchem release status --audit-dir
+artifacts/release_audit --strict` to read those existing outputs and print a
+compact status summary without rerunning the audit.
+CI diagnostic artifacts include that compact status JSON for each Python matrix.
 
 Before publishing release-facing docs, also run:
 

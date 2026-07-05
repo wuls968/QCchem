@@ -121,6 +121,7 @@ placeholder boundary map.
 | Run exploratory workflows | `qcchem exploratory run -c <config.yaml>` |
 | Collect a Runtime result | `qcchem runtime collect <artifact_dir>` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml` |
+| Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 

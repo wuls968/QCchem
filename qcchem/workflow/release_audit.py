@@ -101,12 +101,14 @@ CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/release_audit/release_readiness.md",
     "artifacts/release_audit/release_handoff.json",
     "artifacts/release_audit/release_handoff.md",
+    "artifacts/release_audit/release_status.json",
     "/tmp/qcchem-release-acceptance-status.json",
     "/tmp/qcchem-wheel-smoke.json",
     "/tmp/qcchem-wheel-release-audit/release_readiness.json",
     "/tmp/qcchem-wheel-release-audit/release_readiness.md",
     "/tmp/qcchem-wheel-release-audit/release_handoff.json",
     "/tmp/qcchem-wheel-release-audit/release_handoff.md",
+    "/tmp/qcchem-wheel-release-audit/release_status.json",
 )
 CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     "Build wheel and smoke installed package",

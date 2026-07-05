@@ -89,12 +89,14 @@ def _write_ci_workflow(
         "            artifacts/release_audit/release_readiness.md\n"
         "            artifacts/release_audit/release_handoff.json\n"
         "            artifacts/release_audit/release_handoff.md\n"
+        "            artifacts/release_audit/release_status.json\n"
         "            /tmp/qcchem-release-acceptance-status.json\n"
         "            /tmp/qcchem-wheel-smoke.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_readiness.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_readiness.md\n"
         "            /tmp/qcchem-wheel-release-audit/release_handoff.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_handoff.md\n"
+        "            /tmp/qcchem-wheel-release-audit/release_status.json\n"
         if include_release_diagnostic_upload
         else ""
     )
@@ -1129,12 +1131,14 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
                 "artifacts/release_audit/release_readiness.md",
                 "artifacts/release_audit/release_handoff.json",
                 "artifacts/release_audit/release_handoff.md",
+                "artifacts/release_audit/release_status.json",
                 "/tmp/qcchem-release-acceptance-status.json",
                 "/tmp/qcchem-wheel-smoke.json",
                 "/tmp/qcchem-wheel-release-audit/release_readiness.json",
                 "/tmp/qcchem-wheel-release-audit/release_readiness.md",
                 "/tmp/qcchem-wheel-release-audit/release_handoff.json",
                 "/tmp/qcchem-wheel-release-audit/release_handoff.md",
+                "/tmp/qcchem-wheel-release-audit/release_status.json",
             ],
             "if_no_files_found": "ignore",
         }
@@ -1784,12 +1788,14 @@ def test_release_audit_handoff_records_github_actions_run_and_artifact(
         "artifacts/release_audit/release_readiness.md",
         "artifacts/release_audit/release_handoff.json",
         "artifacts/release_audit/release_handoff.md",
+        "artifacts/release_audit/release_status.json",
         "/tmp/qcchem-release-acceptance-status.json",
         "/tmp/qcchem-wheel-smoke.json",
         "/tmp/qcchem-wheel-release-audit/release_readiness.json",
         "/tmp/qcchem-wheel-release-audit/release_readiness.md",
         "/tmp/qcchem-wheel-release-audit/release_handoff.json",
         "/tmp/qcchem-wheel-release-audit/release_handoff.md",
+        "/tmp/qcchem-wheel-release-audit/release_status.json",
     ]
     assert "https://github.com/wuls968/QCchem/actions/runs/28725412152" in handoff_report
     assert "qcchem-release-diagnostics-3.11" in handoff_report

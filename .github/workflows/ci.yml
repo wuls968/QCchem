@@ -156,6 +156,10 @@ jobs:
             --repo-root "$GITHUB_WORKSPACE" \
             -c configs/release/trust_first_audit.yaml \
             -o /tmp/qcchem-wheel-release-audit
+          PYTHONPATH=/tmp/qcchem-wheel-install /tmp/qcchem-wheel-install/bin/qcchem release status \
+            --audit-dir /tmp/qcchem-wheel-release-audit \
+            --strict \
+            -o /tmp/qcchem-wheel-release-audit/release_status.json
           python - <<'PY'
           import json
           import os
@@ -205,6 +209,10 @@ jobs:
           python -m qcchem.cli.main release audit \
             -c configs/release/trust_first_audit.yaml \
             -o artifacts/release_audit
+          python -m qcchem.cli.main release status \
+            --audit-dir artifacts/release_audit \
+            --strict \
+            -o artifacts/release_audit/release_status.json
 
       - name: Run release acceptance sidecar freshness
         run: |
@@ -227,12 +235,14 @@ jobs:
             artifacts/release_audit/release_readiness.md
             artifacts/release_audit/release_handoff.json
             artifacts/release_audit/release_handoff.md
+            artifacts/release_audit/release_status.json
             /tmp/qcchem-release-acceptance-status.json
             /tmp/qcchem-wheel-smoke.json
             /tmp/qcchem-wheel-release-audit/release_readiness.json
             /tmp/qcchem-wheel-release-audit/release_readiness.md
             /tmp/qcchem-wheel-release-audit/release_handoff.json
             /tmp/qcchem-wheel-release-audit/release_handoff.md
+            /tmp/qcchem-wheel-release-audit/release_status.json
 
       - name: Confirm release output ignore boundaries
         run: |
