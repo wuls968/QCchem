@@ -102,6 +102,10 @@ artifact name. CI uploads those handoff files, readiness files, Workbench smoke
 JSON, and release sidecar freshness JSON as `qcchem-release-diagnostics-*`
 artifacts so failed runs keep their handoff bundle without tracking generated
 outputs in git.
+The CLI prints both `Report: <...>/release_readiness.md` and
+`Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact
+`Diagnostic artifact:` name and the `Artifact listing:` API URL recorded in
+`release_handoff.json`.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
@@ -182,11 +186,12 @@ binding contract.
 - `2`: the manifest could not be read or parsed, or at least one required
   check failed.
 
-On failure, read `release_readiness.md` first. It is the human review surface and
-points at the failed check names. The CLI also prints a bounded triage list of
-required failed check ids and warning check ids, including the first nested
-failure or warning reason when available, so CI logs expose the first actionable
-failure without opening the readiness files.
+On failure, read `release_handoff.md` first for the run and artifact entrypoint,
+then `release_readiness.md` for the full human review surface and failed check
+names. The CLI also prints a bounded triage list of required failed check ids
+and warning check ids, including the first nested failure or warning reason when
+available, so CI logs expose the first actionable failure without opening the
+readiness files.
 
 ## Manifest Shape
 

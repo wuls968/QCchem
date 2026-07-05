@@ -153,7 +153,8 @@ step uses `if: always()` so failed runs preserve `artifacts/workbench_smoke.json
 JSON as downloadable GitHub Actions artifacts. The job-level
 `QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME` environment variable must match the
 uploaded artifact name so `release_handoff.json` records the exact artifact
-entrypoint for the current run.
+entrypoint for the current run. `qcchem release audit` prints that handoff path,
+artifact name, and artifact listing API URL in CI logs.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

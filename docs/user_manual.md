@@ -578,6 +578,8 @@ Release audit reads local source files, docs, configs, and curated artifacts. It
 performs no runtime submission and should not mutate curated artifacts. On
 failure, read `release_handoff.md` first for the compact run/artifact entrypoint,
 then `release_readiness.md` for failed check names and recommended actions.
+The CLI prints both generated paths; in GitHub Actions it also prints the exact
+`qcchem-release-diagnostics-*` artifact name and artifact listing API URL.
 
 Before publishing release-facing docs, also run:
 

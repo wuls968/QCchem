@@ -843,6 +843,43 @@ def _print_release_audit_sidecar_repair_triage(summary: dict[str, object]) -> No
         print(f"  more: {remaining_count} additional sidecar repair item(s); see release_readiness.md")
 
 
+def _release_audit_output_dir(summary: dict[str, object], output_dir: Path | None) -> Path:
+    report_dir = output_dir or Path("artifacts") / "release_audit"
+    if output_dir is not None:
+        return report_dir
+
+    provenance = summary.get("audit_provenance")
+    if not isinstance(provenance, dict):
+        return report_dir
+    repo_root_text = provenance.get("repo_root")
+    output_dir_text = provenance.get("output_dir")
+    if not repo_root_text or not output_dir_text:
+        return report_dir
+
+    output_path = Path(str(output_dir_text))
+    return output_path if output_path.is_absolute() else Path(str(repo_root_text)) / output_path
+
+
+def _print_release_audit_handoff_summary(output_dir: Path) -> None:
+    print(f"Handoff: {output_dir / 'release_handoff.md'}")
+    try:
+        handoff = json.loads((output_dir / "release_handoff.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if not isinstance(handoff, dict):
+        return
+
+    diagnostic_artifacts = handoff.get("diagnostic_artifacts")
+    if not isinstance(diagnostic_artifacts, dict):
+        return
+    artifact_names = diagnostic_artifacts.get("names")
+    if isinstance(artifact_names, list) and artifact_names:
+        print(f"Diagnostic artifact: {', '.join(str(name) for name in artifact_names)}")
+    artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
+    if isinstance(artifact_listing_url, str) and artifact_listing_url:
+        print(f"Artifact listing: {artifact_listing_url}")
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1311,15 +1348,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Required checks: {summary['required_pass_count']} passed, {summary['required_fail_count']} failed")
             _print_release_audit_triage(summary)
             _print_release_audit_sidecar_repair_triage(summary)
-            report_dir = output_dir or Path("artifacts") / "release_audit"
-            if output_dir is None:
-                provenance = summary.get("audit_provenance") or {}
-                repo_root_text = provenance.get("repo_root")
-                output_dir_text = provenance.get("output_dir")
-                if repo_root_text and output_dir_text:
-                    output_path = Path(str(output_dir_text))
-                    report_dir = output_path if output_path.is_absolute() else Path(str(repo_root_text)) / output_path
+            report_dir = _release_audit_output_dir(summary, output_dir)
             print(f"Report: {report_dir / 'release_readiness.md'}")
+            _print_release_audit_handoff_summary(report_dir)
             return 0 if summary["status"] == "passed" else 2
         if args.release_command == "accept-artifact":
             try:

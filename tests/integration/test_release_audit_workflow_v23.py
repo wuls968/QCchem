@@ -143,6 +143,7 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
 
     exit_code = main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)])
 
+    stdout = capsys.readouterr().out
     assert exit_code == 0
     summary = json.loads((output_dir / "release_readiness.json").read_text(encoding="utf-8"))
     assert summary["status"] == "passed"
@@ -177,12 +178,37 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
     assert summary["required_fail_count"] == 0
     assert summary["required_failed_checks"] == []
     assert summary["warning_checks"] == []
-    assert "Release audit completed: passed" in capsys.readouterr().out
+    assert "Release audit completed: passed" in stdout
+    assert f"Report: {output_dir / 'release_readiness.md'}" in stdout
+    assert f"Handoff: {output_dir / 'release_handoff.md'}" in stdout
     assert "release_readiness.md" in (output_dir / "release_readiness.md").read_text(encoding="utf-8")
     handoff = json.loads((output_dir / "release_handoff.json").read_text(encoding="utf-8"))
     assert handoff["schema_version"] == "qcchem.release_handoff.v0.1-alpha"
     assert handoff["release_readiness"]["markdown"] == "release_readiness.md"
     assert "release_handoff.md" in (output_dir / "release_handoff.md").read_text(encoding="utf-8")
+
+
+@pytest.mark.integration
+def test_release_audit_cli_prints_ci_diagnostic_artifact_hint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
+    monkeypatch.setenv("GITHUB_API_URL", "https://api.github.com")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "wuls968/QCchem")
+    monkeypatch.setenv("GITHUB_RUN_ID", "28725875043")
+    monkeypatch.setenv("QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME", "qcchem-release-diagnostics-3.11")
+
+    exit_code = main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Diagnostic artifact: qcchem-release-diagnostics-3.11" in stdout
+    assert "Artifact listing: https://api.github.com/repos/wuls968/QCchem/actions/runs/28725875043/artifacts" in stdout
 
 
 @pytest.mark.integration
