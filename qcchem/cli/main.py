@@ -147,6 +147,14 @@ def run_release_audit_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.release_audit", "run_release_audit_from_config")(*args, **kwargs)
 
 
+def release_audit_schema_version() -> str:
+    return _load_attr("qcchem.workflow.release_audit", "RELEASE_AUDIT_SCHEMA_VERSION")
+
+
+def release_handoff_schema_version() -> str:
+    return _load_attr("qcchem.workflow.release_audit", "RELEASE_HANDOFF_SCHEMA_VERSION")
+
+
 def write_release_artifact_acceptance_summary_from_config(*args, **kwargs):
     return _load_attr(
         "qcchem.workflow.release_acceptance",
@@ -964,6 +972,34 @@ def _read_release_status_json(path: Path, *, label: str) -> dict[str, object]:
     return payload
 
 
+def _release_status_schema_mismatches(
+    *,
+    readiness: dict[str, object],
+    handoff: dict[str, object],
+) -> list[dict[str, object]]:
+    expected = {
+        "release_readiness.json": release_audit_schema_version(),
+        "release_handoff.json": release_handoff_schema_version(),
+    }
+    actual = {
+        "release_readiness.json": readiness.get("schema_version"),
+        "release_handoff.json": handoff.get("schema_version"),
+    }
+    mismatches: list[dict[str, object]] = []
+    for file_name, expected_version in expected.items():
+        actual_version = actual[file_name]
+        if actual_version != expected_version:
+            mismatches.append(
+                {
+                    "file": file_name,
+                    "field": "schema_version",
+                    "expected": expected_version,
+                    "actual": actual_version,
+                }
+            )
+    return mismatches
+
+
 def _build_release_status_summary(audit_dir: Path) -> dict[str, object]:
     readiness_json = audit_dir / "release_readiness.json"
     readiness_md = audit_dir / "release_readiness.md"
@@ -1001,6 +1037,17 @@ def _build_release_status_summary(audit_dir: Path) -> dict[str, object]:
                 "status": "unreadable_outputs",
                 "recommended_action": "rerun_release_audit",
                 "error": str(exc),
+            }
+        )
+        return base
+
+    schema_mismatches = _release_status_schema_mismatches(readiness=readiness, handoff=handoff)
+    if schema_mismatches:
+        base.update(
+            {
+                "status": "schema_mismatch",
+                "recommended_action": "rerun_release_audit",
+                "schema_mismatches": schema_mismatches,
             }
         )
         return base
@@ -1044,6 +1091,17 @@ def _print_release_status_summary(summary: dict[str, object]) -> None:
     if error:
         print("Release status unavailable: unreadable outputs")
         print(f"Error: {error}")
+        return
+    schema_mismatches = summary.get("schema_mismatches")
+    if isinstance(schema_mismatches, list) and schema_mismatches:
+        print("Release status unavailable: schema mismatch")
+        for item in schema_mismatches:
+            if isinstance(item, dict):
+                print(
+                    "Schema mismatch: "
+                    f"{item.get('file')} {item.get('field')} "
+                    f"expected={item.get('expected')} actual={item.get('actual')}"
+                )
         return
 
     required_pass_count = summary.get("required_pass_count")
@@ -1578,7 +1636,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
                 print(f"Status JSON: {args.output}")
-            if summary.get("status") in {"missing_outputs", "unreadable_outputs"}:
+            if summary.get("status") in {"missing_outputs", "unreadable_outputs", "schema_mismatch"}:
                 return 2
             if args.strict and summary.get("status") != "passed":
                 return 2

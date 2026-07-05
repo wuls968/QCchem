@@ -241,6 +241,51 @@ def test_release_status_cli_summarizes_existing_audit_outputs(
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    ("file_name", "stale_schema_version", "expected_schema_version"),
+    [
+        ("release_readiness.json", "0.0-stale", "1.1"),
+        ("release_handoff.json", "qcchem.release_handoff.v0.0-stale", "qcchem.release_handoff.v0.1-alpha"),
+    ],
+)
+def test_release_status_cli_rejects_schema_mismatch(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    file_name: str,
+    stale_schema_version: str,
+    expected_schema_version: str,
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    status_json = tmp_path / "release_status.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+    contract_json = output_dir / file_name
+    contract_payload = json.loads(contract_json.read_text(encoding="utf-8"))
+    contract_payload["schema_version"] = stale_schema_version
+    contract_json.write_text(json.dumps(contract_payload), encoding="utf-8")
+
+    exit_code = main(["release", "status", "--audit-dir", str(output_dir), "-o", str(status_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release status unavailable: schema mismatch" in stdout
+    assert f"{file_name} schema_version expected={expected_schema_version} actual={stale_schema_version}" in stdout
+    status = json.loads(status_json.read_text(encoding="utf-8"))
+    assert status["status"] == "schema_mismatch"
+    assert status["recommended_action"] == "rerun_release_audit"
+    assert status["schema_mismatches"] == [
+        {
+            "file": file_name,
+            "field": "schema_version",
+            "expected": expected_schema_version,
+            "actual": stale_schema_version,
+        }
+    ]
+
+
+@pytest.mark.integration
 def test_release_status_cli_reports_missing_outputs(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

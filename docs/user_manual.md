@@ -583,7 +583,9 @@ The CLI prints both generated paths; in GitHub Actions it also prints the exact
 `qcchem-release-diagnostics-*` artifact name and artifact listing API URL.
 After running the audit, use `qcchem release status --audit-dir
 artifacts/release_audit --strict` to read those existing outputs and print a
-compact status summary without rerunning the audit.
+compact status summary without rerunning the audit. The status command also
+fails if the existing readiness or handoff JSON uses an unexpected
+`schema_version`, which protects scripts from consuming stale audit bundles.
 CI diagnostic artifacts include that compact status JSON for each Python matrix.
 
 Before publishing release-facing docs, also run:

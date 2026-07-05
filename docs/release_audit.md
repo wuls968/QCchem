@@ -121,7 +121,10 @@ The CLI prints both `Report: <...>/release_readiness.md` and
 failure or warning, sidecar status, handoff path, and diagnostic artifact
 pointer. With `--strict`, it exits with code `2` unless the summarized audit
 status is `passed`; missing or unreadable audit outputs always exit with
-code `2`. When `-o` is supplied, it writes a compact
+code `2`. Status also fails with `schema_mismatch` when
+`release_readiness.json` or `release_handoff.json` uses an unexpected
+`schema_version`, so old or incompatible handoff bundles are not accepted as
+current evidence. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
