@@ -571,11 +571,13 @@ Outputs:
 
 - `release_readiness.json`
 - `release_readiness.md`
+- `release_handoff.json`
+- `release_handoff.md`
 
 Release audit reads local source files, docs, configs, and curated artifacts. It
 performs no runtime submission and should not mutate curated artifacts. On
-failure, read `release_readiness.md` first; it lists failed check names and
-recommended actions.
+failure, read `release_handoff.md` first for the compact run/artifact entrypoint,
+then `release_readiness.md` for failed check names and recommended actions.
 
 Before publishing release-facing docs, also run:
 

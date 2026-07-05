@@ -37,6 +37,7 @@ must remain trackable release evidence:
 
 ```bash
 git check-ignore --no-index -q artifacts/release_audit/release_readiness.json
+git check-ignore --no-index -q artifacts/release_audit/release_handoff.json
 git check-ignore --no-index -q artifacts/artifact_index.json
 git check-ignore --no-index -q artifacts/workbench_smoke.json
 git check-ignore --no-index -q artifacts/workflows/research_os_review_workflow/workflow_result.json
@@ -45,7 +46,7 @@ git check-ignore --no-index -q .playwright-cli/probe.yml
 git ls-files --error-unmatch artifacts/h2/acceptance_summary.json
 ```
 
-The first six commands should succeed because those paths are generated local
+The first seven commands should succeed because those paths are generated local
 outputs. A release sidecar such as `artifacts/h2/acceptance_summary.json` should
 not match `.gitignore`; `git ls-files --error-unmatch` should find it.
 Sidecars using `schema_version:
@@ -147,8 +148,12 @@ audit fails when the two drift.
 CI must also keep the `Upload release diagnostics` step after the Workbench
 smoke, Trust-First release audit, and release acceptance freshness gates. The
 step uses `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
-`artifacts/release_audit/release_readiness.*`, and the release sidecar freshness
-JSON as downloadable GitHub Actions artifacts.
+`artifacts/release_audit/release_readiness.*`,
+`artifacts/release_audit/release_handoff.*`, and the release sidecar freshness
+JSON as downloadable GitHub Actions artifacts. The job-level
+`QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME` environment variable must match the
+uploaded artifact name so `release_handoff.json` records the exact artifact
+entrypoint for the current run.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

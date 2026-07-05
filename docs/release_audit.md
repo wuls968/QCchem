@@ -89,13 +89,19 @@ The command writes:
 
 - `release_readiness.json`
 - `release_readiness.md`
+- `release_handoff.json`
+- `release_handoff.md`
 
 Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
 files for the release itself.
-CI uploads those readiness files, Workbench smoke JSON, and release sidecar
-freshness JSON as `qcchem-release-diagnostics-*` artifacts so failed runs keep
-their handoff bundle without tracking generated outputs in git.
+`release_handoff.json` and `release_handoff.md` are the compact entrypoint for
+handoff: they point back to `release_readiness.*`, summarize the release status,
+and, inside GitHub Actions, record the current run URL plus the diagnostic
+artifact name. CI uploads those handoff files, readiness files, Workbench smoke
+JSON, and release sidecar freshness JSON as `qcchem-release-diagnostics-*`
+artifacts so failed runs keep their handoff bundle without tracking generated
+outputs in git.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
@@ -307,8 +313,8 @@ The Trust-First profile verifies:
   pass.
 - The release audit statically confirms CI uploads release diagnostic artifacts
   with `actions/upload-artifact` and `if: always()`, including Workbench smoke,
-  release readiness, and release sidecar freshness outputs for failed-run
-  handoff.
+  release readiness, release handoff, and release sidecar freshness outputs for
+  failed-run handoff.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.

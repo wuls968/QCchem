@@ -87,10 +87,14 @@ def _write_ci_workflow(
         "            artifacts/workbench_smoke.json\n"
         "            artifacts/release_audit/release_readiness.json\n"
         "            artifacts/release_audit/release_readiness.md\n"
+        "            artifacts/release_audit/release_handoff.json\n"
+        "            artifacts/release_audit/release_handoff.md\n"
         "            /tmp/qcchem-release-acceptance-status.json\n"
         "            /tmp/qcchem-wheel-smoke.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_readiness.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_readiness.md\n"
+        "            /tmp/qcchem-wheel-release-audit/release_handoff.json\n"
+        "            /tmp/qcchem-wheel-release-audit/release_handoff.md\n"
         if include_release_diagnostic_upload
         else ""
     )
@@ -104,6 +108,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME: qcchem-release-diagnostics-${{{{ matrix.python-version }}}}
     steps:
       - name: Run tests
         run: {command}
@@ -1116,14 +1122,19 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
             "uses": "actions/upload-artifact@v7",
             "if_condition": "always()",
             "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
+            "env_artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
             "paths": [
                 "artifacts/workbench_smoke.json",
                 "artifacts/release_audit/release_readiness.json",
                 "artifacts/release_audit/release_readiness.md",
+                "artifacts/release_audit/release_handoff.json",
+                "artifacts/release_audit/release_handoff.md",
                 "/tmp/qcchem-release-acceptance-status.json",
                 "/tmp/qcchem-wheel-smoke.json",
                 "/tmp/qcchem-wheel-release-audit/release_readiness.json",
                 "/tmp/qcchem-wheel-release-audit/release_readiness.md",
+                "/tmp/qcchem-wheel-release-audit/release_handoff.json",
+                "/tmp/qcchem-wheel-release-audit/release_handoff.md",
             ],
             "if_no_files_found": "ignore",
         }
@@ -1687,6 +1698,101 @@ def test_release_audit_matrix_reads_sidecar_acceptance_status(tmp_path: Path) ->
     assert "- acceptance_blocking_failure_count: `0`" in report
     assert "- acceptance_warning_count: `0`" in report
     assert "- acceptance_contract_failure_count: `0`" in report
+
+
+def test_release_audit_writes_local_handoff_index(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in (
+        "GITHUB_ACTIONS",
+        "GITHUB_SERVER_URL",
+        "GITHUB_API_URL",
+        "GITHUB_REPOSITORY",
+        "GITHUB_RUN_ID",
+        "GITHUB_RUN_ATTEMPT",
+        "GITHUB_WORKFLOW",
+        "GITHUB_JOB",
+        "GITHUB_SHA",
+        "GITHUB_REF",
+        "QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    _write_release_fixture(tmp_path)
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    handoff = json.loads((tmp_path / "out" / "release_handoff.json").read_text(encoding="utf-8"))
+    handoff_report = (tmp_path / "out" / "release_handoff.md").read_text(encoding="utf-8")
+    assert summary["status"] == "passed"
+    assert handoff["schema_version"] == "qcchem.release_handoff.v0.1-alpha"
+    assert handoff["status"] == "passed"
+    assert handoff["release_readiness"] == {
+        "json": "release_readiness.json",
+        "markdown": "release_readiness.md",
+    }
+    assert handoff["ci"]["provider"] == "local"
+    assert handoff["ci"]["run_url"] is None
+    assert handoff["diagnostic_artifacts"]["names"] == []
+    assert "release_readiness.md" in handoff_report
+    assert "No GitHub Actions run context was available." in handoff_report
+
+
+def test_release_audit_handoff_records_github_actions_run_and_artifact(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.com")
+    monkeypatch.setenv("GITHUB_API_URL", "https://api.github.com")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "wuls968/QCchem")
+    monkeypatch.setenv("GITHUB_RUN_ID", "28725412152")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+    monkeypatch.setenv("GITHUB_WORKFLOW", "CI")
+    monkeypatch.setenv("GITHUB_JOB", "test")
+    monkeypatch.setenv("GITHUB_SHA", "abc123")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/master")
+    monkeypatch.setenv("QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME", "qcchem-release-diagnostics-3.11")
+    _write_release_fixture(tmp_path)
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    handoff = json.loads((tmp_path / "out" / "release_handoff.json").read_text(encoding="utf-8"))
+    handoff_report = (tmp_path / "out" / "release_handoff.md").read_text(encoding="utf-8")
+    assert handoff["ci"]["provider"] == "github_actions"
+    assert handoff["ci"]["run_url"] == "https://github.com/wuls968/QCchem/actions/runs/28725412152"
+    assert handoff["ci"]["api_url"] == "https://api.github.com"
+    assert handoff["ci"]["run_attempt"] == "2"
+    assert handoff["ci"]["workflow"] == "CI"
+    assert handoff["ci"]["job"] == "test"
+    assert handoff["diagnostic_artifacts"]["names"] == ["qcchem-release-diagnostics-3.11"]
+    assert (
+        handoff["diagnostic_artifacts"]["artifact_listing_url"]
+        == "https://api.github.com/repos/wuls968/QCchem/actions/runs/28725412152/artifacts"
+    )
+    assert handoff["diagnostic_artifacts"]["upload_paths"] == [
+        "artifacts/workbench_smoke.json",
+        "artifacts/release_audit/release_readiness.json",
+        "artifacts/release_audit/release_readiness.md",
+        "artifacts/release_audit/release_handoff.json",
+        "artifacts/release_audit/release_handoff.md",
+        "/tmp/qcchem-release-acceptance-status.json",
+        "/tmp/qcchem-wheel-smoke.json",
+        "/tmp/qcchem-wheel-release-audit/release_readiness.json",
+        "/tmp/qcchem-wheel-release-audit/release_readiness.md",
+        "/tmp/qcchem-wheel-release-audit/release_handoff.json",
+        "/tmp/qcchem-wheel-release-audit/release_handoff.md",
+    ]
+    assert "https://github.com/wuls968/QCchem/actions/runs/28725412152" in handoff_report
+    assert "qcchem-release-diagnostics-3.11" in handoff_report
 
 
 def test_release_audit_matrix_surfaces_review_warnings_without_warning_policy_failure(tmp_path: Path) -> None:

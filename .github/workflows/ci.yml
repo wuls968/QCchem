@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTEST_ADDOPTS: "-m 'not slow and not stress'"
+      QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME: qcchem-release-diagnostics-${{ matrix.python-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -224,10 +225,14 @@ jobs:
             artifacts/workbench_smoke.json
             artifacts/release_audit/release_readiness.json
             artifacts/release_audit/release_readiness.md
+            artifacts/release_audit/release_handoff.json
+            artifacts/release_audit/release_handoff.md
             /tmp/qcchem-release-acceptance-status.json
             /tmp/qcchem-wheel-smoke.json
             /tmp/qcchem-wheel-release-audit/release_readiness.json
             /tmp/qcchem-wheel-release-audit/release_readiness.md
+            /tmp/qcchem-wheel-release-audit/release_handoff.json
+            /tmp/qcchem-wheel-release-audit/release_handoff.md
 
       - name: Confirm release output ignore boundaries
         run: |

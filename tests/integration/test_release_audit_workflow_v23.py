@@ -179,6 +179,10 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
     assert summary["warning_checks"] == []
     assert "Release audit completed: passed" in capsys.readouterr().out
     assert "release_readiness.md" in (output_dir / "release_readiness.md").read_text(encoding="utf-8")
+    handoff = json.loads((output_dir / "release_handoff.json").read_text(encoding="utf-8"))
+    assert handoff["schema_version"] == "qcchem.release_handoff.v0.1-alpha"
+    assert handoff["release_readiness"]["markdown"] == "release_readiness.md"
+    assert "release_handoff.md" in (output_dir / "release_handoff.md").read_text(encoding="utf-8")
 
 
 @pytest.mark.integration

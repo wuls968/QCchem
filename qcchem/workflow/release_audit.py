@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shlex
 from datetime import datetime, timezone
@@ -23,6 +24,7 @@ from qcchem.io.release_audit_config import (
 )
 
 RELEASE_AUDIT_SCHEMA_VERSION = "1.1"
+RELEASE_HANDOFF_SCHEMA_VERSION = "qcchem.release_handoff.v0.1-alpha"
 RELEASE_AUDIT_SCHEMA_FEATURES = [
     "failed_checks",
     "required_failed_checks",
@@ -81,6 +83,7 @@ PYTEST_VALUE_OPTIONS = PYTEST_PATH_VALUE_OPTIONS | {
 }
 CI_WORKFLOW_RELATIVE_PATH = Path(".github") / "workflows" / "ci.yml"
 CI_ACCEPTANCE_STATUS_STEP_NAME = "Run release acceptance sidecar freshness"
+CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_ENV = "QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME"
 CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "set -euo pipefail",
     "python -m qcchem.cli.main release acceptance-status \\",
@@ -96,10 +99,14 @@ CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/workbench_smoke.json",
     "artifacts/release_audit/release_readiness.json",
     "artifacts/release_audit/release_readiness.md",
+    "artifacts/release_audit/release_handoff.json",
+    "artifacts/release_audit/release_handoff.md",
     "/tmp/qcchem-release-acceptance-status.json",
     "/tmp/qcchem-wheel-smoke.json",
     "/tmp/qcchem-wheel-release-audit/release_readiness.json",
     "/tmp/qcchem-wheel-release-audit/release_readiness.md",
+    "/tmp/qcchem-wheel-release-audit/release_handoff.json",
+    "/tmp/qcchem-wheel-release-audit/release_handoff.md",
 )
 CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     "Build wheel and smoke installed package",
@@ -1107,6 +1114,8 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
             steps = job.get("steps")
             if not isinstance(steps, list):
                 continue
+            job_env = job.get("env") if isinstance(job.get("env"), dict) else {}
+            env_artifact_name = job_env.get(CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_ENV)
             producer_indices = {
                 step.get("name"): step_index
                 for step_index, step in enumerate(steps)
@@ -1126,6 +1135,7 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                     "uses": step.get("uses"),
                     "if_condition": step.get("if"),
                     "artifact_name": artifact_name,
+                    "env_artifact_name": env_artifact_name,
                     "paths": paths,
                     "if_no_files_found": if_no_files_found,
                 }
@@ -1159,6 +1169,17 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                             "step_index": step_index,
                             "expected_prefix": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX,
                             "actual_name": artifact_name,
+                        }
+                    )
+                if env_artifact_name != artifact_name:
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_artifact_env_mismatch",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "env_name": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_ENV,
+                            "env_value": env_artifact_name,
+                            "artifact_name": artifact_name,
                         }
                     )
                 if if_no_files_found != "ignore":
@@ -2269,6 +2290,127 @@ def _audit_research_os_extensions(*, repo_root: Path, checks: list[dict[str, Any
         )
 
 
+def _github_actions_handoff_context() -> dict[str, Any]:
+    env = os.environ
+    github_actions = env.get("GITHUB_ACTIONS") == "true"
+    server_url = env.get("GITHUB_SERVER_URL") or "https://github.com"
+    api_url = env.get("GITHUB_API_URL") or "https://api.github.com"
+    repository = env.get("GITHUB_REPOSITORY")
+    run_id = env.get("GITHUB_RUN_ID")
+    run_url = f"{server_url}/{repository}/actions/runs/{run_id}" if github_actions and repository and run_id else None
+    return {
+        "provider": "github_actions" if github_actions else "local",
+        "run_url": run_url,
+        "api_url": api_url if github_actions else None,
+        "run_id": run_id,
+        "run_attempt": env.get("GITHUB_RUN_ATTEMPT"),
+        "repository": repository,
+        "workflow": env.get("GITHUB_WORKFLOW"),
+        "job": env.get("GITHUB_JOB"),
+        "sha": env.get("GITHUB_SHA"),
+        "ref": env.get("GITHUB_REF"),
+    }
+
+
+def _build_release_handoff(summary: dict[str, Any]) -> dict[str, Any]:
+    audit_provenance = summary.get("audit_provenance") if isinstance(summary.get("audit_provenance"), dict) else {}
+    ci = _github_actions_handoff_context()
+    artifact_name = os.environ.get(CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_ENV) or None
+    return {
+        "schema_version": RELEASE_HANDOFF_SCHEMA_VERSION,
+        "generated_at_utc": audit_provenance.get("generated_at_utc"),
+        "status": summary.get("status"),
+        "recommended_action": summary.get("recommended_action"),
+        "release_readiness": {
+            "json": "release_readiness.json",
+            "markdown": "release_readiness.md",
+        },
+        "release_audit": {
+            "profile": summary.get("profile"),
+            "release_version": summary.get("release_version"),
+            "manifest_path": audit_provenance.get("manifest_path"),
+            "output_dir": audit_provenance.get("output_dir"),
+            "required_fail_count": summary.get("required_fail_count"),
+            "warning_count": summary.get("warning_count"),
+            "release_acceptance_sidecars_status": (
+                summary.get("release_acceptance_sidecars", {}).get("status")
+                if isinstance(summary.get("release_acceptance_sidecars"), dict)
+                else None
+            ),
+        },
+        "ci": ci,
+        "diagnostic_artifacts": {
+            "names": [artifact_name] if artifact_name else [],
+            "name_prefix": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX,
+            "artifact_listing_url": (
+                f"{ci['api_url']}/repos/{ci['repository']}/actions/runs/{ci['run_id']}/artifacts"
+                if ci.get("api_url") and ci.get("repository") and ci.get("run_id")
+                else None
+            ),
+            "upload_paths": list(CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS),
+        },
+    }
+
+
+def _render_release_handoff_markdown(handoff: dict[str, Any]) -> str:
+    ci = handoff.get("ci") if isinstance(handoff.get("ci"), dict) else {}
+    release_audit = handoff.get("release_audit") if isinstance(handoff.get("release_audit"), dict) else {}
+    diagnostic_artifacts = (
+        handoff.get("diagnostic_artifacts")
+        if isinstance(handoff.get("diagnostic_artifacts"), dict)
+        else {}
+    )
+    lines = [
+        "# QCchem Release Handoff",
+        "",
+        "- output: `release_handoff.md`",
+        f"- schema_version: `{handoff.get('schema_version')}`",
+        f"- generated_at_utc: `{handoff.get('generated_at_utc')}`",
+        f"- status: `{handoff.get('status')}`",
+        f"- recommended_action: `{handoff.get('recommended_action')}`",
+        f"- readiness_json: `{handoff.get('release_readiness', {}).get('json')}`",
+        f"- readiness_markdown: `{handoff.get('release_readiness', {}).get('markdown')}`",
+        f"- manifest_path: `{release_audit.get('manifest_path')}`",
+        f"- output_dir: `{release_audit.get('output_dir')}`",
+        f"- required_fail_count: `{release_audit.get('required_fail_count')}`",
+        f"- warning_count: `{release_audit.get('warning_count')}`",
+        f"- release_acceptance_sidecars_status: `{release_audit.get('release_acceptance_sidecars_status')}`",
+        "",
+        "## CI Run",
+        "",
+    ]
+    if ci.get("provider") == "github_actions" and ci.get("run_url"):
+        lines.extend(
+            [
+                f"- provider: `{ci.get('provider')}`",
+                f"- run_url: {ci.get('run_url')}",
+                f"- run_attempt: `{ci.get('run_attempt')}`",
+                f"- workflow: `{ci.get('workflow')}`",
+                f"- job: `{ci.get('job')}`",
+                f"- sha: `{ci.get('sha')}`",
+                f"- ref: `{ci.get('ref')}`",
+            ]
+        )
+    else:
+        lines.append("No GitHub Actions run context was available.")
+
+    artifact_names = diagnostic_artifacts.get("names") if isinstance(diagnostic_artifacts.get("names"), list) else []
+    lines.extend(["", "## Diagnostic Artifacts", ""])
+    if artifact_names:
+        for name in artifact_names:
+            lines.append(f"- `{name}`")
+    else:
+        lines.append("- No run-specific diagnostic artifact name was available.")
+    artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
+    if artifact_listing_url:
+        lines.append(f"- artifact_listing_url: {artifact_listing_url}")
+    lines.extend(["", "## Uploaded Paths", ""])
+    for path in diagnostic_artifacts.get("upload_paths", []):
+        lines.append(f"- `{path}`")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
     audit_provenance = summary.get("audit_provenance") if isinstance(summary.get("audit_provenance"), dict) else {}
     lines = [
@@ -2547,6 +2689,15 @@ def run_release_audit(
     )
     (resolved_output_dir / "release_readiness.md").write_text(
         _render_release_audit_markdown(summary),
+        encoding="utf-8",
+    )
+    handoff = _build_release_handoff(summary)
+    (resolved_output_dir / "release_handoff.json").write_text(
+        json.dumps(handoff, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    (resolved_output_dir / "release_handoff.md").write_text(
+        _render_release_handoff_markdown(handoff),
         encoding="utf-8",
     )
     return summary
