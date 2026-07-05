@@ -144,6 +144,11 @@ failures so circuit/statevector regressions do not return as noisy test output.
 Keep the CI `Run tests` command listed in the
 `configs/release/trust_first_audit.yaml` `acceptance_commands` list; release
 audit fails when the two drift.
+CI must also keep the `Upload release diagnostics` step after the Workbench
+smoke, Trust-First release audit, and release acceptance freshness gates. The
+step uses `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
+`artifacts/release_audit/release_readiness.*`, and the release sidecar freshness
+JSON as downloadable GitHub Actions artifacts.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

@@ -93,6 +93,9 @@ The command writes:
 Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
 files for the release itself.
+CI uploads those readiness files, Workbench smoke JSON, and release sidecar
+freshness JSON as `qcchem-release-diagnostics-*` artifacts so failed runs keep
+their handoff bundle without tracking generated outputs in git.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
@@ -302,6 +305,10 @@ The Trust-First profile verifies:
   Trust-First release audit so manifest-bound sidecars must stay fresh and CI
   logs carry copyable repair commands before generated-file boundary checks
   pass.
+- The release audit statically confirms CI uploads release diagnostic artifacts
+  with `actions/upload-artifact` and `if: always()`, including Workbench smoke,
+  release readiness, and release sidecar freshness outputs for failed-run
+  handoff.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.
@@ -373,7 +380,8 @@ The current release-readiness schema is `1.1`. It is additive over schema `1`
 and advertises added automation fields through `schema_features`, including
 triage summaries, warning policy results, acceptance command recipes and
 remediation hints, CI acceptance-command alignment, CI acceptance-status
-freshness gate coverage, Evidence Matrix
+freshness gate coverage, CI release diagnostic artifact upload coverage,
+Evidence Matrix
 claim/baseline/error fields, Evidence Matrix review warnings, acceptance
 evidence bindings, acceptance status/count fields, and audit provenance.
 

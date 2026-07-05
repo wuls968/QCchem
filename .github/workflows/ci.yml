@@ -214,6 +214,21 @@ jobs:
             --repair-plan \
             -o /tmp/qcchem-release-acceptance-status.json
 
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcchem-release-diagnostics-${{ matrix.python-version }}
+          if-no-files-found: ignore
+          path: |
+            artifacts/workbench_smoke.json
+            artifacts/release_audit/release_readiness.json
+            artifacts/release_audit/release_readiness.md
+            /tmp/qcchem-release-acceptance-status.json
+            /tmp/qcchem-wheel-smoke.json
+            /tmp/qcchem-wheel-release-audit/release_readiness.json
+            /tmp/qcchem-wheel-release-audit/release_readiness.md
+
       - name: Confirm release output ignore boundaries
         run: |
           set -euo pipefail

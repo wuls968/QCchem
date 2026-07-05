@@ -53,6 +53,7 @@ def _write_ci_workflow(
     command: str,
     *,
     include_acceptance_status_gate: bool = True,
+    include_release_diagnostic_upload: bool = True,
     acceptance_status_command: str | None = None,
 ) -> None:
     workflow = root / ".github" / "workflows" / "ci.yml"
@@ -74,6 +75,25 @@ def _write_ci_workflow(
         if include_acceptance_status_gate
         else ""
     )
+    diagnostic_upload_step = (
+        "\n"
+        "      - name: Upload release diagnostics\n"
+        "        if: always()\n"
+        "        uses: actions/upload-artifact@v4\n"
+        "        with:\n"
+        "          name: qcchem-release-diagnostics-${{ matrix.python-version }}\n"
+        "          if-no-files-found: ignore\n"
+        "          path: |\n"
+        "            artifacts/workbench_smoke.json\n"
+        "            artifacts/release_audit/release_readiness.json\n"
+        "            artifacts/release_audit/release_readiness.md\n"
+        "            /tmp/qcchem-release-acceptance-status.json\n"
+        "            /tmp/qcchem-wheel-smoke.json\n"
+        "            /tmp/qcchem-wheel-release-audit/release_readiness.json\n"
+        "            /tmp/qcchem-wheel-release-audit/release_readiness.md\n"
+        if include_release_diagnostic_upload
+        else ""
+    )
     workflow.write_text(
         f"""
 name: CI
@@ -88,6 +108,7 @@ jobs:
       - name: Run tests
         run: {command}
 {gate_step}
+{diagnostic_upload_step}
 """,
         encoding="utf-8",
     )
@@ -1074,6 +1095,69 @@ def test_release_audit_checks_ci_acceptance_status_gate(tmp_path: Path) -> None:
     assert gate_check["details"]["failures"] == []
 
 
+def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(tmp_path, "python -m pytest tests/unit/test_release_audit_v23.py -q")
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    upload_check = next(check for check in summary["checks"] if check["id"] == "release_diagnostics:ci_artifact_upload")
+    assert summary["status"] == "passed"
+    assert upload_check["status"] == "passed"
+    assert upload_check["required"] is True
+    assert upload_check["details"]["matching_steps"] == [
+        {
+            "job": "test",
+            "step_index": 2,
+            "uses": "actions/upload-artifact@v4",
+            "if_condition": "always()",
+            "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
+            "paths": [
+                "artifacts/workbench_smoke.json",
+                "artifacts/release_audit/release_readiness.json",
+                "artifacts/release_audit/release_readiness.md",
+                "/tmp/qcchem-release-acceptance-status.json",
+                "/tmp/qcchem-wheel-smoke.json",
+                "/tmp/qcchem-wheel-release-audit/release_readiness.json",
+                "/tmp/qcchem-wheel-release-audit/release_readiness.md",
+            ],
+            "if_no_files_found": "ignore",
+        }
+    ]
+    assert upload_check["details"]["failures"] == []
+
+
+def test_release_audit_fails_when_ci_release_diagnostic_artifact_upload_is_missing(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        include_release_diagnostic_upload=False,
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    upload_check = next(check for check in summary["checks"] if check["id"] == "release_diagnostics:ci_artifact_upload")
+    assert summary["status"] == "failed"
+    assert upload_check["status"] == "failed"
+    assert upload_check["required"] is True
+    assert upload_check["details"]["failures"] == [
+        {
+            "reason": "missing_ci_release_diagnostic_upload_step",
+            "workflow": ".github/workflows/ci.yml",
+            "step_name": "Upload release diagnostics",
+        }
+    ]
+
+
 def test_release_audit_fails_when_ci_acceptance_status_gate_is_missing(tmp_path: Path) -> None:
     _write_release_fixture(tmp_path)
     _write_ci_workflow(
@@ -1546,6 +1630,7 @@ def test_release_audit_matrix_reads_sidecar_acceptance_status(tmp_path: Path) ->
         "acceptance_command_remediation",
         "ci_acceptance_command_alignment",
         "ci_acceptance_status_gate",
+        "ci_release_diagnostic_artifacts",
         "acceptance_summary_source",
         "acceptance_schema_version",
         "acceptance_artifact_path",

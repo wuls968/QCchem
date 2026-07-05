@@ -34,6 +34,7 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "acceptance_command_remediation",
     "ci_acceptance_command_alignment",
     "ci_acceptance_status_gate",
+    "ci_release_diagnostic_artifacts",
     "acceptance_summary_source",
     "acceptance_schema_version",
     "acceptance_artifact_path",
@@ -87,6 +88,24 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "--strict \\",
     "--repair-plan \\",
     "-o /tmp/qcchem-release-acceptance-status.json",
+)
+CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
+CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v4"
+CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
+CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
+    "artifacts/workbench_smoke.json",
+    "artifacts/release_audit/release_readiness.json",
+    "artifacts/release_audit/release_readiness.md",
+    "/tmp/qcchem-release-acceptance-status.json",
+    "/tmp/qcchem-wheel-smoke.json",
+    "/tmp/qcchem-wheel-release-audit/release_readiness.json",
+    "/tmp/qcchem-wheel-release-audit/release_readiness.md",
+)
+CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
+    "Build wheel and smoke installed package",
+    "Run Workbench release smoke",
+    "Run Trust-First release audit",
+    CI_ACCEPTANCE_STATUS_STEP_NAME,
 )
 
 
@@ -1050,6 +1069,155 @@ def _audit_ci_acceptance_status_gate(*, repo_root: Path, checks: list[dict[str, 
             "workflow": workflow_relative_path.as_posix(),
             "step_name": CI_ACCEPTANCE_STATUS_STEP_NAME,
             "expected_command_lines": list(CI_ACCEPTANCE_STATUS_COMMAND_LINES),
+            "matching_steps": matching_steps,
+            "failures": failures,
+        },
+    )
+
+
+def _ci_artifact_upload_paths(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return _ci_step_command_lines(value)
+    if isinstance(value, list):
+        return [item.strip() for item in value if isinstance(item, str) and item.strip()]
+    return []
+
+
+def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict[str, Any]]) -> None:
+    workflow_relative_path = CI_WORKFLOW_RELATIVE_PATH
+    workflow_path = repo_root / workflow_relative_path
+    if not workflow_path.exists():
+        _skipped(
+            checks,
+            check_id="release_diagnostics:ci_artifact_upload",
+            label="CI uploads release diagnostic artifacts",
+            summary="No GitHub Actions CI workflow was found; release diagnostic artifact upload was not checked.",
+            details={"workflow": workflow_relative_path.as_posix(), "step_name": CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME},
+        )
+        return
+
+    failures: list[dict[str, Any]] = []
+    matching_steps: list[dict[str, Any]] = []
+    jobs, workflow_failures = _ci_workflow_jobs(workflow_path, workflow_relative_path)
+    failures.extend(workflow_failures)
+    if isinstance(jobs, dict):
+        for job_name, job in jobs.items():
+            if not isinstance(job, dict):
+                continue
+            steps = job.get("steps")
+            if not isinstance(steps, list):
+                continue
+            producer_indices = {
+                step.get("name"): step_index
+                for step_index, step in enumerate(steps)
+                if isinstance(step, dict) and step.get("name") in CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS
+            }
+            for step_index, step in enumerate(steps):
+                if not isinstance(step, dict) or step.get("name") != CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME:
+                    continue
+                with_options = step.get("with")
+                with_options = with_options if isinstance(with_options, dict) else {}
+                paths = _ci_artifact_upload_paths(with_options.get("path"))
+                artifact_name = with_options.get("name")
+                if_no_files_found = with_options.get("if-no-files-found")
+                entry = {
+                    "job": str(job_name),
+                    "step_index": step_index,
+                    "uses": step.get("uses"),
+                    "if_condition": step.get("if"),
+                    "artifact_name": artifact_name,
+                    "paths": paths,
+                    "if_no_files_found": if_no_files_found,
+                }
+                matching_steps.append(entry)
+                if step.get("uses") != CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION:
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_upload_action_mismatch",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "expected_action": CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION,
+                            "actual_action": step.get("uses"),
+                        }
+                    )
+                if step.get("if") != "always()":
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_upload_not_always",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "actual_if": step.get("if"),
+                        }
+                    )
+                if not isinstance(artifact_name, str) or not artifact_name.startswith(
+                    CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX
+                ):
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_upload_name_mismatch",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "expected_prefix": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX,
+                            "actual_name": artifact_name,
+                        }
+                    )
+                if if_no_files_found != "ignore":
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_upload_if_no_files_found_mismatch",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "expected": "ignore",
+                            "actual": if_no_files_found,
+                        }
+                    )
+                missing_paths = [path for path in CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS if path not in paths]
+                if missing_paths:
+                    failures.append(
+                        {
+                            "reason": "ci_release_diagnostic_upload_missing_paths",
+                            "job": str(job_name),
+                            "step_index": step_index,
+                            "missing_paths": missing_paths,
+                        }
+                    )
+                for producer_name, producer_index in producer_indices.items():
+                    if step_index <= producer_index:
+                        failures.append(
+                            {
+                                "reason": "ci_release_diagnostic_upload_before_producer",
+                                "job": str(job_name),
+                                "step_index": step_index,
+                                "producer_step_name": producer_name,
+                                "producer_step_index": producer_index,
+                            }
+                        )
+
+    if jobs is not None and not matching_steps:
+        failures.append(
+            {
+                "reason": "missing_ci_release_diagnostic_upload_step",
+                "workflow": workflow_relative_path.as_posix(),
+                "step_name": CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME,
+            }
+        )
+
+    _check(
+        checks,
+        check_id="release_diagnostics:ci_artifact_upload",
+        label="CI uploads release diagnostic artifacts",
+        passed=not failures,
+        required=True,
+        summary=(
+            "CI preserves release audit, sidecar freshness, and Workbench smoke diagnostics as artifacts."
+            if not failures
+            else "CI is missing or misconfigures release diagnostic artifact upload."
+        ),
+        details={
+            "workflow": workflow_relative_path.as_posix(),
+            "step_name": CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME,
+            "expected_action": CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION,
+            "required_paths": list(CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS),
             "matching_steps": matching_steps,
             "failures": failures,
         },
@@ -2310,6 +2478,7 @@ def run_release_audit(
     _audit_acceptance_commands(spec, repo_root=resolved_repo_root, checks=checks)
     _audit_ci_acceptance_alignment(spec, repo_root=resolved_repo_root, checks=checks)
     _audit_ci_acceptance_status_gate(repo_root=resolved_repo_root, checks=checks)
+    _audit_ci_release_diagnostic_artifacts(repo_root=resolved_repo_root, checks=checks)
 
     for artifact in spec.curated_artifacts:
         _audit_artifact(
