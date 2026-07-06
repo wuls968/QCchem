@@ -613,6 +613,10 @@ This command revalidates release status bundles, sidecar freshness reports,
 diagnostics manifest counts, and each uploaded file's recorded size and SHA-256.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
+If you write the report as `release_artifact_verification.json` under an
+artifact root, `qcchem artifacts index` classifies it as
+`release_artifact_verification`, and the Workbench startup inventory exposes its
+count and featured path.
 
 Before publishing release-facing docs, also run:
 

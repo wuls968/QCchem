@@ -965,6 +965,24 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
     run_root.mkdir(parents=True)
     (run_root / "result.json").write_text("{}", encoding="utf-8")
     (run_root / "report.md").write_text("# report\n", encoding="utf-8")
+    release_root = artifact_root / "release_evidence"
+    release_root.mkdir()
+    (release_root / "release_artifact_verification.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_artifact_verification.v0.1-alpha",
+                "status": "passed",
+                "summary": {
+                    "release_status_count": 6,
+                    "diagnostics_manifest_count": 3,
+                    "acceptance_status_count": 3,
+                    "failure_count": 0,
+                },
+                "failures": [],
+            }
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, "")
 
     _app, summary = prepare_workbench(
@@ -976,8 +994,13 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
 
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["artifact_inventory"]["artifact_root_exists"] is True
+    assert summary["artifact_inventory"]["indexed_artifacts"] == 2
     assert summary["artifact_inventory"]["run_result_roots"] == 1
+    assert summary["artifact_inventory"]["release_artifact_verifications"] == 1
     assert summary["artifact_inventory"]["report_markdown_roots"] == 1
+    assert summary["artifact_inventory"]["featured_release_artifact_verification"] == str(
+        release_root / "release_artifact_verification.json"
+    )
     assert os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] == str(artifact_root.resolve())
 
 

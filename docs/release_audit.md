@@ -156,6 +156,10 @@ The verifier recursively checks downloaded `release_status.json`,
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
 uploaded file sizes and SHA-256 digests. It exits with code `2` if any expected
 file is missing, stale, inconsistent, or tampered with.
+When the output is named `release_artifact_verification.json` under an artifact
+root, `qcchem artifacts index` records it as
+`release_artifact_verification`, and the Workbench startup inventory reports the
+count plus a featured verification report path.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

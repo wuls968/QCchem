@@ -7,19 +7,12 @@ from typing import Any
 
 import dash
 
+from qcchem.io.artifact_index import build_artifact_index
 from qcchem.workbench.app import create_app
 from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, resolve_workbench_artifact_root
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_ROOT = REPO_ROOT / "artifacts"
-_GENERATED_ARTIFACT_DIR_NAMES = {"preview_local"}
-_INVENTORY_RESULT_FILENAMES = {
-    "result.json",
-    "benchmark_result.json",
-    "study_result.json",
-    "scan_result.json",
-    "hardware_calibration_summary.json",
-}
 
 
 def _find_first_existing(*paths: Path) -> str | None:
@@ -27,23 +20,6 @@ def _find_first_existing(*paths: Path) -> str | None:
         if path.exists():
             return str(path)
     return None
-
-
-def _is_nested_generated_artifact_file(path: Path, *, root: Path) -> bool:
-    try:
-        relative_parts = path.relative_to(root).parts
-    except ValueError:
-        relative_parts = path.parts
-    parent_parts = relative_parts[:-1]
-    return any(name in parent_parts for name in _GENERATED_ARTIFACT_DIR_NAMES)
-
-
-def _artifact_files(root: Path, filename: str) -> list[Path]:
-    return sorted(
-        path
-        for path in root.rglob(filename)
-        if path.is_file() and not _is_nested_generated_artifact_file(path, root=root)
-    )
 
 
 def _empty_artifact_inventory(
@@ -56,11 +32,13 @@ def _empty_artifact_inventory(
         "artifact_root_exists": root_exists,
         "artifact_root_is_dir": root_is_dir,
         "inventory_error": inventory_error,
+        "indexed_artifacts": 0,
         "run_result_roots": 0,
         "benchmark_suites": 0,
         "study_results": 0,
         "scan_results": 0,
         "hardware_campaigns": 0,
+        "release_artifact_verifications": 0,
         "report_markdown_roots": 0,
         "runtime_submission_sidecars": 0,
         "skipped_generated_artifacts": 0,
@@ -69,17 +47,21 @@ def _empty_artifact_inventory(
         "featured_study": None,
         "featured_scan": None,
         "featured_hardware_campaign": None,
+        "featured_release_artifact_verification": None,
     }
 
 
-def _count_skipped_generated_artifacts(root: Path) -> int:
-    return sum(
-        1
-        for path in root.rglob("*.json")
-        if path.is_file()
-        and path.name in _INVENTORY_RESULT_FILENAMES
-        and _is_nested_generated_artifact_file(path, root=root)
-    )
+def _entries_by_kind(entries: list[dict[str, Any]], kind: str) -> list[dict[str, Any]]:
+    return [entry for entry in entries if entry.get("artifact_kind") == kind]
+
+
+def _entry_paths(entries: list[dict[str, Any]]) -> list[Path]:
+    paths: list[Path] = []
+    for entry in entries:
+        result_json = entry.get("result_json")
+        if isinstance(result_json, str) and result_json:
+            paths.append(Path(result_json))
+    return paths
 
 
 def _artifact_inventory(root: Path) -> dict[str, Any]:
@@ -92,26 +74,35 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
             inventory_error="Artifact root is not a directory.",
         )
 
-    run_results = _artifact_files(root, "result.json")
-    benchmark_results = _artifact_files(root, "benchmark_result.json")
-    study_results = _artifact_files(root, "study_result.json")
-    scan_results = _artifact_files(root, "scan_result.json")
-    hardware_campaigns = _artifact_files(root, "hardware_calibration_summary.json")
-    report_markdowns = _artifact_files(root, "report.md")
-    runtime_sidecars = _artifact_files(root, "runtime_submission.json")
+    index = build_artifact_index(root)
+    entries = [entry for entry in index.get("artifacts", []) if isinstance(entry, dict)]
+    run_entries = _entries_by_kind(entries, "run")
+    benchmark_entries = _entries_by_kind(entries, "benchmark_suite")
+    study_entries = _entries_by_kind(entries, "study")
+    scan_entries = _entries_by_kind(entries, "scan")
+    hardware_campaign_entries = _entries_by_kind(entries, "hardware_calibration")
+    release_verification_entries = _entries_by_kind(entries, "release_artifact_verification")
+    run_results = _entry_paths(run_entries)
+    benchmark_results = _entry_paths(benchmark_entries)
+    study_results = _entry_paths(study_entries)
+    scan_results = _entry_paths(scan_entries)
+    hardware_campaigns = _entry_paths(hardware_campaign_entries)
+    release_verification_reports = _entry_paths(release_verification_entries)
 
     return {
         "artifact_root_exists": True,
         "artifact_root_is_dir": True,
-        "inventory_error": None,
+        "inventory_error": index.get("index_error"),
+        "indexed_artifacts": index.get("total_artifacts"),
         "run_result_roots": len(run_results),
         "benchmark_suites": len(benchmark_results),
         "study_results": len(study_results),
         "scan_results": len(scan_results),
         "hardware_campaigns": len(hardware_campaigns),
-        "report_markdown_roots": len(report_markdowns),
-        "runtime_submission_sidecars": len(runtime_sidecars),
-        "skipped_generated_artifacts": _count_skipped_generated_artifacts(root),
+        "release_artifact_verifications": len(release_verification_reports),
+        "report_markdown_roots": sum(1 for entry in entries if entry.get("has_report_markdown")),
+        "runtime_submission_sidecars": sum(1 for entry in entries if entry.get("has_runtime_submission")),
+        "skipped_generated_artifacts": index.get("skipped_generated_artifacts"),
         "featured_run": _find_first_existing(
             root / "h2_runtime_hardware_probe_puccd_layout" / "result.json",
             root / "h2" / "result.json",
@@ -133,6 +124,10 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
         "featured_hardware_campaign": _find_first_existing(
             root / "hardware_calibration_suite_v1" / "hardware_calibration_summary.json",
             *(path for path in hardware_campaigns[:1]),
+        ),
+        "featured_release_artifact_verification": _find_first_existing(
+            root / "release_artifact_verification.json",
+            *(path for path in release_verification_reports[:1]),
         ),
     }
 

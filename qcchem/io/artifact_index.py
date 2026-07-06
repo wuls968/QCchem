@@ -30,6 +30,8 @@ def _read_json_object_with_error(path: Path) -> tuple[dict[str, Any], str | None
 
 def _artifact_kind(path: Path) -> str:
     name = path.name
+    if name == "release_artifact_verification.json":
+        return "release_artifact_verification"
     if name == "benchmark_result.json":
         return "benchmark_suite"
     if name == "study_result.json":
@@ -117,6 +119,16 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         acceptance_summary_readable = bool(embedded_acceptance_summary)
     workflow_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
     mtime = result_path.stat().st_mtime if result_path.exists() else None
+    release_verification_summary = (
+        payload.get("summary")
+        if kind == "release_artifact_verification" and isinstance(payload.get("summary"), dict)
+        else {}
+    )
+    release_verification_failures = (
+        payload.get("failures")
+        if kind == "release_artifact_verification" and isinstance(payload.get("failures"), list)
+        else []
+    )
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
         "artifact_kind": kind,
@@ -211,6 +223,30 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "has_workflow_graph": (artifact_root / "workflow_graph.json").exists(),
         "has_workflow_provenance": (artifact_root / "provenance.jsonl").exists(),
         "has_workflow_registry": (artifact_root / "registry.json").exists(),
+        "release_artifact_verification_status": (
+            payload.get("status") if kind == "release_artifact_verification" else None
+        ),
+        "release_artifact_verification_failure_count": (
+            release_verification_summary.get("failure_count") if kind == "release_artifact_verification" else None
+        ),
+        "release_artifact_verification_release_status_count": (
+            release_verification_summary.get("release_status_count")
+            if kind == "release_artifact_verification"
+            else None
+        ),
+        "release_artifact_verification_diagnostics_manifest_count": (
+            release_verification_summary.get("diagnostics_manifest_count")
+            if kind == "release_artifact_verification"
+            else None
+        ),
+        "release_artifact_verification_acceptance_status_count": (
+            release_verification_summary.get("acceptance_status_count")
+            if kind == "release_artifact_verification"
+            else None
+        ),
+        "release_artifact_verification_first_failure": (
+            release_verification_failures[0] if kind == "release_artifact_verification" and release_verification_failures else None
+        ),
         "mtime": mtime,
     }
     return entry
@@ -238,6 +274,7 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "hardware_calibration_summary.json",
         "campaign_result.json",
         "workflow_result.json",
+        "release_artifact_verification.json",
     }
     skipped_generated_paths: list[str] = []
     skipped_generated_count = 0

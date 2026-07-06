@@ -97,6 +97,43 @@ def test_artifact_indexer_discovers_result_artifacts(tmp_path: Path) -> None:
     assert index["skipped_generated_artifacts"] == 0
 
 
+def test_artifact_indexer_discovers_release_artifact_verification(tmp_path: Path) -> None:
+    verification_root = tmp_path / "artifacts" / "release_evidence"
+    verification_root.mkdir(parents=True)
+    verification_json = verification_root / "release_artifact_verification.json"
+    verification_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_artifact_verification.v0.1-alpha",
+                "status": "passed",
+                "artifact_dir": "/tmp/qcchem-ci-artifacts",
+                "summary": {
+                    "release_status_count": 6,
+                    "diagnostics_manifest_count": 3,
+                    "acceptance_status_count": 3,
+                    "failure_count": 0,
+                },
+                "failures": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+
+    assert index["total_artifacts"] == 1
+    entry = index["artifacts"][0]
+    assert entry["artifact_kind"] == "release_artifact_verification"
+    assert entry["result_json"] == str(verification_json)
+    assert entry["verification_status"] == "passed"
+    assert entry["release_artifact_verification_status"] == "passed"
+    assert entry["release_artifact_verification_failure_count"] == 0
+    assert entry["release_artifact_verification_release_status_count"] == 6
+    assert entry["release_artifact_verification_diagnostics_manifest_count"] == 3
+    assert entry["release_artifact_verification_acceptance_status_count"] == 3
+    assert entry["release_artifact_verification_first_failure"] is None
+
+
 def test_artifact_indexer_reports_file_root_without_scanning(tmp_path: Path) -> None:
     root = tmp_path / "artifacts"
     root.write_text("not a directory", encoding="utf-8")

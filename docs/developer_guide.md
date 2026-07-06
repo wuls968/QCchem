@@ -181,6 +181,11 @@ the downloaded diagnostics as release evidence. The verifier is read-only: it
 checks the downloaded release status summaries, release acceptance freshness
 JSON, diagnostics manifest counts, and each uploaded file's recorded size and
 SHA-256 digest without rerunning the audit or calling GitHub.
+Name retained verifier outputs `release_artifact_verification.json` when they
+live under an artifact root. The normalized artifact index and Workbench startup
+inventory classify those reports as `release_artifact_verification`, exposing
+their pass/fail status, failure count, and matrix artifact counts without
+turning the downloaded diagnostics into tracked source files.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

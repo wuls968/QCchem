@@ -58,8 +58,9 @@ At startup, the server summary reads the repo's artifact inventory and reports:
 
 That makes the workbench a navigation layer over QCchem's existing evidence, not a second source of truth.
 
-The artifact inventory is now generated from the same normalized index used by
-the CLI:
+The artifact inventory is generated from the same normalized index used by the
+CLI, including run, benchmark, study, scan, hardware campaign, workflow, and
+release artifact verification reports:
 
 ```bash
 qcchem artifacts index artifacts
