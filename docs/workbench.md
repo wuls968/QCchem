@@ -165,7 +165,9 @@ qcchem release collect-evidence --artifact-dir <downloaded-artifacts> --docs doc
 
 That command writes both machine-readable JSON and a reviewer-facing
 `release_evidence_handoff.md` containing the linked verifier and route-smoke
-status.
+status. When that Markdown file is kept next to `release_evidence_summary.json`,
+the Workbench artifact inventory reports a `release_evidence_handoff` entry and
+the Overview page shows its status, recommended action, first failure, and path.
 A missing docs file or malformed checklist is rejected with exit code `2`, not a
 traceback.
 When the smoke gate fails, the CLI prints the same top-level failed-check ids

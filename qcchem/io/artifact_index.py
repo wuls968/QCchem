@@ -30,6 +30,8 @@ def _read_json_object_with_error(path: Path) -> tuple[dict[str, Any], str | None
 
 def _artifact_kind(path: Path) -> str:
     name = path.name
+    if name == "release_evidence_handoff.md":
+        return "release_evidence_handoff"
     if name == "release_artifact_verification.json":
         return "release_artifact_verification"
     if name == "benchmark_result.json":
@@ -80,7 +82,7 @@ def _empty_artifact_index(
 
 
 def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -> dict[str, object]:
-    """Return a normalized artifact-index row for one result-like JSON file."""
+    """Return a normalized artifact-index row for one result-like artifact file."""
     artifact_root = result_path.parent
     payload = _safe_read_json(result_path)
     evidence = payload.get("evidence_summary") if isinstance(payload.get("evidence_summary"), dict) else {}
@@ -129,15 +131,27 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         if kind == "release_artifact_verification" and isinstance(payload.get("failures"), list)
         else []
     )
+    release_evidence_summary_path = artifact_root / "release_evidence_summary.json"
+    release_evidence_summary = (
+        _safe_read_json(release_evidence_summary_path)
+        if kind == "release_evidence_handoff" and release_evidence_summary_path.exists()
+        else {}
+    )
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
         "artifact_kind": kind,
-        "artifact_name": name,
+        "artifact_name": "release_evidence_handoff" if kind == "release_evidence_handoff" else name,
+        "artifact_path": str(result_path),
         "result_json": str(result_path),
-        "schema_version": payload.get("schema_version"),
-        "verification_status": payload.get("verification_status") or payload.get("status") or evidence.get("trust_tier"),
+        "schema_version": payload.get("schema_version") or release_evidence_summary.get("schema_version"),
+        "verification_status": payload.get("verification_status")
+        or payload.get("status")
+        or release_evidence_summary.get("status")
+        or evidence.get("trust_tier"),
         "trust_tier": evidence.get("trust_tier") or payload.get("verification_status") or payload.get("status"),
-        "recommended_action": evidence.get("recommended_action") or acceptance_summary.get("recommended_action"),
+        "recommended_action": evidence.get("recommended_action")
+        or release_evidence_summary.get("recommended_action")
+        or acceptance_summary.get("recommended_action"),
         "capsule_status": capsule.get("capsule_status"),
         "evidence_summary_complete": (
             capsule.get("evidence_summary_status") == "complete"
@@ -247,6 +261,20 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "release_artifact_verification_first_failure": (
             release_verification_failures[0] if kind == "release_artifact_verification" and release_verification_failures else None
         ),
+        "release_evidence_handoff_status": (
+            release_evidence_summary.get("status") if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_recommended_action": (
+            release_evidence_summary.get("recommended_action") if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_first_failure": (
+            release_evidence_summary.get("first_failure") if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_summary_json": (
+            str(release_evidence_summary_path)
+            if kind == "release_evidence_handoff" and release_evidence_summary_path.exists()
+            else None
+        ),
         "mtime": mtime,
     }
     return entry
@@ -275,10 +303,14 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "campaign_result.json",
         "workflow_result.json",
         "release_artifact_verification.json",
+        "release_evidence_handoff.md",
     }
     skipped_generated_paths: list[str] = []
     skipped_generated_count = 0
-    for result_json in sorted(path for path in resolved_root.rglob("*.json") if path.name in result_names):
+    result_paths = [
+        path for path in resolved_root.rglob("*.json") if path.is_file() and path.name in result_names
+    ] + [path for path in resolved_root.rglob("release_evidence_handoff.md") if path.is_file()]
+    for result_json in sorted(result_paths):
         if _generated_artifact_skip_reason(result_json, root=resolved_root) is not None:
             skipped_generated_count += 1
             if len(skipped_generated_paths) < _MAX_SKIPPED_GENERATED_RESULT_PATHS:

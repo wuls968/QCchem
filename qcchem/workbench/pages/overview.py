@@ -269,6 +269,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     claim_review = research_os.get("claim_review") or {}
     promotion_review = research_os.get("promotion_review") or {}
     release_verification = research_os.get("release_verification") or {}
+    release_evidence_handoff = research_os.get("release_evidence_handoff") or {}
     release_verification_summary = (
         release_verification.get("summary")
         if isinstance(release_verification.get("summary"), dict)
@@ -302,6 +303,26 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_verification_path = release_verification.get("source_path")
     if release_verification_path:
         release_verification_detail = f"{release_verification_detail} | {release_verification_path}"
+    release_handoff_status = str(release_evidence_handoff.get("status") or "No release evidence handoff")
+    release_handoff_first_failure = (
+        release_evidence_handoff.get("first_failure")
+        if isinstance(release_evidence_handoff.get("first_failure"), dict)
+        else None
+    )
+    release_handoff_failure_text = (
+        str(release_handoff_first_failure.get("reason") or "unknown")
+        if release_handoff_first_failure
+        else "no first failure"
+    )
+    release_handoff_detail = (
+        f"{release_evidence_handoff.get('recommended_action') or 'review_release_evidence'}; "
+        f"{release_handoff_failure_text}"
+        if release_evidence_handoff
+        else "Run qcchem release collect-evidence after downloading CI diagnostics."
+    )
+    release_handoff_path = release_evidence_handoff.get("source_path")
+    if release_handoff_path:
+        release_handoff_detail = f"{release_handoff_detail} | {release_handoff_path}"
     return html.Div(
         className="qcchem-page qcchem-page--overview",
         children=[
@@ -421,6 +442,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         release_verification_status,
                         release_verification_detail,
                         tone=_status_tone(release_verification.get("status")),
+                    ),
+                    status_card(
+                        "Release evidence handoff",
+                        release_handoff_status,
+                        release_handoff_detail,
+                        tone=_status_tone(release_evidence_handoff.get("status")),
                     ),
                     status_card(
                         "Best Evidence Desk",

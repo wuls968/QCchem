@@ -631,7 +631,11 @@ If you write the report as `release_artifact_verification.json` under an
 artifact root, `qcchem artifacts index` classifies it as
 `release_artifact_verification`, and the Workbench startup inventory exposes its
 count and featured path. The Workbench Overview page also shows the latest
-indexed release verification status and matrix artifact counts.
+indexed release verification status and matrix artifact counts. When
+`release_evidence_handoff.md` is kept next to `release_evidence_summary.json`,
+the index classifies the Markdown report as `release_evidence_handoff`, and the
+Overview page shows the handoff status, recommended action, first failure, and
+path.
 
 Before publishing release-facing docs, also run:
 

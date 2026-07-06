@@ -865,6 +865,19 @@ def test_overview_page_surfaces_release_verification(
         ),
         encoding="utf-8",
     )
+    handoff_path = release_root / "release_evidence_handoff.md"
+    (release_root / "release_evidence_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_evidence",
+                "first_failure": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    handoff_path.write_text("# QCchem Release Evidence Handoff\n", encoding="utf-8")
     monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, str(artifact_root))
 
     page = build_overview_page(build_sample_view_model())
@@ -874,6 +887,10 @@ def test_overview_page_surfaces_release_verification(
     assert "passed" in page_text
     assert "6 status bundles / 3 manifests / 3 sidecar reports; 0 failures" in page_text
     assert str(verification_path) in page_text
+    assert "Release evidence handoff" in page_text
+    assert "review_release_evidence" in page_text
+    assert "no first failure" in page_text
+    assert str(handoff_path) in page_text
 
 
 @pytest.mark.integration
@@ -1022,6 +1039,21 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
         ),
         encoding="utf-8",
     )
+    (release_root / "release_evidence_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_evidence",
+                "first_failure": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (release_root / "release_evidence_handoff.md").write_text(
+        "# QCchem Release Evidence Handoff\n",
+        encoding="utf-8",
+    )
     monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, "")
 
     _app, summary = prepare_workbench(
@@ -1033,12 +1065,16 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
 
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["artifact_inventory"]["artifact_root_exists"] is True
-    assert summary["artifact_inventory"]["indexed_artifacts"] == 2
+    assert summary["artifact_inventory"]["indexed_artifacts"] == 3
     assert summary["artifact_inventory"]["run_result_roots"] == 1
     assert summary["artifact_inventory"]["release_artifact_verifications"] == 1
+    assert summary["artifact_inventory"]["release_evidence_handoffs"] == 1
     assert summary["artifact_inventory"]["report_markdown_roots"] == 1
     assert summary["artifact_inventory"]["featured_release_artifact_verification"] == str(
         release_root / "release_artifact_verification.json"
+    )
+    assert summary["artifact_inventory"]["featured_release_evidence_handoff"] == str(
+        release_root / "release_evidence_handoff.md"
     )
     assert os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] == str(artifact_root.resolve())
 

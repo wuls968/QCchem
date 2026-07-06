@@ -178,6 +178,10 @@ matrix artifact counts alongside the Research OS evidence snapshot. Workbench
 smoke JSON records the same compact release-verification summary so the
 component-tree route evidence and release artifact verification evidence can be
 reviewed from one generated handoff file.
+When `release_evidence_handoff.md` is kept next to
+`release_evidence_summary.json`, the artifact index classifies it as
+`release_evidence_handoff`, and Workbench Overview surfaces its status,
+recommended action, first failure, and Markdown path.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

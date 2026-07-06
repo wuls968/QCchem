@@ -134,6 +134,47 @@ def test_artifact_indexer_discovers_release_artifact_verification(tmp_path: Path
     assert entry["release_artifact_verification_first_failure"] is None
 
 
+def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> None:
+    evidence_root = tmp_path / "artifacts" / "release_evidence"
+    evidence_root.mkdir(parents=True)
+    handoff_md = evidence_root / "release_evidence_handoff.md"
+    summary_json = evidence_root / "release_evidence_summary.json"
+    handoff_md.write_text("# QCchem Release Evidence Handoff\n", encoding="utf-8")
+    summary_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "failed",
+                "recommended_action": "inspect_release_evidence_failures",
+                "first_failure": {
+                    "reason": "diagnostics_manifest_size_mismatch",
+                    "local_path": "/tmp/release_handoff.md",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+
+    assert index["total_artifacts"] == 1
+    entry = index["artifacts"][0]
+    assert entry["artifact_kind"] == "release_evidence_handoff"
+    assert entry["artifact_name"] == "release_evidence_handoff"
+    assert entry["artifact_path"] == str(handoff_md)
+    assert entry["result_json"] == str(handoff_md)
+    assert entry["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
+    assert entry["verification_status"] == "failed"
+    assert entry["recommended_action"] == "inspect_release_evidence_failures"
+    assert entry["release_evidence_handoff_status"] == "failed"
+    assert entry["release_evidence_handoff_recommended_action"] == "inspect_release_evidence_failures"
+    assert entry["release_evidence_handoff_summary_json"] == str(summary_json)
+    assert entry["release_evidence_handoff_first_failure"] == {
+        "reason": "diagnostics_manifest_size_mismatch",
+        "local_path": "/tmp/release_handoff.md",
+    }
+
+
 def test_artifact_indexer_reports_file_root_without_scanning(tmp_path: Path) -> None:
     root = tmp_path / "artifacts"
     root.write_text("not a directory", encoding="utf-8")

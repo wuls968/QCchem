@@ -195,6 +195,9 @@ Overview release-verification block wired to the same indexed report so the
 startup inventory and visible evidence console agree. Keep
 `workbench_smoke.json` wired to that same summary too, so route smoke evidence
 and downloaded-release verification evidence stay in one generated handoff.
+Keep `release_evidence_handoff.md` indexed as `release_evidence_handoff` when it
+lives next to `release_evidence_summary.json`, so Workbench startup inventory
+and Overview can point reviewers to the human-readable post-CI handoff.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash
