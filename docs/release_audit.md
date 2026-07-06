@@ -128,9 +128,12 @@ code `2`. Status also fails with `schema_mismatch` when
 `release_readiness.json` or `release_handoff.json` uses an unexpected
 `schema_version`, so old or incompatible handoff bundles are not accepted as
 current evidence. It fails with `contract_mismatch` when a current-schema bundle
-is missing required status, count, sidecar, or diagnostic-artifact fields, so
-automation does not silently consume partial handoff JSON. When `-o` is
-supplied, it writes a compact
+is missing required status, count, sidecar, or diagnostic-artifact fields, or
+when `release_handoff.json` no longer agrees with `release_readiness.json` on
+status, action, counts, provenance, or sidecar state. It also checks derived
+counts such as failed checks, warnings, and sidecar repair-plan length, so
+automation does not silently consume partial or internally inconsistent handoff
+JSON. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`

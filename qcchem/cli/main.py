@@ -1087,6 +1087,180 @@ def _release_status_contract_mismatches(
                     "actual_type": _release_status_actual_type(value, missing=missing),
                 }
             )
+    if mismatches:
+        return mismatches
+    mismatches.extend(_release_status_consistency_mismatches(readiness=readiness, handoff=handoff))
+    return mismatches
+
+
+def _release_status_value_mismatch(
+    *,
+    file_name: str,
+    field_path: tuple[str, ...],
+    expected: object,
+    actual: object,
+    reason: str,
+) -> dict[str, object]:
+    return {
+        "file": file_name,
+        "field": ".".join(field_path),
+        "reason": reason,
+        "expected": expected,
+        "actual": actual,
+    }
+
+
+def _release_status_consistency_mismatches(
+    *,
+    readiness: dict[str, object],
+    handoff: dict[str, object],
+) -> list[dict[str, object]]:
+    checks = (
+        (
+            "release_handoff.json",
+            handoff,
+            ("status",),
+            readiness,
+            ("status",),
+            "must_match_release_readiness.status",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("recommended_action",),
+            readiness,
+            ("recommended_action",),
+            "must_match_release_readiness.recommended_action",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "profile"),
+            readiness,
+            ("profile",),
+            "must_match_release_readiness.profile",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "release_version"),
+            readiness,
+            ("release_version",),
+            "must_match_release_readiness.release_version",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "manifest_path"),
+            readiness,
+            ("audit_provenance", "manifest_path"),
+            "must_match_release_readiness.audit_provenance.manifest_path",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "output_dir"),
+            readiness,
+            ("audit_provenance", "output_dir"),
+            "must_match_release_readiness.audit_provenance.output_dir",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "required_fail_count"),
+            readiness,
+            ("required_fail_count",),
+            "must_match_release_readiness.required_fail_count",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "warning_count"),
+            readiness,
+            ("warning_count",),
+            "must_match_release_readiness.warning_count",
+        ),
+        (
+            "release_handoff.json",
+            handoff,
+            ("release_audit", "release_acceptance_sidecars_status"),
+            readiness,
+            ("release_acceptance_sidecars", "status"),
+            "must_match_release_readiness.release_acceptance_sidecars.status",
+        ),
+    )
+    mismatches: list[dict[str, object]] = []
+    for file_name, actual_payload, actual_path, expected_payload, expected_path, reason in checks:
+        actual_exists, actual = _release_status_lookup(actual_payload, actual_path)
+        expected_exists, expected = _release_status_lookup(expected_payload, expected_path)
+        if not actual_exists or not expected_exists:
+            continue
+        if actual != expected:
+            mismatches.append(
+                _release_status_value_mismatch(
+                    file_name=file_name,
+                    field_path=actual_path,
+                    expected=expected,
+                    actual=actual,
+                    reason=reason,
+                )
+            )
+
+    readiness_required_fail_count = readiness.get("required_fail_count")
+    required_failed_checks = readiness.get("required_failed_checks")
+    if isinstance(readiness_required_fail_count, int) and isinstance(required_failed_checks, list):
+        if readiness_required_fail_count != len(required_failed_checks):
+            mismatches.append(
+                _release_status_value_mismatch(
+                    file_name="release_readiness.json",
+                    field_path=("required_fail_count",),
+                    expected=len(required_failed_checks),
+                    actual=readiness_required_fail_count,
+                    reason="must_equal_required_failed_checks_length",
+                )
+            )
+    warning_count = readiness.get("warning_count")
+    warning_checks = readiness.get("warning_checks")
+    if isinstance(warning_count, int) and isinstance(warning_checks, list):
+        if warning_count != len(warning_checks):
+            mismatches.append(
+                _release_status_value_mismatch(
+                    file_name="release_readiness.json",
+                    field_path=("warning_count",),
+                    expected=len(warning_checks),
+                    actual=warning_count,
+                    reason="must_equal_warning_checks_length",
+                )
+            )
+
+    readiness_status = readiness.get("status")
+    if isinstance(readiness_required_fail_count, int) and isinstance(readiness_status, str):
+        expected_status = "passed" if readiness_required_fail_count == 0 else "failed"
+        if readiness_status != expected_status:
+            mismatches.append(
+                _release_status_value_mismatch(
+                    file_name="release_readiness.json",
+                    field_path=("status",),
+                    expected=expected_status,
+                    actual=readiness_status,
+                    reason="must_match_required_fail_count",
+                )
+            )
+    sidecars = readiness.get("release_acceptance_sidecars")
+    if isinstance(sidecars, dict):
+        repair_plan = sidecars.get("repair_plan")
+        repair_plan_count = sidecars.get("repair_plan_count")
+        if isinstance(repair_plan, list) and isinstance(repair_plan_count, int):
+            if repair_plan_count != len(repair_plan):
+                mismatches.append(
+                    _release_status_value_mismatch(
+                        file_name="release_readiness.json",
+                        field_path=("release_acceptance_sidecars", "repair_plan_count"),
+                        expected=len(repair_plan),
+                        actual=repair_plan_count,
+                        reason="must_equal_release_acceptance_sidecars.repair_plan_length",
+                    )
+                )
     return mismatches
 
 
@@ -1209,11 +1383,18 @@ def _print_release_status_summary(summary: dict[str, object]) -> None:
         print("Release status unavailable: contract mismatch")
         for item in contract_mismatches:
             if isinstance(item, dict):
-                print(
+                line = (
                     "Contract mismatch: "
                     f"{item.get('file')} {item.get('field')} "
-                    f"expected={item.get('expected')} actual_type={item.get('actual_type')}"
+                    f"expected={item.get('expected')}"
                 )
+                if "actual_type" in item:
+                    line += f" actual_type={item.get('actual_type')}"
+                elif "actual" in item:
+                    line += f" actual={item.get('actual')}"
+                if item.get("reason"):
+                    line += f" reason={item.get('reason')}"
+                print(line)
         return
 
     required_pass_count = summary.get("required_pass_count")

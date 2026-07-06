@@ -322,6 +322,18 @@ def test_release_status_cli_rejects_schema_mismatch(
                 "actual_type": "int",
             },
         ),
+        (
+            "release_readiness.json",
+            ("release_acceptance_sidecars", "repair_plan_count"),
+            4,
+            {
+                "file": "release_readiness.json",
+                "field": "release_acceptance_sidecars.repair_plan_count",
+                "reason": "must_equal_release_acceptance_sidecars.repair_plan_length",
+                "expected": 0,
+                "actual": 4,
+            },
+        ),
     ],
 )
 def test_release_status_cli_rejects_contract_mismatch(
@@ -355,6 +367,67 @@ def test_release_status_cli_rejects_contract_mismatch(
     assert exit_code == 2
     assert "Release status unavailable: contract mismatch" in stdout
     assert f"{expected_contract['file']} {expected_contract['field']} expected={expected_contract['expected']}" in stdout
+    status = json.loads(status_json.read_text(encoding="utf-8"))
+    assert status["status"] == "contract_mismatch"
+    assert status["recommended_action"] == "rerun_release_audit"
+    assert status["contract_mismatches"] == [expected_contract]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("field_path", "replacement", "expected_contract"),
+    [
+        (
+            ("status",),
+            "failed",
+            {
+                "file": "release_handoff.json",
+                "field": "status",
+                "reason": "must_match_release_readiness.status",
+                "expected": "passed",
+                "actual": "failed",
+            },
+        ),
+        (
+            ("release_audit", "required_fail_count"),
+            7,
+            {
+                "file": "release_handoff.json",
+                "field": "release_audit.required_fail_count",
+                "reason": "must_match_release_readiness.required_fail_count",
+                "expected": 0,
+                "actual": 7,
+            },
+        ),
+    ],
+)
+def test_release_status_cli_rejects_handoff_consistency_mismatch(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    field_path: tuple[str, ...],
+    replacement: object,
+    expected_contract: dict[str, object],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    status_json = tmp_path / "release_status.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+    handoff_json = output_dir / "release_handoff.json"
+    handoff = json.loads(handoff_json.read_text(encoding="utf-8"))
+    target = handoff
+    for part in field_path[:-1]:
+        target = target[part]
+    target[field_path[-1]] = replacement
+    handoff_json.write_text(json.dumps(handoff), encoding="utf-8")
+
+    exit_code = main(["release", "status", "--audit-dir", str(output_dir), "-o", str(status_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release status unavailable: contract mismatch" in stdout
+    assert expected_contract["reason"] in stdout
     status = json.loads(status_json.read_text(encoding="utf-8"))
     assert status["status"] == "contract_mismatch"
     assert status["recommended_action"] == "rerun_release_audit"
