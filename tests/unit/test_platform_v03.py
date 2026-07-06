@@ -456,6 +456,37 @@ def test_ci_validates_release_status_artifacts_with_shared_api() -> None:
     assert "contract_mismatches" in command
 
 
+def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Write release diagnostics manifest"
+    ]
+    upload_indices = [
+        index
+        for index, step in enumerate(steps)
+        if isinstance(step, dict)
+        and step.get("name") == "Upload release diagnostics"
+    ]
+    manifest_index = steps.index(matches[0]) if matches else -1
+
+    assert len(matches) == 1
+    assert len(upload_indices) == 1
+    assert manifest_index < upload_indices[0]
+    command = matches[0]["run"]
+    assert isinstance(command, str)
+    assert "set -euo pipefail" in command
+    assert "write_release_diagnostics_manifest" in command
+    assert 'Path("artifacts/release_audit/release_diagnostics_manifest.json")' in command
+    assert "missing_paths" in command
+    assert "non_file_paths" in command
+    upload_paths = steps[upload_indices[0]]["with"]["path"]
+    assert "artifacts/release_audit/release_diagnostics_manifest.json" in upload_paths
+
+
 def test_manifest_release_acceptance_sidecars_share_handoff_contract() -> None:
     spec = load_release_audit_spec(REPO_ROOT / "configs" / "release" / "trust_first_audit.yaml")
     release_sidecars = manifest_acceptance_sidecar_paths(spec)

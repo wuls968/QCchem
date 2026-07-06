@@ -178,6 +178,7 @@ jobs:
               "ci_acceptance_command_alignment",
               "ci_acceptance_status_gate",
               "acceptance_summary_source",
+              "ci_release_diagnostics_manifest",
               "acceptance_schema_version",
               "acceptance_release_audit_check_id",
               "acceptance_runtime_evidence_status",
@@ -266,6 +267,24 @@ jobs:
               )
           PY
 
+      - name: Write release diagnostics manifest
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          from qcchem.workflow.release_audit import write_release_diagnostics_manifest
+
+          manifest = write_release_diagnostics_manifest(
+              Path("artifacts/release_audit/release_diagnostics_manifest.json")
+          )
+          if manifest["missing_paths"] or manifest["non_file_paths"]:
+              raise SystemExit(
+                  "Release diagnostics manifest found missing or non-file paths: "
+                  f"missing={manifest['missing_paths']} non_file={manifest['non_file_paths']}"
+              )
+          PY
+
       - name: Upload release diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -279,6 +298,7 @@ jobs:
             artifacts/release_audit/release_handoff.json
             artifacts/release_audit/release_handoff.md
             artifacts/release_audit/release_status.json
+            artifacts/release_audit/release_diagnostics_manifest.json
             /tmp/qcchem-release-acceptance-status.json
             /tmp/qcchem-wheel-smoke.json
             /tmp/qcchem-wheel-release-audit/release_readiness.json

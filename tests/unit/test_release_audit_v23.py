@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from qcchem.io.release_audit_config import load_release_audit_spec
-from qcchem.workflow.release_audit import run_release_audit
+from qcchem.workflow.release_audit import build_release_diagnostics_manifest, run_release_audit
 
 
 def test_release_audit_datetime_utc_usage_is_python310_compatible() -> None:
@@ -53,6 +53,7 @@ def _write_ci_workflow(
     command: str,
     *,
     include_acceptance_status_gate: bool = True,
+    include_release_diagnostics_manifest: bool = True,
     include_release_diagnostic_upload: bool = True,
     acceptance_status_command: str | None = None,
 ) -> None:
@@ -75,6 +76,28 @@ def _write_ci_workflow(
         if include_acceptance_status_gate
         else ""
     )
+    diagnostics_manifest_step = (
+        "\n"
+        "      - name: Write release diagnostics manifest\n"
+        "        run: |\n"
+        "          set -euo pipefail\n"
+        "          python - <<'PY'\n"
+        "          from pathlib import Path\n"
+        "\n"
+        "          from qcchem.workflow.release_audit import write_release_diagnostics_manifest\n"
+        "\n"
+        "          manifest = write_release_diagnostics_manifest(\n"
+        "              Path(\"artifacts/release_audit/release_diagnostics_manifest.json\")\n"
+        "          )\n"
+        "          if manifest[\"missing_paths\"] or manifest[\"non_file_paths\"]:\n"
+        "              raise SystemExit(\n"
+        "                  \"Release diagnostics manifest found missing or non-file paths: \"\n"
+        "                  f\"missing={manifest['missing_paths']} non_file={manifest['non_file_paths']}\"\n"
+        "              )\n"
+        "          PY\n"
+        if include_release_diagnostics_manifest
+        else ""
+    )
     diagnostic_upload_step = (
         "\n"
         "      - name: Upload release diagnostics\n"
@@ -90,6 +113,7 @@ def _write_ci_workflow(
         "            artifacts/release_audit/release_handoff.json\n"
         "            artifacts/release_audit/release_handoff.md\n"
         "            artifacts/release_audit/release_status.json\n"
+        "            artifacts/release_audit/release_diagnostics_manifest.json\n"
         "            /tmp/qcchem-release-acceptance-status.json\n"
         "            /tmp/qcchem-wheel-smoke.json\n"
         "            /tmp/qcchem-wheel-release-audit/release_readiness.json\n"
@@ -116,6 +140,7 @@ jobs:
       - name: Run tests
         run: {command}
 {gate_step}
+{diagnostics_manifest_step}
 {diagnostic_upload_step}
 """,
         encoding="utf-8",
@@ -284,6 +309,40 @@ def _write_acceptance_sidecar(
         ),
         encoding="utf-8",
     )
+
+
+def test_release_diagnostics_manifest_records_sizes_digests_and_missing_paths(tmp_path: Path) -> None:
+    present = tmp_path / "artifacts" / "release_audit" / "release_readiness.json"
+    present.parent.mkdir(parents=True)
+    present.write_text('{"status": "passed"}', encoding="utf-8")
+    output = tmp_path / "artifacts" / "release_audit" / "release_diagnostics_manifest.json"
+
+    manifest = build_release_diagnostics_manifest(
+        paths=[
+            "artifacts/release_audit/release_readiness.json",
+            "artifacts/release_audit/missing.json",
+            "artifacts/release_audit/release_diagnostics_manifest.json",
+        ],
+        output_path=output,
+        base_dir=tmp_path,
+    )
+
+    assert manifest["schema_version"] == "qcchem.release_diagnostics_manifest.v0.1-alpha"
+    assert manifest["present_count"] == 1
+    assert manifest["missing_paths"] == ["artifacts/release_audit/missing.json"]
+    assert manifest["missing_count"] == 1
+    assert manifest["omitted_paths"] == [
+        {
+            "path": "artifacts/release_audit/release_diagnostics_manifest.json",
+            "resolved_path": str(output.resolve()),
+            "reason": "self_manifest_digest_omitted",
+        }
+    ]
+    record = manifest["files"][0]
+    assert record["path"] == "artifacts/release_audit/release_readiness.json"
+    assert record["status"] == "present"
+    assert record["size_bytes"] == present.stat().st_size
+    assert record["sha256"] == hashlib.sha256(present.read_bytes()).hexdigest()
 
 
 def test_release_audit_config_parses_defaults_and_paths(tmp_path: Path) -> None:
@@ -1120,7 +1179,7 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
     assert upload_check["details"]["matching_steps"] == [
         {
             "job": "test",
-            "step_index": 2,
+            "step_index": 3,
             "uses": "actions/upload-artifact@v7",
             "if_condition": "always()",
             "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
@@ -1132,6 +1191,7 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
                 "artifacts/release_audit/release_handoff.json",
                 "artifacts/release_audit/release_handoff.md",
                 "artifacts/release_audit/release_status.json",
+                "artifacts/release_audit/release_diagnostics_manifest.json",
                 "/tmp/qcchem-release-acceptance-status.json",
                 "/tmp/qcchem-wheel-smoke.json",
                 "/tmp/qcchem-wheel-release-audit/release_readiness.json",
@@ -1171,6 +1231,32 @@ def test_release_audit_fails_when_ci_release_diagnostic_artifact_upload_is_missi
             "step_name": "Upload release diagnostics",
         }
     ]
+
+
+def test_release_audit_fails_when_ci_release_diagnostics_manifest_step_is_missing(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        include_release_diagnostics_manifest=False,
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    upload_check = next(check for check in summary["checks"] if check["id"] == "release_diagnostics:ci_artifact_upload")
+    assert summary["status"] == "failed"
+    assert upload_check["status"] == "failed"
+    assert upload_check["required"] is True
+    assert {
+        "reason": "missing_ci_release_diagnostics_manifest_step",
+        "job": "test",
+        "workflow": ".github/workflows/ci.yml",
+        "step_name": "Write release diagnostics manifest",
+    } in upload_check["details"]["failures"]
 
 
 def test_release_audit_fails_when_ci_acceptance_status_gate_is_missing(tmp_path: Path) -> None:
@@ -1646,6 +1732,7 @@ def test_release_audit_matrix_reads_sidecar_acceptance_status(tmp_path: Path) ->
         "ci_acceptance_command_alignment",
         "ci_acceptance_status_gate",
         "ci_release_diagnostic_artifacts",
+        "ci_release_diagnostics_manifest",
         "acceptance_summary_source",
         "acceptance_schema_version",
         "acceptance_artifact_path",
@@ -1733,7 +1820,7 @@ def test_release_audit_writes_local_handoff_index(
     handoff = json.loads((tmp_path / "out" / "release_handoff.json").read_text(encoding="utf-8"))
     handoff_report = (tmp_path / "out" / "release_handoff.md").read_text(encoding="utf-8")
     assert summary["status"] == "passed"
-    assert handoff["schema_version"] == "qcchem.release_handoff.v0.1-alpha"
+    assert handoff["schema_version"] == "qcchem.release_handoff.v0.2-alpha"
     assert handoff["status"] == "passed"
     assert handoff["release_readiness"] == {
         "json": "release_readiness.json",
@@ -1742,8 +1829,13 @@ def test_release_audit_writes_local_handoff_index(
     assert handoff["ci"]["provider"] == "local"
     assert handoff["ci"]["run_url"] is None
     assert handoff["diagnostic_artifacts"]["names"] == []
+    assert handoff["diagnostic_artifacts"]["manifest"] == {
+        "path": "artifacts/release_audit/release_diagnostics_manifest.json",
+        "schema_version": "qcchem.release_diagnostics_manifest.v0.1-alpha",
+    }
     assert "release_readiness.md" in handoff_report
     assert "No GitHub Actions run context was available." in handoff_report
+    assert "manifest_path: `artifacts/release_audit/release_diagnostics_manifest.json`" in handoff_report
 
 
 def test_release_audit_handoff_records_github_actions_run_and_artifact(
@@ -1778,6 +1870,10 @@ def test_release_audit_handoff_records_github_actions_run_and_artifact(
     assert handoff["ci"]["workflow"] == "CI"
     assert handoff["ci"]["job"] == "test"
     assert handoff["diagnostic_artifacts"]["names"] == ["qcchem-release-diagnostics-3.11"]
+    assert handoff["diagnostic_artifacts"]["manifest"] == {
+        "path": "artifacts/release_audit/release_diagnostics_manifest.json",
+        "schema_version": "qcchem.release_diagnostics_manifest.v0.1-alpha",
+    }
     assert (
         handoff["diagnostic_artifacts"]["artifact_listing_url"]
         == "https://api.github.com/repos/wuls968/QCchem/actions/runs/28725412152/artifacts"
@@ -1789,6 +1885,7 @@ def test_release_audit_handoff_records_github_actions_run_and_artifact(
         "artifacts/release_audit/release_handoff.json",
         "artifacts/release_audit/release_handoff.md",
         "artifacts/release_audit/release_status.json",
+        "artifacts/release_audit/release_diagnostics_manifest.json",
         "/tmp/qcchem-release-acceptance-status.json",
         "/tmp/qcchem-wheel-smoke.json",
         "/tmp/qcchem-wheel-release-audit/release_readiness.json",

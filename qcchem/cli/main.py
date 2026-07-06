@@ -910,6 +910,9 @@ def _print_release_audit_handoff_summary(output_dir: Path) -> None:
     artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
     if isinstance(artifact_listing_url, str) and artifact_listing_url:
         print(f"Artifact listing: {artifact_listing_url}")
+    manifest = diagnostic_artifacts.get("manifest")
+    if isinstance(manifest, dict) and manifest.get("path"):
+        print(f"Diagnostics manifest: {manifest.get('path')}")
 
 
 def _release_status_audit_dir(audit_dir: Path, repo_root: Path | None) -> Path:
@@ -1014,6 +1017,9 @@ def _print_release_status_summary(summary: dict[str, object]) -> None:
         artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
         if isinstance(artifact_listing_url, str) and artifact_listing_url:
             print(f"Artifact listing: {artifact_listing_url}")
+        manifest = diagnostic_artifacts.get("manifest")
+        if isinstance(manifest, dict) and manifest.get("path"):
+            print(f"Diagnostics manifest: {manifest.get('path')}")
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:

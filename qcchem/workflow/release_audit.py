@@ -24,7 +24,8 @@ from qcchem.io.release_audit_config import (
 )
 
 RELEASE_AUDIT_SCHEMA_VERSION = "1.1"
-RELEASE_HANDOFF_SCHEMA_VERSION = "qcchem.release_handoff.v0.1-alpha"
+RELEASE_HANDOFF_SCHEMA_VERSION = "qcchem.release_handoff.v0.2-alpha"
+RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION = "qcchem.release_diagnostics_manifest.v0.1-alpha"
 RELEASE_AUDIT_SCHEMA_FEATURES = [
     "failed_checks",
     "required_failed_checks",
@@ -37,6 +38,7 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "ci_acceptance_command_alignment",
     "ci_acceptance_status_gate",
     "ci_release_diagnostic_artifacts",
+    "ci_release_diagnostics_manifest",
     "acceptance_summary_source",
     "acceptance_schema_version",
     "acceptance_artifact_path",
@@ -93,8 +95,10 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "-o /tmp/qcchem-release-acceptance-status.json",
 )
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
+CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME = "Write release diagnostics manifest"
 CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v7"
 CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
+CI_RELEASE_DIAGNOSTIC_MANIFEST_PATH = "artifacts/release_audit/release_diagnostics_manifest.json"
 CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/workbench_smoke.json",
     "artifacts/release_audit/release_readiness.json",
@@ -102,6 +106,7 @@ CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/release_audit/release_handoff.json",
     "artifacts/release_audit/release_handoff.md",
     "artifacts/release_audit/release_status.json",
+    CI_RELEASE_DIAGNOSTIC_MANIFEST_PATH,
     "/tmp/qcchem-release-acceptance-status.json",
     "/tmp/qcchem-wheel-smoke.json",
     "/tmp/qcchem-wheel-release-audit/release_readiness.json",
@@ -115,6 +120,7 @@ CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     "Run Workbench release smoke",
     "Run Trust-First release audit",
     CI_ACCEPTANCE_STATUS_STEP_NAME,
+    CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
 )
 
 
@@ -1123,6 +1129,15 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                 for step_index, step in enumerate(steps)
                 if isinstance(step, dict) and step.get("name") in CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS
             }
+            if CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME not in producer_indices:
+                failures.append(
+                    {
+                        "reason": "missing_ci_release_diagnostics_manifest_step",
+                        "job": str(job_name),
+                        "workflow": workflow_relative_path.as_posix(),
+                        "step_name": CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
+                    }
+                )
             for step_index, step in enumerate(steps):
                 if not isinstance(step, dict) or step.get("name") != CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME:
                     continue
@@ -1470,6 +1485,122 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _diagnostic_upload_path_record(path_value: str, *, base_dir: Path) -> dict[str, Any]:
+    raw_path = Path(path_value)
+    resolved = raw_path if raw_path.is_absolute() else base_dir / raw_path
+    record: dict[str, Any] = {
+        "path": path_value,
+        "resolved_path": str(resolved.resolve()),
+    }
+    try:
+        stat = resolved.stat()
+    except OSError as exc:
+        record.update(
+            {
+                "status": "missing",
+                "exists": False,
+                "is_file": False,
+                "size_bytes": None,
+                "sha256": None,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+        )
+        return record
+    if not resolved.is_file():
+        record.update(
+            {
+                "status": "not_file",
+                "exists": True,
+                "is_file": False,
+                "size_bytes": int(stat.st_size),
+                "sha256": None,
+            }
+        )
+        return record
+    record.update(
+        {
+            "status": "present",
+            "exists": True,
+            "is_file": True,
+            "size_bytes": int(stat.st_size),
+            "sha256": _file_sha256(resolved),
+        }
+    )
+    return record
+
+
+def build_release_diagnostics_manifest(
+    *,
+    paths: tuple[str, ...] | list[str] = CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS,
+    output_path: Path | None = None,
+    base_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Build a deterministic upload manifest for CI release diagnostic files."""
+
+    resolved_base_dir = (base_dir or Path.cwd()).resolve()
+    resolved_output = output_path.resolve() if output_path is not None else None
+    files: list[dict[str, Any]] = []
+    omitted_paths: list[dict[str, Any]] = []
+    for path_value in paths:
+        raw_path = Path(path_value)
+        resolved = raw_path if raw_path.is_absolute() else resolved_base_dir / raw_path
+        if resolved_output is not None and resolved.resolve() == resolved_output:
+            omitted_paths.append(
+                {
+                    "path": path_value,
+                    "resolved_path": str(resolved_output),
+                    "reason": "self_manifest_digest_omitted",
+                }
+            )
+            continue
+        files.append(_diagnostic_upload_path_record(path_value, base_dir=resolved_base_dir))
+
+    missing_paths = [record["path"] for record in files if record.get("status") == "missing"]
+    non_file_paths = [record["path"] for record in files if record.get("status") == "not_file"]
+    artifact_name = os.environ.get(CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_ENV) or None
+    return {
+        "schema_version": RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION,
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "base_dir": str(resolved_base_dir),
+        "ci": _github_actions_handoff_context(),
+        "diagnostic_artifact": {
+            "name": artifact_name,
+            "name_prefix": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX,
+        },
+        "manifest_path": str(resolved_output) if resolved_output is not None else None,
+        "upload_paths": list(paths),
+        "files": files,
+        "file_count": len(files),
+        "present_count": sum(1 for record in files if record.get("status") == "present"),
+        "digest_count": sum(1 for record in files if record.get("sha256")),
+        "missing_paths": missing_paths,
+        "missing_count": len(missing_paths),
+        "non_file_paths": non_file_paths,
+        "non_file_count": len(non_file_paths),
+        "omitted_paths": omitted_paths,
+        "omitted_count": len(omitted_paths),
+    }
+
+
+def write_release_diagnostics_manifest(
+    output_path: Path = Path(CI_RELEASE_DIAGNOSTIC_MANIFEST_PATH),
+    *,
+    paths: tuple[str, ...] | list[str] = CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS,
+    base_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Write the CI release diagnostic upload manifest and return its payload."""
+
+    resolved_output = output_path if output_path.is_absolute() else (base_dir or Path.cwd()) / output_path
+    manifest = build_release_diagnostics_manifest(
+        paths=paths,
+        output_path=resolved_output,
+        base_dir=base_dir,
+    )
+    resolved_output.parent.mkdir(parents=True, exist_ok=True)
+    resolved_output.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    return manifest
 
 
 def _acceptance_contract_failures(
@@ -2344,6 +2475,10 @@ def _build_release_handoff(summary: dict[str, Any]) -> dict[str, Any]:
         "diagnostic_artifacts": {
             "names": [artifact_name] if artifact_name else [],
             "name_prefix": CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX,
+            "manifest": {
+                "path": CI_RELEASE_DIAGNOSTIC_MANIFEST_PATH,
+                "schema_version": RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION,
+            },
             "artifact_listing_url": (
                 f"{ci['api_url']}/repos/{ci['repository']}/actions/runs/{ci['run_id']}/artifacts"
                 if ci.get("api_url") and ci.get("repository") and ci.get("run_id")
@@ -2406,6 +2541,10 @@ def _render_release_handoff_markdown(handoff: dict[str, Any]) -> str:
     artifact_listing_url = diagnostic_artifacts.get("artifact_listing_url")
     if artifact_listing_url:
         lines.append(f"- artifact_listing_url: {artifact_listing_url}")
+    manifest = diagnostic_artifacts.get("manifest")
+    if isinstance(manifest, dict):
+        lines.append(f"- manifest_path: `{manifest.get('path')}`")
+        lines.append(f"- manifest_schema_version: `{manifest.get('schema_version')}`")
     lines.extend(["", "## Uploaded Paths", ""])
     for path in diagnostic_artifacts.get("upload_paths", []):
         lines.append(f"- `{path}`")

@@ -159,6 +159,7 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
         "ci_acceptance_command_alignment",
         "acceptance_summary_source",
         "ci_release_diagnostic_artifacts",
+        "ci_release_diagnostics_manifest",
         "acceptance_schema_version",
         "acceptance_artifact_sha256",
         "acceptance_release_audit_check_id",
@@ -184,8 +185,12 @@ def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.Cap
     assert f"Handoff: {output_dir / 'release_handoff.md'}" in stdout
     assert "release_readiness.md" in (output_dir / "release_readiness.md").read_text(encoding="utf-8")
     handoff = json.loads((output_dir / "release_handoff.json").read_text(encoding="utf-8"))
-    assert handoff["schema_version"] == "qcchem.release_handoff.v0.1-alpha"
+    assert handoff["schema_version"] == "qcchem.release_handoff.v0.2-alpha"
     assert handoff["release_readiness"]["markdown"] == "release_readiness.md"
+    assert handoff["diagnostic_artifacts"]["manifest"] == {
+        "path": "artifacts/release_audit/release_diagnostics_manifest.json",
+        "schema_version": "qcchem.release_diagnostics_manifest.v0.1-alpha",
+    }
     assert "release_handoff.md" in (output_dir / "release_handoff.md").read_text(encoding="utf-8")
 
 
@@ -210,6 +215,7 @@ def test_release_audit_cli_prints_ci_diagnostic_artifact_hint(
     assert exit_code == 0
     assert "Diagnostic artifact: qcchem-release-diagnostics-3.11" in stdout
     assert "Artifact listing: https://api.github.com/repos/wuls968/QCchem/actions/runs/28725875043/artifacts" in stdout
+    assert "Diagnostics manifest: artifacts/release_audit/release_diagnostics_manifest.json" in stdout
 
 
 @pytest.mark.integration
@@ -230,6 +236,7 @@ def test_release_status_cli_summarizes_existing_audit_outputs(
     assert "Release status: passed" in stdout
     assert f"Report: {output_dir / 'release_readiness.md'}" in stdout
     assert f"Handoff: {output_dir / 'release_handoff.md'}" in stdout
+    assert "Diagnostics manifest: artifacts/release_audit/release_diagnostics_manifest.json" in stdout
     assert f"Status JSON: {status_json}" in stdout
     status = json.loads(status_json.read_text(encoding="utf-8"))
     assert status["schema_version"] == "qcchem.release_status.v0.1-alpha"
@@ -246,7 +253,7 @@ def test_release_status_cli_summarizes_existing_audit_outputs(
     ("file_name", "stale_schema_version", "expected_schema_version"),
     [
         ("release_readiness.json", "0.0-stale", "1.1"),
-        ("release_handoff.json", "qcchem.release_handoff.v0.0-stale", "qcchem.release_handoff.v0.1-alpha"),
+        ("release_handoff.json", "qcchem.release_handoff.v0.0-stale", "qcchem.release_handoff.v0.2-alpha"),
     ],
 )
 def test_release_status_cli_rejects_schema_mismatch(
@@ -333,6 +340,18 @@ def test_release_status_cli_rejects_schema_mismatch(
                 "reason": "must_equal_release_acceptance_sidecars.repair_plan_length",
                 "expected": 0,
                 "actual": 4,
+            },
+        ),
+        (
+            "release_handoff.json",
+            ("diagnostic_artifacts", "manifest", "schema_version"),
+            "qcchem.release_diagnostics_manifest.v0.0-stale",
+            {
+                "file": "release_handoff.json",
+                "field": "diagnostic_artifacts.manifest.schema_version",
+                "reason": "must_match_release_diagnostics_manifest_schema_version",
+                "expected": "qcchem.release_diagnostics_manifest.v0.1-alpha",
+                "actual": "qcchem.release_diagnostics_manifest.v0.0-stale",
             },
         ),
     ],

@@ -159,17 +159,22 @@ failures so circuit/statevector regressions do not return as noisy test output.
 Keep the CI `Run tests` command listed in the
 `configs/release/trust_first_audit.yaml` `acceptance_commands` list; release
 audit fails when the two drift.
-CI must also keep the `Upload release diagnostics` step after the Workbench
-smoke, Trust-First release audit, and release acceptance freshness gates. The
-step uses `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
+CI must also keep the `Write release diagnostics manifest` step after the
+release status and release acceptance freshness gates, and keep the
+`Upload release diagnostics` step after that manifest step. The upload step uses
+`if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
 `artifacts/release_audit/release_readiness.*`,
 `artifacts/release_audit/release_handoff.*`,
-`artifacts/release_audit/release_status.json`, and the release sidecar freshness
-JSON as downloadable GitHub Actions artifacts. The job-level
+`artifacts/release_audit/release_status.json`,
+`artifacts/release_audit/release_diagnostics_manifest.json`, and the release
+sidecar freshness JSON as downloadable GitHub Actions artifacts. The manifest
+records uploaded-path size and SHA-256 summaries, omitting only its own
+self-referential digest. The job-level
 `QCCHEM_RELEASE_DIAGNOSTIC_ARTIFACT_NAME` environment variable must match the
 uploaded artifact name so `release_handoff.json` records the exact artifact
 entrypoint for the current run. `qcchem release audit` prints that handoff path,
-artifact name, and artifact listing API URL in CI logs.
+artifact name, artifact listing API URL, and diagnostics manifest path in CI
+logs.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash
@@ -441,6 +446,7 @@ for feature in (
     "ci_acceptance_command_alignment",
     "ci_acceptance_status_gate",
     "acceptance_summary_source",
+    "ci_release_diagnostics_manifest",
     "acceptance_schema_version",
     "acceptance_artifact_sha256",
     "acceptance_release_audit_check_id",

@@ -104,6 +104,7 @@ The command writes:
 - `release_readiness.md`
 - `release_handoff.json`
 - `release_handoff.md`
+- `release_diagnostics_manifest.json` in CI, written before diagnostic upload
 
 Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
@@ -111,14 +112,16 @@ files for the release itself.
 `release_handoff.json` and `release_handoff.md` are the compact entrypoint for
 handoff: they point back to `release_readiness.*`, summarize the release status,
 and, inside GitHub Actions, record the current run URL plus the diagnostic
-artifact name. CI uploads those handoff files, readiness files, Workbench smoke
-JSON, compact `release_status.json` summaries, and release sidecar freshness JSON
-as `qcchem-release-diagnostics-*` artifacts so failed runs keep their handoff
-bundle without tracking generated outputs in git.
+artifact name and diagnostics manifest path. CI uploads those handoff files,
+readiness files, Workbench smoke JSON, compact `release_status.json` summaries,
+the `release_diagnostics_manifest.json` digest/size summary, and release sidecar
+freshness JSON as `qcchem-release-diagnostics-*` artifacts so failed runs keep
+their handoff bundle without tracking generated outputs in git.
 The CLI prints both `Report: <...>/release_readiness.md` and
 `Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact
 `Diagnostic artifact:` name and the `Artifact listing:` API URL recorded in
-`release_handoff.json`.
+`release_handoff.json`, plus `Diagnostics manifest:` with the expected manifest
+path.
 `qcchem release status` reads the existing `release_readiness.json` and
 `release_handoff.json` files and prints the current status, first required
 failure or warning, sidecar status, handoff path, and diagnostic artifact
@@ -128,14 +131,15 @@ code `2`. Status also fails with `schema_mismatch` when
 `release_readiness.json` or `release_handoff.json` uses an unexpected
 `schema_version`, so old or incompatible handoff bundles are not accepted as
 current evidence. It fails with `contract_mismatch` when a current-schema bundle
-is missing required status, count, sidecar, or diagnostic-artifact fields, or
-when `release_handoff.json` no longer agrees with `release_readiness.json` on
-status, action, counts, provenance, or sidecar state. The same shared
-release-status validator also checks derived counts such as failed checks,
-warnings, and sidecar repair-plan length, so automation does not silently
-consume partial or internally inconsistent handoff JSON. CI runs that validator
-against both source-tree and installed-wheel release bundles before uploading
-diagnostics. When `-o` is supplied, it writes a compact
+is missing required status, count, sidecar, diagnostic-artifact, or diagnostics
+manifest fields, when the declared diagnostics manifest schema drifts, or when
+`release_handoff.json` no longer agrees with `release_readiness.json` on status,
+action, counts, provenance, or sidecar state. The same shared release-status
+validator also checks derived counts such as failed checks, warnings, and
+sidecar repair-plan length, so automation does not silently consume partial or
+internally inconsistent handoff JSON. CI runs that validator against both
+source-tree and installed-wheel release bundles before writing the diagnostics
+manifest and uploading diagnostics. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`

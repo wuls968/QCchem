@@ -6,7 +6,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from qcchem.workflow.release_audit import RELEASE_AUDIT_SCHEMA_VERSION, RELEASE_HANDOFF_SCHEMA_VERSION
+from qcchem.workflow.release_audit import (
+    RELEASE_AUDIT_SCHEMA_VERSION,
+    RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION,
+    RELEASE_HANDOFF_SCHEMA_VERSION,
+)
 
 RELEASE_STATUS_SCHEMA_VERSION = "qcchem.release_status.v0.1-alpha"
 
@@ -158,6 +162,9 @@ def release_status_contract_mismatches(
         ("release_handoff.json", handoff, ("diagnostic_artifacts",), dict),
         ("release_handoff.json", handoff, ("diagnostic_artifacts", "names"), list),
         ("release_handoff.json", handoff, ("diagnostic_artifacts", "upload_paths"), list),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts", "manifest"), dict),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts", "manifest", "path"), str),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts", "manifest", "schema_version"), str),
     )
     mismatches: list[dict[str, object]] = []
     for file_name, payload, field_path, expected_type in required_fields:
@@ -329,6 +336,20 @@ def release_status_consistency_mismatches(
                         reason="must_equal_release_acceptance_sidecars.repair_plan_length",
                     )
                 )
+    manifest = handoff.get("diagnostic_artifacts")
+    manifest = manifest.get("manifest") if isinstance(manifest, dict) else None
+    if isinstance(manifest, dict):
+        manifest_schema_version = manifest.get("schema_version")
+        if manifest_schema_version != RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION:
+            mismatches.append(
+                _release_status_value_mismatch(
+                    file_name="release_handoff.json",
+                    field_path=("diagnostic_artifacts", "manifest", "schema_version"),
+                    expected=RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION,
+                    actual=manifest_schema_version,
+                    reason="must_match_release_diagnostics_manifest_schema_version",
+                )
+            )
     return mismatches
 
 

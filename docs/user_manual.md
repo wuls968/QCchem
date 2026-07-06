@@ -574,26 +574,30 @@ Outputs:
 - `release_readiness.md`
 - `release_handoff.json`
 - `release_handoff.md`
+- `release_diagnostics_manifest.json` in CI, written before diagnostic upload
 
 Release audit reads local source files, docs, configs, and curated artifacts. It
 performs no runtime submission and should not mutate curated artifacts. On
 failure, read `release_handoff.md` first for the compact run/artifact entrypoint,
 then `release_readiness.md` for failed check names and recommended actions.
 The CLI prints both generated paths; in GitHub Actions it also prints the exact
-`qcchem-release-diagnostics-*` artifact name and artifact listing API URL.
+`qcchem-release-diagnostics-*` artifact name, artifact listing API URL, and
+diagnostics manifest path.
 After running the audit, use `qcchem release status --audit-dir
 artifacts/release_audit --strict` to read those existing outputs and print a
 compact status summary without rerunning the audit. The status command also
 fails if the existing readiness or handoff JSON uses an unexpected
 `schema_version`, or if required current-schema fields are missing or have the
 wrong type, which protects scripts from consuming stale or partial audit bundles.
-It also checks that the handoff status, counts, and sidecar state still agree
-with the readiness JSON before reporting the bundle as current. CI applies that
-same validator to both the source-tree and installed-wheel release bundles.
-CI diagnostic artifacts include that compact status JSON and the
-`acceptance-status` sidecar-freshness JSON with its own `schema_features` for
-each Python matrix; CI validates the acceptance-status artifact before upload so
-the reported counts and repair plan stay consistent with the item list.
+It also checks that the handoff status, counts, sidecar state, and diagnostics
+manifest schema still agree with the readiness JSON before reporting the bundle
+as current. CI applies that same validator to both the source-tree and
+installed-wheel release bundles. CI diagnostic artifacts include that compact
+status JSON, `release_diagnostics_manifest.json` with uploaded-path size and
+SHA-256 summaries, and the `acceptance-status` sidecar-freshness JSON with its
+own `schema_features` for each Python matrix; CI validates the acceptance-status
+artifact before upload so the reported counts and repair plan stay consistent
+with the item list.
 
 Before publishing release-facing docs, also run:
 
