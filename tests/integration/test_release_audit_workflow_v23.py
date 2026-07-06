@@ -286,6 +286,82 @@ def test_release_status_cli_rejects_schema_mismatch(
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(
+    ("file_name", "field_path", "replacement", "expected_contract"),
+    [
+        (
+            "release_readiness.json",
+            ("required_fail_count",),
+            None,
+            {
+                "file": "release_readiness.json",
+                "field": "required_fail_count",
+                "expected": "int",
+                "actual_type": "missing",
+            },
+        ),
+        (
+            "release_handoff.json",
+            ("diagnostic_artifacts", "names"),
+            "qcchem-release-diagnostics-3.11",
+            {
+                "file": "release_handoff.json",
+                "field": "diagnostic_artifacts.names",
+                "expected": "list",
+                "actual_type": "str",
+            },
+        ),
+        (
+            "release_readiness.json",
+            ("release_acceptance_sidecars", "status"),
+            12,
+            {
+                "file": "release_readiness.json",
+                "field": "release_acceptance_sidecars.status",
+                "expected": "str",
+                "actual_type": "int",
+            },
+        ),
+    ],
+)
+def test_release_status_cli_rejects_contract_mismatch(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    file_name: str,
+    field_path: tuple[str, ...],
+    replacement: object,
+    expected_contract: dict[str, object],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    status_json = tmp_path / "release_status.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+    contract_json = output_dir / file_name
+    contract_payload = json.loads(contract_json.read_text(encoding="utf-8"))
+    target = contract_payload
+    for part in field_path[:-1]:
+        target = target[part]
+    if replacement is None:
+        target.pop(field_path[-1])
+    else:
+        target[field_path[-1]] = replacement
+    contract_json.write_text(json.dumps(contract_payload), encoding="utf-8")
+
+    exit_code = main(["release", "status", "--audit-dir", str(output_dir), "-o", str(status_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release status unavailable: contract mismatch" in stdout
+    assert f"{expected_contract['file']} {expected_contract['field']} expected={expected_contract['expected']}" in stdout
+    status = json.loads(status_json.read_text(encoding="utf-8"))
+    assert status["status"] == "contract_mismatch"
+    assert status["recommended_action"] == "rerun_release_audit"
+    assert status["contract_mismatches"] == [expected_contract]
+
+
+@pytest.mark.integration
 def test_release_status_cli_reports_missing_outputs(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

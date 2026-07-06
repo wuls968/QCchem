@@ -100,7 +100,9 @@ show the preview/refresh commands.
 Use `qcchem release status --audit-dir artifacts/release_audit --strict` after a
 local audit when a script needs the compact handoff state without rerunning the
 audit. The status command rejects unexpected `release_readiness.json` and
-`release_handoff.json` schema versions before treating the bundle as current.
+`release_handoff.json` schema versions, and it rejects current-schema bundles
+with missing or mistyped required status fields before treating the bundle as
+current.
 Add `-o artifacts/release_audit/release_status.json` only for local or CI
 handoff bundles; that file is generated output and should stay ignored.
 

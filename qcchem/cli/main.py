@@ -1000,6 +1000,89 @@ def _release_status_schema_mismatches(
     return mismatches
 
 
+def _release_status_lookup(payload: dict[str, object], field_path: tuple[str, ...]) -> tuple[bool, object]:
+    current: object = payload
+    for field in field_path:
+        if not isinstance(current, dict) or field not in current:
+            return False, None
+        current = current[field]
+    return True, current
+
+
+def _release_status_expected_type_name(expected_type: type) -> str:
+    if expected_type is str:
+        return "str"
+    if expected_type is int:
+        return "int"
+    if expected_type is list:
+        return "list"
+    if expected_type is dict:
+        return "dict"
+    return expected_type.__name__
+
+
+def _release_status_actual_type(value: object, *, missing: bool) -> str:
+    if missing:
+        return "missing"
+    if isinstance(value, bool):
+        return "bool"
+    if value is None:
+        return "NoneType"
+    return type(value).__name__
+
+
+def _release_status_type_matches(value: object, expected_type: type) -> bool:
+    if expected_type is int:
+        return type(value) is int
+    return isinstance(value, expected_type)
+
+
+def _release_status_contract_mismatches(
+    *,
+    readiness: dict[str, object],
+    handoff: dict[str, object],
+) -> list[dict[str, object]]:
+    required_fields = (
+        ("release_readiness.json", readiness, ("status",), str),
+        ("release_readiness.json", readiness, ("recommended_action",), str),
+        ("release_readiness.json", readiness, ("required_pass_count",), int),
+        ("release_readiness.json", readiness, ("required_fail_count",), int),
+        ("release_readiness.json", readiness, ("warning_count",), int),
+        ("release_readiness.json", readiness, ("required_failed_checks",), list),
+        ("release_readiness.json", readiness, ("warning_checks",), list),
+        ("release_readiness.json", readiness, ("release_acceptance_sidecars",), dict),
+        ("release_readiness.json", readiness, ("release_acceptance_sidecars", "status"), str),
+        ("release_readiness.json", readiness, ("release_acceptance_sidecars", "repair_plan"), list),
+        ("release_readiness.json", readiness, ("release_acceptance_sidecars", "repair_plan_count"), int),
+        ("release_handoff.json", handoff, ("status",), str),
+        ("release_handoff.json", handoff, ("recommended_action",), str),
+        ("release_handoff.json", handoff, ("release_readiness",), dict),
+        ("release_handoff.json", handoff, ("release_readiness", "json"), str),
+        ("release_handoff.json", handoff, ("release_readiness", "markdown"), str),
+        ("release_handoff.json", handoff, ("release_audit",), dict),
+        ("release_handoff.json", handoff, ("release_audit", "required_fail_count"), int),
+        ("release_handoff.json", handoff, ("release_audit", "warning_count"), int),
+        ("release_handoff.json", handoff, ("ci",), dict),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts",), dict),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts", "names"), list),
+        ("release_handoff.json", handoff, ("diagnostic_artifacts", "upload_paths"), list),
+    )
+    mismatches: list[dict[str, object]] = []
+    for file_name, payload, field_path, expected_type in required_fields:
+        exists, value = _release_status_lookup(payload, field_path)
+        missing = not exists
+        if missing or not _release_status_type_matches(value, expected_type):
+            mismatches.append(
+                {
+                    "file": file_name,
+                    "field": ".".join(field_path),
+                    "expected": _release_status_expected_type_name(expected_type),
+                    "actual_type": _release_status_actual_type(value, missing=missing),
+                }
+            )
+    return mismatches
+
+
 def _build_release_status_summary(audit_dir: Path) -> dict[str, object]:
     readiness_json = audit_dir / "release_readiness.json"
     readiness_md = audit_dir / "release_readiness.md"
@@ -1048,6 +1131,17 @@ def _build_release_status_summary(audit_dir: Path) -> dict[str, object]:
                 "status": "schema_mismatch",
                 "recommended_action": "rerun_release_audit",
                 "schema_mismatches": schema_mismatches,
+            }
+        )
+        return base
+
+    contract_mismatches = _release_status_contract_mismatches(readiness=readiness, handoff=handoff)
+    if contract_mismatches:
+        base.update(
+            {
+                "status": "contract_mismatch",
+                "recommended_action": "rerun_release_audit",
+                "contract_mismatches": contract_mismatches,
             }
         )
         return base
@@ -1101,6 +1195,17 @@ def _print_release_status_summary(summary: dict[str, object]) -> None:
                     "Schema mismatch: "
                     f"{item.get('file')} {item.get('field')} "
                     f"expected={item.get('expected')} actual={item.get('actual')}"
+                )
+        return
+    contract_mismatches = summary.get("contract_mismatches")
+    if isinstance(contract_mismatches, list) and contract_mismatches:
+        print("Release status unavailable: contract mismatch")
+        for item in contract_mismatches:
+            if isinstance(item, dict):
+                print(
+                    "Contract mismatch: "
+                    f"{item.get('file')} {item.get('field')} "
+                    f"expected={item.get('expected')} actual_type={item.get('actual_type')}"
                 )
         return
 
@@ -1636,7 +1741,12 @@ def main(argv: list[str] | None = None) -> int:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
                 print(f"Status JSON: {args.output}")
-            if summary.get("status") in {"missing_outputs", "unreadable_outputs", "schema_mismatch"}:
+            if summary.get("status") in {
+                "missing_outputs",
+                "unreadable_outputs",
+                "schema_mismatch",
+                "contract_mismatch",
+            }:
                 return 2
             if args.strict and summary.get("status") != "passed":
                 return 2
