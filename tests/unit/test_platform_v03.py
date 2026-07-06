@@ -436,6 +436,26 @@ def test_ci_validates_release_acceptance_status_artifact_contract() -> None:
     assert "release_acceptance_status_contract_failures" in command
 
 
+def test_ci_validates_release_status_artifacts_with_shared_api() -> None:
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Validate release status artifacts"
+    ]
+
+    assert len(matches) == 1
+    command = matches[0]["run"]
+    assert isinstance(command, str)
+    assert "set -euo pipefail" in command
+    assert "from qcchem.workflow.release_status import build_release_status_summary" in command
+    assert 'Path("artifacts/release_audit")' in command
+    assert 'Path("/tmp/qcchem-wheel-release-audit")' in command
+    assert "contract_mismatches" in command
+
+
 def test_manifest_release_acceptance_sidecars_share_handoff_contract() -> None:
     spec = load_release_audit_spec(REPO_ROOT / "configs" / "release" / "trust_first_audit.yaml")
     release_sidecars = manifest_acceptance_sidecar_paths(spec)

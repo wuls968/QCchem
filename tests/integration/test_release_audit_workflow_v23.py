@@ -10,6 +10,7 @@ import pytest
 from qcchem.cli.main import main
 from qcchem.io.release_audit_config import load_release_audit_spec
 from qcchem.workflow.release_audit import classify_exploratory_config
+from qcchem.workflow.release_status import build_release_status_summary
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -432,6 +433,36 @@ def test_release_status_cli_rejects_handoff_consistency_mismatch(
     assert status["status"] == "contract_mismatch"
     assert status["recommended_action"] == "rerun_release_audit"
     assert status["contract_mismatches"] == [expected_contract]
+
+
+@pytest.mark.integration
+def test_release_status_shared_validator_reports_handoff_consistency_mismatch(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+    handoff_json = output_dir / "release_handoff.json"
+    handoff = json.loads(handoff_json.read_text(encoding="utf-8"))
+    handoff["release_audit"]["warning_count"] = 3
+    handoff_json.write_text(json.dumps(handoff), encoding="utf-8")
+
+    status = build_release_status_summary(output_dir)
+
+    assert status["status"] == "contract_mismatch"
+    assert status["recommended_action"] == "rerun_release_audit"
+    assert status["contract_mismatches"] == [
+        {
+            "file": "release_handoff.json",
+            "field": "release_audit.warning_count",
+            "reason": "must_match_release_readiness.warning_count",
+            "expected": 0,
+            "actual": 3,
+        }
+    ]
 
 
 @pytest.mark.integration

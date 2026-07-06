@@ -130,10 +130,12 @@ code `2`. Status also fails with `schema_mismatch` when
 current evidence. It fails with `contract_mismatch` when a current-schema bundle
 is missing required status, count, sidecar, or diagnostic-artifact fields, or
 when `release_handoff.json` no longer agrees with `release_readiness.json` on
-status, action, counts, provenance, or sidecar state. It also checks derived
-counts such as failed checks, warnings, and sidecar repair-plan length, so
-automation does not silently consume partial or internally inconsistent handoff
-JSON. When `-o` is supplied, it writes a compact
+status, action, counts, provenance, or sidecar state. The same shared
+release-status validator also checks derived counts such as failed checks,
+warnings, and sidecar repair-plan length, so automation does not silently
+consume partial or internally inconsistent handoff JSON. CI runs that validator
+against both source-tree and installed-wheel release bundles before uploading
+diagnostics. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`

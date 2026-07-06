@@ -588,7 +588,8 @@ fails if the existing readiness or handoff JSON uses an unexpected
 `schema_version`, or if required current-schema fields are missing or have the
 wrong type, which protects scripts from consuming stale or partial audit bundles.
 It also checks that the handoff status, counts, and sidecar state still agree
-with the readiness JSON before reporting the bundle as current.
+with the readiness JSON before reporting the bundle as current. CI applies that
+same validator to both the source-tree and installed-wheel release bundles.
 CI diagnostic artifacts include that compact status JSON and the
 `acceptance-status` sidecar-freshness JSON with its own `schema_features` for
 each Python matrix; CI validates the acceptance-status artifact before upload so

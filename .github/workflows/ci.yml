@@ -214,6 +214,25 @@ jobs:
             --strict \
             -o artifacts/release_audit/release_status.json
 
+      - name: Validate release status artifacts
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          from qcchem.workflow.release_status import build_release_status_summary
+
+          for audit_dir in (
+              Path("artifacts/release_audit"),
+              Path("/tmp/qcchem-wheel-release-audit"),
+          ):
+              summary = build_release_status_summary(audit_dir)
+              if summary.get("status") != "passed":
+                  raise SystemExit(f"{audit_dir} release status did not pass: {summary}")
+              if summary.get("contract_mismatches"):
+                  raise SystemExit(f"{audit_dir} release status contract drifted: {summary['contract_mismatches']}")
+          PY
+
       - name: Run release acceptance sidecar freshness
         run: |
           set -euo pipefail

@@ -105,7 +105,9 @@ audit. The status command rejects unexpected `release_readiness.json` and
 `release_handoff.json` schema versions, and it rejects current-schema bundles
 with missing or mistyped required status fields. It also rejects handoff bundles
 whose status, action, counts, provenance, or sidecar state no longer match the
-readiness JSON before treating the bundle as current.
+readiness JSON before treating the bundle as current. CI calls the same
+`qcchem.workflow.release_status` validator for the source-tree audit bundle and
+the installed-wheel audit bundle before uploading diagnostics.
 Add `-o artifacts/release_audit/release_status.json` only for local or CI
 handoff bundles; that file is generated output and should stay ignored.
 
