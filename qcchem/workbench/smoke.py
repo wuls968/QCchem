@@ -197,75 +197,82 @@ def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Pat
     from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, resolve_workbench_artifact_root
 
     resolved_artifact_root = resolve_workbench_artifact_root(artifact_root)
+    original_artifact_root = os.environ.get(WORKBENCH_ARTIFACT_ROOT_ENV)
     os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] = str(resolved_artifact_root)
-    app = create_app()
-    page_registry = getattr(app, "page_registry", dash.page_registry)
-    registered_pages = _registered_pages(page_registry)
-    pages_by_path = {str(page.get("path")): page for page in registered_pages}
-    registered_routes = sorted(pages_by_path)
+    try:
+        app = create_app()
+        page_registry = getattr(app, "page_registry", dash.page_registry)
+        registered_pages = _registered_pages(page_registry)
+        pages_by_path = {str(page.get("path")): page for page in registered_pages}
+        registered_routes = sorted(pages_by_path)
 
-    route_results: list[dict[str, object]] = []
-    for route in routes:
-        page = pages_by_path.get(route.route)
-        focus = page_focus(route.route)
-        route_label = str(focus.get("route_label") or "")
-        if page is None:
-            page_text = ""
-            render_error = None
-        else:
-            page_text, render_error = _render_page_text_or_error(page)
-        normalized_page_text = _normalize_text(page_text)
-        expected_text = _normalize_text(route.expected_text)
-        checks = {
-            "registered": page is not None,
-            "rendered": page is None or render_error is None,
-            "active_label": route_label == route.active_label,
-            "nonblank": bool(normalized_page_text),
-            "expected_text": expected_text in normalized_page_text,
-            "not_placeholder": "placeholder page" not in normalized_page_text,
-        }
-        failed_checks = _failed_check_names(checks)
-        route_results.append(
-            {
-                "route": route.route,
-                "page_name": page.get("name") if page is not None else None,
-                "page_title": page.get("title") if page is not None else None,
-                "expected_active_label": route.active_label,
-                "actual_active_label": route_label,
-                "expected_text": route.expected_text,
-                "text_excerpt": _text_excerpt(page_text),
-                "render_error": render_error,
-                "checks": checks,
-                "failed_checks": failed_checks,
-                "status": "passed" if not failed_checks else "failed",
+        route_results: list[dict[str, object]] = []
+        for route in routes:
+            page = pages_by_path.get(route.route)
+            focus = page_focus(route.route)
+            route_label = str(focus.get("route_label") or "")
+            if page is None:
+                page_text = ""
+                render_error = None
+            else:
+                page_text, render_error = _render_page_text_or_error(page)
+            normalized_page_text = _normalize_text(page_text)
+            expected_text = _normalize_text(route.expected_text)
+            checks = {
+                "registered": page is not None,
+                "rendered": page is None or render_error is None,
+                "active_label": route_label == route.active_label,
+                "nonblank": bool(normalized_page_text),
+                "expected_text": expected_text in normalized_page_text,
+                "not_placeholder": "placeholder page" not in normalized_page_text,
             }
-        )
+            failed_checks = _failed_check_names(checks)
+            route_results.append(
+                {
+                    "route": route.route,
+                    "page_name": page.get("name") if page is not None else None,
+                    "page_title": page.get("title") if page is not None else None,
+                    "expected_active_label": route.active_label,
+                    "actual_active_label": route_label,
+                    "expected_text": route.expected_text,
+                    "text_excerpt": _text_excerpt(page_text),
+                    "render_error": render_error,
+                    "checks": checks,
+                    "failed_checks": failed_checks,
+                    "status": "passed" if not failed_checks else "failed",
+                }
+            )
 
-    failed_routes = [item for item in route_results if item["status"] != "passed"]
-    page_results = [_page_registry_result(page) for page in registered_pages]
-    failed_pages = [item for item in page_results if item["status"] != "passed"]
-    failed_checks = _failed_check_ids("route", route_results, "route") + _failed_check_ids("page", page_results, "path")
-    return {
-        "schema_version": "qcchem.workbench_smoke.v0.1-alpha",
-        "status": "passed" if not failed_routes and not failed_pages else "failed",
-        "failed_checks": failed_checks,
-        "scope": "component_tree",
-        "artifact_root": str(resolved_artifact_root),
-        "release_verification": _release_verification_summary(resolved_artifact_root),
-        "notes": [
-            "Validates the documented showcase routes and all registered pages without starting a server or browser.",
-            "Run the real browser checklist separately before release candidates.",
-        ],
-        "registered_routes": registered_routes,
-        "route_count": len(route_results),
-        "passed_routes": len(route_results) - len(failed_routes),
-        "failed_routes": len(failed_routes),
-        "routes": route_results,
-        "page_count": len(page_results),
-        "passed_pages": len(page_results) - len(failed_pages),
-        "failed_pages": len(failed_pages),
-        "pages": page_results,
-    }
+        failed_routes = [item for item in route_results if item["status"] != "passed"]
+        page_results = [_page_registry_result(page) for page in registered_pages]
+        failed_pages = [item for item in page_results if item["status"] != "passed"]
+        failed_checks = _failed_check_ids("route", route_results, "route") + _failed_check_ids("page", page_results, "path")
+        return {
+            "schema_version": "qcchem.workbench_smoke.v0.1-alpha",
+            "status": "passed" if not failed_routes and not failed_pages else "failed",
+            "failed_checks": failed_checks,
+            "scope": "component_tree",
+            "artifact_root": str(resolved_artifact_root),
+            "release_verification": _release_verification_summary(resolved_artifact_root),
+            "notes": [
+                "Validates the documented showcase routes and all registered pages without starting a server or browser.",
+                "Run the real browser checklist separately before release candidates.",
+            ],
+            "registered_routes": registered_routes,
+            "route_count": len(route_results),
+            "passed_routes": len(route_results) - len(failed_routes),
+            "failed_routes": len(failed_routes),
+            "routes": route_results,
+            "page_count": len(page_results),
+            "passed_pages": len(page_results) - len(failed_pages),
+            "failed_pages": len(failed_pages),
+            "pages": page_results,
+        }
+    finally:
+        if original_artifact_root is None:
+            os.environ.pop(WORKBENCH_ARTIFACT_ROOT_ENV, None)
+        else:
+            os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] = original_artifact_root
 
 
 def run_workbench_smoke_from_docs(docs_path: Path, *, artifact_root: Path | None = None) -> dict[str, object]:

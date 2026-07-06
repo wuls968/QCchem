@@ -176,11 +176,15 @@ entrypoint for the current run. `qcchem release audit` prints that handoff path,
 artifact name, artifact listing API URL, and diagnostics manifest path in CI
 logs.
 After downloading CI artifacts with `gh run download`, run
-`qcchem release verify-artifacts --artifact-dir <download-dir>` before treating
-the downloaded diagnostics as release evidence. The verifier is read-only: it
-checks the downloaded release status summaries, release acceptance freshness
-JSON, diagnostics manifest counts, and each uploaded file's recorded size and
-SHA-256 digest without rerunning the audit or calling GitHub.
+`qcchem release collect-evidence --artifact-dir <download-dir>` before treating
+the downloaded diagnostics as release evidence. The command writes
+`release_artifact_verification.json`, `workbench_smoke.json`, and
+`release_evidence_summary.json` under the selected evidence root. The verifier
+step is read-only: it checks the downloaded release status summaries, release
+acceptance freshness JSON, diagnostics manifest counts, and each uploaded file's
+recorded size and SHA-256 digest without rerunning the audit or calling GitHub.
+Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
+only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they
 live under an artifact root. The normalized artifact index and Workbench startup
 inventory classify those reports as `release_artifact_verification`, exposing

@@ -53,6 +53,7 @@ rewritten casually.
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
 | Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
 | Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
+| Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
 | Check release sidecars | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict` |
 | Plan release sidecar repairs | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict --repair-plan` |
 | Preview release sidecar refresh | `qcchem release accept-artifact -c configs/release/trust_first_audit.yaml --name h2_local_validated_anchor --dry-run` |
@@ -602,8 +603,18 @@ own `schema_features` for each Python matrix; CI validates the acceptance-status
 artifact before upload so the reported counts and repair plan stay consistent
 with the item list.
 
-After downloading `qcchem-release-diagnostics-*` artifacts from CI, verify them
-without network access:
+After downloading `qcchem-release-diagnostics-*` artifacts from CI, collect the
+offline release evidence handoff:
+
+```bash
+qcchem release collect-evidence \
+  --artifact-dir /tmp/qcchem-ci-artifacts \
+  --docs docs/workbench.md
+```
+
+This writes `release_artifact_verification.json`, `workbench_smoke.json`, and
+`release_evidence_summary.json` under the downloaded artifact directory. Use the
+lower-level verifier directly when you only need the artifact-integrity check:
 
 ```bash
 qcchem release verify-artifacts \

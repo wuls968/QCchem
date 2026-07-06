@@ -439,6 +439,27 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Optional JSON verification report output path.",
     )
+    release_collect_evidence = release_subparsers.add_parser(
+        "collect-evidence",
+        help="Create a post-download release evidence handoff from CI diagnostic artifacts.",
+    )
+    release_collect_evidence.add_argument(
+        "--artifact-dir",
+        type=Path,
+        required=True,
+        help="Directory produced by downloading qcchem-release-diagnostics-* artifacts.",
+    )
+    release_collect_evidence.add_argument(
+        "--docs",
+        type=Path,
+        default=Path("docs") / "workbench.md",
+        help="Workbench documentation containing the Browser Smoke Checklist.",
+    )
+    release_collect_evidence.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Directory for release_artifact_verification.json, workbench_smoke.json, and release_evidence_summary.json; defaults to --artifact-dir.",
+    )
     release_accept = release_subparsers.add_parser(
         "accept-artifact",
         help="Write a release-bound acceptance_summary.json for one manifest artifact.",
@@ -1061,6 +1082,94 @@ def _print_release_artifact_verification_summary(report: dict[str, object]) -> N
             print(line)
 
 
+def _release_evidence_summary(
+    *,
+    artifact_dir: Path,
+    evidence_root: Path,
+    verification_path: Path,
+    verification_report: dict[str, object],
+    workbench_smoke_path: Path,
+    workbench_summary: dict[str, object],
+    docs_path: Path,
+) -> dict[str, object]:
+    verification_status = str(verification_report.get("status") or "unknown")
+    workbench_status = str(workbench_summary.get("status") or "unknown")
+    release_verification = workbench_summary.get("release_verification")
+    return {
+        "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+        "status": "passed" if verification_status == "passed" and workbench_status == "passed" else "failed",
+        "artifact_dir": str(artifact_dir),
+        "evidence_root": str(evidence_root),
+        "docs_path": str(docs_path),
+        "outputs": {
+            "release_artifact_verification": str(verification_path),
+            "workbench_smoke": str(workbench_smoke_path),
+        },
+        "release_artifact_verification": {
+            "status": verification_status,
+            "summary": verification_report.get("summary") if isinstance(verification_report.get("summary"), dict) else {},
+            "failure_count": len(verification_report.get("failures") or []),
+        },
+        "workbench_smoke": {
+            "status": workbench_status,
+            "route_count": workbench_summary.get("route_count"),
+            "failed_routes": workbench_summary.get("failed_routes"),
+            "page_count": workbench_summary.get("page_count"),
+            "failed_pages": workbench_summary.get("failed_pages"),
+            "failed_checks": workbench_summary.get("failed_checks")
+            if isinstance(workbench_summary.get("failed_checks"), list)
+            else [],
+            "release_verification": release_verification if isinstance(release_verification, dict) else {},
+        },
+    }
+
+
+def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, output_dir: Path | None) -> int:
+    evidence_root = output_dir if output_dir is not None else artifact_dir
+    evidence_root.mkdir(parents=True, exist_ok=True)
+    verification_path = evidence_root / "release_artifact_verification.json"
+    workbench_smoke_path = evidence_root / "workbench_smoke.json"
+    summary_path = evidence_root / "release_evidence_summary.json"
+
+    verification_report = verify_release_diagnostics_artifacts(artifact_dir)
+    verification_path.write_text(json.dumps(verification_report, indent=2, sort_keys=True), encoding="utf-8")
+    _print_release_artifact_verification_summary(verification_report)
+    print(f"Verification JSON: {verification_path}")
+
+    try:
+        workbench_summary = run_workbench_smoke_from_docs(docs_path, artifact_root=evidence_root)
+    except ModuleNotFoundError as exc:
+        optional_ui_modules = {"dash", "plotly", "pandas"}
+        if exc.name not in optional_ui_modules:
+            raise
+        print('QCchem workbench smoke requires optional UI dependencies. Install with: pip install -e ".[ui]"')
+        return 2
+    except (OSError, ValueError) as exc:
+        print(f"QCchem release evidence collection rejected: {exc}")
+        return 2
+
+    workbench_smoke_path.write_text(json.dumps(workbench_summary, indent=2, sort_keys=True), encoding="utf-8")
+    print(f"Workbench smoke summary written to {workbench_smoke_path}")
+    print(f"Workbench smoke completed: {workbench_summary['status']}")
+    print(f"Routes: {workbench_summary['passed_routes']} passed, {workbench_summary['failed_routes']} failed")
+    print(f"Registered pages: {workbench_summary['passed_pages']} passed, {workbench_summary['failed_pages']} failed")
+    _print_workbench_smoke_failed_summary(workbench_summary)
+
+    summary = _release_evidence_summary(
+        artifact_dir=artifact_dir,
+        evidence_root=evidence_root,
+        verification_path=verification_path,
+        verification_report=verification_report,
+        workbench_smoke_path=workbench_smoke_path,
+        workbench_summary=workbench_summary,
+        docs_path=docs_path,
+    )
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    print(f"Release evidence summary: {summary['status']}")
+    print(f"Release evidence JSON: {summary_path}")
+    return 0 if summary["status"] == "passed" else 2
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1559,6 +1668,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.output.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
                 print(f"Verification JSON: {args.output}")
             return 0 if report.get("status") == "passed" else 2
+        if args.release_command == "collect-evidence":
+            return _run_release_collect_evidence_command(args.artifact_dir, args.docs, args.output_dir)
         if args.release_command == "accept-artifact":
             try:
                 if args.dry_run:

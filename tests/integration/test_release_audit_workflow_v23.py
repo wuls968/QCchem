@@ -381,6 +381,61 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
 
 
 @pytest.mark.integration
+def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    evidence_root = tmp_path / "release_evidence"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--output-dir",
+            str(evidence_root),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    verification_path = evidence_root / "release_artifact_verification.json"
+    smoke_path = evidence_root / "workbench_smoke.json"
+    summary_path = evidence_root / "release_evidence_summary.json"
+    assert exit_code == 0
+    assert "Release artifact verification: passed" in stdout
+    assert f"Verification JSON: {verification_path}" in stdout
+    assert f"Workbench smoke summary written to {smoke_path}" in stdout
+    assert "Release evidence summary: passed" in stdout
+    assert f"Release evidence JSON: {summary_path}" in stdout
+
+    verification = json.loads(verification_path.read_text(encoding="utf-8"))
+    smoke = json.loads(smoke_path.read_text(encoding="utf-8"))
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert verification["status"] == "passed"
+    assert smoke["status"] == "passed"
+    assert smoke["release_verification"]["status"] == "passed"
+    assert Path(smoke["release_verification"]["source_path"]).resolve() == verification_path.resolve()
+    assert summary["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
+    assert summary["status"] == "passed"
+    assert summary["outputs"] == {
+        "release_artifact_verification": str(verification_path),
+        "workbench_smoke": str(smoke_path),
+    }
+    assert summary["release_artifact_verification"]["summary"] == {
+        "acceptance_status_count": 1,
+        "diagnostics_manifest_count": 1,
+        "failure_count": 0,
+        "release_status_count": 1,
+    }
+    assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
+
+
+@pytest.mark.integration
 def test_release_verify_artifacts_cli_rejects_manifest_digest_mismatch(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

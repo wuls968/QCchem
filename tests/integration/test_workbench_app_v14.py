@@ -1207,6 +1207,24 @@ def test_workbench_smoke_summary_records_release_verification(tmp_path: Path) ->
 
 
 @pytest.mark.integration
+def test_workbench_smoke_restores_artifact_root_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    original_root = tmp_path / "original"
+    smoke_root = tmp_path / "smoke"
+    original_root.mkdir()
+    smoke_root.mkdir()
+    monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, str(original_root))
+
+    summary = run_workbench_smoke_from_docs(REPO_ROOT / "docs" / "workbench.md", artifact_root=smoke_root)
+
+    assert summary["status"] == "passed"
+    assert summary["artifact_root"] == str(smoke_root.resolve())
+    assert os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] == str(original_root)
+
+
+@pytest.mark.integration
 def test_workbench_smoke_collects_text_from_top_level_component_lists() -> None:
     from dash import html
 

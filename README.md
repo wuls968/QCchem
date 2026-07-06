@@ -123,6 +123,7 @@ placeholder boundary map.
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml` |
 | Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
 | Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
+| Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 

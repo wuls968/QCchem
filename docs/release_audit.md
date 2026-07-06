@@ -142,20 +142,27 @@ source-tree and installed-wheel release bundles before writing the diagnostics
 manifest and uploading diagnostics. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
-After downloading CI release diagnostics, verify the downloaded bundle offline:
+After downloading CI release diagnostics, collect the offline release evidence
+handoff:
 
 ```bash
-qcchem release verify-artifacts \
+qcchem release collect-evidence \
   --artifact-dir /tmp/qcchem-ci-artifacts \
-  -o /tmp/release_artifact_verification.json
+  --docs docs/workbench.md
 ```
 
-The verifier recursively checks downloaded `release_status.json`,
-`release_diagnostics_manifest.json`, and
+This command writes `release_artifact_verification.json`,
+`workbench_smoke.json`, and `release_evidence_summary.json` under the downloaded
+artifact directory. The verifier recursively checks downloaded
+`release_status.json`, `release_diagnostics_manifest.json`, and
 `qcchem-release-acceptance-status.json` files. It revalidates the release status
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
-uploaded file sizes and SHA-256 digests. It exits with code `2` if any expected
-file is missing, stale, inconsistent, or tampered with.
+uploaded file sizes and SHA-256 digests. The Workbench smoke pass then records
+the same verifier status and matrix counts in its route handoff. The command
+exits with code `2` if any expected file is missing, stale, inconsistent,
+tampered with, or if the Workbench route smoke fails.
+Use `qcchem release verify-artifacts --artifact-dir /tmp/qcchem-ci-artifacts`
+when you only need the lower-level artifact-integrity check.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
