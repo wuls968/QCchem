@@ -26,6 +26,181 @@ DEFAULT_RELEASE_BOUNDARIES = [
     "This sidecar does not promote the artifact beyond its evidence_summary boundary.",
 ]
 RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION = "qcchem.release_artifact_acceptance_status.v0.1-alpha"
+RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES = [
+    "status_counts",
+    "repair_plan",
+    "repair_plan_count",
+    "item_changed_fields",
+    "item_missing_fields",
+    "item_contract_failures",
+    "repair_commands",
+]
+
+
+def _acceptance_status_expected_type_name(expected_type: type | tuple[type, ...]) -> str:
+    if isinstance(expected_type, tuple):
+        return "|".join(_acceptance_status_expected_type_name(item) for item in expected_type)
+    if expected_type is str:
+        return "str"
+    if expected_type is int:
+        return "int"
+    if expected_type is list:
+        return "list"
+    if expected_type is dict:
+        return "dict"
+    if expected_type is type(None):
+        return "NoneType"
+    return expected_type.__name__
+
+
+def _acceptance_status_actual_type(value: object, *, missing: bool) -> str:
+    if missing:
+        return "missing"
+    if isinstance(value, bool):
+        return "bool"
+    if value is None:
+        return "NoneType"
+    return type(value).__name__
+
+
+def _acceptance_status_type_matches(value: object, expected_type: type | tuple[type, ...]) -> bool:
+    expected_types = expected_type if isinstance(expected_type, tuple) else (expected_type,)
+    if int in expected_types and isinstance(value, bool):
+        return False
+    return isinstance(value, expected_types)
+
+
+def _acceptance_status_require_fields(
+    payload: dict[str, Any],
+    required_fields: tuple[tuple[str, type | tuple[type, ...]], ...],
+    *,
+    prefix: str = "",
+) -> list[dict[str, Any]]:
+    failures: list[dict[str, Any]] = []
+    for field, expected_type in required_fields:
+        exists = field in payload
+        value = payload.get(field)
+        if not exists or not _acceptance_status_type_matches(value, expected_type):
+            failures.append(
+                {
+                    "field": f"{prefix}.{field}" if prefix else field,
+                    "expected": _acceptance_status_expected_type_name(expected_type),
+                    "actual_type": _acceptance_status_actual_type(value, missing=not exists),
+                }
+            )
+    return failures
+
+
+def release_acceptance_status_contract_failures(report: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return schema-contract failures for a release acceptance status report."""
+
+    failures: list[dict[str, Any]] = []
+    schema_version = report.get("schema_version")
+    if schema_version != RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION:
+        failures.append(
+            {
+                "field": "schema_version",
+                "expected": RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION,
+                "actual": schema_version,
+            }
+        )
+
+    failures.extend(
+        _acceptance_status_require_fields(
+            report,
+            (
+                ("schema_version", str),
+                ("schema_features", list),
+                ("status", str),
+                ("repo_root", str),
+                ("total_sidecars", int),
+                ("fresh_count", int),
+                ("requires_update_count", int),
+                ("status_counts", dict),
+                ("repair_plan", list),
+                ("repair_plan_count", int),
+                ("items", list),
+            ),
+        )
+    )
+    schema_features = report.get("schema_features")
+    if isinstance(schema_features, list) and schema_features != list(
+        RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES
+    ):
+        failures.append(
+            {
+                "field": "schema_features",
+                "expected": list(RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES),
+                "actual": schema_features,
+            }
+        )
+
+    items = report.get("items")
+    if isinstance(items, list):
+        for index, item in enumerate(items):
+            if not isinstance(item, dict):
+                failures.append(
+                    {
+                        "field": f"items[{index}]",
+                        "expected": "dict",
+                        "actual_type": _acceptance_status_actual_type(item, missing=False),
+                    }
+                )
+                continue
+            failures.extend(
+                _acceptance_status_require_fields(
+                    item,
+                    (
+                        ("artifact_name", str),
+                        ("artifact_kind", str),
+                        ("artifact_path", str),
+                        ("sidecar_path", str),
+                        ("release_audit_check_id", str),
+                        ("status", str),
+                        ("changed_fields", list),
+                        ("missing_fields", list),
+                        ("extra_fields", list),
+                        ("preserved_extra_fields", list),
+                        ("contract_failures", list),
+                    ),
+                    prefix=f"items[{index}]",
+                )
+            )
+
+    repair_plan = report.get("repair_plan")
+    if isinstance(repair_plan, list):
+        for index, item in enumerate(repair_plan):
+            if not isinstance(item, dict):
+                failures.append(
+                    {
+                        "field": f"repair_plan[{index}]",
+                        "expected": "dict",
+                        "actual_type": _acceptance_status_actual_type(item, missing=False),
+                    }
+                )
+                continue
+            failures.extend(
+                _acceptance_status_require_fields(
+                    item,
+                    (
+                        ("artifact_name", str),
+                        ("artifact_kind", str),
+                        ("status", str),
+                        ("issue", str),
+                        ("artifact_path", str),
+                        ("sidecar_path", str),
+                        ("changed_fields", list),
+                        ("missing_fields", list),
+                        ("contract_failures", list),
+                        ("recommended_action", str),
+                        ("preview_command", (str, type(None))),
+                        ("repair_command", (str, type(None))),
+                    ),
+                    prefix=f"repair_plan[{index}]",
+                )
+            )
+
+    return failures
 
 
 def _repo_relative_artifact_path(artifact_path: Path, *, repo_root: Path) -> str:
@@ -549,8 +724,9 @@ def release_acceptance_status_report(
         config_path=spec.source_path,
         repo_root=resolved_repo_root,
     )
-    return {
+    report = {
         "schema_version": RELEASE_ACCEPTANCE_STATUS_SCHEMA_VERSION,
+        "schema_features": list(RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES),
         "status": "fresh" if requires_update == 0 else "needs_update",
         "repo_root": str(resolved_repo_root),
         "total_sidecars": len(items),
@@ -561,6 +737,10 @@ def release_acceptance_status_report(
         "repair_plan_count": len(repair_plan),
         "items": items,
     }
+    contract_failures = release_acceptance_status_contract_failures(report)
+    if contract_failures:
+        raise ValueError(f"Release acceptance status report contract mismatch: {contract_failures}")
+    return report
 
 
 def release_acceptance_status_report_from_config(

@@ -7,7 +7,9 @@ import pytest
 
 from qcchem.io.release_audit_config import load_release_audit_spec
 from qcchem.workflow.release_acceptance import (
+    RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES,
     preview_release_artifact_acceptance_summary,
+    release_acceptance_status_contract_failures,
     release_acceptance_status_report,
     write_release_artifact_acceptance_summary,
 )
@@ -93,6 +95,10 @@ def test_release_acceptance_writes_manifest_bound_sidecar(tmp_path: Path) -> Non
     assert audit["evidence_matrix"][0]["acceptance_contract_failure_count"] == 0
     report = release_acceptance_status_report(spec, repo_root=tmp_path)
     assert report["status"] == "fresh"
+    assert report["schema_features"] == list(RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES)
+    assert "status_counts" in report["schema_features"]
+    assert "repair_plan" in report["schema_features"]
+    assert release_acceptance_status_contract_failures(report) == []
     assert report["fresh_count"] == 1
     assert report["requires_update_count"] == 0
     assert report["repair_plan_count"] == 0
@@ -149,6 +155,42 @@ def test_release_acceptance_status_reports_missing_sidecar(tmp_path: Path) -> No
     assert "--dry-run" in repair["preview_command"]
     assert repair["repair_command"] is not None
     assert "--overwrite" not in repair["repair_command"]
+
+
+def test_release_acceptance_status_contract_reports_field_drift(tmp_path: Path) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    missing_count = dict(report)
+    missing_count.pop("repair_plan_count")
+    assert release_acceptance_status_contract_failures(missing_count) == [
+        {
+            "field": "repair_plan_count",
+            "expected": "int",
+            "actual_type": "missing",
+        }
+    ]
+
+    mistyped_item = json.loads(json.dumps(report))
+    mistyped_item["items"][0]["changed_fields"] = "artifact_sha256"
+    assert release_acceptance_status_contract_failures(mistyped_item) == [
+        {
+            "field": "items[0].changed_fields",
+            "expected": "list",
+            "actual_type": "str",
+        }
+    ]
+
+    missing_feature = json.loads(json.dumps(report))
+    missing_feature["schema_features"] = ["status_counts"]
+    assert release_acceptance_status_contract_failures(missing_feature) == [
+        {
+            "field": "schema_features",
+            "expected": list(RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES),
+            "actual": ["status_counts"],
+        }
+    ]
 
 
 def test_release_acceptance_status_reports_unreadable_sidecar(tmp_path: Path) -> None:

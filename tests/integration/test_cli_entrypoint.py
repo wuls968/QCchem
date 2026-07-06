@@ -500,6 +500,45 @@ release_audit:
     assert "Release acceptance rejected" in capsys.readouterr().out
 
 
+def test_release_acceptance_status_cli_rejects_report_contract_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config = tmp_path / "trust_first_audit.yaml"
+    config.write_text("release_audit:\n  profile: trust_first\n", encoding="utf-8")
+    output = tmp_path / "acceptance_status.json"
+
+    def _bad_report_from_config(*_args: object, **_kwargs: object) -> dict[str, object]:
+        return {
+            "schema_version": "qcchem.release_artifact_acceptance_status.v0.1-alpha",
+            "status": "fresh",
+        }
+
+    monkeypatch.setattr(
+        "qcchem.cli.main.release_acceptance_status_report_from_config",
+        _bad_report_from_config,
+    )
+
+    exit_code = main(
+        [
+            "release",
+            "acceptance-status",
+            "-c",
+            str(config),
+            "-o",
+            str(output),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release acceptance status rejected:" in stdout
+    assert "contract mismatch" in stdout
+    assert "total_sidecars" in stdout
+    assert not output.exists()
+
+
 def test_aggregate_workflow_cli_passes_overwrite_flags(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

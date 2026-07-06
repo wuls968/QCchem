@@ -176,6 +176,13 @@ def release_acceptance_status_report_from_config(*args, **kwargs):
     )(*args, **kwargs)
 
 
+def release_acceptance_status_contract_failures(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.release_acceptance",
+        "release_acceptance_status_contract_failures",
+    )(*args, **kwargs)
+
+
 def run_workbench_smoke_from_docs(*args, **kwargs):
     return _load_attr("qcchem.workbench.smoke", "run_workbench_smoke_from_docs")(*args, **kwargs)
 
@@ -1799,6 +1806,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.config,
                     repo_root=args.repo_root,
                 )
+                contract_failures = release_acceptance_status_contract_failures(report)
+                if contract_failures:
+                    raise ValueError(f"contract mismatch: {contract_failures}")
             except (OSError, ValueError, yaml.YAMLError) as exc:
                 print(f"Release acceptance status rejected: {exc}")
                 return 2
