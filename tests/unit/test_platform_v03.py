@@ -150,6 +150,25 @@ def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> 
                     "reason": "diagnostics_manifest_size_mismatch",
                     "local_path": "/tmp/release_handoff.md",
                 },
+                "release_artifact_verification": {
+                    "matrix_artifacts": [
+                        {
+                            "artifact_name": "qcchem-release-diagnostics-3.10",
+                            "status": "passed",
+                            "failure_count": 0,
+                            "first_failure": None,
+                        },
+                        {
+                            "artifact_name": "qcchem-release-diagnostics-3.11",
+                            "status": "failed",
+                            "failure_count": 1,
+                            "first_failure": {
+                                "reason": "diagnostics_manifest_size_mismatch",
+                                "local_path": "/tmp/release_handoff.md",
+                            },
+                        },
+                    ]
+                },
             }
         ),
         encoding="utf-8",
@@ -172,6 +191,17 @@ def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> 
     assert entry["release_evidence_handoff_first_failure"] == {
         "reason": "diagnostics_manifest_size_mismatch",
         "local_path": "/tmp/release_handoff.md",
+    }
+    assert entry["release_evidence_handoff_matrix_artifact_count"] == 2
+    assert entry["release_evidence_handoff_failed_matrix_artifact_count"] == 1
+    assert entry["release_evidence_handoff_first_matrix_failure"] == {
+        "artifact_name": "qcchem-release-diagnostics-3.11",
+        "status": "failed",
+        "failure_count": 1,
+        "first_failure": {
+            "reason": "diagnostics_manifest_size_mismatch",
+            "local_path": "/tmp/release_handoff.md",
+        },
     }
 
 

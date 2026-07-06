@@ -314,9 +314,30 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         if release_handoff_first_failure
         else "no first failure"
     )
+    release_handoff_verification = (
+        release_evidence_handoff.get("release_artifact_verification")
+        if isinstance(release_evidence_handoff.get("release_artifact_verification"), dict)
+        else {}
+    )
+    release_handoff_matrix_artifacts = (
+        release_handoff_verification.get("matrix_artifacts")
+        if isinstance(release_handoff_verification.get("matrix_artifacts"), list)
+        else []
+    )
+    release_handoff_failed_matrix_artifacts = [
+        item
+        for item in release_handoff_matrix_artifacts
+        if isinstance(item, dict) and item.get("status") != "passed"
+    ]
+    release_handoff_matrix_text = (
+        f"{len(release_handoff_matrix_artifacts)} matrix artifacts / "
+        f"{len(release_handoff_failed_matrix_artifacts)} failed"
+        if release_handoff_matrix_artifacts
+        else "no matrix artifact summary"
+    )
     release_handoff_detail = (
         f"{release_evidence_handoff.get('recommended_action') or 'review_release_evidence'}; "
-        f"{release_handoff_failure_text}"
+        f"{release_handoff_failure_text}; {release_handoff_matrix_text}"
         if release_evidence_handoff
         else "Run qcchem release collect-evidence after downloading CI diagnostics."
     )

@@ -873,6 +873,12 @@ def test_overview_page_surfaces_release_verification(
                 "status": "passed",
                 "recommended_action": "review_release_evidence",
                 "first_failure": None,
+                "release_artifact_verification": {
+                    "matrix_artifacts": [
+                        {"artifact_name": "qcchem-release-diagnostics-3.10", "status": "passed"},
+                        {"artifact_name": "qcchem-release-diagnostics-3.11", "status": "passed"},
+                    ]
+                },
             }
         ),
         encoding="utf-8",
@@ -888,6 +894,7 @@ def test_overview_page_surfaces_release_verification(
     assert "6 status bundles / 3 manifests / 3 sidecar reports; 0 failures" in page_text
     assert str(verification_path) in page_text
     assert "Release evidence handoff" in page_text
+    assert "2 matrix artifacts / 0 failed" in page_text
     assert "review_release_evidence" in page_text
     assert "no first failure" in page_text
     assert str(handoff_path) in page_text

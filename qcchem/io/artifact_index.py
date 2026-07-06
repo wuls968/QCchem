@@ -137,6 +137,22 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         if kind == "release_evidence_handoff" and release_evidence_summary_path.exists()
         else {}
     )
+    release_evidence_verification = (
+        release_evidence_summary.get("release_artifact_verification")
+        if kind == "release_evidence_handoff"
+        and isinstance(release_evidence_summary.get("release_artifact_verification"), dict)
+        else {}
+    )
+    release_evidence_matrix_artifacts = (
+        release_evidence_verification.get("matrix_artifacts")
+        if isinstance(release_evidence_verification.get("matrix_artifacts"), list)
+        else []
+    )
+    failed_release_evidence_matrix_artifacts = [
+        item
+        for item in release_evidence_matrix_artifacts
+        if isinstance(item, dict) and item.get("status") != "passed"
+    ]
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
         "artifact_kind": kind,
@@ -269,6 +285,17 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         ),
         "release_evidence_handoff_first_failure": (
             release_evidence_summary.get("first_failure") if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_matrix_artifact_count": (
+            len(release_evidence_matrix_artifacts) if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_failed_matrix_artifact_count": (
+            len(failed_release_evidence_matrix_artifacts) if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_first_matrix_failure": (
+            failed_release_evidence_matrix_artifacts[0]
+            if kind == "release_evidence_handoff" and failed_release_evidence_matrix_artifacts
+            else None
         ),
         "release_evidence_handoff_summary_json": (
             str(release_evidence_summary_path)

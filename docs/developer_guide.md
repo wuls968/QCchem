@@ -191,7 +191,9 @@ After downloading CI artifacts with `gh run download`, run
 the downloaded diagnostics as release evidence. The command writes
 `release_artifact_verification.json`, `workbench_smoke.json`, and
 `release_evidence_summary.json`, plus a reviewer-facing
-`release_evidence_handoff.md`, under the selected evidence root. The verifier
+`release_evidence_handoff.md`, under the selected evidence root. The handoff
+lists each downloaded `qcchem-release-diagnostics-*` matrix artifact with
+status, digest/file counts, sidecar freshness, and first failure. The verifier
 step is read-only: it checks the downloaded release status summaries, release
 acceptance freshness JSON, diagnostics manifest counts, and each uploaded file's
 recorded size and SHA-256 digest without rerunning the audit or calling GitHub.

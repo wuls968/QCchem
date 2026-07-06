@@ -179,8 +179,9 @@ verifier recursively checks downloaded
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
 uploaded file sizes and SHA-256 digests. The Workbench smoke pass then records
 the same verifier status and matrix counts in its route handoff. The Markdown
-handoff summarizes the generated paths, verifier counts, Workbench route/page
-status, first failure, and whether a real browser checklist is still required.
+handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
+artifact status, digest/file counts, Workbench route/page status, first failure,
+and whether a real browser checklist is still required.
 The command exits with code `2` if any expected file is missing, stale,
 inconsistent, tampered with, or if the Workbench route smoke fails.
 On failure, the top block of `release_evidence_handoff.md` includes

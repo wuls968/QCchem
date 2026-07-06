@@ -621,6 +621,19 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
         "release_status_count": 1,
     }
     assert summary["release_artifact_verification"]["first_failure"] is None
+    matrix_artifacts = summary["release_artifact_verification"]["matrix_artifacts"]
+    assert len(matrix_artifacts) == 1
+    matrix_artifact = matrix_artifacts[0]
+    assert matrix_artifact["artifact_name"] == "qcchem-release-diagnostics-3.11"
+    assert matrix_artifact["status"] == "passed"
+    assert matrix_artifact["release_status_count"] == 1
+    assert matrix_artifact["source_tree_release_status"] == "passed"
+    assert matrix_artifact["wheel_release_status"] is None
+    assert matrix_artifact["diagnostics_manifest_count"] == 1
+    assert matrix_artifact["diagnostics_digest_count"] == matrix_artifact["diagnostics_file_count"]
+    assert matrix_artifact["acceptance_status"] == "fresh"
+    assert matrix_artifact["failure_count"] == 0
+    assert matrix_artifact["first_failure"] is None
     assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
     assert "# QCchem Release Evidence Handoff" in handoff
     assert "- status: `passed`" in handoff
@@ -628,6 +641,9 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "- first_failure: `none`" in handoff
     assert "- collection_mode: `downloaded_artifact_verification`" in handoff
     assert "- release_status_count: `1`" in handoff
+    assert "## Matrix Artifact Verification" in handoff
+    assert "`qcchem-release-diagnostics-3.11`: status=`passed`" in handoff
+    assert "acceptance=`fresh`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
     assert "It does not replace the real browser console checklist" in handoff
 
@@ -671,11 +687,17 @@ def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
     assert summary["first_failure"]["reason"] == "diagnostics_manifest_size_mismatch"
     assert "release_handoff.md" in str(summary["first_failure"]["local_path"])
     assert summary["release_artifact_verification"]["status"] == "failed"
+    matrix_artifact = summary["release_artifact_verification"]["matrix_artifacts"][0]
+    assert matrix_artifact["artifact_name"] == "qcchem-release-diagnostics-3.11"
+    assert matrix_artifact["status"] == "failed"
+    assert matrix_artifact["failure_count"] >= 1
+    assert matrix_artifact["first_failure"]["reason"] == "diagnostics_manifest_size_mismatch"
     assert summary["workbench_smoke"]["status"] == "passed"
     assert "- status: `failed`" in handoff
     assert "- recommended_action: `inspect_release_evidence_failures`" in handoff
     assert "diagnostics_manifest_size_mismatch" in handoff
     assert "release_handoff.md" in handoff
+    assert "`qcchem-release-diagnostics-3.11`: status=`failed`" in handoff
     assert "- linked_release_verification_status: `failed`" in handoff
 
 

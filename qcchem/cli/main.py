@@ -1146,6 +1146,7 @@ def _release_evidence_summary(
     first_failure = first_verification_failure
     if first_failure is None and workbench_failed_checks:
         first_failure = {"reason": "workbench_smoke_failed", "check": str(workbench_failed_checks[0])}
+    matrix_artifacts = _release_verification_matrix_artifacts(verification_report)
     return {
         "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
         "collection_mode": "downloaded_artifact_verification",
@@ -1166,6 +1167,7 @@ def _release_evidence_summary(
             "summary": verification_report.get("summary") if isinstance(verification_report.get("summary"), dict) else {},
             "failure_count": len(verification_report.get("failures") or []),
             "first_failure": first_verification_failure,
+            "matrix_artifacts": matrix_artifacts,
         },
         "workbench_smoke": {
             "status": workbench_status,
@@ -1179,6 +1181,125 @@ def _release_evidence_summary(
             "release_verification": release_verification if isinstance(release_verification, dict) else {},
         },
     }
+
+
+def _release_artifact_name_from_path(path_value: object, artifact_dir: object) -> str:
+    if not isinstance(path_value, str) or not path_value:
+        return "unknown"
+    path = Path(path_value)
+    if isinstance(artifact_dir, str) and artifact_dir:
+        try:
+            relative = path.resolve().relative_to(Path(artifact_dir).resolve())
+        except ValueError:
+            relative = None
+        if relative is not None and relative.parts:
+            return relative.parts[0]
+    for part in path.parts:
+        if part.startswith("qcchem-release-diagnostics-"):
+            return part
+    return "unknown"
+
+
+def _release_verification_matrix_artifacts(report: dict[str, object]) -> list[dict[str, object]]:
+    artifact_dir = report.get("artifact_dir")
+    artifacts: dict[str, dict[str, object]] = {}
+
+    def ensure(name: str) -> dict[str, object]:
+        if name not in artifacts:
+            artifacts[name] = {
+                "artifact_name": name,
+                "status": "passed",
+                "release_status_count": 0,
+                "release_status_failed_count": 0,
+                "source_tree_release_status": None,
+                "wheel_release_status": None,
+                "diagnostics_manifest_count": 0,
+                "diagnostics_file_count": 0,
+                "diagnostics_present_count": 0,
+                "diagnostics_digest_count": 0,
+                "acceptance_status": None,
+                "acceptance_fresh_count": None,
+                "acceptance_requires_update_count": None,
+                "acceptance_repair_plan_count": None,
+                "failure_count": 0,
+                "first_failure": None,
+            }
+        return artifacts[name]
+
+    release_statuses = report.get("release_statuses")
+    if isinstance(release_statuses, list):
+        for status_entry in release_statuses:
+            if not isinstance(status_entry, dict):
+                continue
+            artifact = ensure(_release_artifact_name_from_path(status_entry.get("path"), artifact_dir))
+            artifact["release_status_count"] = int(artifact["release_status_count"]) + 1
+            if status_entry.get("status") != "passed":
+                artifact["release_status_failed_count"] = int(artifact["release_status_failed_count"]) + 1
+                artifact["status"] = "failed"
+            entry_path = str(status_entry.get("path") or "")
+            if "/tmp/qcchem-wheel-release-audit/" in entry_path:
+                artifact["wheel_release_status"] = status_entry.get("status")
+            else:
+                artifact["source_tree_release_status"] = status_entry.get("status")
+
+    manifests = report.get("diagnostics_manifests")
+    if isinstance(manifests, list):
+        for manifest_entry in manifests:
+            if not isinstance(manifest_entry, dict):
+                continue
+            artifact = ensure(_release_artifact_name_from_path(manifest_entry.get("path"), artifact_dir))
+            artifact["diagnostics_manifest_count"] = int(artifact["diagnostics_manifest_count"]) + 1
+            artifact["diagnostics_file_count"] = int(artifact["diagnostics_file_count"]) + int(
+                manifest_entry.get("file_count") or 0
+            )
+            artifact["diagnostics_present_count"] = int(artifact["diagnostics_present_count"]) + int(
+                manifest_entry.get("present_count") or 0
+            )
+            artifact["diagnostics_digest_count"] = int(artifact["diagnostics_digest_count"]) + int(
+                manifest_entry.get("digest_count") or 0
+            )
+
+    acceptance_statuses = report.get("acceptance_statuses")
+    if isinstance(acceptance_statuses, list):
+        for acceptance_entry in acceptance_statuses:
+            if not isinstance(acceptance_entry, dict):
+                continue
+            artifact = ensure(_release_artifact_name_from_path(acceptance_entry.get("path"), artifact_dir))
+            artifact["acceptance_status"] = acceptance_entry.get("status")
+            artifact["acceptance_fresh_count"] = acceptance_entry.get("fresh_count")
+            artifact["acceptance_requires_update_count"] = acceptance_entry.get("requires_update_count")
+            artifact["acceptance_repair_plan_count"] = acceptance_entry.get("repair_plan_count")
+            if acceptance_entry.get("status") != "fresh" or acceptance_entry.get("repair_plan_count") not in (0, None):
+                artifact["status"] = "failed"
+
+    failures = report.get("failures")
+    if isinstance(failures, list):
+        for failure in failures:
+            if not isinstance(failure, dict):
+                continue
+            failure_path = failure.get("local_path") or failure.get("path") or failure.get("record_path")
+            artifact = ensure(_release_artifact_name_from_path(failure_path, artifact_dir))
+            artifact["status"] = "failed"
+            artifact["failure_count"] = int(artifact["failure_count"]) + 1
+            if artifact["first_failure"] is None:
+                artifact["first_failure"] = failure
+
+    return [artifacts[name] for name in sorted(artifacts)]
+
+
+def _release_failure_handoff_text(failure: object) -> str:
+    if not isinstance(failure, dict):
+        return "none"
+    failure_text = str(failure.get("reason") or "unknown")
+    if failure.get("path"):
+        failure_text = f"{failure_text} path={failure.get('path')}"
+    if failure.get("local_path"):
+        failure_text = f"{failure_text} local_path={failure.get('local_path')}"
+    elif failure.get("record_path"):
+        failure_text = f"{failure_text} record_path={failure.get('record_path')}"
+    elif failure.get("check"):
+        failure_text = f"{failure_text} check={failure.get('check')}"
+    return failure_text
 
 
 def _read_optional_json_object(path: Path, *, label: str, failures: list[dict[str, object]]) -> dict[str, object]:
@@ -1315,19 +1436,12 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
     first_failure = verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
     first_summary_failure = summary.get("first_failure") if isinstance(summary.get("first_failure"), dict) else None
-    first_failure_text = "none"
     failure_for_handoff = first_summary_failure if first_summary_failure is not None else first_failure
-    if failure_for_handoff is not None:
-        first_failure_text = str(failure_for_handoff.get("reason") or "unknown")
-        if failure_for_handoff.get("path"):
-            first_failure_text = f"{first_failure_text} path={failure_for_handoff.get('path')}"
-        if failure_for_handoff.get("local_path"):
-            first_failure_text = f"{first_failure_text} local_path={failure_for_handoff.get('local_path')}"
-        elif failure_for_handoff.get("record_path"):
-            first_failure_text = f"{first_failure_text} record_path={failure_for_handoff.get('record_path')}"
-        elif failure_for_handoff.get("check"):
-            first_failure_text = f"{first_failure_text} check={failure_for_handoff.get('check')}"
+    first_failure_text = _release_failure_handoff_text(failure_for_handoff)
     failed_checks_text = ", ".join(str(item) for item in failed_checks) if failed_checks else "none"
+    matrix_artifacts = (
+        verification.get("matrix_artifacts") if isinstance(verification.get("matrix_artifacts"), list) else []
+    )
     lines = [
         "# QCchem Release Evidence Handoff",
         "",
@@ -1366,26 +1480,50 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- failure_count: `{verification.get('failure_count')}`",
         f"- first_failure: `{first_failure_text}`",
         "",
-        "## Workbench Smoke",
-        "",
-        f"- status: `{workbench.get('status')}`",
-        f"- route_count: `{workbench.get('route_count')}`",
-        f"- failed_routes: `{workbench.get('failed_routes')}`",
-        f"- page_count: `{workbench.get('page_count')}`",
-        f"- failed_pages: `{workbench.get('failed_pages')}`",
-        f"- failed_checks: `{failed_checks_text}`",
-        f"- linked_release_verification_status: `{linked_release_verification.get('status')}`",
-        f"- linked_release_verification_source: `{linked_release_verification.get('source_path')}`",
-        "",
-        "## Review Notes",
-        "",
-        "- `ci_diagnostics_handoff` summarizes local CI diagnostics before artifact upload.",
-        "- `downloaded_artifact_verification` verifies downloaded CI diagnostics and component-tree Workbench routes.",
-        "- Run `qcchem release collect-evidence` after downloading CI artifacts for digest verification.",
-        "- It does not replace the real browser console checklist before a release candidate.",
-        "- Keep the generated files outside tracked source unless you intentionally archive release evidence.",
+        "## Matrix Artifact Verification",
         "",
     ]
+    if matrix_artifacts:
+        for item in matrix_artifacts:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                f"- `{item.get('artifact_name')}`: status=`{item.get('status')}`; "
+                f"release_statuses=`{item.get('release_status_count')}`; "
+                f"source=`{item.get('source_tree_release_status')}`; "
+                f"wheel=`{item.get('wheel_release_status')}`; "
+                f"manifests=`{item.get('diagnostics_manifest_count')}`; "
+                f"digests=`{item.get('diagnostics_digest_count')}/{item.get('diagnostics_file_count')}`; "
+                f"acceptance=`{item.get('acceptance_status')}`; "
+                f"failures=`{item.get('failure_count')}`; "
+                f"first_failure=`{_release_failure_handoff_text(item.get('first_failure'))}`"
+            )
+    else:
+        lines.append("- none")
+    lines.extend(
+        [
+            "",
+            "## Workbench Smoke",
+            "",
+            f"- status: `{workbench.get('status')}`",
+            f"- route_count: `{workbench.get('route_count')}`",
+            f"- failed_routes: `{workbench.get('failed_routes')}`",
+            f"- page_count: `{workbench.get('page_count')}`",
+            f"- failed_pages: `{workbench.get('failed_pages')}`",
+            f"- failed_checks: `{failed_checks_text}`",
+            f"- linked_release_verification_status: `{linked_release_verification.get('status')}`",
+            f"- linked_release_verification_source: `{linked_release_verification.get('source_path')}`",
+            "",
+            "## Review Notes",
+            "",
+            "- `ci_diagnostics_handoff` summarizes local CI diagnostics before artifact upload.",
+            "- `downloaded_artifact_verification` verifies downloaded CI diagnostics and component-tree Workbench routes.",
+            "- Run `qcchem release collect-evidence` after downloading CI artifacts for digest verification.",
+            "- It does not replace the real browser console checklist before a release candidate.",
+            "- Keep the generated files outside tracked source unless you intentionally archive release evidence.",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 

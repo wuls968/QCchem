@@ -630,7 +630,10 @@ qcchem release collect-evidence \
 
 This writes `release_artifact_verification.json`, `workbench_smoke.json`,
 `release_evidence_summary.json`, and reviewer-facing
-`release_evidence_handoff.md` under the downloaded artifact directory. Use the
+`release_evidence_handoff.md` under the downloaded artifact directory. The
+handoff includes a per-matrix artifact section with release-status count,
+manifest digest/file counts, sidecar freshness, failure count, and first failure
+for each `qcchem-release-diagnostics-*` bundle. Use the
 lower-level verifier directly when you only need the artifact-integrity check:
 
 ```bash
