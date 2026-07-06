@@ -14,3 +14,4 @@ artifacts/workbench_smoke.json
 artifacts/workflows/
 artifacts/lr_ace_local_molecule_sweep_*/
 artifacts/release_audit/
+artifacts/release_evidence/

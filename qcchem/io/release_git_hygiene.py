@@ -20,6 +20,8 @@ def release_generated_output_paths() -> tuple[str, ...]:
         "artifacts/release_audit/release_handoff.json",
         "artifacts/release_audit/release_handoff.md",
         "artifacts/release_audit/release_status.json",
+        "artifacts/release_evidence/release_evidence_summary.json",
+        "artifacts/release_evidence/release_evidence_handoff.md",
         "artifacts/workflows/research_os_review_workflow/workflow_result.json",
         "artifacts/lr_ace_flagship_suite_v1/preview_local/benchmark_result.json",
         ".playwright-cli/probe.yml",

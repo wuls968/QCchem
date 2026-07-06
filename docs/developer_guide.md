@@ -13,6 +13,7 @@ fixtures. The following are intentionally ignored:
 - `artifacts/workbench_smoke.json`
 - `artifacts/lr_ace_local_molecule_sweep_*/`
 - `artifacts/release_audit/`
+- `artifacts/release_evidence/`
 - `artifacts/**/preview_local/`
 
 When running tests, make sure curated release files are not rewritten or left as
@@ -28,8 +29,8 @@ The tracked-ignored probe should print nothing. If it prints paths, a generated
 or ignored file is still in the Git index and should be removed from tracking.
 The diff and status probes should print nothing, except for intentionally
 ignored local outputs such as `artifacts/artifact_index.json`,
-`artifacts/workbench_smoke.json`, `artifacts/release_audit/`, and
-`artifacts/workflows/`.
+`artifacts/workbench_smoke.json`, `artifacts/release_audit/`,
+`artifacts/release_evidence/`, and `artifacts/workflows/`.
 
 Release acceptance sidecars are not scratch output. When a path is listed in
 `configs/release/trust_first_audit.yaml`, its sibling `acceptance_summary.json`
@@ -39,6 +40,8 @@ must remain trackable release evidence:
 git check-ignore --no-index -q artifacts/release_audit/release_readiness.json
 git check-ignore --no-index -q artifacts/release_audit/release_handoff.json
 git check-ignore --no-index -q artifacts/release_audit/release_status.json
+git check-ignore --no-index -q artifacts/release_evidence/release_evidence_summary.json
+git check-ignore --no-index -q artifacts/release_evidence/release_evidence_handoff.md
 git check-ignore --no-index -q artifacts/artifact_index.json
 git check-ignore --no-index -q artifacts/workbench_smoke.json
 git check-ignore --no-index -q artifacts/workflows/research_os_review_workflow/workflow_result.json
@@ -47,9 +50,10 @@ git check-ignore --no-index -q .playwright-cli/probe.yml
 git ls-files --error-unmatch artifacts/h2/acceptance_summary.json
 ```
 
-The first eight commands should succeed because those paths are generated local
-outputs. A release sidecar such as `artifacts/h2/acceptance_summary.json` should
-not match `.gitignore`; `git ls-files --error-unmatch` should find it.
+The generated-output `check-ignore` commands should succeed because those paths
+are generated local outputs. A release sidecar such as
+`artifacts/h2/acceptance_summary.json` should not match `.gitignore`;
+`git ls-files --error-unmatch` should find it.
 Sidecars using `schema_version:
 qcchem.release_artifact_acceptance.v0.1-alpha` must also be listed by the
 release manifest through their sibling artifact path. Historical

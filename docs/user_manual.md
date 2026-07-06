@@ -663,4 +663,5 @@ git status --short --untracked-files=all -- .github artifacts README.md docs con
 
 The last two commands should print nothing except intentionally ignored local
 outputs such as `artifacts/artifact_index.json`,
-`artifacts/workbench_smoke.json`, and `artifacts/release_audit/`.
+`artifacts/workbench_smoke.json`, `artifacts/release_audit/`, and
+`artifacts/release_evidence/`.

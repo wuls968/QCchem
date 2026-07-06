@@ -551,8 +551,8 @@ git status --short --untracked-files=all -- .github artifacts README.md docs con
 ```
 
 Both commands should print nothing in a packaged release branch, except for
-ignored local outputs such as `artifacts/release_audit/` and
-`artifacts/workflows/`.
+ignored local outputs such as `artifacts/release_audit/`,
+`artifacts/release_evidence/`, and `artifacts/workflows/`.
 CI also checks release acceptance sidecar freshness with
 `qcchem release acceptance-status --strict --repair-plan`, then confirms
 release-audit outputs and workflow bundles match `.gitignore`, while
