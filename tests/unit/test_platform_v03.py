@@ -417,6 +417,25 @@ def test_ci_runs_release_acceptance_sidecar_freshness_gate() -> None:
     ]
 
 
+def test_ci_validates_release_acceptance_status_artifact_contract() -> None:
+    workflow = yaml.safe_load((REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["test"]["steps"]
+    matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Validate release acceptance status artifact"
+    ]
+
+    assert len(matches) == 1
+    command = matches[0]["run"]
+    assert isinstance(command, str)
+    assert "set -euo pipefail" in command
+    assert "/tmp/qcchem-release-acceptance-status.json" in command
+    assert "RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES" in command
+    assert "release_acceptance_status_contract_failures" in command
+
+
 def test_manifest_release_acceptance_sidecars_share_handoff_contract() -> None:
     spec = load_release_audit_spec(REPO_ROOT / "configs" / "release" / "trust_first_audit.yaml")
     release_sidecars = manifest_acceptance_sidecar_paths(spec)

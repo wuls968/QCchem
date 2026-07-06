@@ -223,6 +223,30 @@ jobs:
             --repair-plan \
             -o /tmp/qcchem-release-acceptance-status.json
 
+      - name: Validate release acceptance status artifact
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from qcchem.workflow.release_acceptance import (
+              RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES,
+              release_acceptance_status_contract_failures,
+          )
+
+          path = Path("/tmp/qcchem-release-acceptance-status.json")
+          summary = json.loads(path.read_text(encoding="utf-8"))
+          failures = release_acceptance_status_contract_failures(summary)
+          if failures:
+              raise SystemExit(f"Release acceptance status contract failures: {failures}")
+          if summary.get("schema_features") != list(RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES):
+              raise SystemExit(
+                  "Release acceptance status schema features drifted: "
+                  f"{summary.get('schema_features')}"
+              )
+          PY
+
       - name: Upload release diagnostics
         if: always()
         uses: actions/upload-artifact@v7

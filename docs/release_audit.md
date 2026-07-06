@@ -83,8 +83,9 @@ sidecar needs attention. For every non-fresh sidecar, the CLI prints a bounded
 failure reason when one is available. Add `--repair-plan` to print copyable
 preview and refresh commands for each non-fresh sidecar; the JSON status output
 also includes `schema_features`, `repair_plan`, and `repair_plan_count`. The CLI
-validates that status JSON contract before writing `-o`, so CI will fail rather
-than upload a partial or mistyped sidecar-freshness report.
+validates that status JSON contract and semantic invariants before writing `-o`,
+so CI will fail rather than upload a partial, mistyped, or internally
+inconsistent sidecar-freshness report.
 `accept-artifact --dry-run` builds the same manifest-bound payload and reports
 the current sidecar status without writing. `accept-artifact` without
 `--dry-run` writes the sibling

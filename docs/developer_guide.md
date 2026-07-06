@@ -97,8 +97,8 @@ CI runs `qcchem release acceptance-status --strict --repair-plan` after the
 Trust-First release audit, so a regenerated curated artifact must have its
 manifest-bound sidecar refreshed before the release branch can pass and CI logs
 show the preview/refresh commands. The JSON output carries `schema_features` and
-is validated before it is written, so CI does not upload a partial
-sidecar-freshness report.
+is validated before it is written; CI also probes the saved artifact for schema
+feature and semantic-invariant drift before upload.
 Use `qcchem release status --audit-dir artifacts/release_audit --strict` after a
 local audit when a script needs the compact handoff state without rerunning the
 audit. The status command rejects unexpected `release_readiness.json` and

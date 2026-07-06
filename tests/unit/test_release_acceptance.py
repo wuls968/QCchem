@@ -193,6 +193,54 @@ def test_release_acceptance_status_contract_reports_field_drift(tmp_path: Path) 
     ]
 
 
+def test_release_acceptance_status_contract_reports_semantic_invariant_drift(
+    tmp_path: Path,
+) -> None:
+    config = _write_release_acceptance_fixture(tmp_path)
+    spec = load_release_audit_spec(config)
+    report = release_acceptance_status_report(spec, repo_root=tmp_path)
+
+    mismatched_total = json.loads(json.dumps(report))
+    mismatched_total["total_sidecars"] = 2
+    failures = release_acceptance_status_contract_failures(mismatched_total)
+    assert any(
+        failure.get("field") == "total_sidecars"
+        and failure.get("reason") == "must_equal_items_length"
+        for failure in failures
+    )
+
+    mismatched_counts = json.loads(json.dumps(report))
+    mismatched_counts["status_counts"] = {"fresh": 1}
+    failures = release_acceptance_status_contract_failures(mismatched_counts)
+    assert any(
+        failure.get("field") == "status_counts"
+        and failure.get("reason") == "must_match_item_statuses"
+        for failure in failures
+    )
+
+    mismatched_status = json.loads(json.dumps(report))
+    mismatched_status["status"] = "fresh"
+    failures = release_acceptance_status_contract_failures(mismatched_status)
+    assert any(
+        failure.get("field") == "status"
+        and failure.get("expected") == "needs_update"
+        and failure.get("reason") == "must_match_requires_update_count"
+        for failure in failures
+    )
+
+    missing_repair = json.loads(json.dumps(report))
+    missing_repair["repair_plan"] = []
+    missing_repair["repair_plan_count"] = 0
+    failures = release_acceptance_status_contract_failures(missing_repair)
+    assert any(
+        failure.get("field") == "repair_plan"
+        and failure.get("reason") == "must_cover_non_fresh_items"
+        and failure.get("expected_count") == 1
+        and failure.get("actual_count") == 0
+        for failure in failures
+    )
+
+
 def test_release_acceptance_status_reports_unreadable_sidecar(tmp_path: Path) -> None:
     config = _write_release_acceptance_fixture(tmp_path)
     spec = load_release_audit_spec(config)

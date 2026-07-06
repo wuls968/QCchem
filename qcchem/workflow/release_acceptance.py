@@ -34,7 +34,15 @@ RELEASE_ACCEPTANCE_STATUS_SCHEMA_FEATURES = [
     "item_missing_fields",
     "item_contract_failures",
     "repair_commands",
+    "semantic_invariants",
 ]
+_RELEASE_ACCEPTANCE_FRESH_STATUS = "fresh"
+_RELEASE_ACCEPTANCE_STALE_STATUSES = {"missing", "stale", "unreadable", "blocked"}
+_RELEASE_ACCEPTANCE_ITEM_STATUSES = {
+    _RELEASE_ACCEPTANCE_FRESH_STATUS,
+    *_RELEASE_ACCEPTANCE_STALE_STATUSES,
+}
+_RELEASE_ACCEPTANCE_REPORT_STATUSES = {"fresh", "needs_update"}
 
 
 def _acceptance_status_expected_type_name(expected_type: type | tuple[type, ...]) -> str:
@@ -91,6 +99,71 @@ def _acceptance_status_require_fields(
     return failures
 
 
+def _acceptance_status_invariant_failure(
+    field: str,
+    *,
+    reason: str,
+    expected: object,
+    actual: object,
+) -> dict[str, Any]:
+    return {
+        "field": field,
+        "reason": reason,
+        "expected": expected,
+        "actual": actual,
+    }
+
+
+def _acceptance_status_count_failure(
+    field: str,
+    *,
+    reason: str,
+    expected_count: int,
+    actual_count: int,
+) -> dict[str, Any]:
+    return {
+        "field": field,
+        "reason": reason,
+        "expected_count": expected_count,
+        "actual_count": actual_count,
+    }
+
+
+def _acceptance_status_key(item: dict[str, Any]) -> dict[str, str]:
+    return {
+        "artifact_name": str(item.get("artifact_name") or ""),
+        "artifact_kind": str(item.get("artifact_kind") or ""),
+        "sidecar_path": str(item.get("sidecar_path") or ""),
+        "status": str(item.get("status") or ""),
+    }
+
+
+def _acceptance_status_sorted_keys(items: list[dict[str, Any]]) -> list[dict[str, str]]:
+    return sorted(
+        (_acceptance_status_key(item) for item in items),
+        key=lambda item: (
+            item["artifact_name"],
+            item["artifact_kind"],
+            item["sidecar_path"],
+            item["status"],
+        ),
+    )
+
+
+def _acceptance_status_counts_from_items(items: list[dict[str, Any]]) -> dict[str, int]:
+    status_counts: dict[str, int] = {}
+    for item in items:
+        status = str(item.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    return dict(sorted(status_counts.items()))
+
+
+def _acceptance_status_int(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
 def release_acceptance_status_contract_failures(report: dict[str, Any]) -> list[dict[str, Any]]:
     """Return schema-contract failures for a release acceptance status report."""
 
@@ -135,10 +208,23 @@ def release_acceptance_status_contract_failures(report: dict[str, Any]) -> list[
             }
         )
 
+    status = report.get("status")
+    if isinstance(status, str) and status not in _RELEASE_ACCEPTANCE_REPORT_STATUSES:
+        failures.append(
+            _acceptance_status_invariant_failure(
+                "status",
+                reason="must_be_known_status",
+                expected=sorted(_RELEASE_ACCEPTANCE_REPORT_STATUSES),
+                actual=status,
+            )
+        )
+
     items = report.get("items")
+    valid_item_statuses = True
     if isinstance(items, list):
         for index, item in enumerate(items):
             if not isinstance(item, dict):
+                valid_item_statuses = False
                 failures.append(
                     {
                         "field": f"items[{index}]",
@@ -166,11 +252,27 @@ def release_acceptance_status_contract_failures(report: dict[str, Any]) -> list[
                     prefix=f"items[{index}]",
                 )
             )
+            item_status = item.get("status")
+            if isinstance(item_status, str):
+                if item_status not in _RELEASE_ACCEPTANCE_ITEM_STATUSES:
+                    valid_item_statuses = False
+                    failures.append(
+                        _acceptance_status_invariant_failure(
+                            f"items[{index}].status",
+                            reason="must_be_known_status",
+                            expected=sorted(_RELEASE_ACCEPTANCE_ITEM_STATUSES),
+                            actual=item_status,
+                        )
+                    )
+            else:
+                valid_item_statuses = False
 
     repair_plan = report.get("repair_plan")
+    valid_repair_plan_statuses = True
     if isinstance(repair_plan, list):
         for index, item in enumerate(repair_plan):
             if not isinstance(item, dict):
+                valid_repair_plan_statuses = False
                 failures.append(
                     {
                         "field": f"repair_plan[{index}]",
@@ -197,6 +299,156 @@ def release_acceptance_status_contract_failures(report: dict[str, Any]) -> list[
                         ("repair_command", (str, type(None))),
                     ),
                     prefix=f"repair_plan[{index}]",
+                )
+            )
+            item_status = item.get("status")
+            if isinstance(item_status, str):
+                if item_status not in _RELEASE_ACCEPTANCE_STALE_STATUSES:
+                    valid_repair_plan_statuses = False
+                    failures.append(
+                        _acceptance_status_invariant_failure(
+                            f"repair_plan[{index}].status",
+                            reason="must_be_non_fresh_status",
+                            expected=sorted(_RELEASE_ACCEPTANCE_STALE_STATUSES),
+                            actual=item_status,
+                        )
+                    )
+            else:
+                valid_repair_plan_statuses = False
+
+    status_counts = report.get("status_counts")
+    valid_status_counts = isinstance(status_counts, dict)
+    if isinstance(status_counts, dict):
+        for key, value in status_counts.items():
+            if not isinstance(key, str) or key not in _RELEASE_ACCEPTANCE_ITEM_STATUSES:
+                valid_status_counts = False
+                failures.append(
+                    _acceptance_status_invariant_failure(
+                        "status_counts",
+                        reason="must_use_known_status_keys",
+                        expected=sorted(_RELEASE_ACCEPTANCE_ITEM_STATUSES),
+                        actual=sorted(str(item) for item in status_counts),
+                    )
+                )
+                break
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                valid_status_counts = False
+                failures.append(
+                    {
+                        "field": f"status_counts.{key}",
+                        "reason": "must_be_non_negative_int",
+                        "expected": "non_negative_int",
+                        "actual": value,
+                        "actual_type": _acceptance_status_actual_type(value, missing=False),
+                    }
+                )
+
+    if isinstance(items, list):
+        total_sidecars = _acceptance_status_int(report.get("total_sidecars"))
+        if total_sidecars is not None and total_sidecars != len(items):
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "total_sidecars",
+                    reason="must_equal_items_length",
+                    expected=len(items),
+                    actual=total_sidecars,
+                )
+            )
+
+    if isinstance(items, list) and valid_item_statuses:
+        expected_status_counts = _acceptance_status_counts_from_items(items)
+        if valid_status_counts and status_counts != expected_status_counts:
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "status_counts",
+                    reason="must_match_item_statuses",
+                    expected=expected_status_counts,
+                    actual=status_counts,
+                )
+            )
+
+        fresh_count = _acceptance_status_int(report.get("fresh_count"))
+        expected_fresh_count = expected_status_counts.get(_RELEASE_ACCEPTANCE_FRESH_STATUS, 0)
+        if fresh_count is not None and fresh_count != expected_fresh_count:
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "fresh_count",
+                    reason="must_match_item_statuses",
+                    expected=expected_fresh_count,
+                    actual=fresh_count,
+                )
+            )
+
+        requires_update_count = _acceptance_status_int(report.get("requires_update_count"))
+        expected_requires_update_count = sum(
+            expected_status_counts.get(status, 0)
+            for status in _RELEASE_ACCEPTANCE_STALE_STATUSES
+        )
+        if (
+            requires_update_count is not None
+            and requires_update_count != expected_requires_update_count
+        ):
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "requires_update_count",
+                    reason="must_match_item_statuses",
+                    expected=expected_requires_update_count,
+                    actual=requires_update_count,
+                )
+            )
+
+        expected_report_status = (
+            "fresh" if expected_requires_update_count == 0 else "needs_update"
+        )
+        if isinstance(status, str) and status != expected_report_status:
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "status",
+                    reason="must_match_requires_update_count",
+                    expected=expected_report_status,
+                    actual=status,
+                )
+            )
+
+        if isinstance(repair_plan, list):
+            expected_repair_items = [
+                item
+                for item in items
+                if item.get("status") != _RELEASE_ACCEPTANCE_FRESH_STATUS
+            ]
+            if len(repair_plan) != len(expected_repair_items):
+                failures.append(
+                    _acceptance_status_count_failure(
+                        "repair_plan",
+                        reason="must_cover_non_fresh_items",
+                        expected_count=len(expected_repair_items),
+                        actual_count=len(repair_plan),
+                    )
+                )
+            elif valid_repair_plan_statuses and all(
+                isinstance(item, dict) for item in repair_plan
+            ):
+                expected_keys = _acceptance_status_sorted_keys(expected_repair_items)
+                actual_keys = _acceptance_status_sorted_keys(repair_plan)
+                if actual_keys != expected_keys:
+                    failures.append(
+                        _acceptance_status_invariant_failure(
+                            "repair_plan",
+                            reason="must_cover_non_fresh_items",
+                            expected=expected_keys,
+                            actual=actual_keys,
+                        )
+                    )
+
+    if isinstance(repair_plan, list):
+        repair_plan_count = _acceptance_status_int(report.get("repair_plan_count"))
+        if repair_plan_count is not None and repair_plan_count != len(repair_plan):
+            failures.append(
+                _acceptance_status_invariant_failure(
+                    "repair_plan_count",
+                    reason="must_equal_repair_plan_length",
+                    expected=len(repair_plan),
+                    actual=repair_plan_count,
                 )
             )
 

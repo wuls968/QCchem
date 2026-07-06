@@ -589,7 +589,8 @@ fails if the existing readiness or handoff JSON uses an unexpected
 wrong type, which protects scripts from consuming stale or partial audit bundles.
 CI diagnostic artifacts include that compact status JSON and the
 `acceptance-status` sidecar-freshness JSON with its own `schema_features` for
-each Python matrix.
+each Python matrix; CI validates the acceptance-status artifact before upload so
+the reported counts and repair plan stay consistent with the item list.
 
 Before publishing release-facing docs, also run:
 
