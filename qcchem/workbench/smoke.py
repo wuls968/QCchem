@@ -158,6 +158,37 @@ def _page_registry_result(page: dict[str, Any]) -> dict[str, object]:
     }
 
 
+def _release_verification_summary(artifact_root: Path) -> dict[str, object]:
+    from qcchem.workbench.data import load_research_os_snapshot
+
+    snapshot = load_research_os_snapshot(artifact_root)
+    report = snapshot.get("release_verification")
+    if not isinstance(report, dict) or not report:
+        return {
+            "available": False,
+            "status": "missing",
+            "source_path": None,
+            "release_status_count": 0,
+            "diagnostics_manifest_count": 0,
+            "acceptance_status_count": 0,
+            "failure_count": 0,
+            "first_failure": None,
+        }
+    summary = report.get("summary") if isinstance(report.get("summary"), dict) else {}
+    failures = report.get("failures") if isinstance(report.get("failures"), list) else []
+    first_failure = next((failure for failure in failures if isinstance(failure, dict)), None)
+    return {
+        "available": True,
+        "status": str(report.get("status") or "unknown"),
+        "source_path": report.get("source_path"),
+        "release_status_count": summary.get("release_status_count"),
+        "diagnostics_manifest_count": summary.get("diagnostics_manifest_count"),
+        "acceptance_status_count": summary.get("acceptance_status_count"),
+        "failure_count": summary.get("failure_count", len(failures)),
+        "first_failure": first_failure,
+    }
+
+
 def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Path | None = None) -> dict[str, object]:
     import dash
 
@@ -220,6 +251,7 @@ def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Pat
         "failed_checks": failed_checks,
         "scope": "component_tree",
         "artifact_root": str(resolved_artifact_root),
+        "release_verification": _release_verification_summary(resolved_artifact_root),
         "notes": [
             "Validates the documented showcase routes and all registered pages without starting a server or browser.",
             "Run the real browser checklist separately before release candidates.",

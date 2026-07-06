@@ -161,7 +161,10 @@ root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
 count plus a featured verification report path. The Workbench Overview page also
 surfaces the latest indexed release verification status, failure count, and
-matrix artifact counts alongside the Research OS evidence snapshot.
+matrix artifact counts alongside the Research OS evidence snapshot. Workbench
+smoke JSON records the same compact release-verification summary so the
+component-tree route evidence and release artifact verification evidence can be
+reviewed from one generated handoff file.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

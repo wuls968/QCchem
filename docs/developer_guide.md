@@ -187,7 +187,9 @@ inventory classify those reports as `release_artifact_verification`, exposing
 their pass/fail status, failure count, and matrix artifact counts without
 turning the downloaded diagnostics into tracked source files. Keep the Workbench
 Overview release-verification block wired to the same indexed report so the
-startup inventory and visible evidence console agree.
+startup inventory and visible evidence console agree. Keep
+`workbench_smoke.json` wired to that same summary too, so route smoke evidence
+and downloaded-release verification evidence stay in one generated handoff.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

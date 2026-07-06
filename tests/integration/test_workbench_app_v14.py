@@ -1161,6 +1161,49 @@ def test_workbench_smoke_summary_records_artifact_root() -> None:
 
     assert summary["status"] == "passed"
     assert summary["artifact_root"] == str(artifact_root.resolve())
+    assert summary["release_verification"]["status"] in {"missing", "passed", "failed"}
+
+
+@pytest.mark.integration
+def test_workbench_smoke_summary_records_release_verification(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    artifact_root = tmp_path / "artifacts"
+    release_root = artifact_root / "release_evidence"
+    release_root.mkdir(parents=True)
+    verification_path = release_root / "release_artifact_verification.json"
+    verification_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_artifact_verification.v0.1-alpha",
+                "status": "passed",
+                "summary": {
+                    "release_status_count": 6,
+                    "diagnostics_manifest_count": 3,
+                    "acceptance_status_count": 3,
+                    "failure_count": 0,
+                },
+                "failures": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    summary = run_workbench_smoke_from_docs(
+        REPO_ROOT / "docs" / "workbench.md",
+        artifact_root=artifact_root,
+    )
+
+    release_verification = summary["release_verification"]
+    assert summary["status"] == "passed"
+    assert release_verification["available"] is True
+    assert release_verification["status"] == "passed"
+    assert release_verification["source_path"] == str(verification_path)
+    assert release_verification["release_status_count"] == 6
+    assert release_verification["diagnostics_manifest_count"] == 3
+    assert release_verification["acceptance_status_count"] == 3
+    assert release_verification["failure_count"] == 0
+    assert release_verification["first_failure"] is None
 
 
 @pytest.mark.integration
@@ -1458,6 +1501,7 @@ def test_workbench_smoke_cli_can_write_json_summary(tmp_path: Path, capsys: pyte
     assert payload["page_count"] == 14
     assert payload["failed_pages"] == 0
     assert "/overview" in payload["registered_routes"]
+    assert payload["release_verification"]["status"] in {"missing", "passed", "failed"}
     assert payload["routes"][0]["text_excerpt"]
     assert payload["pages"][0]["text_excerpt"]
     assert "Workbench smoke summary written" in capsys.readouterr().out

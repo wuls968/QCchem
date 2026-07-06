@@ -154,8 +154,11 @@ The JSON includes a top-level `failed_checks` summary using
 `artifact_root`, bounded `text_excerpt` fields, and `render_error` fields for
 page layout exceptions so CI logs can show whether a failure came from an
 unregistered route, an active-label mismatch, rendered content drift, or a
-component render failure. A missing docs file or malformed checklist is rejected
-with exit code `2`, not a traceback.
+component render failure. It also includes a compact `release_verification`
+summary for the latest indexed `release_artifact_verification.json`, or
+`status: missing` when that report is not present under the selected artifact
+root. A missing docs file or malformed checklist is rejected with exit code `2`,
+not a traceback.
 When the smoke gate fails, the CLI prints the same top-level failed-check ids
 before the per-route and per-page diagnostics.
 

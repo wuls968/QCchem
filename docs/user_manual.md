@@ -557,7 +557,9 @@ Missing explicit artifact roots are rejected with exit code `2`.
 
 The JSON summary is local diagnostic output. It is intentionally ignored by git
 and includes route labels, registered routes, failed checks, and bounded text
-excerpts for CI triage.
+excerpts for CI triage. When a `release_artifact_verification.json` report is
+indexed under the selected artifact root, the same smoke JSON also records its
+status, source path, matrix artifact counts, and failure count.
 
 ## Release Audit
 
