@@ -32,6 +32,8 @@ def _artifact_kind(path: Path) -> str:
     name = path.name
     if name == "release_evidence_handoff.md":
         return "release_evidence_handoff"
+    if name == "release_matrix_summary.json":
+        return "release_matrix_summary"
     if name == "release_artifact_verification.json":
         return "release_artifact_verification"
     if name == "benchmark_result.json":
@@ -153,6 +155,26 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         for item in release_evidence_matrix_artifacts
         if isinstance(item, dict) and item.get("status") != "passed"
     ]
+    release_matrix_summary_artifacts = (
+        payload.get("artifacts")
+        if kind == "release_matrix_summary" and isinstance(payload.get("artifacts"), list)
+        else []
+    )
+    failed_release_matrix_summary_artifacts = [
+        item
+        for item in release_matrix_summary_artifacts
+        if isinstance(item, dict) and item.get("status") != "passed"
+    ]
+    release_matrix_summary_failed_count = payload.get("failed_artifact_count")
+    if not isinstance(release_matrix_summary_failed_count, int):
+        release_matrix_summary_failed_count = len(failed_release_matrix_summary_artifacts)
+    release_matrix_summary_status = (
+        "failed"
+        if kind == "release_matrix_summary" and release_matrix_summary_failed_count > 0
+        else "passed"
+        if kind == "release_matrix_summary"
+        else None
+    )
     release_evidence_matrix_delta = (
         release_evidence_summary.get("release_matrix_delta")
         if kind == "release_evidence_handoff" and isinstance(release_evidence_summary.get("release_matrix_delta"), dict)
@@ -176,13 +198,20 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
         "artifact_kind": kind,
-        "artifact_name": "release_evidence_handoff" if kind == "release_evidence_handoff" else name,
+        "artifact_name": (
+            "release_evidence_handoff"
+            if kind == "release_evidence_handoff"
+            else "release_matrix_summary"
+            if kind == "release_matrix_summary"
+            else name
+        ),
         "artifact_path": str(result_path),
         "result_json": str(result_path),
         "schema_version": payload.get("schema_version") or release_evidence_summary.get("schema_version"),
         "verification_status": payload.get("verification_status")
         or payload.get("status")
         or release_evidence_summary.get("status")
+        or release_matrix_summary_status
         or evidence.get("trust_tier"),
         "trust_tier": evidence.get("trust_tier") or payload.get("verification_status") or payload.get("status"),
         "recommended_action": evidence.get("recommended_action")
@@ -337,6 +366,20 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             if kind == "release_evidence_handoff" and release_evidence_summary_path.exists()
             else None
         ),
+        "release_matrix_summary_artifact_count": (
+            payload.get("artifact_count") if kind == "release_matrix_summary" else None
+        ),
+        "release_matrix_summary_failed_artifact_count": (
+            release_matrix_summary_failed_count if kind == "release_matrix_summary" else None
+        ),
+        "release_matrix_summary_first_failed_artifact": (
+            failed_release_matrix_summary_artifacts[0]
+            if kind == "release_matrix_summary" and failed_release_matrix_summary_artifacts
+            else None
+        ),
+        "release_matrix_summary_source_verification": (
+            payload.get("source_verification") if kind == "release_matrix_summary" else None
+        ),
         "mtime": mtime,
     }
     return entry
@@ -365,6 +408,7 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "campaign_result.json",
         "workflow_result.json",
         "release_artifact_verification.json",
+        "release_matrix_summary.json",
         "release_evidence_handoff.md",
     }
     skipped_generated_paths: list[str] = []

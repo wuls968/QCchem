@@ -269,6 +269,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     claim_review = research_os.get("claim_review") or {}
     promotion_review = research_os.get("promotion_review") or {}
     release_verification = research_os.get("release_verification") or {}
+    release_matrix_summary = research_os.get("release_matrix_summary") or {}
     release_evidence_handoff = research_os.get("release_evidence_handoff") or {}
     release_verification_summary = (
         release_verification.get("summary")
@@ -303,6 +304,35 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_verification_path = release_verification.get("source_path")
     if release_verification_path:
         release_verification_detail = f"{release_verification_detail} | {release_verification_path}"
+    release_matrix_artifacts = (
+        release_matrix_summary.get("artifacts")
+        if isinstance(release_matrix_summary.get("artifacts"), list)
+        else []
+    )
+    release_matrix_failed_count = release_matrix_summary.get("failed_artifact_count")
+    release_matrix_failed_count = (
+        int(release_matrix_failed_count)
+        if isinstance(release_matrix_failed_count, int)
+        else sum(1 for item in release_matrix_artifacts if isinstance(item, dict) and item.get("status") != "passed")
+    )
+    release_matrix_status = (
+        "passed"
+        if release_matrix_summary and release_matrix_failed_count == 0
+        else "failed"
+        if release_matrix_summary
+        else "No release matrix baseline"
+    )
+    release_matrix_artifact_count = release_matrix_summary.get("artifact_count")
+    if not isinstance(release_matrix_artifact_count, int):
+        release_matrix_artifact_count = len(release_matrix_artifacts)
+    release_matrix_detail = (
+        f"{release_matrix_artifact_count} matrix artifacts / {release_matrix_failed_count} failed"
+        if release_matrix_summary
+        else "Run qcchem release collect-evidence to write release_matrix_summary.json."
+    )
+    release_matrix_path = release_matrix_summary.get("source_path")
+    if release_matrix_path:
+        release_matrix_detail = f"{release_matrix_detail} | {release_matrix_path}"
     release_handoff_status = str(release_evidence_handoff.get("status") or "No release evidence handoff")
     release_handoff_first_failure = (
         release_evidence_handoff.get("first_failure")
@@ -488,6 +518,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         release_verification_status,
                         release_verification_detail,
                         tone=_status_tone(release_verification.get("status")),
+                    ),
+                    status_card(
+                        "Release matrix baseline",
+                        str(release_matrix_status),
+                        release_matrix_detail,
+                        tone=_status_tone(release_matrix_status),
                     ),
                     status_card(
                         "Release evidence handoff",

@@ -134,6 +134,51 @@ def test_artifact_indexer_discovers_release_artifact_verification(tmp_path: Path
     assert entry["release_artifact_verification_first_failure"] is None
 
 
+def test_artifact_indexer_discovers_release_matrix_summary(tmp_path: Path) -> None:
+    release_root = tmp_path / "artifacts" / "release_evidence"
+    release_root.mkdir(parents=True)
+    matrix_summary_json = release_root / "release_matrix_summary.json"
+    source_verification = release_root / "release_artifact_verification.json"
+    matrix_summary_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_matrix_summary.v0.1-alpha",
+                "source_verification": str(source_verification),
+                "artifact_count": 2,
+                "failed_artifact_count": 1,
+                "artifacts": [
+                    {"artifact_name": "qcchem-release-diagnostics-3.10", "status": "passed"},
+                    {
+                        "artifact_name": "qcchem-release-diagnostics-3.11",
+                        "status": "failed",
+                        "failure_count": 1,
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+
+    assert index["total_artifacts"] == 1
+    entry = index["artifacts"][0]
+    assert entry["artifact_kind"] == "release_matrix_summary"
+    assert entry["artifact_name"] == "release_matrix_summary"
+    assert entry["artifact_path"] == str(matrix_summary_json)
+    assert entry["result_json"] == str(matrix_summary_json)
+    assert entry["schema_version"] == "qcchem.release_matrix_summary.v0.1-alpha"
+    assert entry["verification_status"] == "failed"
+    assert entry["release_matrix_summary_artifact_count"] == 2
+    assert entry["release_matrix_summary_failed_artifact_count"] == 1
+    assert entry["release_matrix_summary_first_failed_artifact"] == {
+        "artifact_name": "qcchem-release-diagnostics-3.11",
+        "status": "failed",
+        "failure_count": 1,
+    }
+    assert entry["release_matrix_summary_source_verification"] == str(source_verification)
+
+
 def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> None:
     evidence_root = tmp_path / "artifacts" / "release_evidence"
     evidence_root.mkdir(parents=True)

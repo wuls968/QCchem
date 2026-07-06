@@ -209,7 +209,10 @@ Name retained verifier outputs `release_artifact_verification.json` when they
 live under an artifact root. The normalized artifact index and Workbench startup
 inventory classify those reports as `release_artifact_verification`, exposing
 their pass/fail status, failure count, and matrix artifact counts without
-turning the downloaded diagnostics into tracked source files. Keep the Workbench
+turning the downloaded diagnostics into tracked source files. Keep retained
+`release_matrix_summary.json` files next to the verifier output so the index can
+classify them as `release_matrix_summary` and Workbench can surface the baseline
+matrix count and featured path separately from the handoff delta. Keep the Workbench
 Overview release-verification block wired to the same indexed report so the
 startup inventory and visible evidence console agree. Keep
 `workbench_smoke.json` wired to that same summary too, so route smoke evidence

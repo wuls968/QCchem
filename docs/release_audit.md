@@ -214,6 +214,10 @@ matrix artifact counts alongside the Research OS evidence snapshot. Workbench
 smoke JSON records the same compact release-verification summary so the
 component-tree route evidence and release artifact verification evidence can be
 reviewed from one generated handoff file.
+When `release_matrix_summary.json` is retained under that artifact root, the
+index records it as `release_matrix_summary`, Workbench startup reports its
+count and featured path, and Overview shows the baseline matrix count and failed
+count separately from the reviewer-facing handoff delta.
 When `release_evidence_handoff.md` is kept next to
 `release_evidence_summary.json`, the artifact index classifies it as
 `release_evidence_handoff`, and Workbench Overview surfaces its status,

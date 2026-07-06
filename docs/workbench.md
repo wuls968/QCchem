@@ -168,6 +168,9 @@ That command writes both machine-readable JSON and a reviewer-facing
 status. When that Markdown file is kept next to `release_evidence_summary.json`,
 the Workbench artifact inventory reports a `release_evidence_handoff` entry and
 the Overview page shows its status, recommended action, first failure, and path.
+When `release_matrix_summary.json` is retained from the same collection, the
+inventory also reports a `release_matrix_summary` entry and the Overview page
+shows the baseline matrix-artifact count, failed count, and source path.
 A missing docs file or malformed checklist is rejected with exit code `2`, not a
 traceback.
 When the smoke gate fails, the CLI prints the same top-level failed-check ids
