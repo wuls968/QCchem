@@ -185,7 +185,9 @@ Name retained verifier outputs `release_artifact_verification.json` when they
 live under an artifact root. The normalized artifact index and Workbench startup
 inventory classify those reports as `release_artifact_verification`, exposing
 their pass/fail status, failure count, and matrix artifact counts without
-turning the downloaded diagnostics into tracked source files.
+turning the downloaded diagnostics into tracked source files. Keep the Workbench
+Overview release-verification block wired to the same indexed report so the
+startup inventory and visible evidence console agree.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

@@ -268,6 +268,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     objective = research_os.get("objective") or {}
     claim_review = research_os.get("claim_review") or {}
     promotion_review = research_os.get("promotion_review") or {}
+    release_verification = research_os.get("release_verification") or {}
+    release_verification_summary = (
+        release_verification.get("summary")
+        if isinstance(release_verification.get("summary"), dict)
+        else {}
+    )
     open_gaps = research_os.get("open_evidence_gaps") or []
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
@@ -284,6 +290,18 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     )
     runtime_status_label = str(runtime_status_raw).replace("_", " ").title()
     runtime_gap = float(runtime_chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
+    release_verification_status = str(release_verification.get("status") or "No verification report")
+    release_verification_detail = (
+        f"{release_verification_summary.get('release_status_count', 0)} status bundles / "
+        f"{release_verification_summary.get('diagnostics_manifest_count', 0)} manifests / "
+        f"{release_verification_summary.get('acceptance_status_count', 0)} sidecar reports; "
+        f"{release_verification_summary.get('failure_count', 0)} failures"
+        if release_verification
+        else "No downloaded CI diagnostics verification report has been indexed."
+    )
+    release_verification_path = release_verification.get("source_path")
+    if release_verification_path:
+        release_verification_detail = f"{release_verification_detail} | {release_verification_path}"
     return html.Div(
         className="qcchem-page qcchem-page--overview",
         children=[
@@ -397,6 +415,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         str(promotion_review.get("status") or "No gate review yet"),
                         str(promotion_review.get("recommended_action") or "Exploratory artifacts require a promotion gate before candidate language."),
                         tone=_status_tone(promotion_review.get("status")),
+                    ),
+                    status_card(
+                        "Release verification",
+                        release_verification_status,
+                        release_verification_detail,
+                        tone=_status_tone(release_verification.get("status")),
                     ),
                     status_card(
                         "Best Evidence Desk",

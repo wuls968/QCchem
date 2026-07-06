@@ -244,6 +244,26 @@ def _latest_json(root: Path, pattern: str) -> dict[str, Any] | None:
 def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, Any]:
     """Load latest Research OS review artifacts for workbench summaries."""
     root = resolve_workbench_artifact_root(artifact_root)
+    artifact_index = build_artifact_index(root)
+    indexed_artifacts = [
+        entry for entry in artifact_index.get("artifacts", []) if isinstance(entry, dict)
+    ]
+    release_verification_entries = [
+        entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_artifact_verification"
+    ]
+    latest_release_verification = (
+        max(release_verification_entries, key=lambda entry: float(entry.get("mtime") or 0.0))
+        if release_verification_entries
+        else None
+    )
+    release_verification = (
+        _load_json(Path(str(latest_release_verification["result_json"])))
+        if latest_release_verification and latest_release_verification.get("result_json")
+        else None
+    )
+    if isinstance(release_verification, dict) and latest_release_verification is not None:
+        release_verification["source_path"] = str(latest_release_verification["result_json"])
+        release_verification["artifact_index_entry"] = latest_release_verification
     objective_status = _latest_json(root, "objectives/**/objective_status.json")
     objective_plan = _latest_json(root, "objectives/**/objective_plan.json")
     claim_review = _latest_json(root, "claim_reviews/**/claim_review.json")
@@ -256,5 +276,6 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
         "claim_review": claim_review or {},
         "promotion_review": promotion_review or {},
         "capsule": capsule or {},
+        "release_verification": release_verification or {},
         "open_evidence_gaps": missing_evidence if isinstance(missing_evidence, list) else [],
     }

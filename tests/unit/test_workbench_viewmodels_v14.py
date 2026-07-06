@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from qcchem.io.exports import build_qcschema_payload
-from qcchem.workbench.data import load_artifact_bundle
+from qcchem.workbench.data import load_artifact_bundle, load_research_os_snapshot
 from qcchem.workbench.viewmodels import build_run_view_model
 
 
@@ -181,6 +183,37 @@ def test_load_artifact_bundle_prefers_qcschema_and_hdf5_when_present(tmp_path) -
     assert bundle["run"]["pbc_qmmm"]["embedding_mode"] == "electrostatic_periodic_metadata"
     assert bundle["artifacts"]["pbc"]["present"] is True
     assert bundle["artifacts"]["pbc_qmmm"]["present"] is True
+
+
+def test_load_research_os_snapshot_includes_release_verification(tmp_path) -> None:
+    artifact_root = tmp_path / "artifacts"
+    release_root = artifact_root / "release_evidence"
+    release_root.mkdir(parents=True)
+    verification_path = release_root / "release_artifact_verification.json"
+    verification_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_artifact_verification.v0.1-alpha",
+                "status": "passed",
+                "summary": {
+                    "release_status_count": 6,
+                    "diagnostics_manifest_count": 3,
+                    "acceptance_status_count": 3,
+                    "failure_count": 0,
+                },
+                "failures": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = load_research_os_snapshot(artifact_root)
+
+    release_verification = snapshot["release_verification"]
+    assert release_verification["status"] == "passed"
+    assert release_verification["summary"]["release_status_count"] == 6
+    assert release_verification["source_path"] == str(verification_path)
+    assert release_verification["artifact_index_entry"]["artifact_kind"] == "release_artifact_verification"
 
 
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:

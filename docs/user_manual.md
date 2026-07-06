@@ -616,7 +616,8 @@ release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an
 artifact root, `qcchem artifacts index` classifies it as
 `release_artifact_verification`, and the Workbench startup inventory exposes its
-count and featured path.
+count and featured path. The Workbench Overview page also shows the latest
+indexed release verification status and matrix artifact counts.
 
 Before publishing release-facing docs, also run:
 

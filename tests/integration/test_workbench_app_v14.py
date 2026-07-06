@@ -838,6 +838,45 @@ def test_overview_page_leads_with_defended_claim_summary() -> None:
 
 
 @pytest.mark.integration
+def test_overview_page_surfaces_release_verification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV
+    from qcchem.workbench.pages.overview import build_overview_page, build_sample_view_model
+
+    artifact_root = tmp_path / "artifacts"
+    release_root = artifact_root / "release_evidence"
+    release_root.mkdir(parents=True)
+    verification_path = release_root / "release_artifact_verification.json"
+    verification_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_artifact_verification.v0.1-alpha",
+                "status": "passed",
+                "summary": {
+                    "release_status_count": 6,
+                    "diagnostics_manifest_count": 3,
+                    "acceptance_status_count": 3,
+                    "failure_count": 0,
+                },
+                "failures": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, str(artifact_root))
+
+    page = build_overview_page(build_sample_view_model())
+    page_text = _collect_text(page)
+
+    assert "Release verification" in page_text
+    assert "passed" in page_text
+    assert "6 status bundles / 3 manifests / 3 sidecar reports; 0 failures" in page_text
+    assert str(verification_path) in page_text
+
+
+@pytest.mark.integration
 def test_validation_markers_do_not_call_parameterized_layout() -> None:
     from qcchem.workbench.pages._registry import build_validation_pages
 

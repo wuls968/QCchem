@@ -163,7 +163,7 @@ Check each route directly, not only through in-app navigation:
 
 | Route | Active route label | Route-specific text to confirm |
 | --- | --- | --- |
-| `/overview` | Overview | Current defended claim |
+| `/overview` | Overview | Release verification |
 | `/result-confidence` | Result Confidence | Result Confidence Report |
 | `/benchmarks` | Benchmarks | Benchmark credibility bands |
 | `/hardware-campaign` | Hardware Campaign | Hardware Campaign |
@@ -202,7 +202,9 @@ The release-facing terms `baseline strength` and `hardware verification boundary
 ### Evidence Console v2 pages
 
 - `/overview` is the best-evidence research home: chemical-accuracy gap, runtime boundary, open AI work, and next action appear before deep diagnostics.
-- `/overview` also acts as the Research Objective snapshot, showing the latest objective status and open evidence gaps when `artifacts/objectives/` exists.
+- `/overview` also acts as the Research Objective snapshot, showing the latest
+  objective status, open evidence gaps, and indexed release artifact
+  verification status when those artifacts exist.
 - `/runtime-monitoring` is the runtime decision cockpit: submission health, hardware-derived accuracy, simulator-vs-hardware gap, and budget/shot usage are separated before telemetry.
 - `/hardware-campaign` is the budget decision surface: best retrieved evidence is shown alongside whether another controlled runtime probe is worth the budget.
 - `/hardware-campaign` also surfaces `Optimization Trial` when a hardware optimization artifact is present, including selected candidate, compiled burden, budget ledger, and stop reason.

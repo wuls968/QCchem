@@ -159,7 +159,9 @@ file is missing, stale, inconsistent, or tampered with.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
-count plus a featured verification report path.
+count plus a featured verification report path. The Workbench Overview page also
+surfaces the latest indexed release verification status, failure count, and
+matrix artifact counts alongside the Research OS evidence snapshot.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
