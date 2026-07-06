@@ -105,6 +105,8 @@ The command writes:
 - `release_handoff.json`
 - `release_handoff.md`
 - `release_diagnostics_manifest.json` in CI, written before diagnostic upload
+- `release_evidence/release_evidence_summary.json` in CI, written before diagnostic upload
+- `release_evidence/release_evidence_handoff.md` in CI, written before diagnostic upload
 
 Generated readiness outputs live under `artifacts/release_audit/` by default and
 are ignored by git. They are local evidence for the current checkout, not source
@@ -114,9 +116,10 @@ handoff: they point back to `release_readiness.*`, summarize the release status,
 and, inside GitHub Actions, record the current run URL plus the diagnostic
 artifact name and diagnostics manifest path. CI uploads those handoff files,
 readiness files, Workbench smoke JSON, compact `release_status.json` summaries,
-the `release_diagnostics_manifest.json` digest/size summary, and release sidecar
-freshness JSON as `qcchem-release-diagnostics-*` artifacts so failed runs keep
-their handoff bundle without tracking generated outputs in git.
+the `release_diagnostics_manifest.json` digest/size summary, release sidecar
+freshness JSON, and the CI-side `release_evidence_summary.json` /
+`release_evidence_handoff.md` as `qcchem-release-diagnostics-*` artifacts so
+failed runs keep their handoff bundle without tracking generated outputs in git.
 The CLI prints both `Report: <...>/release_readiness.md` and
 `Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact
 `Diagnostic artifact:` name and the `Artifact listing:` API URL recorded in
@@ -141,6 +144,22 @@ internally inconsistent handoff JSON. CI runs that validator against both
 source-tree and installed-wheel release bundles before writing the diagnostics
 manifest and uploading diagnostics. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
+
+Inside CI, write the pre-upload reviewer handoff after release audit, release
+status, Workbench smoke, and acceptance-status have produced their JSON:
+
+```bash
+qcchem release evidence-handoff \
+  --audit-dir artifacts/release_audit \
+  --workbench-smoke artifacts/workbench_smoke.json \
+  --acceptance-status /tmp/qcchem-release-acceptance-status.json \
+  --output-dir artifacts/release_evidence
+```
+
+That command uses `collection_mode: ci_diagnostics_handoff`. It summarizes the
+local CI diagnostics and marks downloaded artifact digest verification as
+`not_run`, because SHA-256 verification only becomes meaningful after the
+uploaded artifact has been downloaded.
 
 After downloading CI release diagnostics, collect the offline release evidence
 handoff:

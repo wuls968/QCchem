@@ -579,6 +579,8 @@ Outputs:
 - `release_handoff.json`
 - `release_handoff.md`
 - `release_diagnostics_manifest.json` in CI, written before diagnostic upload
+- `release_evidence/release_evidence_summary.json` in CI, written before diagnostic upload
+- `release_evidence/release_evidence_handoff.md` in CI, written before diagnostic upload
 
 Release audit reads local source files, docs, configs, and curated artifacts. It
 performs no runtime submission and should not mutate curated artifacts. On
@@ -598,10 +600,24 @@ manifest schema still agree with the readiness JSON before reporting the bundle
 as current. CI applies that same validator to both the source-tree and
 installed-wheel release bundles. CI diagnostic artifacts include that compact
 status JSON, `release_diagnostics_manifest.json` with uploaded-path size and
-SHA-256 summaries, and the `acceptance-status` sidecar-freshness JSON with its
-own `schema_features` for each Python matrix; CI validates the acceptance-status
-artifact before upload so the reported counts and repair plan stay consistent
-with the item list.
+SHA-256 summaries, the `acceptance-status` sidecar-freshness JSON with its own
+`schema_features`, and a pre-upload `release_evidence_handoff.md` /
+`release_evidence_summary.json` pair for each Python matrix; CI validates the
+acceptance-status artifact before upload so the reported counts and repair plan
+stay consistent with the item list.
+
+The CI-side reviewer handoff is generated with:
+
+```bash
+qcchem release evidence-handoff \
+  --audit-dir artifacts/release_audit \
+  --workbench-smoke artifacts/workbench_smoke.json \
+  --acceptance-status /tmp/qcchem-release-acceptance-status.json \
+  --output-dir artifacts/release_evidence
+```
+
+It uses `collection_mode: ci_diagnostics_handoff` and intentionally records
+downloaded artifact digest verification as `not_run`.
 
 After downloading `qcchem-release-diagnostics-*` artifacts from CI, collect the
 offline release evidence handoff:

@@ -463,6 +463,39 @@ def _build_parser() -> argparse.ArgumentParser:
             "release_evidence_summary.json, and release_evidence_handoff.md; defaults to --artifact-dir."
         ),
     )
+    release_evidence_handoff = release_subparsers.add_parser(
+        "evidence-handoff",
+        help="Write a local CI release evidence handoff from generated diagnostics.",
+    )
+    release_evidence_handoff.add_argument(
+        "--audit-dir",
+        type=Path,
+        default=Path("artifacts") / "release_audit",
+        help="Directory containing release_readiness.json and release_handoff.json.",
+    )
+    release_evidence_handoff.add_argument(
+        "--workbench-smoke",
+        type=Path,
+        default=Path("artifacts") / "workbench_smoke.json",
+        help="Workbench smoke JSON produced by qcchem workbench smoke.",
+    )
+    release_evidence_handoff.add_argument(
+        "--acceptance-status",
+        type=Path,
+        default=Path("/tmp") / "qcchem-release-acceptance-status.json",
+        help="Release acceptance status JSON produced by qcchem release acceptance-status.",
+    )
+    release_evidence_handoff.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("artifacts") / "release_evidence",
+        help="Directory for release_evidence_summary.json and release_evidence_handoff.md.",
+    )
+    release_evidence_handoff.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with code 2 when the local release evidence handoff status is not passed.",
+    )
     release_accept = release_subparsers.add_parser(
         "accept-artifact",
         help="Write a release-bound acceptance_summary.json for one manifest artifact.",
@@ -1115,6 +1148,7 @@ def _release_evidence_summary(
         first_failure = {"reason": "workbench_smoke_failed", "check": str(workbench_failed_checks[0])}
     return {
         "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+        "collection_mode": "downloaded_artifact_verification",
         "status": status,
         "recommended_action": "review_release_evidence" if status == "passed" else "inspect_release_evidence_failures",
         "first_failure": first_failure,
@@ -1147,6 +1181,123 @@ def _release_evidence_summary(
     }
 
 
+def _read_optional_json_object(path: Path, *, label: str, failures: list[dict[str, object]]) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        failures.append({"reason": f"{label}_missing", "path": str(path)})
+        return {}
+    except (OSError, json.JSONDecodeError) as exc:
+        failures.append({"reason": f"{label}_unreadable", "path": str(path), "error": f"{type(exc).__name__}: {exc}"})
+        return {}
+    if not isinstance(payload, dict):
+        failures.append({"reason": f"{label}_not_object", "path": str(path)})
+        return {}
+    return payload
+
+
+def _local_release_evidence_summary(
+    *,
+    audit_dir: Path,
+    workbench_smoke_path: Path,
+    acceptance_status_path: Path,
+    output_dir: Path,
+) -> dict[str, object]:
+    failures: list[dict[str, object]] = []
+    summary_path = output_dir / "release_evidence_summary.json"
+    handoff_path = output_dir / "release_evidence_handoff.md"
+    release_status = build_release_status_summary(audit_dir)
+    if release_status.get("status") != "passed":
+        failures.append(
+            {
+                "reason": "release_status_not_passed",
+                "path": str(audit_dir),
+                "status": release_status.get("status"),
+                "recommended_action": release_status.get("recommended_action"),
+            }
+        )
+
+    workbench_summary = _read_optional_json_object(workbench_smoke_path, label="workbench_smoke", failures=failures)
+    if workbench_summary and workbench_summary.get("status") != "passed":
+        failed_checks = workbench_summary.get("failed_checks")
+        first_check = failed_checks[0] if isinstance(failed_checks, list) and failed_checks else None
+        failures.append(
+            {
+                "reason": "workbench_smoke_not_passed",
+                "path": str(workbench_smoke_path),
+                "status": workbench_summary.get("status"),
+                "check": str(first_check) if first_check is not None else None,
+            }
+        )
+
+    acceptance_status = _read_optional_json_object(
+        acceptance_status_path,
+        label="acceptance_status",
+        failures=failures,
+    )
+    if acceptance_status and acceptance_status.get("status") != "fresh":
+        failures.append(
+            {
+                "reason": "acceptance_status_not_fresh",
+                "path": str(acceptance_status_path),
+                "status": acceptance_status.get("status"),
+                "repair_plan_count": acceptance_status.get("repair_plan_count"),
+            }
+        )
+
+    first_failure = next((failure for failure in failures if isinstance(failure, dict)), None)
+    status = "passed" if not failures else "failed"
+    return {
+        "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+        "collection_mode": "ci_diagnostics_handoff",
+        "status": status,
+        "recommended_action": "review_release_evidence" if status == "passed" else "inspect_release_evidence_failures",
+        "first_failure": first_failure,
+        "artifact_dir": str(audit_dir.parent),
+        "evidence_root": str(output_dir),
+        "docs_path": None,
+        "outputs": {
+            "release_evidence_summary": str(summary_path),
+            "release_evidence_handoff": str(handoff_path),
+            "workbench_smoke": str(workbench_smoke_path),
+        },
+        "release_status": {
+            "status": release_status.get("status"),
+            "required_pass_count": release_status.get("required_pass_count"),
+            "required_fail_count": release_status.get("required_fail_count"),
+            "warning_count": release_status.get("warning_count"),
+            "recommended_action": release_status.get("recommended_action"),
+            "release_handoff": release_status.get("release_handoff"),
+        },
+        "acceptance_status": {
+            "status": acceptance_status.get("status"),
+            "fresh_count": acceptance_status.get("fresh_count"),
+            "requires_update_count": acceptance_status.get("requires_update_count"),
+            "repair_plan_count": acceptance_status.get("repair_plan_count"),
+        },
+        "release_artifact_verification": {
+            "status": "not_run",
+            "summary": {},
+            "failure_count": None,
+            "first_failure": None,
+        },
+        "workbench_smoke": {
+            "status": workbench_summary.get("status"),
+            "route_count": workbench_summary.get("route_count"),
+            "failed_routes": workbench_summary.get("failed_routes"),
+            "page_count": workbench_summary.get("page_count"),
+            "failed_pages": workbench_summary.get("failed_pages"),
+            "failed_checks": workbench_summary.get("failed_checks")
+            if isinstance(workbench_summary.get("failed_checks"), list)
+            else [],
+            "release_verification": workbench_summary.get("release_verification")
+            if isinstance(workbench_summary.get("release_verification"), dict)
+            else {},
+        },
+        "failures": failures,
+    }
+
+
 def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     outputs = summary.get("outputs") if isinstance(summary.get("outputs"), dict) else {}
     verification = (
@@ -1159,6 +1310,8 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     linked_release_verification = (
         workbench.get("release_verification") if isinstance(workbench.get("release_verification"), dict) else {}
     )
+    release_status = summary.get("release_status") if isinstance(summary.get("release_status"), dict) else {}
+    acceptance_status = summary.get("acceptance_status") if isinstance(summary.get("acceptance_status"), dict) else {}
     failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
     first_failure = verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
     first_summary_failure = summary.get("first_failure") if isinstance(summary.get("first_failure"), dict) else None
@@ -1186,6 +1339,7 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- artifact_dir: `{summary.get('artifact_dir')}`",
         f"- evidence_root: `{summary.get('evidence_root')}`",
         f"- docs_path: `{summary.get('docs_path')}`",
+        f"- collection_mode: `{summary.get('collection_mode')}`",
         "",
         "## Generated Outputs",
         "",
@@ -1193,6 +1347,15 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- release_evidence_handoff_markdown: `{outputs.get('release_evidence_handoff')}`",
         f"- release_artifact_verification_json: `{outputs.get('release_artifact_verification')}`",
         f"- workbench_smoke_json: `{outputs.get('workbench_smoke')}`",
+        "",
+        "## CI Diagnostics Handoff",
+        "",
+        f"- release_status: `{release_status.get('status')}`",
+        f"- required_checks: `{release_status.get('required_pass_count')}` passed / `{release_status.get('required_fail_count')}` failed",
+        f"- warnings: `{release_status.get('warning_count')}`",
+        f"- release_status_action: `{release_status.get('recommended_action')}`",
+        f"- acceptance_status: `{acceptance_status.get('status')}`",
+        f"- acceptance_repair_plan_count: `{acceptance_status.get('repair_plan_count')}`",
         "",
         "## Release Artifact Verification",
         "",
@@ -1216,7 +1379,9 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         "",
         "## Review Notes",
         "",
-        "- This handoff verifies downloaded CI diagnostics and component-tree Workbench routes.",
+        "- `ci_diagnostics_handoff` summarizes local CI diagnostics before artifact upload.",
+        "- `downloaded_artifact_verification` verifies downloaded CI diagnostics and component-tree Workbench routes.",
+        "- Run `qcchem release collect-evidence` after downloading CI artifacts for digest verification.",
         "- It does not replace the real browser console checklist before a release candidate.",
         "- Keep the generated files outside tracked source unless you intentionally archive release evidence.",
         "",
@@ -1273,6 +1438,37 @@ def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, o
     print(f"Release evidence JSON: {summary_path}")
     print(f"Release evidence handoff: {handoff_path}")
     return 0 if summary["status"] == "passed" else 2
+
+
+def _run_release_evidence_handoff_command(
+    *,
+    audit_dir: Path,
+    workbench_smoke_path: Path,
+    acceptance_status_path: Path,
+    output_dir: Path,
+    strict: bool,
+) -> int:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary = _local_release_evidence_summary(
+        audit_dir=audit_dir,
+        workbench_smoke_path=workbench_smoke_path,
+        acceptance_status_path=acceptance_status_path,
+        output_dir=output_dir,
+    )
+    summary_path = output_dir / "release_evidence_summary.json"
+    handoff_path = output_dir / "release_evidence_handoff.md"
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    handoff_path.write_text(_release_evidence_handoff_markdown(summary), encoding="utf-8")
+    print(f"Release evidence handoff: {summary.get('status')}")
+    print(f"Release evidence JSON: {summary_path}")
+    print(f"Release evidence handoff Markdown: {handoff_path}")
+    first_failure = summary.get("first_failure")
+    if isinstance(first_failure, dict):
+        line = f"First failure: {first_failure.get('reason')}"
+        if first_failure.get("path"):
+            line += f" path={first_failure.get('path')}"
+        print(line)
+    return 2 if strict and summary.get("status") != "passed" else 0
 
 
 def _ensure_active_space_recommendation_spec(spec) -> None:
@@ -1775,6 +1971,14 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if report.get("status") == "passed" else 2
         if args.release_command == "collect-evidence":
             return _run_release_collect_evidence_command(args.artifact_dir, args.docs, args.output_dir)
+        if args.release_command == "evidence-handoff":
+            return _run_release_evidence_handoff_command(
+                audit_dir=args.audit_dir,
+                workbench_smoke_path=args.workbench_smoke,
+                acceptance_status_path=args.acceptance_status,
+                output_dir=args.output_dir,
+                strict=args.strict,
+            )
         if args.release_command == "accept-artifact":
             try:
                 if args.dry_run:

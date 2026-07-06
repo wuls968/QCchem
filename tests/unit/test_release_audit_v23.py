@@ -53,6 +53,7 @@ def _write_ci_workflow(
     command: str,
     *,
     include_acceptance_status_gate: bool = True,
+    include_release_evidence_handoff: bool = True,
     include_release_diagnostics_manifest: bool = True,
     include_release_diagnostic_upload: bool = True,
     acceptance_status_command: str | None = None,
@@ -76,9 +77,24 @@ def _write_ci_workflow(
         if include_acceptance_status_gate
         else ""
     )
+    evidence_handoff_step = (
+        "\n"
+        "      - name: Write release evidence handoff\n"
+        "        if: always()\n"
+        "        run: |\n"
+        "          set -euo pipefail\n"
+        "          python -m qcchem.cli.main release evidence-handoff \\\n"
+        "            --audit-dir artifacts/release_audit \\\n"
+        "            --workbench-smoke artifacts/workbench_smoke.json \\\n"
+        "            --acceptance-status /tmp/qcchem-release-acceptance-status.json \\\n"
+        "            --output-dir artifacts/release_evidence\n"
+        if include_release_evidence_handoff
+        else ""
+    )
     diagnostics_manifest_step = (
         "\n"
         "      - name: Write release diagnostics manifest\n"
+        "        if: always()\n"
         "        run: |\n"
         "          set -euo pipefail\n"
         "          python - <<'PY'\n"
@@ -108,6 +124,8 @@ def _write_ci_workflow(
         "          if-no-files-found: ignore\n"
         "          path: |\n"
         "            artifacts/workbench_smoke.json\n"
+        "            artifacts/release_evidence/release_evidence_summary.json\n"
+        "            artifacts/release_evidence/release_evidence_handoff.md\n"
         "            artifacts/release_audit/release_readiness.json\n"
         "            artifacts/release_audit/release_readiness.md\n"
         "            artifacts/release_audit/release_handoff.json\n"
@@ -140,6 +158,7 @@ jobs:
       - name: Run tests
         run: {command}
 {gate_step}
+{evidence_handoff_step}
 {diagnostics_manifest_step}
 {diagnostic_upload_step}
 """,
@@ -1179,13 +1198,15 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
     assert upload_check["details"]["matching_steps"] == [
         {
             "job": "test",
-            "step_index": 3,
+            "step_index": 4,
             "uses": "actions/upload-artifact@v7",
             "if_condition": "always()",
             "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
             "env_artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
             "paths": [
                 "artifacts/workbench_smoke.json",
+                "artifacts/release_evidence/release_evidence_summary.json",
+                "artifacts/release_evidence/release_evidence_handoff.md",
                 "artifacts/release_audit/release_readiness.json",
                 "artifacts/release_audit/release_readiness.md",
                 "artifacts/release_audit/release_handoff.json",
@@ -1256,6 +1277,32 @@ def test_release_audit_fails_when_ci_release_diagnostics_manifest_step_is_missin
         "job": "test",
         "workflow": ".github/workflows/ci.yml",
         "step_name": "Write release diagnostics manifest",
+    } in upload_check["details"]["failures"]
+
+
+def test_release_audit_fails_when_ci_release_evidence_handoff_step_is_missing(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        include_release_evidence_handoff=False,
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    upload_check = next(check for check in summary["checks"] if check["id"] == "release_diagnostics:ci_artifact_upload")
+    assert summary["status"] == "failed"
+    assert upload_check["status"] == "failed"
+    assert upload_check["required"] is True
+    assert {
+        "reason": "missing_ci_release_evidence_handoff_step",
+        "job": "test",
+        "workflow": ".github/workflows/ci.yml",
+        "step_name": "Write release evidence handoff",
     } in upload_check["details"]["failures"]
 
 
@@ -1880,6 +1927,8 @@ def test_release_audit_handoff_records_github_actions_run_and_artifact(
     )
     assert handoff["diagnostic_artifacts"]["upload_paths"] == [
         "artifacts/workbench_smoke.json",
+        "artifacts/release_evidence/release_evidence_summary.json",
+        "artifacts/release_evidence/release_evidence_handoff.md",
         "artifacts/release_audit/release_readiness.json",
         "artifacts/release_audit/release_readiness.md",
         "artifacts/release_audit/release_handoff.json",

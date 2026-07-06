@@ -159,10 +159,13 @@ failures so circuit/statevector regressions do not return as noisy test output.
 Keep the CI `Run tests` command listed in the
 `configs/release/trust_first_audit.yaml` `acceptance_commands` list; release
 audit fails when the two drift.
-CI must also keep the `Write release diagnostics manifest` step after the
-release status and release acceptance freshness gates, and keep the
-`Upload release diagnostics` step after that manifest step. The upload step uses
+CI must also keep the `Write release evidence handoff` step after the release
+status, Workbench smoke, and release acceptance freshness gates; keep the
+`Write release diagnostics manifest` step after that handoff step; and keep the
+`Upload release diagnostics` step after the manifest step. The upload step uses
 `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
+`artifacts/release_evidence/release_evidence_summary.json`,
+`artifacts/release_evidence/release_evidence_handoff.md`,
 `artifacts/release_audit/release_readiness.*`,
 `artifacts/release_audit/release_handoff.*`,
 `artifacts/release_audit/release_status.json`,
@@ -175,6 +178,10 @@ uploaded artifact name so `release_handoff.json` records the exact artifact
 entrypoint for the current run. `qcchem release audit` prints that handoff path,
 artifact name, artifact listing API URL, and diagnostics manifest path in CI
 logs.
+The CI-side reviewer handoff is generated with
+`qcchem release evidence-handoff --audit-dir artifacts/release_audit`; it uses
+`collection_mode: ci_diagnostics_handoff` and leaves downloaded artifact digest
+verification as `not_run` until the artifact is downloaded.
 After downloading CI artifacts with `gh run download`, run
 `qcchem release collect-evidence --artifact-dir <download-dir>` before treating
 the downloaded diagnostics as release evidence. The command writes

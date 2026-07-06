@@ -122,14 +122,17 @@ placeholder boundary map.
 | Collect a Runtime result | `qcchem runtime collect <artifact_dir>` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml` |
 | Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
+| Write CI release evidence handoff | `qcchem release evidence-handoff --audit-dir artifacts/release_audit` |
 | Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
 | Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
-`qcchem release collect-evidence` writes the post-CI verifier JSON, Workbench
-smoke JSON, compact summary JSON, and a reviewer-facing Markdown handoff in the
-selected evidence directory.
+`qcchem release evidence-handoff` writes the CI-side summary and reviewer
+handoff before diagnostic upload. After downloading CI artifacts,
+`qcchem release collect-evidence` reruns the digest verifier and writes the
+post-download Workbench smoke JSON, compact summary JSON, and reviewer-facing
+Markdown handoff in the selected evidence directory.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

@@ -267,7 +267,18 @@ jobs:
               )
           PY
 
+      - name: Write release evidence handoff
+        if: always()
+        run: |
+          set -euo pipefail
+          python -m qcchem.cli.main release evidence-handoff \
+            --audit-dir artifacts/release_audit \
+            --workbench-smoke artifacts/workbench_smoke.json \
+            --acceptance-status /tmp/qcchem-release-acceptance-status.json \
+            --output-dir artifacts/release_evidence
+
       - name: Write release diagnostics manifest
+        if: always()
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -293,6 +304,8 @@ jobs:
           if-no-files-found: ignore
           path: |
             artifacts/workbench_smoke.json
+            artifacts/release_evidence/release_evidence_summary.json
+            artifacts/release_evidence/release_evidence_handoff.md
             artifacts/release_audit/release_readiness.json
             artifacts/release_audit/release_readiness.md
             artifacts/release_audit/release_handoff.json

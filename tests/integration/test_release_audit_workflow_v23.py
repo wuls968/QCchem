@@ -69,6 +69,24 @@ def _write_release_acceptance(
     )
 
 
+def _write_workbench_smoke(path: Path, *, status: str = "passed") -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.workbench_smoke.v0.1-alpha",
+                "status": status,
+                "route_count": 0,
+                "failed_routes": 0 if status == "passed" else 1,
+                "page_count": 0,
+                "failed_pages": 0 if status == "passed" else 1,
+                "failed_checks": [] if status == "passed" else ["route:/overview"],
+                "release_verification": {"status": "passed"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def _write_minimal_release_tree(root: Path, *, bad_artifact: bool = False) -> Path:
     (root / "pyproject.toml").write_text('[project]\nversion = "0.1.0a1"\n', encoding="utf-8")
     docs = root / "docs"
@@ -163,6 +181,26 @@ def _write_downloaded_release_diagnostics_artifact(
         )
         == 0
     )
+    workbench_smoke_json = tmp_path / "workbench_smoke.json"
+    _write_workbench_smoke(workbench_smoke_json)
+    ci_evidence_dir = tmp_path / "ci_release_evidence"
+    assert (
+        main(
+            [
+                "release",
+                "evidence-handoff",
+                "--audit-dir",
+                str(output_dir),
+                "--workbench-smoke",
+                str(workbench_smoke_json),
+                "--acceptance-status",
+                str(acceptance_status_json),
+                "--output-dir",
+                str(ci_evidence_dir),
+            ]
+        )
+        == 0
+    )
 
     artifact_dir = tmp_path / "downloaded" / "qcchem-release-diagnostics-3.11"
     workspace_root = "/home/runner/work/QCchem/QCchem"
@@ -170,6 +208,17 @@ def _write_downloaded_release_diagnostics_artifact(
     copied_paths: dict[str, Path] = {}
     records: list[dict[str, object]] = []
     sources = [
+        ("workbench_smoke_json", workbench_smoke_json, "artifacts/workbench_smoke.json"),
+        (
+            "release_evidence_summary_json",
+            ci_evidence_dir / "release_evidence_summary.json",
+            "artifacts/release_evidence/release_evidence_summary.json",
+        ),
+        (
+            "release_evidence_handoff_md",
+            ci_evidence_dir / "release_evidence_handoff.md",
+            "artifacts/release_evidence/release_evidence_handoff.md",
+        ),
         ("release_readiness_json", output_dir / "release_readiness.json", "artifacts/release_audit/release_readiness.json"),
         ("release_readiness_md", output_dir / "release_readiness.md", "artifacts/release_audit/release_readiness.md"),
         ("release_handoff_json", output_dir / "release_handoff.json", "artifacts/release_audit/release_handoff.json"),
@@ -351,6 +400,137 @@ def test_release_status_cli_summarizes_existing_audit_outputs(
 
 
 @pytest.mark.integration
+def test_release_evidence_handoff_cli_writes_local_ci_handoff(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    acceptance_status_json = tmp_path / "qcchem-release-acceptance-status.json"
+    workbench_smoke_json = tmp_path / "workbench_smoke.json"
+    evidence_root = tmp_path / "release_evidence"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    assert main(["release", "status", "--audit-dir", str(output_dir), "-o", str(output_dir / "release_status.json")]) == 0
+    assert (
+        main(
+            [
+                "release",
+                "acceptance-status",
+                "-c",
+                str(manifest),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+                "-o",
+                str(acceptance_status_json),
+            ]
+        )
+        == 0
+    )
+    _write_workbench_smoke(workbench_smoke_json)
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "evidence-handoff",
+            "--audit-dir",
+            str(output_dir),
+            "--workbench-smoke",
+            str(workbench_smoke_json),
+            "--acceptance-status",
+            str(acceptance_status_json),
+            "--output-dir",
+            str(evidence_root),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary_path = evidence_root / "release_evidence_summary.json"
+    handoff_path = evidence_root / "release_evidence_handoff.md"
+    assert exit_code == 0
+    assert "Release evidence handoff: passed" in stdout
+    assert f"Release evidence JSON: {summary_path}" in stdout
+    assert f"Release evidence handoff Markdown: {handoff_path}" in stdout
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    handoff = handoff_path.read_text(encoding="utf-8")
+    assert summary["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
+    assert summary["collection_mode"] == "ci_diagnostics_handoff"
+    assert summary["status"] == "passed"
+    assert summary["first_failure"] is None
+    assert summary["release_status"]["status"] == "passed"
+    assert summary["acceptance_status"]["status"] == "fresh"
+    assert summary["release_artifact_verification"]["status"] == "not_run"
+    assert summary["workbench_smoke"]["status"] == "passed"
+    assert summary["failures"] == []
+    assert "# QCchem Release Evidence Handoff" in handoff
+    assert "- collection_mode: `ci_diagnostics_handoff`" in handoff
+    assert "## CI Diagnostics Handoff" in handoff
+    assert "- release_status: `passed`" in handoff
+    assert "- acceptance_status: `fresh`" in handoff
+    assert "`downloaded_artifact_verification` verifies downloaded CI diagnostics" in handoff
+
+
+@pytest.mark.integration
+def test_release_evidence_handoff_cli_strict_fails_when_workbench_smoke_is_missing(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    acceptance_status_json = tmp_path / "qcchem-release-acceptance-status.json"
+    evidence_root = tmp_path / "release_evidence"
+    missing_smoke_json = tmp_path / "missing_workbench_smoke.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    assert (
+        main(
+            [
+                "release",
+                "acceptance-status",
+                "-c",
+                str(manifest),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+                "-o",
+                str(acceptance_status_json),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "evidence-handoff",
+            "--audit-dir",
+            str(output_dir),
+            "--workbench-smoke",
+            str(missing_smoke_json),
+            "--acceptance-status",
+            str(acceptance_status_json),
+            "--output-dir",
+            str(evidence_root),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary = json.loads((evidence_root / "release_evidence_summary.json").read_text(encoding="utf-8"))
+    handoff = (evidence_root / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert exit_code == 2
+    assert "Release evidence handoff: failed" in stdout
+    assert f"First failure: workbench_smoke_missing path={missing_smoke_json}" in stdout
+    assert summary["collection_mode"] == "ci_diagnostics_handoff"
+    assert summary["status"] == "failed"
+    assert summary["first_failure"] == {"path": str(missing_smoke_json), "reason": "workbench_smoke_missing"}
+    assert "- status: `failed`" in handoff
+    assert "workbench_smoke_missing" in handoff
+
+
+@pytest.mark.integration
 def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -424,6 +604,7 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert smoke["release_verification"]["status"] == "passed"
     assert Path(smoke["release_verification"]["source_path"]).resolve() == verification_path.resolve()
     assert summary["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
+    assert summary["collection_mode"] == "downloaded_artifact_verification"
     assert summary["status"] == "passed"
     assert summary["recommended_action"] == "review_release_evidence"
     assert summary["first_failure"] is None
@@ -445,6 +626,7 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "- status: `passed`" in handoff
     assert "- recommended_action: `review_release_evidence`" in handoff
     assert "- first_failure: `none`" in handoff
+    assert "- collection_mode: `downloaded_artifact_verification`" in handoff
     assert "- release_status_count: `1`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
     assert "It does not replace the real browser console checklist" in handoff

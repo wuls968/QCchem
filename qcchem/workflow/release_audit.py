@@ -95,12 +95,15 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "-o /tmp/qcchem-release-acceptance-status.json",
 )
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
+CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME = "Write release evidence handoff"
 CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME = "Write release diagnostics manifest"
 CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v7"
 CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
 CI_RELEASE_DIAGNOSTIC_MANIFEST_PATH = "artifacts/release_audit/release_diagnostics_manifest.json"
 CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/workbench_smoke.json",
+    "artifacts/release_evidence/release_evidence_summary.json",
+    "artifacts/release_evidence/release_evidence_handoff.md",
     "artifacts/release_audit/release_readiness.json",
     "artifacts/release_audit/release_readiness.md",
     "artifacts/release_audit/release_handoff.json",
@@ -120,6 +123,7 @@ CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     "Run Workbench release smoke",
     "Run Trust-First release audit",
     CI_ACCEPTANCE_STATUS_STEP_NAME,
+    CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME,
     CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
 )
 
@@ -1138,6 +1142,30 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                         "step_name": CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
                     }
                 )
+            if CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME not in producer_indices:
+                failures.append(
+                    {
+                        "reason": "missing_ci_release_evidence_handoff_step",
+                        "job": str(job_name),
+                        "workflow": workflow_relative_path.as_posix(),
+                        "step_name": CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME,
+                    }
+                )
+            manifest_index = producer_indices.get(CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME)
+            if isinstance(manifest_index, int):
+                for producer_name, producer_index in producer_indices.items():
+                    if producer_name == CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME:
+                        continue
+                    if manifest_index <= producer_index:
+                        failures.append(
+                            {
+                                "reason": "ci_release_diagnostics_manifest_before_producer",
+                                "job": str(job_name),
+                                "step_index": manifest_index,
+                                "producer_step_name": producer_name,
+                                "producer_step_index": producer_index,
+                            }
+                        )
             for step_index, step in enumerate(steps):
                 if not isinstance(step, dict) or step.get("name") != CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME:
                     continue
