@@ -406,16 +406,19 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     verification_path = evidence_root / "release_artifact_verification.json"
     smoke_path = evidence_root / "workbench_smoke.json"
     summary_path = evidence_root / "release_evidence_summary.json"
+    handoff_path = evidence_root / "release_evidence_handoff.md"
     assert exit_code == 0
     assert "Release artifact verification: passed" in stdout
     assert f"Verification JSON: {verification_path}" in stdout
     assert f"Workbench smoke summary written to {smoke_path}" in stdout
     assert "Release evidence summary: passed" in stdout
     assert f"Release evidence JSON: {summary_path}" in stdout
+    assert f"Release evidence handoff: {handoff_path}" in stdout
 
     verification = json.loads(verification_path.read_text(encoding="utf-8"))
     smoke = json.loads(smoke_path.read_text(encoding="utf-8"))
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    handoff = handoff_path.read_text(encoding="utf-8")
     assert verification["status"] == "passed"
     assert smoke["status"] == "passed"
     assert smoke["release_verification"]["status"] == "passed"
@@ -423,6 +426,8 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert summary["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
     assert summary["status"] == "passed"
     assert summary["outputs"] == {
+        "release_evidence_summary": str(summary_path),
+        "release_evidence_handoff": str(handoff_path),
         "release_artifact_verification": str(verification_path),
         "workbench_smoke": str(smoke_path),
     }
@@ -432,7 +437,14 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
         "failure_count": 0,
         "release_status_count": 1,
     }
+    assert summary["release_artifact_verification"]["first_failure"] is None
     assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
+    assert "# QCchem Release Evidence Handoff" in handoff
+    assert "- status: `passed`" in handoff
+    assert "- recommended_action: `review_release_evidence`" in handoff
+    assert "- release_status_count: `1`" in handoff
+    assert "- linked_release_verification_status: `passed`" in handoff
+    assert "It does not replace the real browser console checklist" in handoff
 
 
 @pytest.mark.integration

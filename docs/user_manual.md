@@ -612,8 +612,9 @@ qcchem release collect-evidence \
   --docs docs/workbench.md
 ```
 
-This writes `release_artifact_verification.json`, `workbench_smoke.json`, and
-`release_evidence_summary.json` under the downloaded artifact directory. Use the
+This writes `release_artifact_verification.json`, `workbench_smoke.json`,
+`release_evidence_summary.json`, and reviewer-facing
+`release_evidence_handoff.md` under the downloaded artifact directory. Use the
 lower-level verifier directly when you only need the artifact-integrity check:
 
 ```bash

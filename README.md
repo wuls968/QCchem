@@ -127,6 +127,10 @@ placeholder boundary map.
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
+`qcchem release collect-evidence` writes the post-CI verifier JSON, Workbench
+smoke JSON, compact summary JSON, and a reviewer-facing Markdown handoff in the
+selected evidence directory.
+
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.
 

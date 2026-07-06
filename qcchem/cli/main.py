@@ -458,7 +458,10 @@ def _build_parser() -> argparse.ArgumentParser:
     release_collect_evidence.add_argument(
         "--output-dir",
         type=Path,
-        help="Directory for release_artifact_verification.json, workbench_smoke.json, and release_evidence_summary.json; defaults to --artifact-dir.",
+        help=(
+            "Directory for release_artifact_verification.json, workbench_smoke.json, "
+            "release_evidence_summary.json, and release_evidence_handoff.md; defaults to --artifact-dir."
+        ),
     )
     release_accept = release_subparsers.add_parser(
         "accept-artifact",
@@ -1091,10 +1094,18 @@ def _release_evidence_summary(
     workbench_smoke_path: Path,
     workbench_summary: dict[str, object],
     docs_path: Path,
+    summary_path: Path,
+    handoff_path: Path,
 ) -> dict[str, object]:
     verification_status = str(verification_report.get("status") or "unknown")
     workbench_status = str(workbench_summary.get("status") or "unknown")
     release_verification = workbench_summary.get("release_verification")
+    verification_failures = verification_report.get("failures")
+    first_verification_failure = (
+        next((failure for failure in verification_failures if isinstance(failure, dict)), None)
+        if isinstance(verification_failures, list)
+        else None
+    )
     return {
         "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
         "status": "passed" if verification_status == "passed" and workbench_status == "passed" else "failed",
@@ -1102,6 +1113,8 @@ def _release_evidence_summary(
         "evidence_root": str(evidence_root),
         "docs_path": str(docs_path),
         "outputs": {
+            "release_evidence_summary": str(summary_path),
+            "release_evidence_handoff": str(handoff_path),
             "release_artifact_verification": str(verification_path),
             "workbench_smoke": str(workbench_smoke_path),
         },
@@ -1109,6 +1122,7 @@ def _release_evidence_summary(
             "status": verification_status,
             "summary": verification_report.get("summary") if isinstance(verification_report.get("summary"), dict) else {},
             "failure_count": len(verification_report.get("failures") or []),
+            "first_failure": first_verification_failure,
         },
         "workbench_smoke": {
             "status": workbench_status,
@@ -1124,12 +1138,86 @@ def _release_evidence_summary(
     }
 
 
+def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
+    outputs = summary.get("outputs") if isinstance(summary.get("outputs"), dict) else {}
+    verification = (
+        summary.get("release_artifact_verification")
+        if isinstance(summary.get("release_artifact_verification"), dict)
+        else {}
+    )
+    verification_counts = verification.get("summary") if isinstance(verification.get("summary"), dict) else {}
+    workbench = summary.get("workbench_smoke") if isinstance(summary.get("workbench_smoke"), dict) else {}
+    linked_release_verification = (
+        workbench.get("release_verification") if isinstance(workbench.get("release_verification"), dict) else {}
+    )
+    failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
+    first_failure = verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
+    first_failure_text = "none"
+    if first_failure is not None:
+        first_failure_text = str(first_failure.get("reason") or "unknown")
+        if first_failure.get("path"):
+            first_failure_text = f"{first_failure_text} path={first_failure.get('path')}"
+    failed_checks_text = ", ".join(str(item) for item in failed_checks) if failed_checks else "none"
+    recommended_action = (
+        "review_release_evidence"
+        if summary.get("status") == "passed"
+        else "inspect_release_evidence_failures"
+    )
+    lines = [
+        "# QCchem Release Evidence Handoff",
+        "",
+        "- output: `release_evidence_handoff.md`",
+        f"- schema_version: `{summary.get('schema_version')}`",
+        f"- status: `{summary.get('status')}`",
+        f"- recommended_action: `{recommended_action}`",
+        f"- artifact_dir: `{summary.get('artifact_dir')}`",
+        f"- evidence_root: `{summary.get('evidence_root')}`",
+        f"- docs_path: `{summary.get('docs_path')}`",
+        "",
+        "## Generated Outputs",
+        "",
+        f"- release_evidence_summary_json: `{outputs.get('release_evidence_summary')}`",
+        f"- release_evidence_handoff_markdown: `{outputs.get('release_evidence_handoff')}`",
+        f"- release_artifact_verification_json: `{outputs.get('release_artifact_verification')}`",
+        f"- workbench_smoke_json: `{outputs.get('workbench_smoke')}`",
+        "",
+        "## Release Artifact Verification",
+        "",
+        f"- status: `{verification.get('status')}`",
+        f"- release_status_count: `{verification_counts.get('release_status_count')}`",
+        f"- diagnostics_manifest_count: `{verification_counts.get('diagnostics_manifest_count')}`",
+        f"- acceptance_status_count: `{verification_counts.get('acceptance_status_count')}`",
+        f"- failure_count: `{verification.get('failure_count')}`",
+        f"- first_failure: `{first_failure_text}`",
+        "",
+        "## Workbench Smoke",
+        "",
+        f"- status: `{workbench.get('status')}`",
+        f"- route_count: `{workbench.get('route_count')}`",
+        f"- failed_routes: `{workbench.get('failed_routes')}`",
+        f"- page_count: `{workbench.get('page_count')}`",
+        f"- failed_pages: `{workbench.get('failed_pages')}`",
+        f"- failed_checks: `{failed_checks_text}`",
+        f"- linked_release_verification_status: `{linked_release_verification.get('status')}`",
+        f"- linked_release_verification_source: `{linked_release_verification.get('source_path')}`",
+        "",
+        "## Review Notes",
+        "",
+        "- This handoff verifies downloaded CI diagnostics and component-tree Workbench routes.",
+        "- It does not replace the real browser console checklist before a release candidate.",
+        "- Keep the generated files outside tracked source unless you intentionally archive release evidence.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, output_dir: Path | None) -> int:
     evidence_root = output_dir if output_dir is not None else artifact_dir
     evidence_root.mkdir(parents=True, exist_ok=True)
     verification_path = evidence_root / "release_artifact_verification.json"
     workbench_smoke_path = evidence_root / "workbench_smoke.json"
     summary_path = evidence_root / "release_evidence_summary.json"
+    handoff_path = evidence_root / "release_evidence_handoff.md"
 
     verification_report = verify_release_diagnostics_artifacts(artifact_dir)
     verification_path.write_text(json.dumps(verification_report, indent=2, sort_keys=True), encoding="utf-8")
@@ -1163,10 +1251,14 @@ def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, o
         workbench_smoke_path=workbench_smoke_path,
         workbench_summary=workbench_summary,
         docs_path=docs_path,
+        summary_path=summary_path,
+        handoff_path=handoff_path,
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    handoff_path.write_text(_release_evidence_handoff_markdown(summary), encoding="utf-8")
     print(f"Release evidence summary: {summary['status']}")
     print(f"Release evidence JSON: {summary_path}")
+    print(f"Release evidence handoff: {handoff_path}")
     return 0 if summary["status"] == "passed" else 2
 
 

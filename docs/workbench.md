@@ -163,6 +163,9 @@ root. The same linked handoff can be generated after a CI artifact download:
 qcchem release collect-evidence --artifact-dir <downloaded-artifacts> --docs docs/workbench.md
 ```
 
+That command writes both machine-readable JSON and a reviewer-facing
+`release_evidence_handoff.md` containing the linked verifier and route-smoke
+status.
 A missing docs file or malformed checklist is rejected with exit code `2`, not a
 traceback.
 When the smoke gate fails, the CLI prints the same top-level failed-check ids

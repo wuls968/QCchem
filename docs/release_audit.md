@@ -152,15 +152,18 @@ qcchem release collect-evidence \
 ```
 
 This command writes `release_artifact_verification.json`,
-`workbench_smoke.json`, and `release_evidence_summary.json` under the downloaded
-artifact directory. The verifier recursively checks downloaded
+`workbench_smoke.json`, `release_evidence_summary.json`, and the reviewer-facing
+`release_evidence_handoff.md` under the downloaded artifact directory. The
+verifier recursively checks downloaded
 `release_status.json`, `release_diagnostics_manifest.json`, and
 `qcchem-release-acceptance-status.json` files. It revalidates the release status
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
 uploaded file sizes and SHA-256 digests. The Workbench smoke pass then records
-the same verifier status and matrix counts in its route handoff. The command
-exits with code `2` if any expected file is missing, stale, inconsistent,
-tampered with, or if the Workbench route smoke fails.
+the same verifier status and matrix counts in its route handoff. The Markdown
+handoff summarizes the generated paths, verifier counts, Workbench route/page
+status, first failure, and whether a real browser checklist is still required.
+The command exits with code `2` if any expected file is missing, stale,
+inconsistent, tampered with, or if the Workbench route smoke fails.
 Use `qcchem release verify-artifacts --artifact-dir /tmp/qcchem-ci-artifacts`
 when you only need the lower-level artifact-integrity check.
 When the output is named `release_artifact_verification.json` under an artifact
