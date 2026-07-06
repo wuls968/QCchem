@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -137,6 +138,107 @@ release_audit:
     return manifest
 
 
+def _write_downloaded_release_diagnostics_artifact(
+    tmp_path: Path,
+) -> tuple[Path, dict[str, Path]]:
+    manifest = _write_minimal_release_tree(tmp_path)
+    output_dir = tmp_path / "release_audit"
+    status_json = output_dir / "release_status.json"
+    acceptance_status_json = tmp_path / "qcchem-release-acceptance-status.json"
+    assert main(["release", "audit", "-c", str(manifest), "-o", str(output_dir), "--repo-root", str(tmp_path)]) == 0
+    assert main(["release", "status", "--audit-dir", str(output_dir), "-o", str(status_json)]) == 0
+    assert (
+        main(
+            [
+                "release",
+                "acceptance-status",
+                "-c",
+                str(manifest),
+                "--repo-root",
+                str(tmp_path),
+                "--strict",
+                "-o",
+                str(acceptance_status_json),
+            ]
+        )
+        == 0
+    )
+
+    artifact_dir = tmp_path / "downloaded" / "qcchem-release-diagnostics-3.11"
+    workspace_root = "/home/runner/work/QCchem/QCchem"
+    manifest_remote_path = f"{workspace_root}/artifacts/release_audit/release_diagnostics_manifest.json"
+    copied_paths: dict[str, Path] = {}
+    records: list[dict[str, object]] = []
+    sources = [
+        ("release_readiness_json", output_dir / "release_readiness.json", "artifacts/release_audit/release_readiness.json"),
+        ("release_readiness_md", output_dir / "release_readiness.md", "artifacts/release_audit/release_readiness.md"),
+        ("release_handoff_json", output_dir / "release_handoff.json", "artifacts/release_audit/release_handoff.json"),
+        ("release_handoff_md", output_dir / "release_handoff.md", "artifacts/release_audit/release_handoff.md"),
+        ("release_status_json", status_json, "artifacts/release_audit/release_status.json"),
+        ("acceptance_status_json", acceptance_status_json, "/tmp/qcchem-release-acceptance-status.json"),
+    ]
+    for name, source, upload_path in sources:
+        remote_path = upload_path if upload_path.startswith("/") else f"{workspace_root}/{upload_path}"
+        local_path = artifact_dir / remote_path.lstrip("/")
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, local_path)
+        copied_paths[name] = local_path
+        records.append(_diagnostics_manifest_file_record(upload_path, remote_path, local_path))
+
+    manifest_path = artifact_dir / manifest_remote_path.lstrip("/")
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    upload_paths = [str(record["path"]) for record in records]
+    upload_paths.append("artifacts/release_audit/release_diagnostics_manifest.json")
+    manifest_payload = {
+        "schema_version": "qcchem.release_diagnostics_manifest.v0.1-alpha",
+        "generated_at_utc": "2026-07-06T00:00:00Z",
+        "base_dir": workspace_root,
+        "ci": {"github_actions": True},
+        "diagnostic_artifact": {
+            "name": "qcchem-release-diagnostics-3.11",
+            "name_prefix": "qcchem-release-diagnostics-",
+        },
+        "manifest_path": manifest_remote_path,
+        "upload_paths": upload_paths,
+        "files": records,
+        "file_count": len(records),
+        "present_count": len(records),
+        "digest_count": len(records),
+        "missing_paths": [],
+        "missing_count": 0,
+        "non_file_paths": [],
+        "non_file_count": 0,
+        "omitted_paths": [
+            {
+                "path": "artifacts/release_audit/release_diagnostics_manifest.json",
+                "resolved_path": manifest_remote_path,
+                "reason": "self_manifest_digest_omitted",
+            }
+        ],
+        "omitted_count": 1,
+    }
+    manifest_path.write_text(json.dumps(manifest_payload, indent=2, sort_keys=True), encoding="utf-8")
+    copied_paths["diagnostics_manifest_json"] = manifest_path
+    return artifact_dir.parent, copied_paths
+
+
+def _diagnostics_manifest_file_record(
+    upload_path: str,
+    remote_path: str,
+    local_path: Path,
+) -> dict[str, object]:
+    payload = local_path.read_bytes()
+    return {
+        "path": upload_path,
+        "resolved_path": remote_path,
+        "status": "present",
+        "exists": True,
+        "is_file": True,
+        "size_bytes": len(payload),
+        "sha256": hashlib.sha256(payload).hexdigest(),
+    }
+
+
 @pytest.mark.integration
 def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     manifest = _write_minimal_release_tree(tmp_path)
@@ -246,6 +348,60 @@ def test_release_status_cli_summarizes_existing_audit_outputs(
     assert status["first_required_failure"] is None
     assert status["first_sidecar_repair"] is None
     assert status["release_handoff"]["markdown"] == str(output_dir / "release_handoff.md")
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Release artifact verification: passed" in stdout
+    assert "Release status bundles: 1" in stdout
+    assert "Diagnostics manifests: 1" in stdout
+    assert "Acceptance status files: 1" in stdout
+    assert f"Verification JSON: {verification_json}" in stdout
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    assert report["schema_version"] == "qcchem.release_artifact_verification.v0.1-alpha"
+    assert report["status"] == "passed"
+    assert report["summary"] == {
+        "acceptance_status_count": 1,
+        "diagnostics_manifest_count": 1,
+        "failure_count": 0,
+        "release_status_count": 1,
+    }
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_rejects_manifest_digest_mismatch(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    copied_paths["release_handoff_md"].write_text("tampered handoff\n", encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release artifact verification: failed" in stdout
+    assert "First failure: diagnostics_manifest_size_mismatch" in stdout
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    assert report["status"] == "failed"
+    assert {
+        "diagnostics_manifest_size_mismatch",
+        "diagnostics_manifest_sha256_mismatch",
+    }.issubset({failure["reason"] for failure in report["failures"]})
 
 
 @pytest.mark.integration

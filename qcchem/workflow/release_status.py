@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ from qcchem.workflow.release_audit import (
 )
 
 RELEASE_STATUS_SCHEMA_VERSION = "qcchem.release_status.v0.1-alpha"
+RELEASE_ARTIFACT_VERIFICATION_SCHEMA_VERSION = "qcchem.release_artifact_verification.v0.1-alpha"
 
 
 def compact_release_audit_check(check: object) -> dict[str, object] | None:
@@ -455,6 +457,435 @@ def build_release_status_summary(audit_dir: Path) -> dict[str, object]:
         }
     )
     return base
+
+
+def verify_release_diagnostics_artifacts(artifact_dir: Path) -> dict[str, object]:
+    """Verify a downloaded CI release diagnostics artifact directory."""
+
+    artifact_dir = Path(artifact_dir)
+    failures: list[dict[str, object]] = []
+    report: dict[str, object] = {
+        "schema_version": RELEASE_ARTIFACT_VERIFICATION_SCHEMA_VERSION,
+        "artifact_dir": str(artifact_dir),
+        "release_statuses": [],
+        "diagnostics_manifests": [],
+        "acceptance_statuses": [],
+        "failures": failures,
+    }
+    if not artifact_dir.exists():
+        failures.append({"reason": "artifact_dir_missing", "path": str(artifact_dir)})
+        _finalize_release_artifact_verification_report(report)
+        return report
+    if not artifact_dir.is_dir():
+        failures.append({"reason": "artifact_dir_not_directory", "path": str(artifact_dir)})
+        _finalize_release_artifact_verification_report(report)
+        return report
+
+    release_status_paths = sorted(artifact_dir.rglob("release_status.json"))
+    diagnostics_manifest_paths = sorted(artifact_dir.rglob("release_diagnostics_manifest.json"))
+    acceptance_status_paths = sorted(artifact_dir.rglob("qcchem-release-acceptance-status.json"))
+
+    release_statuses = report["release_statuses"]
+    assert isinstance(release_statuses, list)
+    for status_path in release_status_paths:
+        release_statuses.append(_verify_downloaded_release_status(status_path, failures))
+    if not release_status_paths:
+        failures.append({"reason": "missing_release_status_files", "path": str(artifact_dir)})
+
+    diagnostics_manifests = report["diagnostics_manifests"]
+    assert isinstance(diagnostics_manifests, list)
+    for manifest_path in diagnostics_manifest_paths:
+        diagnostics_manifests.append(_verify_diagnostics_manifest(manifest_path, failures))
+    if not diagnostics_manifest_paths:
+        failures.append({"reason": "missing_diagnostics_manifests", "path": str(artifact_dir)})
+
+    acceptance_statuses = report["acceptance_statuses"]
+    assert isinstance(acceptance_statuses, list)
+    for status_path in acceptance_status_paths:
+        acceptance_statuses.append(_verify_acceptance_status(status_path, failures))
+    if not acceptance_status_paths:
+        failures.append({"reason": "missing_acceptance_status_files", "path": str(artifact_dir)})
+
+    _finalize_release_artifact_verification_report(report)
+    return report
+
+
+def _verify_downloaded_release_status(
+    status_path: Path,
+    failures: list[dict[str, object]],
+) -> dict[str, object]:
+    audit_dir = status_path.parent
+    summary = build_release_status_summary(audit_dir)
+    entry = {
+        "path": str(status_path),
+        "audit_dir": str(audit_dir),
+        "status": summary.get("status"),
+        "required_pass_count": summary.get("required_pass_count"),
+        "required_fail_count": summary.get("required_fail_count"),
+        "warning_count": summary.get("warning_count"),
+        "release_acceptance_sidecars_status": summary.get("release_acceptance_sidecars_status"),
+    }
+    if summary.get("status") != "passed":
+        failures.append(
+            {
+                "reason": "release_status_not_passed",
+                "path": str(status_path),
+                "status": summary.get("status"),
+                "recommended_action": summary.get("recommended_action"),
+            }
+        )
+    schema_mismatches = summary.get("schema_mismatches")
+    if isinstance(schema_mismatches, list) and schema_mismatches:
+        failures.append(
+            {
+                "reason": "release_status_schema_mismatch",
+                "path": str(status_path),
+                "schema_mismatches": schema_mismatches,
+            }
+        )
+    contract_mismatches = summary.get("contract_mismatches")
+    if isinstance(contract_mismatches, list) and contract_mismatches:
+        failures.append(
+            {
+                "reason": "release_status_contract_mismatch",
+                "path": str(status_path),
+                "contract_mismatches": contract_mismatches,
+            }
+        )
+    return entry
+
+
+def _verify_diagnostics_manifest(
+    manifest_path: Path,
+    failures: list[dict[str, object]],
+) -> dict[str, object]:
+    try:
+        manifest = read_release_status_json(manifest_path, label="release_diagnostics_manifest.json")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_unreadable",
+                "path": str(manifest_path),
+                "error": str(exc),
+            }
+        )
+        return {"path": str(manifest_path), "status": "unreadable"}
+
+    entry = {
+        "path": str(manifest_path),
+        "schema_version": manifest.get("schema_version"),
+        "file_count": manifest.get("file_count"),
+        "present_count": manifest.get("present_count"),
+        "digest_count": manifest.get("digest_count"),
+        "omitted_count": manifest.get("omitted_count"),
+    }
+    if manifest.get("schema_version") != RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_schema_mismatch",
+                "path": str(manifest_path),
+                "expected": RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION,
+                "actual": manifest.get("schema_version"),
+            }
+        )
+
+    missing_paths = manifest.get("missing_paths")
+    if isinstance(missing_paths, list) and missing_paths:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_missing_paths",
+                "path": str(manifest_path),
+                "missing_paths": missing_paths,
+            }
+        )
+    non_file_paths = manifest.get("non_file_paths")
+    if isinstance(non_file_paths, list) and non_file_paths:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_non_file_paths",
+                "path": str(manifest_path),
+                "non_file_paths": non_file_paths,
+            }
+        )
+
+    files = manifest.get("files")
+    if not isinstance(files, list):
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_files_not_list",
+                "path": str(manifest_path),
+                "actual_type": release_status_actual_type(files, missing="files" not in manifest),
+            }
+        )
+        return entry
+
+    _check_diagnostics_manifest_count(
+        failures,
+        manifest_path=manifest_path,
+        field="file_count",
+        expected=len(files),
+        actual=manifest.get("file_count"),
+    )
+    _check_diagnostics_manifest_count(
+        failures,
+        manifest_path=manifest_path,
+        field="present_count",
+        expected=sum(1 for record in files if isinstance(record, dict) and record.get("status") == "present"),
+        actual=manifest.get("present_count"),
+    )
+    _check_diagnostics_manifest_count(
+        failures,
+        manifest_path=manifest_path,
+        field="digest_count",
+        expected=sum(1 for record in files if isinstance(record, dict) and record.get("sha256")),
+        actual=manifest.get("digest_count"),
+    )
+    omitted_paths = manifest.get("omitted_paths")
+    if isinstance(omitted_paths, list):
+        _check_diagnostics_manifest_count(
+            failures,
+            manifest_path=manifest_path,
+            field="omitted_count",
+            expected=len(omitted_paths),
+            actual=manifest.get("omitted_count"),
+        )
+
+    artifact_root = _downloaded_artifact_root(
+        local_path=manifest_path,
+        remote_path=manifest.get("manifest_path"),
+    )
+    if artifact_root is None:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_path_unmappable",
+                "path": str(manifest_path),
+                "manifest_path": manifest.get("manifest_path"),
+            }
+        )
+        return entry
+
+    for index, record in enumerate(files):
+        if not isinstance(record, dict):
+            failures.append(
+                {
+                    "reason": "diagnostics_manifest_record_not_object",
+                    "path": str(manifest_path),
+                    "index": index,
+                    "actual_type": release_status_actual_type(record, missing=False),
+                }
+            )
+            continue
+        _verify_diagnostics_manifest_record(
+            record,
+            artifact_root=artifact_root,
+            manifest_path=manifest_path,
+            index=index,
+            failures=failures,
+        )
+    return entry
+
+
+def _verify_acceptance_status(
+    status_path: Path,
+    failures: list[dict[str, object]],
+) -> dict[str, object]:
+    try:
+        status = read_release_status_json(status_path, label="qcchem-release-acceptance-status.json")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        failures.append(
+            {
+                "reason": "acceptance_status_unreadable",
+                "path": str(status_path),
+                "error": str(exc),
+            }
+        )
+        return {"path": str(status_path), "status": "unreadable"}
+
+    from qcchem.workflow.release_acceptance import release_acceptance_status_contract_failures
+
+    entry = {
+        "path": str(status_path),
+        "status": status.get("status"),
+        "total_sidecars": status.get("total_sidecars"),
+        "fresh_count": status.get("fresh_count"),
+        "requires_update_count": status.get("requires_update_count"),
+        "repair_plan_count": status.get("repair_plan_count"),
+    }
+    contract_failures = release_acceptance_status_contract_failures(status)
+    if contract_failures:
+        failures.append(
+            {
+                "reason": "acceptance_status_contract_failure",
+                "path": str(status_path),
+                "contract_failures": contract_failures,
+            }
+        )
+    if status.get("status") != "fresh":
+        failures.append(
+            {
+                "reason": "acceptance_status_not_fresh",
+                "path": str(status_path),
+                "status": status.get("status"),
+            }
+        )
+    if status.get("repair_plan_count") != 0:
+        failures.append(
+            {
+                "reason": "acceptance_status_repair_plan_not_empty",
+                "path": str(status_path),
+                "repair_plan_count": status.get("repair_plan_count"),
+            }
+        )
+    return entry
+
+
+def _verify_diagnostics_manifest_record(
+    record: dict[str, object],
+    *,
+    artifact_root: Path,
+    manifest_path: Path,
+    index: int,
+    failures: list[dict[str, object]],
+) -> None:
+    if record.get("status") != "present":
+        return
+    local_path = _downloaded_file_path(artifact_root, record.get("resolved_path") or record.get("path"))
+    if local_path is None:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_record_path_unmappable",
+                "path": str(manifest_path),
+                "index": index,
+                "record_path": record.get("path"),
+                "resolved_path": record.get("resolved_path"),
+            }
+        )
+        return
+    if not local_path.exists():
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_local_file_missing",
+                "path": str(manifest_path),
+                "index": index,
+                "local_path": str(local_path),
+                "record_path": record.get("path"),
+            }
+        )
+        return
+    if not local_path.is_file():
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_local_path_not_file",
+                "path": str(manifest_path),
+                "index": index,
+                "local_path": str(local_path),
+                "record_path": record.get("path"),
+            }
+        )
+        return
+    expected_size = record.get("size_bytes")
+    actual_size = local_path.stat().st_size
+    if expected_size != actual_size:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_size_mismatch",
+                "path": str(manifest_path),
+                "index": index,
+                "local_path": str(local_path),
+                "record_path": record.get("path"),
+                "expected": expected_size,
+                "actual": actual_size,
+            }
+        )
+    expected_sha256 = record.get("sha256")
+    actual_sha256 = _file_sha256(local_path)
+    if expected_sha256 != actual_sha256:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_sha256_mismatch",
+                "path": str(manifest_path),
+                "index": index,
+                "local_path": str(local_path),
+                "record_path": record.get("path"),
+                "expected": expected_sha256,
+                "actual": actual_sha256,
+            }
+        )
+
+
+def _check_diagnostics_manifest_count(
+    failures: list[dict[str, object]],
+    *,
+    manifest_path: Path,
+    field: str,
+    expected: int,
+    actual: object,
+) -> None:
+    if actual != expected:
+        failures.append(
+            {
+                "reason": "diagnostics_manifest_count_mismatch",
+                "path": str(manifest_path),
+                "field": field,
+                "expected": expected,
+                "actual": actual,
+            }
+        )
+
+
+def _downloaded_artifact_root(*, local_path: Path, remote_path: object) -> Path | None:
+    suffix = _portable_path_suffix_parts(remote_path)
+    if not suffix:
+        return None
+    local_parts = local_path.resolve().parts
+    if len(local_parts) < len(suffix):
+        return None
+    if tuple(local_parts[-len(suffix) :]) != suffix:
+        return None
+    root_parts = local_parts[: -len(suffix)]
+    if not root_parts:
+        return Path(".")
+    return Path(*root_parts)
+
+
+def _downloaded_file_path(artifact_root: Path, remote_path: object) -> Path | None:
+    suffix = _portable_path_suffix_parts(remote_path)
+    if not suffix:
+        return None
+    return artifact_root.joinpath(*suffix)
+
+
+def _portable_path_suffix_parts(path_value: object) -> tuple[str, ...] | None:
+    if not isinstance(path_value, str) or not path_value:
+        return None
+    path = Path(path_value)
+    parts = path.parts
+    if path.anchor and parts and parts[0] == path.anchor:
+        parts = parts[1:]
+    return tuple(part for part in parts if part not in {"", "."})
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _finalize_release_artifact_verification_report(report: dict[str, object]) -> None:
+    failures = report.get("failures")
+    failure_count = len(failures) if isinstance(failures, list) else 0
+    release_statuses = report.get("release_statuses")
+    diagnostics_manifests = report.get("diagnostics_manifests")
+    acceptance_statuses = report.get("acceptance_statuses")
+    report["status"] = "passed" if failure_count == 0 else "failed"
+    report["summary"] = {
+        "release_status_count": len(release_statuses) if isinstance(release_statuses, list) else 0,
+        "diagnostics_manifest_count": len(diagnostics_manifests) if isinstance(diagnostics_manifests, list) else 0,
+        "acceptance_status_count": len(acceptance_statuses) if isinstance(acceptance_statuses, list) else 0,
+        "failure_count": failure_count,
+    }
 
 
 def _release_status_value_mismatch(

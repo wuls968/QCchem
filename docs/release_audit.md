@@ -142,6 +142,21 @@ source-tree and installed-wheel release bundles before writing the diagnostics
 manifest and uploading diagnostics. When `-o` is supplied, it writes a compact
 `qcchem.release_status.v0.1-alpha` JSON summary for automation.
 
+After downloading CI release diagnostics, verify the downloaded bundle offline:
+
+```bash
+qcchem release verify-artifacts \
+  --artifact-dir /tmp/qcchem-ci-artifacts \
+  -o /tmp/release_artifact_verification.json
+```
+
+The verifier recursively checks downloaded `release_status.json`,
+`release_diagnostics_manifest.json`, and
+`qcchem-release-acceptance-status.json` files. It revalidates the release status
+contracts, confirms sidecar freshness, checks manifest counts, and recomputes
+uploaded file sizes and SHA-256 digests. It exits with code `2` if any expected
+file is missing, stale, inconsistent, or tampered with.
+
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or
 blocked, `release_readiness.md` adds a `Release Sidecar Repair Plan` section

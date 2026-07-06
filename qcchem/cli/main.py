@@ -149,6 +149,10 @@ def build_release_status_summary(*args, **kwargs):
     return _load_attr("qcchem.workflow.release_status", "build_release_status_summary")(*args, **kwargs)
 
 
+def verify_release_diagnostics_artifacts(*args, **kwargs):
+    return _load_attr("qcchem.workflow.release_status", "verify_release_diagnostics_artifacts")(*args, **kwargs)
+
+
 def write_release_artifact_acceptance_summary_from_config(*args, **kwargs):
     return _load_attr(
         "qcchem.workflow.release_acceptance",
@@ -418,6 +422,22 @@ def _build_parser() -> argparse.ArgumentParser:
         "--strict",
         action="store_true",
         help="Exit with code 2 when the summarized release audit status is not passed.",
+    )
+    release_verify_artifacts = release_subparsers.add_parser(
+        "verify-artifacts",
+        help="Verify downloaded CI release diagnostic artifacts without network access.",
+    )
+    release_verify_artifacts.add_argument(
+        "--artifact-dir",
+        type=Path,
+        required=True,
+        help="Directory produced by downloading qcchem-release-diagnostics-* artifacts.",
+    )
+    release_verify_artifacts.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Optional JSON verification report output path.",
     )
     release_accept = release_subparsers.add_parser(
         "accept-artifact",
@@ -1022,6 +1042,25 @@ def _print_release_status_summary(summary: dict[str, object]) -> None:
             print(f"Diagnostics manifest: {manifest.get('path')}")
 
 
+def _print_release_artifact_verification_summary(report: dict[str, object]) -> None:
+    print(f"Release artifact verification: {report.get('status')}")
+    print(f"Artifact dir: {report.get('artifact_dir')}")
+    summary = report.get("summary")
+    if isinstance(summary, dict):
+        print(f"Release status bundles: {summary.get('release_status_count')}")
+        print(f"Diagnostics manifests: {summary.get('diagnostics_manifest_count')}")
+        print(f"Acceptance status files: {summary.get('acceptance_status_count')}")
+        print(f"Failures: {summary.get('failure_count')}")
+    failures = report.get("failures")
+    if isinstance(failures, list) and failures:
+        first = next((item for item in failures if isinstance(item, dict)), None)
+        if first is not None:
+            line = f"First failure: {first.get('reason')}"
+            if first.get("path"):
+                line += f" path={first.get('path')}"
+            print(line)
+
+
 def _ensure_active_space_recommendation_spec(spec) -> None:
     from qcchem.core import ActiveSpaceSpec, AutoActiveSpaceSpec
 
@@ -1512,6 +1551,14 @@ def main(argv: list[str] | None = None) -> int:
             if args.strict and summary.get("status") != "passed":
                 return 2
             return 0
+        if args.release_command == "verify-artifacts":
+            report = verify_release_diagnostics_artifacts(args.artifact_dir)
+            _print_release_artifact_verification_summary(report)
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+                print(f"Verification JSON: {args.output}")
+            return 0 if report.get("status") == "passed" else 2
         if args.release_command == "accept-artifact":
             try:
                 if args.dry_run:

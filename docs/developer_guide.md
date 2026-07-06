@@ -175,6 +175,12 @@ uploaded artifact name so `release_handoff.json` records the exact artifact
 entrypoint for the current run. `qcchem release audit` prints that handoff path,
 artifact name, artifact listing API URL, and diagnostics manifest path in CI
 logs.
+After downloading CI artifacts with `gh run download`, run
+`qcchem release verify-artifacts --artifact-dir <download-dir>` before treating
+the downloaded diagnostics as release evidence. The verifier is read-only: it
+checks the downloaded release status summaries, release acceptance freshness
+JSON, diagnostics manifest counts, and each uploaded file's recorded size and
+SHA-256 digest without rerunning the audit or calling GitHub.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

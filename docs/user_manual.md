@@ -52,6 +52,7 @@ rewritten casually.
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml -o artifacts/release_audit` |
 | Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
+| Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
 | Check release sidecars | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict` |
 | Plan release sidecar repairs | `qcchem release acceptance-status -c configs/release/trust_first_audit.yaml --strict --repair-plan` |
 | Preview release sidecar refresh | `qcchem release accept-artifact -c configs/release/trust_first_audit.yaml --name h2_local_validated_anchor --dry-run` |
@@ -598,6 +599,20 @@ SHA-256 summaries, and the `acceptance-status` sidecar-freshness JSON with its
 own `schema_features` for each Python matrix; CI validates the acceptance-status
 artifact before upload so the reported counts and repair plan stay consistent
 with the item list.
+
+After downloading `qcchem-release-diagnostics-*` artifacts from CI, verify them
+without network access:
+
+```bash
+qcchem release verify-artifacts \
+  --artifact-dir /tmp/qcchem-ci-artifacts \
+  -o /tmp/release_artifact_verification.json
+```
+
+This command revalidates release status bundles, sidecar freshness reports,
+diagnostics manifest counts, and each uploaded file's recorded size and SHA-256.
+It exits with code `2` when the downloaded artifact set is missing required
+release evidence or no longer matches the manifest.
 
 Before publishing release-facing docs, also run:
 
