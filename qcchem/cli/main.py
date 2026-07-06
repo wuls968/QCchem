@@ -1099,6 +1099,7 @@ def _release_evidence_summary(
 ) -> dict[str, object]:
     verification_status = str(verification_report.get("status") or "unknown")
     workbench_status = str(workbench_summary.get("status") or "unknown")
+    status = "passed" if verification_status == "passed" and workbench_status == "passed" else "failed"
     release_verification = workbench_summary.get("release_verification")
     verification_failures = verification_report.get("failures")
     first_verification_failure = (
@@ -1106,9 +1107,17 @@ def _release_evidence_summary(
         if isinstance(verification_failures, list)
         else None
     )
+    workbench_failed_checks = (
+        workbench_summary.get("failed_checks") if isinstance(workbench_summary.get("failed_checks"), list) else []
+    )
+    first_failure = first_verification_failure
+    if first_failure is None and workbench_failed_checks:
+        first_failure = {"reason": "workbench_smoke_failed", "check": str(workbench_failed_checks[0])}
     return {
         "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
-        "status": "passed" if verification_status == "passed" and workbench_status == "passed" else "failed",
+        "status": status,
+        "recommended_action": "review_release_evidence" if status == "passed" else "inspect_release_evidence_failures",
+        "first_failure": first_failure,
         "artifact_dir": str(artifact_dir),
         "evidence_root": str(evidence_root),
         "docs_path": str(docs_path),
@@ -1152,24 +1161,28 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     )
     failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
     first_failure = verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
+    first_summary_failure = summary.get("first_failure") if isinstance(summary.get("first_failure"), dict) else None
     first_failure_text = "none"
-    if first_failure is not None:
-        first_failure_text = str(first_failure.get("reason") or "unknown")
-        if first_failure.get("path"):
-            first_failure_text = f"{first_failure_text} path={first_failure.get('path')}"
+    failure_for_handoff = first_summary_failure if first_summary_failure is not None else first_failure
+    if failure_for_handoff is not None:
+        first_failure_text = str(failure_for_handoff.get("reason") or "unknown")
+        if failure_for_handoff.get("path"):
+            first_failure_text = f"{first_failure_text} path={failure_for_handoff.get('path')}"
+        if failure_for_handoff.get("local_path"):
+            first_failure_text = f"{first_failure_text} local_path={failure_for_handoff.get('local_path')}"
+        elif failure_for_handoff.get("record_path"):
+            first_failure_text = f"{first_failure_text} record_path={failure_for_handoff.get('record_path')}"
+        elif failure_for_handoff.get("check"):
+            first_failure_text = f"{first_failure_text} check={failure_for_handoff.get('check')}"
     failed_checks_text = ", ".join(str(item) for item in failed_checks) if failed_checks else "none"
-    recommended_action = (
-        "review_release_evidence"
-        if summary.get("status") == "passed"
-        else "inspect_release_evidence_failures"
-    )
     lines = [
         "# QCchem Release Evidence Handoff",
         "",
         "- output: `release_evidence_handoff.md`",
         f"- schema_version: `{summary.get('schema_version')}`",
         f"- status: `{summary.get('status')}`",
-        f"- recommended_action: `{recommended_action}`",
+        f"- recommended_action: `{summary.get('recommended_action')}`",
+        f"- first_failure: `{first_failure_text}`",
         f"- artifact_dir: `{summary.get('artifact_dir')}`",
         f"- evidence_root: `{summary.get('evidence_root')}`",
         f"- docs_path: `{summary.get('docs_path')}`",

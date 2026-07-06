@@ -164,6 +164,9 @@ handoff summarizes the generated paths, verifier counts, Workbench route/page
 status, first failure, and whether a real browser checklist is still required.
 The command exits with code `2` if any expected file is missing, stale,
 inconsistent, tampered with, or if the Workbench route smoke fails.
+On failure, the top block of `release_evidence_handoff.md` includes
+`recommended_action: inspect_release_evidence_failures` and the first failure
+reason/path before the detailed verifier and Workbench sections.
 Use `qcchem release verify-artifacts --artifact-dir /tmp/qcchem-ci-artifacts`
 when you only need the lower-level artifact-integrity check.
 When the output is named `release_artifact_verification.json` under an artifact

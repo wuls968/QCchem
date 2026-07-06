@@ -425,6 +425,8 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert Path(smoke["release_verification"]["source_path"]).resolve() == verification_path.resolve()
     assert summary["schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
     assert summary["status"] == "passed"
+    assert summary["recommended_action"] == "review_release_evidence"
+    assert summary["first_failure"] is None
     assert summary["outputs"] == {
         "release_evidence_summary": str(summary_path),
         "release_evidence_handoff": str(handoff_path),
@@ -442,9 +444,57 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "# QCchem Release Evidence Handoff" in handoff
     assert "- status: `passed`" in handoff
     assert "- recommended_action: `review_release_evidence`" in handoff
+    assert "- first_failure: `none`" in handoff
     assert "- release_status_count: `1`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
     assert "It does not replace the real browser console checklist" in handoff
+
+
+@pytest.mark.integration
+def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    copied_paths["release_handoff_md"].write_text("tampered handoff\n", encoding="utf-8")
+    evidence_root = tmp_path / "release_evidence"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--output-dir",
+            str(evidence_root),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary_path = evidence_root / "release_evidence_summary.json"
+    handoff_path = evidence_root / "release_evidence_handoff.md"
+    assert exit_code == 2
+    assert "Release artifact verification: failed" in stdout
+    assert "First failure: diagnostics_manifest_size_mismatch" in stdout
+    assert "Release evidence summary: failed" in stdout
+    assert f"Release evidence handoff: {handoff_path}" in stdout
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    handoff = handoff_path.read_text(encoding="utf-8")
+    assert summary["status"] == "failed"
+    assert summary["recommended_action"] == "inspect_release_evidence_failures"
+    assert summary["first_failure"]["reason"] == "diagnostics_manifest_size_mismatch"
+    assert "release_handoff.md" in str(summary["first_failure"]["local_path"])
+    assert summary["release_artifact_verification"]["status"] == "failed"
+    assert summary["workbench_smoke"]["status"] == "passed"
+    assert "- status: `failed`" in handoff
+    assert "- recommended_action: `inspect_release_evidence_failures`" in handoff
+    assert "diagnostics_manifest_size_mismatch" in handoff
+    assert "release_handoff.md" in handoff
+    assert "- linked_release_verification_status: `failed`" in handoff
 
 
 @pytest.mark.integration
