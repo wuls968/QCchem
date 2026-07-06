@@ -197,10 +197,12 @@ handoff should compare the current downloaded matrix artifacts against a prior
 collection. The handoff
 lists each downloaded `qcchem-release-diagnostics-*` matrix artifact with
 status, digest/file counts, sidecar freshness, first failure, and any
-matrix-baseline delta. The verifier step is read-only: it checks the downloaded
-release status summaries, release acceptance freshness JSON, diagnostics
-manifest counts, and each uploaded file's recorded size and SHA-256 digest
-without rerunning the audit or calling GitHub.
+matrix-baseline delta. Keep inactive or unavailable handoff fields explicit as
+`not_applicable`, `not_available`, `not_provided`, or `none`; do not emit
+placeholder `None` text into reviewer Markdown. The verifier step is read-only:
+it checks the downloaded release status summaries, release acceptance freshness
+JSON, diagnostics manifest counts, and each uploaded file's recorded size and
+SHA-256 digest without rerunning the audit or calling GitHub.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
 only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they

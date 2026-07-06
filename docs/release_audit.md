@@ -195,6 +195,9 @@ The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,
 matrix artifact delta, and whether a real browser checklist is still required.
+Fields outside the active collection mode are rendered as explicit
+`not_applicable`, `not_available`, `not_provided`, or `none` values rather than
+placeholder `None` text.
 The command exits with code `2` if any expected file is missing, stale,
 inconsistent, tampered with, or if the Workbench route smoke fails.
 On failure, the top block of `release_evidence_handoff.md` includes

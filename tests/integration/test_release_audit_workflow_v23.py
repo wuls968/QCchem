@@ -467,10 +467,15 @@ def test_release_evidence_handoff_cli_writes_local_ci_handoff(
     assert summary["workbench_smoke"]["status"] == "passed"
     assert summary["failures"] == []
     assert "# QCchem Release Evidence Handoff" in handoff
+    assert "`None`" not in handoff
+    assert "- docs_path: `not_applicable`" in handoff
     assert "- collection_mode: `ci_diagnostics_handoff`" in handoff
+    assert "- release_artifact_verification_json: `not_applicable`" in handoff
+    assert "- release_matrix_summary_json: `not_applicable`" in handoff
     assert "## CI Diagnostics Handoff" in handoff
     assert "- release_status: `passed`" in handoff
     assert "- acceptance_status: `fresh`" in handoff
+    assert "- release_status_count: `not_applicable`" in handoff
     assert "## Matrix Artifact Delta" in handoff
     assert "- status: `not_applicable`" in handoff
     assert "`downloaded_artifact_verification` verifies downloaded CI diagnostics" in handoff
@@ -664,17 +669,23 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     }
     assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
     assert "# QCchem Release Evidence Handoff" in handoff
+    assert "`None`" not in handoff
     assert "- status: `passed`" in handoff
     assert "- recommended_action: `review_release_evidence`" in handoff
     assert "- first_failure: `none`" in handoff
     assert "- collection_mode: `downloaded_artifact_verification`" in handoff
+    assert "- release_status: `not_applicable`" in handoff
+    assert "- required_checks: `not_applicable`" in handoff
+    assert "- acceptance_status: `not_applicable`" in handoff
     assert "- release_status_count: `1`" in handoff
     assert "## Matrix Artifact Verification" in handoff
     assert "`qcchem-release-diagnostics-3.11`: status=`passed`" in handoff
+    assert "wheel=`not_applicable`" in handoff
     assert "acceptance=`fresh`" in handoff
     assert "## Matrix Artifact Delta" in handoff
     assert "- status: `not_compared`" in handoff
     assert "- reason: `baseline_not_provided`" in handoff
+    assert "- baseline_path: `not_provided`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
     assert "It does not replace the real browser console checklist" in handoff
 
@@ -748,6 +759,7 @@ def test_release_collect_evidence_handoff_compares_matrix_baseline(
         "artifact_name": "qcchem-release-diagnostics-3.11",
         "changed_fields": changed["changed_fields"],
     }
+    assert "`None`" not in handoff
     assert "## Matrix Artifact Delta" in handoff
     assert "- status: `changed`" in handoff
     assert f"- baseline_path: `{baseline_path}`" in handoff

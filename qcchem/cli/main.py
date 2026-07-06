@@ -1485,6 +1485,16 @@ def _release_failure_handoff_text(failure: object) -> str:
     return failure_text
 
 
+def _release_handoff_value(value: object, *, missing: str = "not_applicable") -> str:
+    return missing if value is None else str(value)
+
+
+def _release_handoff_count_pair(passed: object, failed: object, *, missing: str = "not_applicable") -> str:
+    if passed is None and failed is None:
+        return f"`{missing}`"
+    return f"`{_release_handoff_value(passed, missing=missing)}` passed / `{_release_handoff_value(failed, missing=missing)}` failed"
+
+
 def _read_optional_json_object(path: Path, *, label: str, failures: list[dict[str, object]]) -> dict[str, object]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1677,35 +1687,35 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- status: `{summary.get('status')}`",
         f"- recommended_action: `{summary.get('recommended_action')}`",
         f"- first_failure: `{first_failure_text}`",
-        f"- artifact_dir: `{summary.get('artifact_dir')}`",
-        f"- evidence_root: `{summary.get('evidence_root')}`",
-        f"- docs_path: `{summary.get('docs_path')}`",
+        f"- artifact_dir: `{_release_handoff_value(summary.get('artifact_dir'), missing='not_available')}`",
+        f"- evidence_root: `{_release_handoff_value(summary.get('evidence_root'), missing='not_available')}`",
+        f"- docs_path: `{_release_handoff_value(summary.get('docs_path'))}`",
         f"- collection_mode: `{summary.get('collection_mode')}`",
         "",
         "## Generated Outputs",
         "",
-        f"- release_evidence_summary_json: `{outputs.get('release_evidence_summary')}`",
-        f"- release_evidence_handoff_markdown: `{outputs.get('release_evidence_handoff')}`",
-        f"- release_artifact_verification_json: `{outputs.get('release_artifact_verification')}`",
-        f"- release_matrix_summary_json: `{outputs.get('release_matrix_summary')}`",
-        f"- workbench_smoke_json: `{outputs.get('workbench_smoke')}`",
+        f"- release_evidence_summary_json: `{_release_handoff_value(outputs.get('release_evidence_summary'), missing='not_available')}`",
+        f"- release_evidence_handoff_markdown: `{_release_handoff_value(outputs.get('release_evidence_handoff'), missing='not_available')}`",
+        f"- release_artifact_verification_json: `{_release_handoff_value(outputs.get('release_artifact_verification'))}`",
+        f"- release_matrix_summary_json: `{_release_handoff_value(outputs.get('release_matrix_summary'))}`",
+        f"- workbench_smoke_json: `{_release_handoff_value(outputs.get('workbench_smoke'), missing='not_available')}`",
         "",
         "## CI Diagnostics Handoff",
         "",
-        f"- release_status: `{release_status.get('status')}`",
-        f"- required_checks: `{release_status.get('required_pass_count')}` passed / `{release_status.get('required_fail_count')}` failed",
-        f"- warnings: `{release_status.get('warning_count')}`",
-        f"- release_status_action: `{release_status.get('recommended_action')}`",
-        f"- acceptance_status: `{acceptance_status.get('status')}`",
-        f"- acceptance_repair_plan_count: `{acceptance_status.get('repair_plan_count')}`",
+        f"- release_status: `{_release_handoff_value(release_status.get('status'))}`",
+        f"- required_checks: {_release_handoff_count_pair(release_status.get('required_pass_count'), release_status.get('required_fail_count'))}",
+        f"- warnings: `{_release_handoff_value(release_status.get('warning_count'))}`",
+        f"- release_status_action: `{_release_handoff_value(release_status.get('recommended_action'))}`",
+        f"- acceptance_status: `{_release_handoff_value(acceptance_status.get('status'))}`",
+        f"- acceptance_repair_plan_count: `{_release_handoff_value(acceptance_status.get('repair_plan_count'))}`",
         "",
         "## Release Artifact Verification",
         "",
-        f"- status: `{verification.get('status')}`",
-        f"- release_status_count: `{verification_counts.get('release_status_count')}`",
-        f"- diagnostics_manifest_count: `{verification_counts.get('diagnostics_manifest_count')}`",
-        f"- acceptance_status_count: `{verification_counts.get('acceptance_status_count')}`",
-        f"- failure_count: `{verification.get('failure_count')}`",
+        f"- status: `{_release_handoff_value(verification.get('status'), missing='not_available')}`",
+        f"- release_status_count: `{_release_handoff_value(verification_counts.get('release_status_count'))}`",
+        f"- diagnostics_manifest_count: `{_release_handoff_value(verification_counts.get('diagnostics_manifest_count'))}`",
+        f"- acceptance_status_count: `{_release_handoff_value(verification_counts.get('acceptance_status_count'))}`",
+        f"- failure_count: `{_release_handoff_value(verification.get('failure_count'))}`",
         f"- first_failure: `{first_failure_text}`",
         "",
         "## Matrix Artifact Verification",
@@ -1718,11 +1728,11 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             lines.append(
                 f"- `{item.get('artifact_name')}`: status=`{item.get('status')}`; "
                 f"release_statuses=`{item.get('release_status_count')}`; "
-                f"source=`{item.get('source_tree_release_status')}`; "
-                f"wheel=`{item.get('wheel_release_status')}`; "
+                f"source=`{_release_handoff_value(item.get('source_tree_release_status'))}`; "
+                f"wheel=`{_release_handoff_value(item.get('wheel_release_status'))}`; "
                 f"manifests=`{item.get('diagnostics_manifest_count')}`; "
                 f"digests=`{item.get('diagnostics_digest_count')}/{item.get('diagnostics_file_count')}`; "
-                f"acceptance=`{item.get('acceptance_status')}`; "
+                f"acceptance=`{_release_handoff_value(item.get('acceptance_status'))}`; "
                 f"failures=`{item.get('failure_count')}`; "
                 f"first_failure=`{_release_failure_handoff_text(item.get('first_failure'))}`"
             )
@@ -1733,15 +1743,15 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             "",
             "## Matrix Artifact Delta",
             "",
-            f"- status: `{matrix_delta.get('status')}`",
-            f"- reason: `{matrix_delta.get('reason')}`",
-            f"- baseline_path: `{matrix_delta.get('baseline_path')}`",
-            f"- current_artifact_count: `{matrix_delta.get('current_artifact_count')}`",
-            f"- baseline_artifact_count: `{matrix_delta.get('baseline_artifact_count')}`",
+            f"- status: `{_release_handoff_value(matrix_delta.get('status'), missing='not_available')}`",
+            f"- reason: `{_release_handoff_value(matrix_delta.get('reason'), missing='none')}`",
+            f"- baseline_path: `{_release_handoff_value(matrix_delta.get('baseline_path'), missing='not_provided')}`",
+            f"- current_artifact_count: `{_release_handoff_value(matrix_delta.get('current_artifact_count'))}`",
+            f"- baseline_artifact_count: `{_release_handoff_value(matrix_delta.get('baseline_artifact_count'))}`",
             f"- added: `{len(matrix_delta_added)}`",
             f"- removed: `{len(matrix_delta_removed)}`",
             f"- changed: `{len(matrix_delta_changed)}`",
-            f"- unchanged: `{matrix_delta.get('unchanged_count')}`",
+            f"- unchanged: `{_release_handoff_value(matrix_delta.get('unchanged_count'))}`",
             f"- first_change: `{first_change_text}`",
         ]
     )
@@ -1766,14 +1776,14 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             "",
             "## Workbench Smoke",
             "",
-            f"- status: `{workbench.get('status')}`",
-            f"- route_count: `{workbench.get('route_count')}`",
-            f"- failed_routes: `{workbench.get('failed_routes')}`",
-            f"- page_count: `{workbench.get('page_count')}`",
-            f"- failed_pages: `{workbench.get('failed_pages')}`",
+            f"- status: `{_release_handoff_value(workbench.get('status'), missing='not_available')}`",
+            f"- route_count: `{_release_handoff_value(workbench.get('route_count'))}`",
+            f"- failed_routes: `{_release_handoff_value(workbench.get('failed_routes'))}`",
+            f"- page_count: `{_release_handoff_value(workbench.get('page_count'))}`",
+            f"- failed_pages: `{_release_handoff_value(workbench.get('failed_pages'))}`",
             f"- failed_checks: `{failed_checks_text}`",
-            f"- linked_release_verification_status: `{linked_release_verification.get('status')}`",
-            f"- linked_release_verification_source: `{linked_release_verification.get('source_path')}`",
+            f"- linked_release_verification_status: `{_release_handoff_value(linked_release_verification.get('status'), missing='not_available')}`",
+            f"- linked_release_verification_source: `{_release_handoff_value(linked_release_verification.get('source_path'), missing='not_available')}`",
             "",
             "## Review Notes",
             "",

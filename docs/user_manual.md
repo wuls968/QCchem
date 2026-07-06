@@ -635,7 +635,10 @@ handoff includes a per-matrix artifact section with release-status count,
 manifest digest/file counts, sidecar freshness, failure count, first failure,
 and matrix-baseline delta for each `qcchem-release-diagnostics-*` bundle. Use
 `--baseline-summary <previous-release_matrix_summary.json>` to compare the
-current downloaded matrix set against an earlier collection. Use the
+current downloaded matrix set against an earlier collection. The Markdown
+handoff writes inactive or unavailable fields as `not_applicable`,
+`not_available`, `not_provided`, or `none` instead of placeholder `None` text.
+Use the
 lower-level verifier directly when you only need the artifact-integrity check:
 
 ```bash
