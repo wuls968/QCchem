@@ -488,6 +488,14 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Optional release_matrix_summary.json from a previous collect-evidence run.",
     )
+    release_collect_evidence.add_argument(
+        "--baseline-search-root",
+        type=Path,
+        help=(
+            "Optional retained release-evidence directory tree. When --baseline-summary is omitted, "
+            "the newest prior release_matrix_summary.json under this root is used as the matrix baseline."
+        ),
+    )
     release_evidence_handoff = release_subparsers.add_parser(
         "evidence-handoff",
         help="Write a local CI release evidence handoff from generated diagnostics.",
@@ -1155,6 +1163,7 @@ def _release_evidence_summary(
     matrix_summary_path: Path,
     matrix_summary: dict[str, object],
     matrix_delta: dict[str, object],
+    matrix_baseline_selection: dict[str, object],
     summary_path: Path,
     handoff_path: Path,
 ) -> dict[str, object]:
@@ -1208,6 +1217,7 @@ def _release_evidence_summary(
             "matrix_artifacts": matrix_artifacts,
         },
         "release_matrix_summary": matrix_summary,
+        "release_matrix_baseline_selection": matrix_baseline_selection,
         "release_matrix_delta": matrix_delta,
         "workbench_smoke": {
             "status": workbench_status,
@@ -1362,6 +1372,87 @@ def _load_release_matrix_baseline(
     return payload, None
 
 
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
+
+
+def _resolve_release_matrix_baseline_summary_path(
+    *,
+    explicit_baseline_summary_path: Path | None,
+    baseline_search_root: Path | None,
+    current_evidence_root: Path,
+) -> tuple[Path | None, dict[str, object]]:
+    if explicit_baseline_summary_path is not None:
+        return explicit_baseline_summary_path, {
+            "mode": "explicit",
+            "path": str(explicit_baseline_summary_path),
+            "search_root": None,
+            "candidate_count": None,
+            "reason": None,
+        }
+    if baseline_search_root is None:
+        return None, {
+            "mode": "not_requested",
+            "path": None,
+            "search_root": None,
+            "candidate_count": 0,
+            "reason": "baseline_not_provided",
+        }
+
+    search_root = baseline_search_root
+    if not search_root.exists():
+        return None, {
+            "mode": "auto_not_found",
+            "path": None,
+            "search_root": str(search_root),
+            "candidate_count": 0,
+            "reason": "baseline_search_root_missing",
+        }
+    if not search_root.is_dir():
+        return None, {
+            "mode": "auto_not_found",
+            "path": None,
+            "search_root": str(search_root),
+            "candidate_count": 0,
+            "reason": "baseline_search_root_not_directory",
+        }
+
+    current_root = current_evidence_root.resolve()
+    candidates: list[tuple[int, str, Path]] = []
+    for candidate in search_root.rglob("release_matrix_summary.json"):
+        try:
+            resolved_candidate = candidate.resolve()
+            if _is_relative_to(resolved_candidate, current_root):
+                continue
+            stat = candidate.stat()
+        except OSError:
+            continue
+        candidates.append((stat.st_mtime_ns, str(resolved_candidate), candidate))
+
+    if not candidates:
+        return None, {
+            "mode": "auto_not_found",
+            "path": None,
+            "search_root": str(search_root),
+            "candidate_count": 0,
+            "reason": "auto_baseline_not_found",
+        }
+
+    candidates.sort(reverse=True)
+    selected = candidates[0][2]
+    return selected, {
+        "mode": "auto",
+        "path": str(selected),
+        "search_root": str(search_root),
+        "candidate_count": len(candidates),
+        "reason": None,
+    }
+
+
 def _release_matrix_artifacts_by_name(matrix_summary: dict[str, object]) -> dict[str, dict[str, object]]:
     artifacts = matrix_summary.get("artifacts")
     if not isinstance(artifacts, list):
@@ -1399,12 +1490,13 @@ def _release_matrix_artifact_delta(
     baseline_failure: dict[str, object] | None,
     *,
     baseline_summary_path: Path | None,
+    missing_baseline_reason: str = "baseline_not_provided",
 ) -> dict[str, object]:
     current_artifacts = _release_matrix_artifacts_by_name(current_matrix_summary)
     if baseline_summary_path is None:
         return {
             "status": "not_compared",
-            "reason": "baseline_not_provided",
+            "reason": missing_baseline_reason,
             "baseline_path": None,
             "current_artifact_count": len(current_artifacts),
             "baseline_artifact_count": None,
@@ -1608,6 +1700,13 @@ def _local_release_evidence_summary(
             "first_change": None,
             "first_failure": None,
         },
+        "release_matrix_baseline_selection": {
+            "mode": "not_applicable",
+            "path": None,
+            "search_root": None,
+            "candidate_count": None,
+            "reason": "downloaded_artifact_verification_not_run",
+        },
         "workbench_smoke": {
             "status": workbench_summary.get("status"),
             "route_count": workbench_summary.get("route_count"),
@@ -1663,6 +1762,17 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             "unchanged_count": None,
             "first_change": None,
             "first_failure": None,
+        }
+    )
+    matrix_baseline_selection = (
+        summary.get("release_matrix_baseline_selection")
+        if isinstance(summary.get("release_matrix_baseline_selection"), dict)
+        else {
+            "mode": "not_available",
+            "path": None,
+            "search_root": None,
+            "candidate_count": None,
+            "reason": "release_matrix_baseline_selection_missing",
         }
     )
     matrix_delta_added = matrix_delta.get("added") if isinstance(matrix_delta.get("added"), list) else []
@@ -1743,6 +1853,9 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             "",
             "## Matrix Artifact Delta",
             "",
+            f"- baseline_selection: `{_release_handoff_value(matrix_baseline_selection.get('mode'), missing='not_available')}`",
+            f"- baseline_search_root: `{_release_handoff_value(matrix_baseline_selection.get('search_root'), missing='not_provided')}`",
+            f"- baseline_candidate_count: `{_release_handoff_value(matrix_baseline_selection.get('candidate_count'))}`",
             f"- status: `{_release_handoff_value(matrix_delta.get('status'), missing='not_available')}`",
             f"- reason: `{_release_handoff_value(matrix_delta.get('reason'), missing='none')}`",
             f"- baseline_path: `{_release_handoff_value(matrix_delta.get('baseline_path'), missing='not_provided')}`",
@@ -1803,6 +1916,7 @@ def _run_release_collect_evidence_command(
     docs_path: Path,
     output_dir: Path | None,
     baseline_summary_path: Path | None,
+    baseline_search_root: Path | None,
 ) -> int:
     evidence_root = output_dir if output_dir is not None else artifact_dir
     evidence_root.mkdir(parents=True, exist_ok=True)
@@ -1817,16 +1931,26 @@ def _run_release_collect_evidence_command(
     matrix_artifacts = _release_verification_matrix_artifacts(verification_report)
     matrix_summary = _release_matrix_summary(matrix_artifacts, source_verification_path=verification_path)
     matrix_summary_path.write_text(json.dumps(matrix_summary, indent=2, sort_keys=True), encoding="utf-8")
-    baseline_summary, baseline_failure = _load_release_matrix_baseline(baseline_summary_path)
+    resolved_baseline_summary_path, matrix_baseline_selection = _resolve_release_matrix_baseline_summary_path(
+        explicit_baseline_summary_path=baseline_summary_path,
+        baseline_search_root=baseline_search_root,
+        current_evidence_root=evidence_root,
+    )
+    baseline_summary, baseline_failure = _load_release_matrix_baseline(resolved_baseline_summary_path)
     matrix_delta = _release_matrix_artifact_delta(
         matrix_summary,
         baseline_summary,
         baseline_failure,
-        baseline_summary_path=baseline_summary_path,
+        baseline_summary_path=resolved_baseline_summary_path,
+        missing_baseline_reason=str(matrix_baseline_selection.get("reason") or "baseline_not_provided"),
     )
     _print_release_artifact_verification_summary(verification_report)
     print(f"Verification JSON: {verification_path}")
     print(f"Release matrix summary: {matrix_summary_path}")
+    if matrix_baseline_selection.get("path"):
+        print(f"Matrix baseline selection: {matrix_baseline_selection['mode']} ({matrix_baseline_selection['path']})")
+    else:
+        print(f"Matrix baseline selection: {matrix_baseline_selection['mode']}")
     print(f"Matrix artifact comparison: {matrix_delta['status']}")
 
     try:
@@ -1859,6 +1983,7 @@ def _run_release_collect_evidence_command(
         matrix_summary_path=matrix_summary_path,
         matrix_summary=matrix_summary,
         matrix_delta=matrix_delta,
+        matrix_baseline_selection=matrix_baseline_selection,
         summary_path=summary_path,
         handoff_path=handoff_path,
     )
@@ -2405,6 +2530,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.docs,
                 args.output_dir,
                 args.baseline_summary,
+                args.baseline_search_root,
             )
         if args.release_command == "evidence-handoff":
             return _run_release_evidence_handoff_command(

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
@@ -761,9 +762,96 @@ def test_release_collect_evidence_handoff_compares_matrix_baseline(
     }
     assert "`None`" not in handoff
     assert "## Matrix Artifact Delta" in handoff
+    assert "- baseline_selection: `explicit`" in handoff
     assert "- status: `changed`" in handoff
     assert f"- baseline_path: `{baseline_path}`" in handoff
     assert "- changed `qcchem-release-diagnostics-3.11`: fields=`diagnostics_digest_count`" in handoff
+
+
+@pytest.mark.integration
+def test_release_collect_evidence_auto_selects_latest_matrix_baseline(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    seed_root = tmp_path / "seed_release_evidence"
+    assert (
+        main(
+            [
+                "release",
+                "collect-evidence",
+                "--artifact-dir",
+                str(artifact_dir),
+                "--docs",
+                str(REPO_ROOT / "docs" / "workbench.md"),
+                "--output-dir",
+                str(seed_root),
+            ]
+        )
+        == 0
+    )
+    seed_payload = json.loads((seed_root / "release_matrix_summary.json").read_text(encoding="utf-8"))
+    older_root = tmp_path / "release_history" / "2026-07-05"
+    newer_root = tmp_path / "release_history" / "2026-07-06"
+    older_root.mkdir(parents=True)
+    newer_root.mkdir(parents=True)
+    older_path = older_root / "release_matrix_summary.json"
+    newer_path = newer_root / "release_matrix_summary.json"
+    older_payload = dict(seed_payload)
+    older_payload["source_verification"] = str(older_root / "release_artifact_verification.json")
+    newer_payload = json.loads(json.dumps(seed_payload))
+    newer_payload["source_verification"] = str(newer_root / "release_artifact_verification.json")
+    newer_payload["artifacts"][0]["diagnostics_digest_count"] = 0
+    older_path.write_text(json.dumps(older_payload, indent=2, sort_keys=True), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer_payload, indent=2, sort_keys=True), encoding="utf-8")
+    os.utime(older_path, (1_700_000_000, 1_700_000_000))
+    os.utime(newer_path, (1_800_000_000, 1_800_000_000))
+    evidence_root = tmp_path / "current_release_evidence"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--output-dir",
+            str(evidence_root),
+            "--baseline-search-root",
+            str(tmp_path / "release_history"),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary = json.loads((evidence_root / "release_evidence_summary.json").read_text(encoding="utf-8"))
+    handoff = (evidence_root / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert f"Matrix baseline selection: auto ({newer_path})" in stdout
+    assert "Matrix artifact comparison: changed" in stdout
+    selection = summary["release_matrix_baseline_selection"]
+    assert selection == {
+        "mode": "auto",
+        "path": str(newer_path),
+        "search_root": str(tmp_path / "release_history"),
+        "candidate_count": 2,
+        "reason": None,
+    }
+    delta = summary["release_matrix_delta"]
+    assert delta["status"] == "changed"
+    assert delta["baseline_path"] == str(newer_path)
+    assert delta["current_artifact_count"] == 1
+    assert delta["baseline_artifact_count"] == 1
+    assert delta["added"] == []
+    assert delta["removed"] == []
+    assert delta["unchanged_count"] == 0
+    assert delta["changed"][0]["artifact_name"] == "qcchem-release-diagnostics-3.11"
+    assert delta["changed"][0]["before"]["diagnostics_digest_count"] == 0
+    assert "- baseline_selection: `auto`" in handoff
+    assert f"- baseline_search_root: `{tmp_path / 'release_history'}`" in handoff
+    assert "- baseline_candidate_count: `2`" in handoff
+    assert f"- baseline_path: `{newer_path}`" in handoff
 
 
 @pytest.mark.integration

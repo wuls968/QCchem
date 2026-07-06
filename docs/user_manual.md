@@ -635,7 +635,12 @@ handoff includes a per-matrix artifact section with release-status count,
 manifest digest/file counts, sidecar freshness, failure count, first failure,
 and matrix-baseline delta for each `qcchem-release-diagnostics-*` bundle. Use
 `--baseline-summary <previous-release_matrix_summary.json>` to compare the
-current downloaded matrix set against an earlier collection. The Markdown
+current downloaded matrix set against an earlier collection. Use
+`--baseline-search-root <history-dir>` when retained evidence is stored as one
+directory per run; the collector skips the current output directory, picks the
+newest prior `release_matrix_summary.json`, and records the selection mode,
+candidate count, search root, and selected path in the JSON and Markdown
+handoffs. An explicit `--baseline-summary` takes precedence. The Markdown
 handoff writes inactive or unavailable fields as `not_applicable`,
 `not_available`, `not_provided`, or `none` instead of placeholder `None` text.
 Use the

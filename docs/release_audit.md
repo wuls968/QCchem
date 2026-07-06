@@ -191,6 +191,23 @@ qcchem release collect-evidence \
   --baseline-summary /tmp/previous-release/release_matrix_summary.json
 ```
 
+If retained evidence is organized as one directory per CI run, point collection
+at the history root instead of naming a file:
+
+```bash
+qcchem release collect-evidence \
+  --artifact-dir /tmp/qcchem-ci-artifacts \
+  --docs docs/workbench.md \
+  --output-dir /tmp/qcchem-release-history/28800298969 \
+  --baseline-search-root /tmp/qcchem-release-history
+```
+
+The collector excludes the current output directory, chooses the newest prior
+`release_matrix_summary.json` by file modification time, and records the
+selection mode, candidate count, search root, and selected baseline path in the
+JSON summary and Markdown handoff. An explicit `--baseline-summary` takes
+precedence over automatic search.
+
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,
