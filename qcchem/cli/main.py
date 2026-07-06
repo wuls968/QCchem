@@ -10,6 +10,25 @@ from pathlib import Path
 import yaml
 
 
+RELEASE_MATRIX_SUMMARY_SCHEMA_VERSION = "qcchem.release_matrix_summary.v0.1-alpha"
+RELEASE_MATRIX_COMPARE_FIELDS = (
+    "status",
+    "release_status_count",
+    "release_status_failed_count",
+    "source_tree_release_status",
+    "wheel_release_status",
+    "diagnostics_manifest_count",
+    "diagnostics_file_count",
+    "diagnostics_present_count",
+    "diagnostics_digest_count",
+    "acceptance_status",
+    "acceptance_fresh_count",
+    "acceptance_requires_update_count",
+    "acceptance_repair_plan_count",
+    "failure_count",
+)
+
+
 def _load_attr(module_name: str, attribute: str):
     return getattr(importlib.import_module(module_name), attribute)
 
@@ -459,9 +478,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "--output-dir",
         type=Path,
         help=(
-            "Directory for release_artifact_verification.json, workbench_smoke.json, "
-            "release_evidence_summary.json, and release_evidence_handoff.md; defaults to --artifact-dir."
+            "Directory for release_artifact_verification.json, release_matrix_summary.json, "
+            "workbench_smoke.json, release_evidence_summary.json, and release_evidence_handoff.md; "
+            "defaults to --artifact-dir."
         ),
+    )
+    release_collect_evidence.add_argument(
+        "--baseline-summary",
+        type=Path,
+        help="Optional release_matrix_summary.json from a previous collect-evidence run.",
     )
     release_evidence_handoff = release_subparsers.add_parser(
         "evidence-handoff",
@@ -1127,12 +1152,20 @@ def _release_evidence_summary(
     workbench_smoke_path: Path,
     workbench_summary: dict[str, object],
     docs_path: Path,
+    matrix_summary_path: Path,
+    matrix_summary: dict[str, object],
+    matrix_delta: dict[str, object],
     summary_path: Path,
     handoff_path: Path,
 ) -> dict[str, object]:
     verification_status = str(verification_report.get("status") or "unknown")
     workbench_status = str(workbench_summary.get("status") or "unknown")
-    status = "passed" if verification_status == "passed" and workbench_status == "passed" else "failed"
+    matrix_delta_status = str(matrix_delta.get("status") or "not_compared")
+    status = (
+        "passed"
+        if verification_status == "passed" and workbench_status == "passed" and matrix_delta_status != "failed"
+        else "failed"
+    )
     release_verification = workbench_summary.get("release_verification")
     verification_failures = verification_report.get("failures")
     first_verification_failure = (
@@ -1146,7 +1179,11 @@ def _release_evidence_summary(
     first_failure = first_verification_failure
     if first_failure is None and workbench_failed_checks:
         first_failure = {"reason": "workbench_smoke_failed", "check": str(workbench_failed_checks[0])}
-    matrix_artifacts = _release_verification_matrix_artifacts(verification_report)
+    if first_failure is None and matrix_delta_status == "failed":
+        first_failure = (
+            matrix_delta.get("first_failure") if isinstance(matrix_delta.get("first_failure"), dict) else None
+        )
+    matrix_artifacts = matrix_summary.get("artifacts") if isinstance(matrix_summary.get("artifacts"), list) else []
     return {
         "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
         "collection_mode": "downloaded_artifact_verification",
@@ -1160,6 +1197,7 @@ def _release_evidence_summary(
             "release_evidence_summary": str(summary_path),
             "release_evidence_handoff": str(handoff_path),
             "release_artifact_verification": str(verification_path),
+            "release_matrix_summary": str(matrix_summary_path),
             "workbench_smoke": str(workbench_smoke_path),
         },
         "release_artifact_verification": {
@@ -1169,6 +1207,8 @@ def _release_evidence_summary(
             "first_failure": first_verification_failure,
             "matrix_artifacts": matrix_artifacts,
         },
+        "release_matrix_summary": matrix_summary,
+        "release_matrix_delta": matrix_delta,
         "workbench_smoke": {
             "status": workbench_status,
             "route_count": workbench_summary.get("route_count"),
@@ -1287,6 +1327,149 @@ def _release_verification_matrix_artifacts(report: dict[str, object]) -> list[di
     return [artifacts[name] for name in sorted(artifacts)]
 
 
+def _release_matrix_summary(
+    matrix_artifacts: list[dict[str, object]],
+    *,
+    source_verification_path: Path,
+) -> dict[str, object]:
+    failed_artifacts = [item for item in matrix_artifacts if item.get("status") != "passed"]
+    return {
+        "schema_version": RELEASE_MATRIX_SUMMARY_SCHEMA_VERSION,
+        "source_verification": str(source_verification_path),
+        "artifact_count": len(matrix_artifacts),
+        "failed_artifact_count": len(failed_artifacts),
+        "artifacts": matrix_artifacts,
+    }
+
+
+def _load_release_matrix_baseline(
+    baseline_summary_path: Path | None,
+) -> tuple[dict[str, object] | None, dict[str, object] | None]:
+    if baseline_summary_path is None:
+        return None, None
+    try:
+        payload = json.loads(baseline_summary_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, {"reason": "matrix_baseline_missing", "path": str(baseline_summary_path)}
+    except (OSError, json.JSONDecodeError) as exc:
+        return None, {
+            "reason": "matrix_baseline_unreadable",
+            "path": str(baseline_summary_path),
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+    if not isinstance(payload, dict):
+        return None, {"reason": "matrix_baseline_not_object", "path": str(baseline_summary_path)}
+    return payload, None
+
+
+def _release_matrix_artifacts_by_name(matrix_summary: dict[str, object]) -> dict[str, dict[str, object]]:
+    artifacts = matrix_summary.get("artifacts")
+    if not isinstance(artifacts, list):
+        return {}
+    named_artifacts: dict[str, dict[str, object]] = {}
+    for artifact in artifacts:
+        if not isinstance(artifact, dict):
+            continue
+        artifact_name = artifact.get("artifact_name")
+        if isinstance(artifact_name, str) and artifact_name:
+            named_artifacts[artifact_name] = artifact
+    return named_artifacts
+
+
+def _release_matrix_first_change(delta: dict[str, object]) -> dict[str, object] | None:
+    added = delta.get("added") if isinstance(delta.get("added"), list) else []
+    if added and isinstance(added[0], dict):
+        return {"change_type": "added", "artifact_name": added[0].get("artifact_name")}
+    removed = delta.get("removed") if isinstance(delta.get("removed"), list) else []
+    if removed and isinstance(removed[0], dict):
+        return {"change_type": "removed", "artifact_name": removed[0].get("artifact_name")}
+    changed = delta.get("changed") if isinstance(delta.get("changed"), list) else []
+    if changed and isinstance(changed[0], dict):
+        return {
+            "change_type": "changed",
+            "artifact_name": changed[0].get("artifact_name"),
+            "changed_fields": changed[0].get("changed_fields"),
+        }
+    return None
+
+
+def _release_matrix_artifact_delta(
+    current_matrix_summary: dict[str, object],
+    baseline_summary: dict[str, object] | None,
+    baseline_failure: dict[str, object] | None,
+    *,
+    baseline_summary_path: Path | None,
+) -> dict[str, object]:
+    current_artifacts = _release_matrix_artifacts_by_name(current_matrix_summary)
+    if baseline_summary_path is None:
+        return {
+            "status": "not_compared",
+            "reason": "baseline_not_provided",
+            "baseline_path": None,
+            "current_artifact_count": len(current_artifacts),
+            "baseline_artifact_count": None,
+            "added": [],
+            "removed": [],
+            "changed": [],
+            "unchanged_count": 0,
+            "first_change": None,
+            "first_failure": None,
+        }
+    if baseline_failure is not None:
+        return {
+            "status": "failed",
+            "reason": "baseline_unavailable",
+            "baseline_path": str(baseline_summary_path),
+            "current_artifact_count": len(current_artifacts),
+            "baseline_artifact_count": None,
+            "added": [],
+            "removed": [],
+            "changed": [],
+            "unchanged_count": 0,
+            "first_change": None,
+            "first_failure": baseline_failure,
+        }
+
+    baseline_artifacts = _release_matrix_artifacts_by_name(baseline_summary or {})
+    added = [current_artifacts[name] for name in sorted(current_artifacts.keys() - baseline_artifacts.keys())]
+    removed = [baseline_artifacts[name] for name in sorted(baseline_artifacts.keys() - current_artifacts.keys())]
+    changed: list[dict[str, object]] = []
+    unchanged_count = 0
+    for name in sorted(current_artifacts.keys() & baseline_artifacts.keys()):
+        current = current_artifacts[name]
+        baseline = baseline_artifacts[name]
+        changed_fields = [
+            field for field in RELEASE_MATRIX_COMPARE_FIELDS if current.get(field) != baseline.get(field)
+        ]
+        if changed_fields:
+            changed.append(
+                {
+                    "artifact_name": name,
+                    "changed_fields": changed_fields,
+                    "before": baseline,
+                    "after": current,
+                }
+            )
+        else:
+            unchanged_count += 1
+
+    delta = {
+        "status": "changed" if added or removed or changed else "passed",
+        "reason": None,
+        "baseline_path": str(baseline_summary_path),
+        "current_artifact_count": len(current_artifacts),
+        "baseline_artifact_count": len(baseline_artifacts),
+        "added": added,
+        "removed": removed,
+        "changed": changed,
+        "unchanged_count": unchanged_count,
+        "first_change": None,
+        "first_failure": None,
+    }
+    delta["first_change"] = _release_matrix_first_change(delta)
+    return delta
+
+
 def _release_failure_handoff_text(failure: object) -> str:
     if not isinstance(failure, dict):
         return "none"
@@ -1402,6 +1585,19 @@ def _local_release_evidence_summary(
             "failure_count": None,
             "first_failure": None,
         },
+        "release_matrix_delta": {
+            "status": "not_applicable",
+            "reason": "downloaded_artifact_verification_not_run",
+            "baseline_path": None,
+            "current_artifact_count": None,
+            "baseline_artifact_count": None,
+            "added": [],
+            "removed": [],
+            "changed": [],
+            "unchanged_count": None,
+            "first_change": None,
+            "first_failure": None,
+        },
         "workbench_smoke": {
             "status": workbench_summary.get("status"),
             "route_count": workbench_summary.get("route_count"),
@@ -1442,6 +1638,37 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     matrix_artifacts = (
         verification.get("matrix_artifacts") if isinstance(verification.get("matrix_artifacts"), list) else []
     )
+    matrix_delta = (
+        summary.get("release_matrix_delta")
+        if isinstance(summary.get("release_matrix_delta"), dict)
+        else {
+            "status": "not_available",
+            "reason": "release_matrix_delta_missing",
+            "baseline_path": None,
+            "current_artifact_count": None,
+            "baseline_artifact_count": None,
+            "added": [],
+            "removed": [],
+            "changed": [],
+            "unchanged_count": None,
+            "first_change": None,
+            "first_failure": None,
+        }
+    )
+    matrix_delta_added = matrix_delta.get("added") if isinstance(matrix_delta.get("added"), list) else []
+    matrix_delta_removed = matrix_delta.get("removed") if isinstance(matrix_delta.get("removed"), list) else []
+    matrix_delta_changed = matrix_delta.get("changed") if isinstance(matrix_delta.get("changed"), list) else []
+    matrix_delta_first_change = (
+        matrix_delta.get("first_change") if isinstance(matrix_delta.get("first_change"), dict) else None
+    )
+    first_change_text = "none"
+    if matrix_delta_first_change is not None:
+        first_change_text = str(matrix_delta_first_change.get("change_type") or "unknown")
+        if matrix_delta_first_change.get("artifact_name"):
+            first_change_text = f"{first_change_text} artifact={matrix_delta_first_change.get('artifact_name')}"
+        changed_fields = matrix_delta_first_change.get("changed_fields")
+        if isinstance(changed_fields, list) and changed_fields:
+            first_change_text = f"{first_change_text} fields={','.join(str(field) for field in changed_fields)}"
     lines = [
         "# QCchem Release Evidence Handoff",
         "",
@@ -1460,6 +1687,7 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- release_evidence_summary_json: `{outputs.get('release_evidence_summary')}`",
         f"- release_evidence_handoff_markdown: `{outputs.get('release_evidence_handoff')}`",
         f"- release_artifact_verification_json: `{outputs.get('release_artifact_verification')}`",
+        f"- release_matrix_summary_json: `{outputs.get('release_matrix_summary')}`",
         f"- workbench_smoke_json: `{outputs.get('workbench_smoke')}`",
         "",
         "## CI Diagnostics Handoff",
@@ -1503,6 +1731,39 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     lines.extend(
         [
             "",
+            "## Matrix Artifact Delta",
+            "",
+            f"- status: `{matrix_delta.get('status')}`",
+            f"- reason: `{matrix_delta.get('reason')}`",
+            f"- baseline_path: `{matrix_delta.get('baseline_path')}`",
+            f"- current_artifact_count: `{matrix_delta.get('current_artifact_count')}`",
+            f"- baseline_artifact_count: `{matrix_delta.get('baseline_artifact_count')}`",
+            f"- added: `{len(matrix_delta_added)}`",
+            f"- removed: `{len(matrix_delta_removed)}`",
+            f"- changed: `{len(matrix_delta_changed)}`",
+            f"- unchanged: `{matrix_delta.get('unchanged_count')}`",
+            f"- first_change: `{first_change_text}`",
+        ]
+    )
+    if matrix_delta_added:
+        for item in matrix_delta_added:
+            if isinstance(item, dict):
+                lines.append(f"- added `{item.get('artifact_name')}`")
+    if matrix_delta_removed:
+        for item in matrix_delta_removed:
+            if isinstance(item, dict):
+                lines.append(f"- removed `{item.get('artifact_name')}`")
+    if matrix_delta_changed:
+        for item in matrix_delta_changed:
+            if not isinstance(item, dict):
+                continue
+            changed_fields = item.get("changed_fields") if isinstance(item.get("changed_fields"), list) else []
+            lines.append(
+                f"- changed `{item.get('artifact_name')}`: fields=`{','.join(str(field) for field in changed_fields)}`"
+            )
+    lines.extend(
+        [
+            "",
             "## Workbench Smoke",
             "",
             f"- status: `{workbench.get('status')}`",
@@ -1527,18 +1788,36 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
-def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, output_dir: Path | None) -> int:
+def _run_release_collect_evidence_command(
+    artifact_dir: Path,
+    docs_path: Path,
+    output_dir: Path | None,
+    baseline_summary_path: Path | None,
+) -> int:
     evidence_root = output_dir if output_dir is not None else artifact_dir
     evidence_root.mkdir(parents=True, exist_ok=True)
     verification_path = evidence_root / "release_artifact_verification.json"
+    matrix_summary_path = evidence_root / "release_matrix_summary.json"
     workbench_smoke_path = evidence_root / "workbench_smoke.json"
     summary_path = evidence_root / "release_evidence_summary.json"
     handoff_path = evidence_root / "release_evidence_handoff.md"
 
     verification_report = verify_release_diagnostics_artifacts(artifact_dir)
     verification_path.write_text(json.dumps(verification_report, indent=2, sort_keys=True), encoding="utf-8")
+    matrix_artifacts = _release_verification_matrix_artifacts(verification_report)
+    matrix_summary = _release_matrix_summary(matrix_artifacts, source_verification_path=verification_path)
+    matrix_summary_path.write_text(json.dumps(matrix_summary, indent=2, sort_keys=True), encoding="utf-8")
+    baseline_summary, baseline_failure = _load_release_matrix_baseline(baseline_summary_path)
+    matrix_delta = _release_matrix_artifact_delta(
+        matrix_summary,
+        baseline_summary,
+        baseline_failure,
+        baseline_summary_path=baseline_summary_path,
+    )
     _print_release_artifact_verification_summary(verification_report)
     print(f"Verification JSON: {verification_path}")
+    print(f"Release matrix summary: {matrix_summary_path}")
+    print(f"Matrix artifact comparison: {matrix_delta['status']}")
 
     try:
         workbench_summary = run_workbench_smoke_from_docs(docs_path, artifact_root=evidence_root)
@@ -1567,6 +1846,9 @@ def _run_release_collect_evidence_command(artifact_dir: Path, docs_path: Path, o
         workbench_smoke_path=workbench_smoke_path,
         workbench_summary=workbench_summary,
         docs_path=docs_path,
+        matrix_summary_path=matrix_summary_path,
+        matrix_summary=matrix_summary,
+        matrix_delta=matrix_delta,
         summary_path=summary_path,
         handoff_path=handoff_path,
     )
@@ -2108,7 +2390,12 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Verification JSON: {args.output}")
             return 0 if report.get("status") == "passed" else 2
         if args.release_command == "collect-evidence":
-            return _run_release_collect_evidence_command(args.artifact_dir, args.docs, args.output_dir)
+            return _run_release_collect_evidence_command(
+                args.artifact_dir,
+                args.docs,
+                args.output_dir,
+                args.baseline_summary,
+            )
         if args.release_command == "evidence-handoff":
             return _run_release_evidence_handoff_command(
                 audit_dir=args.audit_dir,

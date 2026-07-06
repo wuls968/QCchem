@@ -153,6 +153,26 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         for item in release_evidence_matrix_artifacts
         if isinstance(item, dict) and item.get("status") != "passed"
     ]
+    release_evidence_matrix_delta = (
+        release_evidence_summary.get("release_matrix_delta")
+        if kind == "release_evidence_handoff" and isinstance(release_evidence_summary.get("release_matrix_delta"), dict)
+        else {}
+    )
+    release_evidence_matrix_delta_added = (
+        release_evidence_matrix_delta.get("added")
+        if isinstance(release_evidence_matrix_delta.get("added"), list)
+        else []
+    )
+    release_evidence_matrix_delta_removed = (
+        release_evidence_matrix_delta.get("removed")
+        if isinstance(release_evidence_matrix_delta.get("removed"), list)
+        else []
+    )
+    release_evidence_matrix_delta_changed = (
+        release_evidence_matrix_delta.get("changed")
+        if isinstance(release_evidence_matrix_delta.get("changed"), list)
+        else []
+    )
     entry = {
         "artifact_root": str(artifact_root if root is None else artifact_root),
         "artifact_kind": kind,
@@ -296,6 +316,21 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             failed_release_evidence_matrix_artifacts[0]
             if kind == "release_evidence_handoff" and failed_release_evidence_matrix_artifacts
             else None
+        ),
+        "release_evidence_handoff_matrix_delta_status": (
+            release_evidence_matrix_delta.get("status") if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_matrix_delta_added_count": (
+            len(release_evidence_matrix_delta_added) if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_matrix_delta_removed_count": (
+            len(release_evidence_matrix_delta_removed) if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_matrix_delta_changed_count": (
+            len(release_evidence_matrix_delta_changed) if kind == "release_evidence_handoff" else None
+        ),
+        "release_evidence_handoff_matrix_delta_first_change": (
+            release_evidence_matrix_delta.get("first_change") if kind == "release_evidence_handoff" else None
         ),
         "release_evidence_handoff_summary_json": (
             str(release_evidence_summary_path)

@@ -462,6 +462,8 @@ def test_release_evidence_handoff_cli_writes_local_ci_handoff(
     assert summary["release_status"]["status"] == "passed"
     assert summary["acceptance_status"]["status"] == "fresh"
     assert summary["release_artifact_verification"]["status"] == "not_run"
+    assert summary["release_matrix_delta"]["status"] == "not_applicable"
+    assert summary["release_matrix_delta"]["reason"] == "downloaded_artifact_verification_not_run"
     assert summary["workbench_smoke"]["status"] == "passed"
     assert summary["failures"] == []
     assert "# QCchem Release Evidence Handoff" in handoff
@@ -469,6 +471,8 @@ def test_release_evidence_handoff_cli_writes_local_ci_handoff(
     assert "## CI Diagnostics Handoff" in handoff
     assert "- release_status: `passed`" in handoff
     assert "- acceptance_status: `fresh`" in handoff
+    assert "## Matrix Artifact Delta" in handoff
+    assert "- status: `not_applicable`" in handoff
     assert "`downloaded_artifact_verification` verifies downloaded CI diagnostics" in handoff
 
 
@@ -584,18 +588,22 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
 
     stdout = capsys.readouterr().out
     verification_path = evidence_root / "release_artifact_verification.json"
+    matrix_summary_path = evidence_root / "release_matrix_summary.json"
     smoke_path = evidence_root / "workbench_smoke.json"
     summary_path = evidence_root / "release_evidence_summary.json"
     handoff_path = evidence_root / "release_evidence_handoff.md"
     assert exit_code == 0
     assert "Release artifact verification: passed" in stdout
     assert f"Verification JSON: {verification_path}" in stdout
+    assert f"Release matrix summary: {matrix_summary_path}" in stdout
+    assert "Matrix artifact comparison: not_compared" in stdout
     assert f"Workbench smoke summary written to {smoke_path}" in stdout
     assert "Release evidence summary: passed" in stdout
     assert f"Release evidence JSON: {summary_path}" in stdout
     assert f"Release evidence handoff: {handoff_path}" in stdout
 
     verification = json.loads(verification_path.read_text(encoding="utf-8"))
+    matrix_summary = json.loads(matrix_summary_path.read_text(encoding="utf-8"))
     smoke = json.loads(smoke_path.read_text(encoding="utf-8"))
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     handoff = handoff_path.read_text(encoding="utf-8")
@@ -612,6 +620,7 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
         "release_evidence_summary": str(summary_path),
         "release_evidence_handoff": str(handoff_path),
         "release_artifact_verification": str(verification_path),
+        "release_matrix_summary": str(matrix_summary_path),
         "workbench_smoke": str(smoke_path),
     }
     assert summary["release_artifact_verification"]["summary"] == {
@@ -634,6 +643,25 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert matrix_artifact["acceptance_status"] == "fresh"
     assert matrix_artifact["failure_count"] == 0
     assert matrix_artifact["first_failure"] is None
+    assert matrix_summary["schema_version"] == "qcchem.release_matrix_summary.v0.1-alpha"
+    assert matrix_summary["source_verification"] == str(verification_path)
+    assert matrix_summary["artifact_count"] == 1
+    assert matrix_summary["failed_artifact_count"] == 0
+    assert matrix_summary["artifacts"] == matrix_artifacts
+    assert summary["release_matrix_summary"] == matrix_summary
+    assert summary["release_matrix_delta"] == {
+        "status": "not_compared",
+        "reason": "baseline_not_provided",
+        "baseline_path": None,
+        "current_artifact_count": 1,
+        "baseline_artifact_count": None,
+        "added": [],
+        "removed": [],
+        "changed": [],
+        "unchanged_count": 0,
+        "first_change": None,
+        "first_failure": None,
+    }
     assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
     assert "# QCchem Release Evidence Handoff" in handoff
     assert "- status: `passed`" in handoff
@@ -644,8 +672,86 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "## Matrix Artifact Verification" in handoff
     assert "`qcchem-release-diagnostics-3.11`: status=`passed`" in handoff
     assert "acceptance=`fresh`" in handoff
+    assert "## Matrix Artifact Delta" in handoff
+    assert "- status: `not_compared`" in handoff
+    assert "- reason: `baseline_not_provided`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
     assert "It does not replace the real browser console checklist" in handoff
+
+
+@pytest.mark.integration
+def test_release_collect_evidence_handoff_compares_matrix_baseline(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    seed_root = tmp_path / "seed_release_evidence"
+    assert (
+        main(
+            [
+                "release",
+                "collect-evidence",
+                "--artifact-dir",
+                str(artifact_dir),
+                "--docs",
+                str(REPO_ROOT / "docs" / "workbench.md"),
+                "--output-dir",
+                str(seed_root),
+            ]
+        )
+        == 0
+    )
+    baseline_payload = json.loads((seed_root / "release_matrix_summary.json").read_text(encoding="utf-8"))
+    baseline_payload["artifacts"][0]["diagnostics_digest_count"] = 0
+    baseline_path = tmp_path / "previous_release_matrix_summary.json"
+    baseline_path.write_text(json.dumps(baseline_payload, indent=2, sort_keys=True), encoding="utf-8")
+    evidence_root = tmp_path / "release_evidence"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--output-dir",
+            str(evidence_root),
+            "--baseline-summary",
+            str(baseline_path),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary = json.loads((evidence_root / "release_evidence_summary.json").read_text(encoding="utf-8"))
+    handoff = (evidence_root / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert "Matrix artifact comparison: changed" in stdout
+    assert summary["status"] == "passed"
+    delta = summary["release_matrix_delta"]
+    assert delta["status"] == "changed"
+    assert delta["baseline_path"] == str(baseline_path)
+    assert delta["current_artifact_count"] == 1
+    assert delta["baseline_artifact_count"] == 1
+    assert delta["added"] == []
+    assert delta["removed"] == []
+    assert delta["unchanged_count"] == 0
+    assert len(delta["changed"]) == 1
+    changed = delta["changed"][0]
+    assert changed["artifact_name"] == "qcchem-release-diagnostics-3.11"
+    assert "diagnostics_digest_count" in changed["changed_fields"]
+    assert changed["before"]["diagnostics_digest_count"] == 0
+    assert changed["after"]["diagnostics_digest_count"] == changed["after"]["diagnostics_file_count"]
+    assert delta["first_change"] == {
+        "change_type": "changed",
+        "artifact_name": "qcchem-release-diagnostics-3.11",
+        "changed_fields": changed["changed_fields"],
+    }
+    assert "## Matrix Artifact Delta" in handoff
+    assert "- status: `changed`" in handoff
+    assert f"- baseline_path: `{baseline_path}`" in handoff
+    assert "- changed `qcchem-release-diagnostics-3.11`: fields=`diagnostics_digest_count`" in handoff
 
 
 @pytest.mark.integration

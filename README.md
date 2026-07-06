@@ -131,8 +131,11 @@ placeholder boundary map.
 `qcchem release evidence-handoff` writes the CI-side summary and reviewer
 handoff before diagnostic upload. After downloading CI artifacts,
 `qcchem release collect-evidence` reruns the digest verifier and writes the
-post-download Workbench smoke JSON, compact summary JSON, and reviewer-facing
-Markdown handoff in the selected evidence directory.
+post-download Workbench smoke JSON, compact summary JSON, matrix baseline JSON,
+and reviewer-facing Markdown handoff in the selected evidence directory. Pass
+`--baseline-summary <previous-release_matrix_summary.json>` to compare the
+current matrix artifacts against an earlier collection without treating expected
+matrix drift as artifact-integrity failure.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

@@ -335,9 +335,34 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         if release_handoff_matrix_artifacts
         else "no matrix artifact summary"
     )
+    release_handoff_matrix_delta = (
+        release_evidence_handoff.get("release_matrix_delta")
+        if isinstance(release_evidence_handoff.get("release_matrix_delta"), dict)
+        else {}
+    )
+    release_handoff_delta_added = (
+        release_handoff_matrix_delta.get("added") if isinstance(release_handoff_matrix_delta.get("added"), list) else []
+    )
+    release_handoff_delta_removed = (
+        release_handoff_matrix_delta.get("removed")
+        if isinstance(release_handoff_matrix_delta.get("removed"), list)
+        else []
+    )
+    release_handoff_delta_changed = (
+        release_handoff_matrix_delta.get("changed")
+        if isinstance(release_handoff_matrix_delta.get("changed"), list)
+        else []
+    )
+    release_handoff_delta_text = (
+        f"delta={release_handoff_matrix_delta.get('status')} "
+        f"({len(release_handoff_delta_changed)} changed, "
+        f"{len(release_handoff_delta_added)} added, {len(release_handoff_delta_removed)} removed)"
+        if release_handoff_matrix_delta
+        else "delta=not available"
+    )
     release_handoff_detail = (
         f"{release_evidence_handoff.get('recommended_action') or 'review_release_evidence'}; "
-        f"{release_handoff_failure_text}; {release_handoff_matrix_text}"
+        f"{release_handoff_failure_text}; {release_handoff_matrix_text}; {release_handoff_delta_text}"
         if release_evidence_handoff
         else "Run qcchem release collect-evidence after downloading CI diagnostics."
     )

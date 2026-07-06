@@ -189,14 +189,18 @@ verification as `not_run` until the artifact is downloaded.
 After downloading CI artifacts with `gh run download`, run
 `qcchem release collect-evidence --artifact-dir <download-dir>` before treating
 the downloaded diagnostics as release evidence. The command writes
-`release_artifact_verification.json`, `workbench_smoke.json`, and
-`release_evidence_summary.json`, plus a reviewer-facing
-`release_evidence_handoff.md`, under the selected evidence root. The handoff
+`release_artifact_verification.json`, `release_matrix_summary.json`,
+`workbench_smoke.json`, and `release_evidence_summary.json`, plus a
+reviewer-facing `release_evidence_handoff.md`, under the selected evidence
+root. Pass `--baseline-summary <previous-release_matrix_summary.json>` when the
+handoff should compare the current downloaded matrix artifacts against a prior
+collection. The handoff
 lists each downloaded `qcchem-release-diagnostics-*` matrix artifact with
-status, digest/file counts, sidecar freshness, and first failure. The verifier
-step is read-only: it checks the downloaded release status summaries, release
-acceptance freshness JSON, diagnostics manifest counts, and each uploaded file's
-recorded size and SHA-256 digest without rerunning the audit or calling GitHub.
+status, digest/file counts, sidecar freshness, first failure, and any
+matrix-baseline delta. The verifier step is read-only: it checks the downloaded
+release status summaries, release acceptance freshness JSON, diagnostics
+manifest counts, and each uploaded file's recorded size and SHA-256 digest
+without rerunning the audit or calling GitHub.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
 only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they
@@ -210,7 +214,8 @@ startup inventory and visible evidence console agree. Keep
 and downloaded-release verification evidence stay in one generated handoff.
 Keep `release_evidence_handoff.md` indexed as `release_evidence_handoff` when it
 lives next to `release_evidence_summary.json`, so Workbench startup inventory
-and Overview can point reviewers to the human-readable post-CI handoff.
+and Overview can point reviewers to the human-readable post-CI handoff while
+using `release_evidence_summary.json` for matrix counts and delta status.
 Slow tests are bounded opt-in checks for expensive or exploratory paths:
 
 ```bash

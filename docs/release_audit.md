@@ -171,17 +171,30 @@ qcchem release collect-evidence \
 ```
 
 This command writes `release_artifact_verification.json`,
-`workbench_smoke.json`, `release_evidence_summary.json`, and the reviewer-facing
+`release_matrix_summary.json`, `workbench_smoke.json`,
+`release_evidence_summary.json`, and the reviewer-facing
 `release_evidence_handoff.md` under the downloaded artifact directory. The
 verifier recursively checks downloaded
 `release_status.json`, `release_diagnostics_manifest.json`, and
 `qcchem-release-acceptance-status.json` files. It revalidates the release status
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
 uploaded file sizes and SHA-256 digests. The Workbench smoke pass then records
-the same verifier status and matrix counts in its route handoff. The Markdown
+the same verifier status and matrix counts in its route handoff. The
+`release_matrix_summary.json` file is a compact baseline of the current
+`qcchem-release-diagnostics-*` matrix artifacts. To compare a later run against
+that baseline, pass it back to collection:
+
+```bash
+qcchem release collect-evidence \
+  --artifact-dir /tmp/qcchem-ci-artifacts \
+  --docs docs/workbench.md \
+  --baseline-summary /tmp/previous-release/release_matrix_summary.json
+```
+
+The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,
-and whether a real browser checklist is still required.
+matrix artifact delta, and whether a real browser checklist is still required.
 The command exits with code `2` if any expected file is missing, stale,
 inconsistent, tampered with, or if the Workbench route smoke fails.
 On failure, the top block of `release_evidence_handoff.md` includes
@@ -201,7 +214,8 @@ reviewed from one generated handoff file.
 When `release_evidence_handoff.md` is kept next to
 `release_evidence_summary.json`, the artifact index classifies it as
 `release_evidence_handoff`, and Workbench Overview surfaces its status,
-recommended action, first failure, and Markdown path.
+recommended action, first failure, matrix artifact counts, matrix delta status,
+and Markdown path.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

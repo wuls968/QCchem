@@ -169,6 +169,21 @@ def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> 
                         },
                     ]
                 },
+                "release_matrix_delta": {
+                    "status": "changed",
+                    "added": [{"artifact_name": "qcchem-release-diagnostics-3.12"}],
+                    "removed": [],
+                    "changed": [
+                        {
+                            "artifact_name": "qcchem-release-diagnostics-3.11",
+                            "changed_fields": ["diagnostics_digest_count"],
+                        }
+                    ],
+                    "first_change": {
+                        "change_type": "added",
+                        "artifact_name": "qcchem-release-diagnostics-3.12",
+                    },
+                },
             }
         ),
         encoding="utf-8",
@@ -202,6 +217,14 @@ def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> 
             "reason": "diagnostics_manifest_size_mismatch",
             "local_path": "/tmp/release_handoff.md",
         },
+    }
+    assert entry["release_evidence_handoff_matrix_delta_status"] == "changed"
+    assert entry["release_evidence_handoff_matrix_delta_added_count"] == 1
+    assert entry["release_evidence_handoff_matrix_delta_removed_count"] == 0
+    assert entry["release_evidence_handoff_matrix_delta_changed_count"] == 1
+    assert entry["release_evidence_handoff_matrix_delta_first_change"] == {
+        "change_type": "added",
+        "artifact_name": "qcchem-release-diagnostics-3.12",
     }
 
 

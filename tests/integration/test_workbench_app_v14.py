@@ -879,6 +879,13 @@ def test_overview_page_surfaces_release_verification(
                         {"artifact_name": "qcchem-release-diagnostics-3.11", "status": "passed"},
                     ]
                 },
+                "release_matrix_delta": {
+                    "status": "changed",
+                    "added": [],
+                    "removed": [{"artifact_name": "qcchem-release-diagnostics-3.9"}],
+                    "changed": [{"artifact_name": "qcchem-release-diagnostics-3.11"}],
+                    "unchanged_count": 1,
+                },
             }
         ),
         encoding="utf-8",
@@ -895,6 +902,7 @@ def test_overview_page_surfaces_release_verification(
     assert str(verification_path) in page_text
     assert "Release evidence handoff" in page_text
     assert "2 matrix artifacts / 0 failed" in page_text
+    assert "delta=changed (1 changed, 0 added, 1 removed)" in page_text
     assert "review_release_evidence" in page_text
     assert "no first failure" in page_text
     assert str(handoff_path) in page_text
