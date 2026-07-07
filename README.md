@@ -152,7 +152,10 @@ retained runs, selected baselines, matrix delta status, verifier status,
 Workbench smoke status, and first failures without rereading GitHub or
 mutating any retained run directory. Add `--strict` when a non-`passed` history
 summary should return exit code `2`, and `-o <json>` when the compact overview
-should be archived.
+should be archived. When that output is named `release_history_summary.json`
+under an artifact root, `qcchem artifacts index` classifies it as
+`release_history_summary`, and Workbench startup/Overview surface the retained
+run counts and matrix-delta status counts.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

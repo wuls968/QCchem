@@ -251,6 +251,9 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     release_verification_entries = [
         entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_artifact_verification"
     ]
+    release_history_summary_entries = [
+        entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_history_summary"
+    ]
     release_matrix_summary_entries = [
         entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_matrix_summary"
     ]
@@ -260,6 +263,11 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     latest_release_verification = (
         max(release_verification_entries, key=lambda entry: float(entry.get("mtime") or 0.0))
         if release_verification_entries
+        else None
+    )
+    latest_release_history_summary = (
+        max(release_history_summary_entries, key=lambda entry: float(entry.get("mtime") or 0.0))
+        if release_history_summary_entries
         else None
     )
     latest_release_matrix_summary = (
@@ -280,6 +288,14 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     if isinstance(release_verification, dict) and latest_release_verification is not None:
         release_verification["source_path"] = str(latest_release_verification["result_json"])
         release_verification["artifact_index_entry"] = latest_release_verification
+    release_history_summary = (
+        _load_json(Path(str(latest_release_history_summary["result_json"])))
+        if latest_release_history_summary and latest_release_history_summary.get("result_json")
+        else None
+    )
+    if isinstance(release_history_summary, dict) and latest_release_history_summary is not None:
+        release_history_summary["source_path"] = str(latest_release_history_summary["result_json"])
+        release_history_summary["artifact_index_entry"] = latest_release_history_summary
     release_matrix_summary = (
         _load_json(Path(str(latest_release_matrix_summary["result_json"])))
         if latest_release_matrix_summary and latest_release_matrix_summary.get("result_json")
@@ -316,6 +332,7 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
         "promotion_review": promotion_review or {},
         "capsule": capsule or {},
         "release_verification": release_verification or {},
+        "release_history_summary": release_history_summary or {},
         "release_matrix_summary": release_matrix_summary or {},
         "release_evidence_handoff": release_handoff or {},
         "open_evidence_gaps": missing_evidence if isinstance(missing_evidence, list) else [],

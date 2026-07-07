@@ -698,7 +698,11 @@ indexed release verification status and matrix artifact counts. When
 `release_matrix_summary.json` is kept under the same artifact root, the index
 classifies it as `release_matrix_summary`, startup inventory exposes its count
 and featured path, and Overview shows the baseline matrix-artifact count plus
-failed count. When
+failed count. When a retained-history overview is written as
+`release_history_summary.json` under the artifact root, the index classifies it
+as `release_history_summary`, startup inventory exposes its count and featured
+path, and Overview shows retained run counts plus matrix-delta status counts.
+When
 `release_evidence_handoff.md` is kept next to `release_evidence_summary.json`,
 the index classifies the Markdown report as `release_evidence_handoff`, and the
 Overview page shows the handoff status, recommended action, first failure,

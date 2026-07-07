@@ -273,6 +273,11 @@ When `release_matrix_summary.json` is retained under that artifact root, the
 index records it as `release_matrix_summary`, Workbench startup reports its
 count and featured path, and Overview shows the baseline matrix count and failed
 count separately from the reviewer-facing handoff delta.
+When a retained-history overview is archived as `release_history_summary.json`
+under the artifact root, the index records it as `release_history_summary`,
+Workbench startup reports its count and featured path, and Overview shows the
+retained run counts plus matrix-delta status counts separately from the per-run
+handoff files.
 When `release_evidence_handoff.md` is kept next to
 `release_evidence_summary.json`, the artifact index classifies it as
 `release_evidence_handoff`, and Workbench Overview surfaces its status,

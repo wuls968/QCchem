@@ -269,6 +269,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     claim_review = research_os.get("claim_review") or {}
     promotion_review = research_os.get("promotion_review") or {}
     release_verification = research_os.get("release_verification") or {}
+    release_history_summary = research_os.get("release_history_summary") or {}
     release_matrix_summary = research_os.get("release_matrix_summary") or {}
     release_evidence_handoff = research_os.get("release_evidence_handoff") or {}
     release_verification_summary = (
@@ -304,6 +305,29 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_verification_path = release_verification.get("source_path")
     if release_verification_path:
         release_verification_detail = f"{release_verification_detail} | {release_verification_path}"
+    release_history_status = str(release_history_summary.get("status") or "No release history summary")
+    release_history_delta_counts = (
+        release_history_summary.get("matrix_delta_status_counts")
+        if isinstance(release_history_summary.get("matrix_delta_status_counts"), dict)
+        else {}
+    )
+    release_history_delta_text = (
+        ", ".join(f"{key}={value}" for key, value in sorted(release_history_delta_counts.items()))
+        if release_history_delta_counts
+        else "no matrix delta counts"
+    )
+    release_history_detail = (
+        f"{release_history_summary.get('run_count', 0)} retained runs / "
+        f"{release_history_summary.get('passed_run_count', 0)} passed / "
+        f"{release_history_summary.get('failed_run_count', 0)} failed / "
+        f"{release_history_summary.get('incomplete_run_count', 0)} incomplete; "
+        f"{release_history_delta_text}"
+        if release_history_summary
+        else "Run qcchem release history summarize --history-root <history-dir> -o release_history_summary.json."
+    )
+    release_history_path = release_history_summary.get("source_path")
+    if release_history_path:
+        release_history_detail = f"{release_history_detail} | {release_history_path}"
     release_matrix_artifacts = (
         release_matrix_summary.get("artifacts")
         if isinstance(release_matrix_summary.get("artifacts"), list)
@@ -518,6 +542,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         release_verification_status,
                         release_verification_detail,
                         tone=_status_tone(release_verification.get("status")),
+                    ),
+                    status_card(
+                        "Release history",
+                        release_history_status,
+                        release_history_detail,
+                        tone=_status_tone(release_history_summary.get("status")),
                     ),
                     status_card(
                         "Release matrix baseline",

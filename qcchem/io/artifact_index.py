@@ -32,6 +32,8 @@ def _artifact_kind(path: Path) -> str:
     name = path.name
     if name == "release_evidence_handoff.md":
         return "release_evidence_handoff"
+    if name == "release_history_summary.json":
+        return "release_history_summary"
     if name == "release_matrix_summary.json":
         return "release_matrix_summary"
     if name == "release_artifact_verification.json":
@@ -175,6 +177,17 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         if kind == "release_matrix_summary"
         else None
     )
+    release_history_summary_runs = (
+        payload.get("runs")
+        if kind == "release_history_summary" and isinstance(payload.get("runs"), list)
+        else []
+    )
+    release_history_summary_status = payload.get("status") if kind == "release_history_summary" else None
+    release_history_summary_first_failure = (
+        payload.get("first_failure")
+        if kind == "release_history_summary" and isinstance(payload.get("first_failure"), dict)
+        else None
+    )
     release_evidence_matrix_delta = (
         release_evidence_summary.get("release_matrix_delta")
         if kind == "release_evidence_handoff" and isinstance(release_evidence_summary.get("release_matrix_delta"), dict)
@@ -201,6 +214,8 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "artifact_name": (
             "release_evidence_handoff"
             if kind == "release_evidence_handoff"
+            else "release_history_summary"
+            if kind == "release_history_summary"
             else "release_matrix_summary"
             if kind == "release_matrix_summary"
             else name
@@ -212,10 +227,12 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         or payload.get("status")
         or release_evidence_summary.get("status")
         or release_matrix_summary_status
+        or release_history_summary_status
         or evidence.get("trust_tier"),
         "trust_tier": evidence.get("trust_tier") or payload.get("verification_status") or payload.get("status"),
         "recommended_action": evidence.get("recommended_action")
         or release_evidence_summary.get("recommended_action")
+        or payload.get("recommended_action")
         or acceptance_summary.get("recommended_action"),
         "capsule_status": capsule.get("capsule_status"),
         "evidence_summary_complete": (
@@ -380,6 +397,43 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "release_matrix_summary_source_verification": (
             payload.get("source_verification") if kind == "release_matrix_summary" else None
         ),
+        "release_history_summary_status": (
+            release_history_summary_status if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_run_count": (
+            payload.get("run_count") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_passed_run_count": (
+            payload.get("passed_run_count") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_failed_run_count": (
+            payload.get("failed_run_count") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_incomplete_run_count": (
+            payload.get("incomplete_run_count") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_history_root": (
+            payload.get("history_root") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_first_failure": (
+            release_history_summary_first_failure if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_matrix_delta_status_counts": (
+            payload.get("matrix_delta_status_counts") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_release_artifact_verification_status_counts": (
+            payload.get("release_artifact_verification_status_counts")
+            if kind == "release_history_summary"
+            else None
+        ),
+        "release_history_summary_workbench_smoke_status_counts": (
+            payload.get("workbench_smoke_status_counts") if kind == "release_history_summary" else None
+        ),
+        "release_history_summary_first_run": (
+            release_history_summary_runs[0]
+            if kind == "release_history_summary" and release_history_summary_runs
+            else None
+        ),
         "mtime": mtime,
     }
     return entry
@@ -408,6 +462,7 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "campaign_result.json",
         "workflow_result.json",
         "release_artifact_verification.json",
+        "release_history_summary.json",
         "release_matrix_summary.json",
         "release_evidence_handoff.md",
     }

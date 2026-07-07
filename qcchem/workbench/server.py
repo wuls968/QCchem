@@ -39,6 +39,7 @@ def _empty_artifact_inventory(
         "scan_results": 0,
         "hardware_campaigns": 0,
         "release_artifact_verifications": 0,
+        "release_history_summaries": 0,
         "release_matrix_summaries": 0,
         "release_evidence_handoffs": 0,
         "report_markdown_roots": 0,
@@ -50,6 +51,7 @@ def _empty_artifact_inventory(
         "featured_scan": None,
         "featured_hardware_campaign": None,
         "featured_release_artifact_verification": None,
+        "featured_release_history_summary": None,
         "featured_release_matrix_summary": None,
         "featured_release_evidence_handoff": None,
     }
@@ -86,6 +88,7 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
     scan_entries = _entries_by_kind(entries, "scan")
     hardware_campaign_entries = _entries_by_kind(entries, "hardware_calibration")
     release_verification_entries = _entries_by_kind(entries, "release_artifact_verification")
+    release_history_summary_entries = _entries_by_kind(entries, "release_history_summary")
     release_matrix_summary_entries = _entries_by_kind(entries, "release_matrix_summary")
     release_handoff_entries = _entries_by_kind(entries, "release_evidence_handoff")
     run_results = _entry_paths(run_entries)
@@ -94,6 +97,7 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
     scan_results = _entry_paths(scan_entries)
     hardware_campaigns = _entry_paths(hardware_campaign_entries)
     release_verification_reports = _entry_paths(release_verification_entries)
+    release_history_summaries = _entry_paths(release_history_summary_entries)
     release_matrix_summaries = _entry_paths(release_matrix_summary_entries)
     release_handoff_reports = _entry_paths(release_handoff_entries)
 
@@ -108,6 +112,7 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
         "scan_results": len(scan_results),
         "hardware_campaigns": len(hardware_campaigns),
         "release_artifact_verifications": len(release_verification_reports),
+        "release_history_summaries": len(release_history_summaries),
         "release_matrix_summaries": len(release_matrix_summaries),
         "release_evidence_handoffs": len(release_handoff_reports),
         "report_markdown_roots": sum(1 for entry in entries if entry.get("has_report_markdown")),
@@ -138,6 +143,10 @@ def _artifact_inventory(root: Path) -> dict[str, Any]:
         "featured_release_artifact_verification": _find_first_existing(
             root / "release_artifact_verification.json",
             *(path for path in release_verification_reports[:1]),
+        ),
+        "featured_release_history_summary": _find_first_existing(
+            root / "release_history_summary.json",
+            *(path for path in release_history_summaries[:1]),
         ),
         "featured_release_matrix_summary": _find_first_existing(
             root / "release_matrix_summary.json",

@@ -866,6 +866,29 @@ def test_overview_page_surfaces_release_verification(
         encoding="utf-8",
     )
     handoff_path = release_root / "release_evidence_handoff.md"
+    history_summary_path = release_root / "release_history_summary.json"
+    history_summary_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_history",
+                "history_root": str(tmp_path / "release_history"),
+                "run_count": 2,
+                "passed_run_count": 2,
+                "failed_run_count": 0,
+                "incomplete_run_count": 0,
+                "matrix_delta_status_counts": {"not_compared": 1, "passed": 1},
+                "release_artifact_verification_status_counts": {"passed": 2},
+                "workbench_smoke_status_counts": {"passed": 2},
+                "runs": [
+                    {"label": "run-001", "status": "passed"},
+                    {"label": "run-002", "status": "passed"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     matrix_summary_path = release_root / "release_matrix_summary.json"
     matrix_summary_path.write_text(
         json.dumps(
@@ -916,6 +939,10 @@ def test_overview_page_surfaces_release_verification(
     assert "passed" in page_text
     assert "6 status bundles / 3 manifests / 3 sidecar reports; 0 failures" in page_text
     assert str(verification_path) in page_text
+    assert "Release history" in page_text
+    assert "2 retained runs / 2 passed / 0 failed / 0 incomplete" in page_text
+    assert "not_compared=1, passed=1" in page_text
+    assert str(history_summary_path) in page_text
     assert "Release matrix baseline" in page_text
     assert "2 matrix artifacts / 0 failed" in page_text
     assert str(matrix_summary_path) in page_text
@@ -1073,6 +1100,28 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
         ),
         encoding="utf-8",
     )
+    (release_root / "release_history_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_history",
+                "history_root": str(tmp_path / "release_history"),
+                "run_count": 2,
+                "passed_run_count": 2,
+                "failed_run_count": 0,
+                "incomplete_run_count": 0,
+                "matrix_delta_status_counts": {"not_compared": 1, "passed": 1},
+                "release_artifact_verification_status_counts": {"passed": 2},
+                "workbench_smoke_status_counts": {"passed": 2},
+                "runs": [
+                    {"label": "run-001", "status": "passed"},
+                    {"label": "run-002", "status": "passed"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     (release_root / "release_matrix_summary.json").write_text(
         json.dumps(
             {
@@ -1114,14 +1163,18 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
 
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["artifact_inventory"]["artifact_root_exists"] is True
-    assert summary["artifact_inventory"]["indexed_artifacts"] == 4
+    assert summary["artifact_inventory"]["indexed_artifacts"] == 5
     assert summary["artifact_inventory"]["run_result_roots"] == 1
     assert summary["artifact_inventory"]["release_artifact_verifications"] == 1
+    assert summary["artifact_inventory"]["release_history_summaries"] == 1
     assert summary["artifact_inventory"]["release_matrix_summaries"] == 1
     assert summary["artifact_inventory"]["release_evidence_handoffs"] == 1
     assert summary["artifact_inventory"]["report_markdown_roots"] == 1
     assert summary["artifact_inventory"]["featured_release_artifact_verification"] == str(
         release_root / "release_artifact_verification.json"
+    )
+    assert summary["artifact_inventory"]["featured_release_history_summary"] == str(
+        release_root / "release_history_summary.json"
     )
     assert summary["artifact_inventory"]["featured_release_matrix_summary"] == str(
         release_root / "release_matrix_summary.json"
