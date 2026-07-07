@@ -228,6 +228,24 @@ the run id. The `gh` command is invoked with explicit argv arguments, not a
 shell string. If `--download-dir` is omitted, a unique `/tmp` directory is
 created and left on disk for provenance review; if supplied, it must be empty.
 
+To review the retained history without downloading or rewriting any run
+directory, summarize the history root:
+
+```bash
+qcchem release history summarize \
+  --history-root /tmp/qcchem-release-history \
+  -o /tmp/qcchem-release-history-summary.json \
+  --strict
+```
+
+The summary JSON uses `qcchem.release_history_summary.v0.1-alpha` and lists one
+direct child directory per retained run. Each run records the release evidence
+status, selected baseline, matrix delta status/counts, release artifact
+verifier status, Workbench smoke status, and first failure. Missing, unreadable,
+or non-object `release_evidence_summary.json` files are reported as incomplete
+runs instead of crashing the review. `--strict` returns exit code `2` unless
+the retained history summary is `passed`.
+
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,

@@ -14,6 +14,7 @@ import yaml
 
 
 RELEASE_MATRIX_SUMMARY_SCHEMA_VERSION = "qcchem.release_matrix_summary.v0.1-alpha"
+RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION = "qcchem.release_history_summary.v0.1-alpha"
 RELEASE_MATRIX_COMPARE_FIELDS = (
     "status",
     "release_status_count",
@@ -557,6 +558,32 @@ def _build_parser() -> argparse.ArgumentParser:
         "--baseline-search-root",
         type=Path,
         help="Optional baseline search root; defaults to --history-root.",
+    )
+    release_history = release_subparsers.add_parser(
+        "history",
+        help="Inspect retained release-evidence history directories.",
+    )
+    release_history_subparsers = release_history.add_subparsers(dest="release_history_command", required=True)
+    release_history_summarize = release_history_subparsers.add_parser(
+        "summarize",
+        help="Summarize retained release-evidence runs, baselines, and matrix deltas.",
+    )
+    release_history_summarize.add_argument(
+        "--history-root",
+        type=Path,
+        required=True,
+        help="Directory containing one retained release-evidence subdirectory per run.",
+    )
+    release_history_summarize.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Optional JSON summary output path.",
+    )
+    release_history_summarize.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with code 2 when the retained history summary status is not passed.",
     )
     release_evidence_handoff = release_subparsers.add_parser(
         "evidence-handoff",
@@ -2223,6 +2250,343 @@ def _run_release_fetch_ci_evidence_command(
     )
 
 
+def _release_history_list_count(value: object) -> int:
+    return len(value) if isinstance(value, list) else 0
+
+
+def _release_history_first_list_item(value: object) -> object | None:
+    if isinstance(value, list) and value:
+        return value[0]
+    return None
+
+
+def _release_history_dict(value: object) -> dict[str, object]:
+    return value if isinstance(value, dict) else {}
+
+
+def _release_history_incomplete_run_summary(
+    *,
+    run_root: Path,
+    status: str,
+    reason: str,
+    error: str | None = None,
+) -> dict[str, object]:
+    summary_path = run_root / "release_evidence_summary.json"
+    first_failure: dict[str, object] = {
+        "reason": reason,
+        "path": str(summary_path),
+    }
+    if error is not None:
+        first_failure["error"] = error
+    return {
+        "label": run_root.name,
+        "status": status,
+        "recommended_action": "rerun_collect_evidence_or_remove_incomplete_run",
+        "collection_mode": None,
+        "artifact_dir": None,
+        "evidence_root": str(run_root),
+        "summary_path": str(summary_path),
+        "outputs": {},
+        "first_failure": first_failure,
+        "release_history": {
+            "mode": "retained_history",
+            "root": str(run_root.parent),
+            "label": run_root.name,
+            "path": str(run_root),
+            "baseline_search_root": str(run_root.parent),
+        },
+        "release_artifact_verification": {
+            "status": "not_available",
+            "failure_count": None,
+            "first_failure": None,
+        },
+        "release_matrix_summary": {
+            "artifact_count": None,
+            "failed_artifact_count": None,
+            "first_failed_artifact": None,
+        },
+        "release_matrix_baseline_selection": {
+            "mode": "not_available",
+            "path": None,
+            "search_root": None,
+            "candidate_count": None,
+            "reason": reason,
+        },
+        "release_matrix_delta": {
+            "status": "not_available",
+            "reason": reason,
+            "baseline_path": None,
+            "current_artifact_count": None,
+            "baseline_artifact_count": None,
+            "added_count": 0,
+            "removed_count": 0,
+            "changed_count": 0,
+            "unchanged_count": None,
+            "first_change": None,
+            "first_failure": first_failure,
+        },
+        "workbench_smoke": {
+            "status": "not_available",
+            "route_count": None,
+            "failed_routes": None,
+            "page_count": None,
+            "failed_pages": None,
+            "failed_check_count": None,
+            "first_failed_check": None,
+        },
+    }
+
+
+def _release_history_matrix_delta_summary(delta: dict[str, object]) -> dict[str, object]:
+    return {
+        "status": delta.get("status") or "not_available",
+        "reason": delta.get("reason"),
+        "baseline_path": delta.get("baseline_path"),
+        "current_artifact_count": delta.get("current_artifact_count"),
+        "baseline_artifact_count": delta.get("baseline_artifact_count"),
+        "added_count": _release_history_list_count(delta.get("added")),
+        "removed_count": _release_history_list_count(delta.get("removed")),
+        "changed_count": _release_history_list_count(delta.get("changed")),
+        "unchanged_count": delta.get("unchanged_count"),
+        "first_change": delta.get("first_change") if isinstance(delta.get("first_change"), dict) else None,
+        "first_failure": delta.get("first_failure") if isinstance(delta.get("first_failure"), dict) else None,
+    }
+
+
+def _release_history_run_summary(run_root: Path) -> dict[str, object]:
+    summary_path = run_root / "release_evidence_summary.json"
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return _release_history_incomplete_run_summary(
+            run_root=run_root,
+            status="missing_summary",
+            reason="release_evidence_summary_missing",
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        return _release_history_incomplete_run_summary(
+            run_root=run_root,
+            status="unreadable_summary",
+            reason="release_evidence_summary_unreadable",
+            error=f"{type(exc).__name__}: {exc}",
+        )
+    if not isinstance(payload, dict):
+        return _release_history_incomplete_run_summary(
+            run_root=run_root,
+            status="invalid_summary",
+            reason="release_evidence_summary_not_object",
+        )
+
+    verification = _release_history_dict(payload.get("release_artifact_verification"))
+    matrix_summary = _release_history_dict(payload.get("release_matrix_summary"))
+    matrix_artifacts = matrix_summary.get("artifacts") if isinstance(matrix_summary.get("artifacts"), list) else []
+    failed_matrix_artifacts = [
+        artifact
+        for artifact in matrix_artifacts
+        if isinstance(artifact, dict) and artifact.get("status") != "passed"
+    ]
+    baseline_selection = _release_history_dict(payload.get("release_matrix_baseline_selection"))
+    matrix_delta = _release_history_matrix_delta_summary(_release_history_dict(payload.get("release_matrix_delta")))
+    workbench = _release_history_dict(payload.get("workbench_smoke"))
+    failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
+    status = str(payload.get("status") or "unknown")
+    first_failure = payload.get("first_failure") if isinstance(payload.get("first_failure"), dict) else None
+    if status != "passed" and first_failure is None:
+        first_failure = {
+            "reason": "release_evidence_status_not_passed",
+            "path": str(summary_path),
+            "status": status,
+        }
+    release_history = _release_history_dict(payload.get("release_history"))
+    if not release_history:
+        release_history = {
+            "mode": "not_available",
+            "root": str(run_root.parent),
+            "label": run_root.name,
+            "path": str(run_root),
+            "baseline_search_root": None,
+        }
+
+    return {
+        "label": run_root.name,
+        "status": status,
+        "recommended_action": payload.get("recommended_action"),
+        "collection_mode": payload.get("collection_mode"),
+        "artifact_dir": payload.get("artifact_dir"),
+        "evidence_root": payload.get("evidence_root") or str(run_root),
+        "summary_path": str(summary_path),
+        "outputs": payload.get("outputs") if isinstance(payload.get("outputs"), dict) else {},
+        "first_failure": first_failure,
+        "release_history": release_history,
+        "release_artifact_verification": {
+            "status": verification.get("status") or "not_available",
+            "failure_count": verification.get("failure_count"),
+            "first_failure": verification.get("first_failure")
+            if isinstance(verification.get("first_failure"), dict)
+            else None,
+        },
+        "release_matrix_summary": {
+            "artifact_count": matrix_summary.get("artifact_count"),
+            "failed_artifact_count": matrix_summary.get("failed_artifact_count"),
+            "first_failed_artifact": failed_matrix_artifacts[0] if failed_matrix_artifacts else None,
+        },
+        "release_matrix_baseline_selection": {
+            "mode": baseline_selection.get("mode") or "not_available",
+            "path": baseline_selection.get("path"),
+            "search_root": baseline_selection.get("search_root"),
+            "candidate_count": baseline_selection.get("candidate_count"),
+            "reason": baseline_selection.get("reason"),
+        },
+        "release_matrix_delta": matrix_delta,
+        "workbench_smoke": {
+            "status": workbench.get("status") or "not_available",
+            "route_count": workbench.get("route_count"),
+            "failed_routes": workbench.get("failed_routes"),
+            "page_count": workbench.get("page_count"),
+            "failed_pages": workbench.get("failed_pages"),
+            "failed_check_count": len(failed_checks),
+            "first_failed_check": _release_history_first_list_item(failed_checks),
+        },
+    }
+
+
+def _release_history_first_failure(runs: list[dict[str, object]]) -> dict[str, object] | None:
+    for run in runs:
+        if run.get("status") == "passed":
+            continue
+        first_failure = run.get("first_failure") if isinstance(run.get("first_failure"), dict) else None
+        reason = first_failure.get("reason") if first_failure is not None else "release_history_run_not_passed"
+        path = first_failure.get("path") if first_failure is not None else run.get("summary_path")
+        return {
+            "label": run.get("label"),
+            "status": run.get("status"),
+            "reason": reason,
+            "path": path,
+            "failure": first_failure,
+        }
+    return None
+
+
+def _release_history_status_counts(runs: list[dict[str, object]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for run in runs:
+        value = run.get(key)
+        if isinstance(value, dict):
+            status = str(value.get("status") or "not_available")
+        else:
+            status = str(value or "not_available")
+        counts[status] = counts.get(status, 0) + 1
+    return {name: counts[name] for name in sorted(counts)}
+
+
+def _release_history_summary(history_root: Path) -> dict[str, object]:
+    if not history_root.exists() or not history_root.is_dir():
+        raise ValueError(f"--history-root is not a directory: {history_root}")
+    try:
+        children = sorted(history_root.iterdir(), key=lambda path: path.name)
+    except OSError as exc:
+        raise ValueError(f"--history-root is not readable: {history_root}") from exc
+
+    run_roots = [child for child in children if child.is_dir()]
+    skipped_non_directory_count = len(children) - len(run_roots)
+    runs = [_release_history_run_summary(run_root) for run_root in run_roots]
+    passed_run_count = sum(1 for run in runs if run.get("status") == "passed")
+    failed_run_count = sum(1 for run in runs if run.get("status") == "failed")
+    incomplete_run_count = sum(1 for run in runs if run.get("status") not in {"passed", "failed"})
+    if not runs:
+        status = "empty"
+    elif passed_run_count == len(runs):
+        status = "passed"
+    elif failed_run_count:
+        status = "failed"
+    else:
+        status = "incomplete"
+
+    return {
+        "schema_version": RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION,
+        "status": status,
+        "recommended_action": "review_release_history"
+        if status == "passed"
+        else "collect_release_evidence"
+        if status == "empty"
+        else "inspect_release_history_failures",
+        "history_root": str(history_root),
+        "run_count": len(runs),
+        "passed_run_count": passed_run_count,
+        "failed_run_count": failed_run_count,
+        "incomplete_run_count": incomplete_run_count,
+        "skipped_non_directory_count": skipped_non_directory_count,
+        "first_failure": _release_history_first_failure(runs),
+        "run_status_counts": _release_history_status_counts(runs, "status"),
+        "matrix_delta_status_counts": _release_history_status_counts(runs, "release_matrix_delta"),
+        "release_artifact_verification_status_counts": _release_history_status_counts(
+            runs,
+            "release_artifact_verification",
+        ),
+        "workbench_smoke_status_counts": _release_history_status_counts(runs, "workbench_smoke"),
+        "runs": runs,
+    }
+
+
+def _print_release_history_summary(summary: dict[str, object]) -> None:
+    print(f"Release history summary: {summary.get('status')}")
+    print(f"History root: {summary.get('history_root')}")
+    print(
+        "Runs: "
+        f"{summary.get('run_count')} total, "
+        f"{summary.get('passed_run_count')} passed, "
+        f"{summary.get('failed_run_count')} failed, "
+        f"{summary.get('incomplete_run_count')} incomplete"
+    )
+    runs = summary.get("runs") if isinstance(summary.get("runs"), list) else []
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        delta = _release_history_dict(run.get("release_matrix_delta"))
+        baseline = _release_history_dict(run.get("release_matrix_baseline_selection"))
+        verification = _release_history_dict(run.get("release_artifact_verification"))
+        workbench = _release_history_dict(run.get("workbench_smoke"))
+        print(
+            f"- {run.get('label')}: "
+            f"status={run.get('status')} "
+            f"delta={delta.get('status')} "
+            f"baseline={baseline.get('mode')} "
+            f"verification={verification.get('status')} "
+            f"workbench={workbench.get('status')}"
+        )
+    first_failure = summary.get("first_failure")
+    if isinstance(first_failure, dict):
+        line = (
+            f"First failure: label={first_failure.get('label')} "
+            f"reason={first_failure.get('reason')}"
+        )
+        if first_failure.get("path"):
+            line += f" path={first_failure.get('path')}"
+        failure = first_failure.get("failure")
+        if isinstance(failure, dict):
+            line += f" detail={_release_failure_handoff_text(failure)}"
+        print(line)
+
+
+def _run_release_history_summarize_command(
+    *,
+    history_root: Path,
+    output_path: Path | None,
+    strict: bool,
+) -> int:
+    try:
+        summary = _release_history_summary(history_root)
+    except ValueError as exc:
+        print(f"QCchem release history summary rejected: {exc}")
+        return 2
+    _print_release_history_summary(summary)
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        print(f"Release history summary JSON: {output_path}")
+    return 2 if strict and summary.get("status") != "passed" else 0
+
+
 def _run_release_evidence_handoff_command(
     *,
     audit_dir: Path,
@@ -2773,6 +3137,13 @@ def main(argv: list[str] | None = None) -> int:
                 baseline_summary_path=args.baseline_summary,
                 baseline_search_root=args.baseline_search_root,
             )
+        if args.release_command == "history":
+            if args.release_history_command == "summarize":
+                return _run_release_history_summarize_command(
+                    history_root=args.history_root,
+                    output_path=args.output,
+                    strict=args.strict,
+                )
         if args.release_command == "evidence-handoff":
             return _run_release_evidence_handoff_command(
                 audit_dir=args.audit_dir,

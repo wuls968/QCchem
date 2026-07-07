@@ -1129,6 +1129,139 @@ def test_release_fetch_ci_evidence_rejects_non_empty_download_dir(
 
 
 @pytest.mark.integration
+def test_release_history_summarize_lists_retained_runs_and_baselines(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_root = tmp_path / "release_history"
+
+    first_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-001",
+        ]
+    )
+    second_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-002",
+        ]
+    )
+    capsys.readouterr()
+
+    summary_json = tmp_path / "release_history_summary.json"
+    summarize_exit = main(
+        [
+            "release",
+            "history",
+            "summarize",
+            "--history-root",
+            str(history_root),
+            "-o",
+            str(summary_json),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary = json.loads(summary_json.read_text(encoding="utf-8"))
+    runs = {run["label"]: run for run in summary["runs"]}
+    assert first_exit == 0
+    assert second_exit == 0
+    assert summarize_exit == 0
+    assert "Release history summary: passed" in stdout
+    assert "Runs: 2 total, 2 passed, 0 failed, 0 incomplete" in stdout
+    assert "- run-001: status=passed delta=not_compared baseline=auto_not_found" in stdout
+    assert "- run-002: status=passed delta=passed baseline=auto" in stdout
+    assert summary["schema_version"] == "qcchem.release_history_summary.v0.1-alpha"
+    assert summary["status"] == "passed"
+    assert summary["recommended_action"] == "review_release_history"
+    assert summary["run_count"] == 2
+    assert summary["passed_run_count"] == 2
+    assert summary["failed_run_count"] == 0
+    assert summary["incomplete_run_count"] == 0
+    assert summary["matrix_delta_status_counts"] == {"not_compared": 1, "passed": 1}
+    assert summary["release_artifact_verification_status_counts"] == {"passed": 2}
+    assert summary["workbench_smoke_status_counts"] == {"passed": 2}
+    assert runs["run-001"]["release_matrix_baseline_selection"]["mode"] == "auto_not_found"
+    assert runs["run-001"]["release_matrix_delta"]["status"] == "not_compared"
+    assert runs["run-002"]["release_matrix_baseline_selection"]["mode"] == "auto"
+    assert runs["run-002"]["release_matrix_baseline_selection"]["path"] == str(
+        history_root / "run-001" / "release_matrix_summary.json"
+    )
+    assert runs["run-002"]["release_matrix_delta"]["baseline_path"] == str(
+        history_root / "run-001" / "release_matrix_summary.json"
+    )
+    assert runs["run-002"]["release_matrix_delta"]["added_count"] == 0
+    assert runs["run-002"]["release_matrix_delta"]["removed_count"] == 0
+    assert runs["run-002"]["release_matrix_delta"]["changed_count"] == 0
+
+
+@pytest.mark.integration
+def test_release_history_summarize_reports_incomplete_runs_with_strict_exit(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    history_root = tmp_path / "release_history"
+    bad_run = history_root / "bad-run"
+    missing_run = history_root / "missing-run"
+    bad_run.mkdir(parents=True)
+    missing_run.mkdir(parents=True)
+    (bad_run / "release_evidence_summary.json").write_text("{not-json", encoding="utf-8")
+    (history_root / "notes.txt").write_text("not a retained run\n", encoding="utf-8")
+    summary_json = tmp_path / "release_history_summary.json"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "history",
+            "summarize",
+            "--history-root",
+            str(history_root),
+            "-o",
+            str(summary_json),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    summary = json.loads(summary_json.read_text(encoding="utf-8"))
+    runs = {run["label"]: run for run in summary["runs"]}
+    assert exit_code == 2
+    assert "Release history summary: incomplete" in stdout
+    assert "Runs: 2 total, 0 passed, 0 failed, 2 incomplete" in stdout
+    assert "First failure: label=bad-run reason=release_evidence_summary_unreadable" in stdout
+    assert summary["status"] == "incomplete"
+    assert summary["recommended_action"] == "inspect_release_history_failures"
+    assert summary["run_count"] == 2
+    assert summary["incomplete_run_count"] == 2
+    assert summary["skipped_non_directory_count"] == 1
+    assert summary["first_failure"]["label"] == "bad-run"
+    assert runs["bad-run"]["status"] == "unreadable_summary"
+    assert runs["bad-run"]["release_matrix_delta"]["reason"] == "release_evidence_summary_unreadable"
+    assert runs["missing-run"]["status"] == "missing_summary"
+    assert runs["missing-run"]["first_failure"]["reason"] == "release_evidence_summary_missing"
+
+
+@pytest.mark.integration
 def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

@@ -663,6 +663,20 @@ This requires the GitHub CLI `gh`. It downloads the run artifacts into an empty
 omitted, then runs the retained `collect-evidence` flow with the run id as the
 default `--history-label`.
 
+To inspect retained runs later, use:
+
+```bash
+qcchem release history summarize \
+  --history-root /tmp/qcchem-release-history \
+  -o /tmp/qcchem-release-history-summary.json
+```
+
+This read-only command prints each retained run with release evidence status,
+matrix delta status, selected baseline mode, downloaded-artifact verifier
+status, and Workbench smoke status. The optional JSON output preserves those
+fields plus first failures and compact status counts. Add `--strict` when any
+failed or incomplete retained run should make the command exit with code `2`.
+
 Use the
 lower-level verifier directly when you only need the artifact-integrity check:
 

@@ -126,6 +126,7 @@ placeholder boundary map.
 | Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
 | Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
 | Fetch and retain post-CI release evidence | `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <history-dir>` |
+| Summarize retained release history | `qcchem release history summarize --history-root <history-dir>` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
@@ -146,6 +147,12 @@ Use `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <h
 to run `gh run download` first and then retain the collected evidence in one
 step. The command leaves the downloaded artifact directory on disk so the
 summary path remains inspectable.
+Use `qcchem release history summarize --history-root <history-dir>` to list
+retained runs, selected baselines, matrix delta status, verifier status,
+Workbench smoke status, and first failures without rereading GitHub or
+mutating any retained run directory. Add `--strict` when a non-`passed` history
+summary should return exit code `2`, and `-o <json>` when the compact overview
+should be archived.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

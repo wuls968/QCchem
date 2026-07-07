@@ -217,6 +217,12 @@ instead of hand-assembling `gh run download` plus `collect-evidence`. The
 wrapper invokes `gh` with an argv list, leaves the downloaded artifact directory
 on disk for provenance review, and rejects a non-empty explicit `--download-dir`
 before calling GitHub.
+Use `qcchem release history summarize --history-root <dir> --strict` as the
+read-only retained-history gate after multiple runs have been collected. The
+summary walks only direct child run directories, reports missing or unreadable
+`release_evidence_summary.json` files as incomplete runs, and records selected
+baselines, matrix delta counts, verifier status, Workbench smoke status, and
+first failures in the optional `-o <json>` output.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
 only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they
