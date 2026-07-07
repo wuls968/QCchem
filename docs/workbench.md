@@ -175,6 +175,9 @@ When `release_history_summary.json` is written under the artifact root by
 `qcchem release history summarize -o`, the inventory reports a
 `release_history_summary` entry and the Overview page shows retained run counts,
 failed/incomplete counts, matrix-delta status counts, and source path.
+Keep the sibling Markdown produced by `qcchem release history export-markdown`
+with that JSON when reviewers need a human-readable retained-history handoff;
+Workbench still treats the JSON summary as the indexed source of truth.
 A missing docs file or malformed checklist is rejected with exit code `2`, not a
 traceback.
 When the smoke gate fails, the CLI prints the same top-level failed-check ids

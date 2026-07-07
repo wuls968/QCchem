@@ -127,6 +127,7 @@ placeholder boundary map.
 | Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
 | Fetch and retain post-CI release evidence | `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <history-dir>` |
 | Summarize retained release history | `qcchem release history summarize --history-root <history-dir>` |
+| Export retained release history handoff | `qcchem release history export-markdown --history-summary <json> -o <md>` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
@@ -155,7 +156,11 @@ summary should return exit code `2`, and `-o <json>` when the compact overview
 should be archived. When that output is named `release_history_summary.json`
 under an artifact root, `qcchem artifacts index` classifies it as
 `release_history_summary`, and Workbench startup/Overview surface the retained
-run counts and matrix-delta status counts.
+run counts and matrix-delta status counts. Use
+`qcchem release history export-markdown --history-summary <json> -o <md>` to
+turn the same retained-history overview into reviewer-facing Markdown. The
+export can also read `--history-root <history-dir>` directly and supports
+`--strict` with the same non-`passed` exit-code behavior.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

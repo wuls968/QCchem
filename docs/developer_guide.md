@@ -223,6 +223,10 @@ summary walks only direct child run directories, reports missing or unreadable
 `release_evidence_summary.json` files as incomplete runs, and records selected
 baselines, matrix delta counts, verifier status, Workbench smoke status, and
 first failures in the optional `-o <json>` output.
+Use `qcchem release history export-markdown --history-summary <json> -o <md>`
+when reviewers need a stable human-readable retained-history handoff. It can
+also read `--history-root` directly, honors `--strict`, and writes only the
+requested Markdown file.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
 only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they

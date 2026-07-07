@@ -585,6 +585,33 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Exit with code 2 when the retained history summary status is not passed.",
     )
+    release_history_export_markdown = release_history_subparsers.add_parser(
+        "export-markdown",
+        help="Write a reviewer-facing Markdown handoff for retained release-evidence history.",
+    )
+    release_history_export_source = release_history_export_markdown.add_mutually_exclusive_group(required=True)
+    release_history_export_source.add_argument(
+        "--history-root",
+        type=Path,
+        help="Directory containing one retained release-evidence subdirectory per run.",
+    )
+    release_history_export_source.add_argument(
+        "--history-summary",
+        type=Path,
+        help="Existing release_history_summary.json produced by qcchem release history summarize.",
+    )
+    release_history_export_markdown.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        required=True,
+        help="Markdown output path, for example release_history_summary.md.",
+    )
+    release_history_export_markdown.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit with code 2 when the exported retained history status is not passed.",
+    )
     release_evidence_handoff = release_subparsers.add_parser(
         "evidence-handoff",
         help="Write a local CI release evidence handoff from generated diagnostics.",
@@ -2568,6 +2595,127 @@ def _print_release_history_summary(summary: dict[str, object]) -> None:
         print(line)
 
 
+def _release_history_counts_text(counts: object) -> str:
+    if not isinstance(counts, dict) or not counts:
+        return "none"
+    return ", ".join(f"{key}={counts[key]}" for key in sorted(counts))
+
+
+def _release_history_run_failure_text(run: dict[str, object]) -> str:
+    first_failure = run.get("first_failure") if isinstance(run.get("first_failure"), dict) else None
+    if first_failure is not None:
+        return _release_failure_handoff_text(first_failure)
+    delta = _release_history_dict(run.get("release_matrix_delta"))
+    delta_failure = delta.get("first_failure") if isinstance(delta.get("first_failure"), dict) else None
+    if delta_failure is not None:
+        return _release_failure_handoff_text(delta_failure)
+    verification = _release_history_dict(run.get("release_artifact_verification"))
+    verification_failure = (
+        verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
+    )
+    if verification_failure is not None:
+        return _release_failure_handoff_text(verification_failure)
+    return "none"
+
+
+def _release_history_first_failure_text(summary: dict[str, object]) -> str:
+    first_failure = summary.get("first_failure") if isinstance(summary.get("first_failure"), dict) else None
+    if first_failure is None:
+        return "none"
+    reason = str(first_failure.get("reason") or "unknown")
+    label = first_failure.get("label")
+    if label:
+        reason = f"label={label} {reason}"
+    path = first_failure.get("path")
+    if path:
+        reason = f"{reason} path={path}"
+    failure = first_failure.get("failure")
+    if isinstance(failure, dict):
+        reason = f"{reason} detail={_release_failure_handoff_text(failure)}"
+    return reason
+
+
+def _release_history_markdown(summary: dict[str, object], *, output_path: Path) -> str:
+    runs = summary.get("runs") if isinstance(summary.get("runs"), list) else []
+    lines = [
+        "# QCchem Release History Handoff",
+        "",
+        f"- output: `{output_path.name}`",
+        f"- schema_version: `{summary.get('schema_version')}`",
+        f"- status: `{summary.get('status')}`",
+        f"- recommended_action: `{summary.get('recommended_action')}`",
+        f"- history_root: `{_release_handoff_value(summary.get('history_root'), missing='not_available')}`",
+        f"- run_count: `{_release_handoff_value(summary.get('run_count'))}`",
+        f"- passed_runs: `{_release_handoff_value(summary.get('passed_run_count'))}`",
+        f"- failed_runs: `{_release_handoff_value(summary.get('failed_run_count'))}`",
+        f"- incomplete_runs: `{_release_handoff_value(summary.get('incomplete_run_count'))}`",
+        f"- skipped_non_directory_count: `{_release_handoff_value(summary.get('skipped_non_directory_count'))}`",
+        f"- first_failure: `{_release_history_first_failure_text(summary)}`",
+        "",
+        "## Status Counts",
+        "",
+        f"- run_status_counts: `{_release_history_counts_text(summary.get('run_status_counts'))}`",
+        f"- matrix_delta_status_counts: `{_release_history_counts_text(summary.get('matrix_delta_status_counts'))}`",
+        "- release_artifact_verification_status_counts: "
+        f"`{_release_history_counts_text(summary.get('release_artifact_verification_status_counts'))}`",
+        f"- workbench_smoke_status_counts: `{_release_history_counts_text(summary.get('workbench_smoke_status_counts'))}`",
+        "",
+        "## Retained Runs",
+        "",
+    ]
+    if runs:
+        for run in runs:
+            if not isinstance(run, dict):
+                continue
+            delta = _release_history_dict(run.get("release_matrix_delta"))
+            baseline = _release_history_dict(run.get("release_matrix_baseline_selection"))
+            verification = _release_history_dict(run.get("release_artifact_verification"))
+            matrix_summary = _release_history_dict(run.get("release_matrix_summary"))
+            workbench = _release_history_dict(run.get("workbench_smoke"))
+            lines.append(
+                f"- `{run.get('label')}`: status=`{run.get('status')}`; "
+                f"verification=`{verification.get('status')}`; "
+                f"workbench=`{workbench.get('status')}`; "
+                f"matrix_artifacts=`{_release_handoff_value(matrix_summary.get('artifact_count'))}`; "
+                f"matrix_failures=`{_release_handoff_value(matrix_summary.get('failed_artifact_count'))}`; "
+                f"delta=`{delta.get('status')}`; "
+                f"added=`{_release_handoff_value(delta.get('added_count'))}`; "
+                f"removed=`{_release_handoff_value(delta.get('removed_count'))}`; "
+                f"changed=`{_release_handoff_value(delta.get('changed_count'))}`; "
+                f"baseline=`{baseline.get('mode')}`; "
+                f"baseline_path=`{_release_handoff_value(baseline.get('path'), missing='not_provided')}`; "
+                f"summary=`{_release_handoff_value(run.get('summary_path'), missing='not_available')}`; "
+                f"first_failure=`{_release_history_run_failure_text(run)}`"
+            )
+    else:
+        lines.append("- none")
+    lines.extend(
+        [
+            "",
+            "## Review Notes",
+            "",
+            "- This handoff is generated from retained post-CI release evidence history.",
+            "- It does not download GitHub artifacts or rewrite retained run directories.",
+            "- Use `qcchem release history summarize` to refresh the machine-readable JSON.",
+            "- Keep this Markdown next to `release_history_summary.json` when archiving a release history review.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _load_release_history_summary(summary_path: Path) -> dict[str, object]:
+    try:
+        payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise ValueError(f"--history-summary is missing: {summary_path}") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"--history-summary is unreadable: {summary_path}: {type(exc).__name__}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"--history-summary is not a JSON object: {summary_path}")
+    return payload
+
+
 def _run_release_history_summarize_command(
     *,
     history_root: Path,
@@ -2584,6 +2732,40 @@ def _run_release_history_summarize_command(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
         print(f"Release history summary JSON: {output_path}")
+    return 2 if strict and summary.get("status") != "passed" else 0
+
+
+def _run_release_history_export_markdown_command(
+    *,
+    history_root: Path | None,
+    history_summary_path: Path | None,
+    output_path: Path,
+    strict: bool,
+) -> int:
+    try:
+        if history_summary_path is not None:
+            summary = _load_release_history_summary(history_summary_path)
+        elif history_root is not None:
+            summary = _release_history_summary(history_root)
+        else:
+            raise ValueError("either --history-root or --history-summary is required")
+    except ValueError as exc:
+        print(f"QCchem release history Markdown export rejected: {exc}")
+        return 2
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(_release_history_markdown(summary, output_path=output_path), encoding="utf-8")
+    print(f"Release history Markdown: {output_path}")
+    print(f"Release history status: {summary.get('status')}")
+    print(
+        "Runs: "
+        f"{summary.get('run_count')} total, "
+        f"{summary.get('passed_run_count')} passed, "
+        f"{summary.get('failed_run_count')} failed, "
+        f"{summary.get('incomplete_run_count')} incomplete"
+    )
+    first_failure = _release_history_first_failure_text(summary)
+    if first_failure != "none":
+        print(f"First failure: {first_failure}")
     return 2 if strict and summary.get("status") != "passed" else 0
 
 
@@ -3141,6 +3323,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.release_history_command == "summarize":
                 return _run_release_history_summarize_command(
                     history_root=args.history_root,
+                    output_path=args.output,
+                    strict=args.strict,
+                )
+            if args.release_history_command == "export-markdown":
+                return _run_release_history_export_markdown_command(
+                    history_root=args.history_root,
+                    history_summary_path=args.history_summary,
                     output_path=args.output,
                     strict=args.strict,
                 )

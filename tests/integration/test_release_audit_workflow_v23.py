@@ -1262,6 +1262,174 @@ def test_release_history_summarize_reports_incomplete_runs_with_strict_exit(
 
 
 @pytest.mark.integration
+def test_release_history_export_markdown_from_history_root_lists_retained_runs(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    history_root = tmp_path / "release_history"
+    first_root = history_root / "run-001"
+    second_root = history_root / "run-002"
+    first_root.mkdir(parents=True)
+    second_root.mkdir(parents=True)
+    (first_root / "release_evidence_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_evidence",
+                "artifact_dir": "/tmp/qcchem-ci-artifacts-1",
+                "release_artifact_verification": {"status": "passed", "failure_count": 0},
+                "release_matrix_summary": {"artifact_count": 3, "failed_artifact_count": 0},
+                "release_matrix_baseline_selection": {"mode": "auto_not_found", "path": None},
+                "release_matrix_delta": {
+                    "status": "not_compared",
+                    "added": [],
+                    "removed": [],
+                    "changed": [],
+                    "unchanged_count": 0,
+                },
+                "workbench_smoke": {"status": "passed", "failed_checks": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    baseline_path = first_root / "release_matrix_summary.json"
+    (second_root / "release_evidence_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_evidence",
+                "artifact_dir": "/tmp/qcchem-ci-artifacts-2",
+                "release_artifact_verification": {"status": "passed", "failure_count": 0},
+                "release_matrix_summary": {"artifact_count": 3, "failed_artifact_count": 0},
+                "release_matrix_baseline_selection": {"mode": "auto", "path": str(baseline_path)},
+                "release_matrix_delta": {
+                    "status": "passed",
+                    "baseline_path": str(baseline_path),
+                    "added": [],
+                    "removed": [],
+                    "changed": [],
+                    "unchanged_count": 3,
+                },
+                "workbench_smoke": {"status": "passed", "failed_checks": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    markdown_path = tmp_path / "release_history_summary.md"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "history",
+            "export-markdown",
+            "--history-root",
+            str(history_root),
+            "-o",
+            str(markdown_path),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert f"Release history Markdown: {markdown_path}" in stdout
+    assert "Release history status: passed" in stdout
+    assert "Runs: 2 total, 2 passed, 0 failed, 0 incomplete" in stdout
+    assert "# QCchem Release History Handoff" in markdown
+    assert "- status: `passed`" in markdown
+    assert "- run_status_counts: `passed=2`" in markdown
+    assert "- matrix_delta_status_counts: `not_compared=1, passed=1`" in markdown
+    assert "`run-001`: status=`passed`; verification=`passed`; workbench=`passed`" in markdown
+    assert "delta=`not_compared`" in markdown
+    assert "`run-002`: status=`passed`; verification=`passed`; workbench=`passed`" in markdown
+    assert f"baseline_path=`{baseline_path}`" in markdown
+    assert "first_failure=`none`" in markdown
+    assert "Keep this Markdown next to `release_history_summary.json`" in markdown
+
+
+@pytest.mark.integration
+def test_release_history_export_markdown_from_summary_reports_strict_failure(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    summary_path = tmp_path / "release_history_summary.json"
+    markdown_path = tmp_path / "release_history_summary.md"
+    first_failure = {
+        "label": "bad-run",
+        "status": "unreadable_summary",
+        "reason": "release_evidence_summary_unreadable",
+        "path": str(tmp_path / "release_history" / "bad-run" / "release_evidence_summary.json"),
+    }
+    summary_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "incomplete",
+                "recommended_action": "inspect_release_history_failures",
+                "history_root": str(tmp_path / "release_history"),
+                "run_count": 1,
+                "passed_run_count": 0,
+                "failed_run_count": 0,
+                "incomplete_run_count": 1,
+                "skipped_non_directory_count": 0,
+                "first_failure": first_failure,
+                "run_status_counts": {"unreadable_summary": 1},
+                "matrix_delta_status_counts": {"not_available": 1},
+                "release_artifact_verification_status_counts": {"not_available": 1},
+                "workbench_smoke_status_counts": {"not_available": 1},
+                "runs": [
+                    {
+                        "label": "bad-run",
+                        "status": "unreadable_summary",
+                        "summary_path": first_failure["path"],
+                        "first_failure": {
+                            "reason": "release_evidence_summary_unreadable",
+                            "path": first_failure["path"],
+                        },
+                        "release_artifact_verification": {"status": "not_available"},
+                        "release_matrix_summary": {"artifact_count": None, "failed_artifact_count": None},
+                        "release_matrix_baseline_selection": {"mode": "not_available", "path": None},
+                        "release_matrix_delta": {"status": "not_available", "added_count": 0, "removed_count": 0, "changed_count": 0},
+                        "workbench_smoke": {"status": "not_available"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "history",
+            "export-markdown",
+            "--history-summary",
+            str(summary_path),
+            "-o",
+            str(markdown_path),
+            "--strict",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert exit_code == 2
+    assert f"Release history Markdown: {markdown_path}" in stdout
+    assert "Release history status: incomplete" in stdout
+    assert "First failure: label=bad-run release_evidence_summary_unreadable" in stdout
+    assert "- status: `incomplete`" in markdown
+    assert "- first_failure: `label=bad-run release_evidence_summary_unreadable" in markdown
+    assert "- run_status_counts: `unreadable_summary=1`" in markdown
+    assert "`bad-run`: status=`unreadable_summary`; verification=`not_available`" in markdown
+    assert "first_failure=`release_evidence_summary_unreadable" in markdown
+
+
+@pytest.mark.integration
 def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

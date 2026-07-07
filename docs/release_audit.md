@@ -246,6 +246,22 @@ or non-object `release_evidence_summary.json` files are reported as incomplete
 runs instead of crashing the review. `--strict` returns exit code `2` unless
 the retained history summary is `passed`.
 
+Export the same retained-history review as Markdown when handing it to a
+reviewer:
+
+```bash
+qcchem release history export-markdown \
+  --history-summary /tmp/qcchem-release-history-summary.json \
+  -o /tmp/qcchem-release-history-summary.md \
+  --strict
+```
+
+The Markdown export can also read `--history-root` directly. It lists top-level
+run counts, status-count summaries, each retained run, selected baseline,
+matrix-delta counts, verifier status, Workbench smoke status, and first failure.
+It writes only the requested Markdown path and does not mutate retained run
+directories.
+
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,

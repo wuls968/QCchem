@@ -676,6 +676,18 @@ matrix delta status, selected baseline mode, downloaded-artifact verifier
 status, and Workbench smoke status. The optional JSON output preserves those
 fields plus first failures and compact status counts. Add `--strict` when any
 failed or incomplete retained run should make the command exit with code `2`.
+To write a reviewer-facing Markdown handoff from the same history, use:
+
+```bash
+qcchem release history export-markdown \
+  --history-summary /tmp/qcchem-release-history-summary.json \
+  -o /tmp/qcchem-release-history-summary.md
+```
+
+The export can also read `--history-root` directly. It writes only the requested
+Markdown path and includes retained run counts, status-count summaries,
+selected baselines, matrix-delta counts, verifier status, Workbench smoke
+status, and first failures.
 
 Use the
 lower-level verifier directly when you only need the artifact-integrity check:
