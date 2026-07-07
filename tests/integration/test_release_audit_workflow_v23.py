@@ -984,6 +984,151 @@ def test_release_collect_evidence_history_root_rejects_unsafe_output_choices(
 
 
 @pytest.mark.integration
+def test_release_fetch_ci_evidence_downloads_and_retains_history(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_root = tmp_path / "release_history"
+    first_download_root = tmp_path / "ci_download_123456"
+    second_download_root = tmp_path / "ci_download_123457"
+    calls: list[list[str]] = []
+
+    def fake_run(command: list[str], *, check: bool) -> object:
+        assert check is True
+        calls.append(command)
+        assert command[:3] == ["gh", "run", "download"]
+        assert command[3] in {"123456", "123457"}
+        assert "--dir" in command
+        target = Path(command[command.index("--dir") + 1])
+        target.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source_artifact_dir, target, dirs_exist_ok=True)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr("qcchem.cli.main.subprocess.run", fake_run)
+    capsys.readouterr()
+
+    first_exit = main(
+        [
+            "release",
+            "fetch-ci-evidence",
+            "--run-id",
+            "123456",
+            "--repo",
+            "wuls968/QCchem",
+            "--download-dir",
+            str(first_download_root),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+        ]
+    )
+    second_exit = main(
+        [
+            "release",
+            "fetch-ci-evidence",
+            "--run-id",
+            "123457",
+            "--repo",
+            "wuls968/QCchem",
+            "--download-dir",
+            str(second_download_root),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    first_summary_path = history_root / "123456" / "release_evidence_summary.json"
+    second_summary_path = history_root / "123457" / "release_evidence_summary.json"
+    first_summary = json.loads(first_summary_path.read_text(encoding="utf-8"))
+    second_summary = json.loads(second_summary_path.read_text(encoding="utf-8"))
+    handoff = (history_root / "123457" / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert first_exit == 0
+    assert second_exit == 0
+    assert calls == [
+        [
+            "gh",
+            "run",
+            "download",
+            "123456",
+            "--dir",
+            str(first_download_root),
+            "--repo",
+            "wuls968/QCchem",
+        ],
+        [
+            "gh",
+            "run",
+            "download",
+            "123457",
+            "--dir",
+            str(second_download_root),
+            "--repo",
+            "wuls968/QCchem",
+        ]
+    ]
+    assert "Downloading CI release artifacts: run_id=123456" in stdout
+    assert "Downloading CI release artifacts: run_id=123457" in stdout
+    assert f"CI artifact download dir: {first_download_root}" in stdout
+    assert f"CI artifact download dir: {second_download_root}" in stdout
+    assert f"Release evidence JSON: {first_summary_path}" in stdout
+    assert f"Release evidence JSON: {second_summary_path}" in stdout
+    assert first_summary["status"] == "passed"
+    assert first_summary["artifact_dir"] == str(first_download_root)
+    assert first_summary["release_history"]["label"] == "123456"
+    assert first_summary["release_matrix_baseline_selection"]["mode"] == "auto_not_found"
+    assert second_summary["status"] == "passed"
+    assert second_summary["artifact_dir"] == str(second_download_root)
+    assert second_summary["release_history"]["label"] == "123457"
+    assert second_summary["release_matrix_baseline_selection"]["mode"] == "auto"
+    assert second_summary["release_matrix_baseline_selection"]["path"] == str(
+        history_root / "123456" / "release_matrix_summary.json"
+    )
+    assert second_summary["release_matrix_delta"]["status"] == "passed"
+    assert "- history_label: `123457`" in handoff
+    assert "- baseline_selection: `auto`" in handoff
+
+
+@pytest.mark.integration
+def test_release_fetch_ci_evidence_rejects_non_empty_download_dir(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    download_root = tmp_path / "ci_download"
+    download_root.mkdir()
+    (download_root / "old.txt").write_text("old\n", encoding="utf-8")
+
+    def fake_run(command: list[str], *, check: bool) -> object:
+        raise AssertionError(f"gh should not be called for rejected download dir: {command}")
+
+    monkeypatch.setattr("qcchem.cli.main.subprocess.run", fake_run)
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "fetch-ci-evidence",
+            "--run-id",
+            "123456",
+            "--download-dir",
+            str(download_root),
+            "--history-root",
+            str(tmp_path / "release_history"),
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "CI artifact download directory is not empty" in stdout
+
+
+@pytest.mark.integration
 def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

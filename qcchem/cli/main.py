@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import subprocess
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -511,6 +513,50 @@ def _build_parser() -> argparse.ArgumentParser:
             "Optional retained release-evidence directory tree. When --baseline-summary is omitted, "
             "the newest prior release_matrix_summary.json under this root is used as the matrix baseline."
         ),
+    )
+    release_fetch_ci_evidence = release_subparsers.add_parser(
+        "fetch-ci-evidence",
+        help="Download a GitHub Actions run's release diagnostics and retain post-CI evidence.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--run-id",
+        required=True,
+        help="GitHub Actions run id to download with gh run download.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--repo",
+        help="Optional GitHub repository passed to gh, for example owner/name.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--download-dir",
+        type=Path,
+        help="Optional empty directory for downloaded CI artifacts; defaults to a retained /tmp directory.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--docs",
+        type=Path,
+        default=Path("docs") / "workbench.md",
+        help="Workbench documentation containing the Browser Smoke Checklist.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--history-root",
+        type=Path,
+        required=True,
+        help="Retained release-evidence history root passed to collect-evidence.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--history-label",
+        help="Single directory name for retained evidence; defaults to --run-id.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--baseline-summary",
+        type=Path,
+        help="Optional explicit release_matrix_summary.json baseline for collect-evidence.",
+    )
+    release_fetch_ci_evidence.add_argument(
+        "--baseline-search-root",
+        type=Path,
+        help="Optional baseline search root; defaults to --history-root.",
     )
     release_evidence_handoff = release_subparsers.add_parser(
         "evidence-handoff",
@@ -2101,6 +2147,82 @@ def _run_release_collect_evidence_command(
     return 0 if summary["status"] == "passed" else 2
 
 
+def _resolve_ci_artifact_download_dir(run_id: str, download_dir: Path | None) -> tuple[Path, bool]:
+    if download_dir is None:
+        temp_dir = Path(tempfile.mkdtemp(prefix=f"qcchem-ci-{run_id}-artifacts."))
+        return temp_dir, True
+    try:
+        if download_dir.exists() and any(download_dir.iterdir()):
+            raise ValueError(f"CI artifact download directory is not empty: {download_dir}")
+    except OSError as exc:
+        raise ValueError(f"CI artifact download directory is not readable: {download_dir}") from exc
+    download_dir.mkdir(parents=True, exist_ok=True)
+    return download_dir, False
+
+
+def _download_ci_release_artifacts(
+    *,
+    run_id: str,
+    repo: str | None,
+    download_dir: Path,
+) -> int:
+    command = ["gh", "run", "download", run_id, "--dir", str(download_dir)]
+    if repo:
+        command.extend(["--repo", repo])
+    try:
+        subprocess.run(command, check=True)
+    except FileNotFoundError:
+        print("QCchem release evidence fetch requires the GitHub CLI (`gh`) on PATH.")
+        return 2
+    except subprocess.CalledProcessError as exc:
+        print(f"QCchem release evidence fetch failed: gh run download exited with code {exc.returncode}")
+        return 2
+    return 0
+
+
+def _run_release_fetch_ci_evidence_command(
+    *,
+    run_id: str,
+    repo: str | None,
+    download_dir: Path | None,
+    docs_path: Path,
+    history_root: Path,
+    history_label: str | None,
+    baseline_summary_path: Path | None,
+    baseline_search_root: Path | None,
+) -> int:
+    try:
+        resolved_download_dir, generated_download_dir = _resolve_ci_artifact_download_dir(run_id, download_dir)
+    except ValueError as exc:
+        print(f"QCchem release evidence fetch rejected: {exc}")
+        return 2
+
+    print(f"Downloading CI release artifacts: run_id={run_id}")
+    if repo:
+        print(f"GitHub repository: {repo}")
+    print(f"CI artifact download dir: {resolved_download_dir}")
+    download_status = _download_ci_release_artifacts(
+        run_id=run_id,
+        repo=repo,
+        download_dir=resolved_download_dir,
+    )
+    if download_status != 0:
+        return download_status
+
+    effective_history_label = history_label or run_id
+    if generated_download_dir:
+        print("CI artifact download dir was created automatically and left on disk for provenance review.")
+    return _run_release_collect_evidence_command(
+        resolved_download_dir,
+        docs_path,
+        None,
+        baseline_summary_path,
+        baseline_search_root,
+        history_root,
+        effective_history_label,
+    )
+
+
 def _run_release_evidence_handoff_command(
     *,
     audit_dir: Path,
@@ -2639,6 +2761,17 @@ def main(argv: list[str] | None = None) -> int:
                 args.baseline_search_root,
                 args.history_root,
                 args.history_label,
+            )
+        if args.release_command == "fetch-ci-evidence":
+            return _run_release_fetch_ci_evidence_command(
+                run_id=args.run_id,
+                repo=args.repo,
+                download_dir=args.download_dir,
+                docs_path=args.docs,
+                history_root=args.history_root,
+                history_label=args.history_label,
+                baseline_summary_path=args.baseline_summary,
+                baseline_search_root=args.baseline_search_root,
             )
         if args.release_command == "evidence-handoff":
             return _run_release_evidence_handoff_command(

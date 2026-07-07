@@ -212,6 +212,22 @@ Markdown handoff. Omit `--history-label` to use a UTC timestamp. Use
 `--baseline-search-root` when you already chose `--output-dir` manually. An
 explicit `--baseline-summary` takes precedence over automatic search.
 
+To download a GitHub Actions run and retain the post-CI evidence in one step,
+use:
+
+```bash
+qcchem release fetch-ci-evidence \
+  --run-id 28834488613 \
+  --repo wuls968/QCchem \
+  --history-root /tmp/qcchem-release-history
+```
+
+This wrapper calls `gh run download <run-id> --dir <download-dir>`, then runs
+the same retained `collect-evidence` flow with `--history-label` defaulting to
+the run id. The `gh` command is invoked with explicit argv arguments, not a
+shell string. If `--download-dir` is omitted, a unique `/tmp` directory is
+created and left on disk for provenance review; if supplied, it must be empty.
+
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,

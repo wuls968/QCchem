@@ -125,6 +125,7 @@ placeholder boundary map.
 | Write CI release evidence handoff | `qcchem release evidence-handoff --audit-dir artifacts/release_audit` |
 | Verify downloaded release diagnostics | `qcchem release verify-artifacts --artifact-dir <downloaded-artifacts>` |
 | Collect post-CI release evidence | `qcchem release collect-evidence --artifact-dir <downloaded-artifacts>` |
+| Fetch and retain post-CI release evidence | `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <history-dir>` |
 | Serve Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md` |
 
@@ -141,6 +142,10 @@ optional `--history-label <run-id>` to write the current evidence under that
 history root and auto-select the newest prior `release_matrix_summary.json`.
 Use `--baseline-search-root <history-dir>` for an existing output directory;
 an explicit `--baseline-summary` always wins.
+Use `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <history-dir>`
+to run `gh run download` first and then retain the collected evidence in one
+step. The command leaves the downloaded artifact directory on disk so the
+summary path remains inspectable.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

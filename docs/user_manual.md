@@ -647,6 +647,22 @@ picked `--output-dir` manually. An explicit `--baseline-summary` takes
 precedence. The Markdown
 handoff writes inactive or unavailable fields as `not_applicable`,
 `not_available`, `not_provided`, or `none` instead of placeholder `None` text.
+
+When the artifacts are still in GitHub Actions, fetch and retain them in one
+step:
+
+```bash
+qcchem release fetch-ci-evidence \
+  --run-id 28834488613 \
+  --repo wuls968/QCchem \
+  --history-root /tmp/qcchem-release-history
+```
+
+This requires the GitHub CLI `gh`. It downloads the run artifacts into an empty
+`--download-dir`, or into a generated `/tmp` directory when `--download-dir` is
+omitted, then runs the retained `collect-evidence` flow with the run id as the
+default `--history-label`.
+
 Use the
 lower-level verifier directly when you only need the artifact-integrity check:
 

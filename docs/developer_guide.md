@@ -210,6 +210,13 @@ placeholder `None` text into reviewer Markdown. The verifier step is read-only:
 it checks the downloaded release status summaries, release acceptance freshness
 JSON, diagnostics manifest counts, and each uploaded file's recorded size and
 SHA-256 digest without rerunning the audit or calling GitHub.
+
+When the artifacts still need to be downloaded, use
+`qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <dir>`
+instead of hand-assembling `gh run download` plus `collect-evidence`. The
+wrapper invokes `gh` with an argv list, leaves the downloaded artifact directory
+on disk for provenance review, and rejects a non-empty explicit `--download-dir`
+before calling GitHub.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
 only need the lower-level artifact-integrity check.
 Name retained verifier outputs `release_artifact_verification.json` when they
