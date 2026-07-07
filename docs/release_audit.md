@@ -192,21 +192,25 @@ qcchem release collect-evidence \
 ```
 
 If retained evidence is organized as one directory per CI run, point collection
-at the history root instead of naming a file:
+at the history root instead of naming a file or manually choosing an output
+directory:
 
 ```bash
 qcchem release collect-evidence \
   --artifact-dir /tmp/qcchem-ci-artifacts \
   --docs docs/workbench.md \
-  --output-dir /tmp/qcchem-release-history/28800298969 \
-  --baseline-search-root /tmp/qcchem-release-history
+  --history-root /tmp/qcchem-release-history \
+  --history-label 28800298969
 ```
 
-The collector excludes the current output directory, chooses the newest prior
-`release_matrix_summary.json` by file modification time, and records the
-selection mode, candidate count, search root, and selected baseline path in the
-JSON summary and Markdown handoff. An explicit `--baseline-summary` takes
-precedence over automatic search.
+The collector writes into `<history-root>/<history-label>`, refuses to overwrite
+a non-empty retained run directory, defaults the automatic baseline search root
+to the same history root, excludes the current output directory, chooses the
+newest prior `release_matrix_summary.json` by file modification time, and
+records the history path plus baseline selection details in the JSON summary and
+Markdown handoff. Omit `--history-label` to use a UTC timestamp. Use
+`--baseline-search-root` when you already chose `--output-dir` manually. An
+explicit `--baseline-summary` takes precedence over automatic search.
 
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic

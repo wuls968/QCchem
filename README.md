@@ -136,9 +136,11 @@ and reviewer-facing Markdown handoff in the selected evidence directory. Pass
 `--baseline-summary <previous-release_matrix_summary.json>` to compare the
 current matrix artifacts against an earlier collection without treating expected
 matrix drift as artifact-integrity failure. When retained release evidence lives
-under one history directory, pass `--baseline-search-root <history-dir>` instead
-to auto-select the newest prior `release_matrix_summary.json`; an explicit
-`--baseline-summary` always wins.
+under one history directory, pass `--history-root <history-dir>` with an
+optional `--history-label <run-id>` to write the current evidence under that
+history root and auto-select the newest prior `release_matrix_summary.json`.
+Use `--baseline-search-root <history-dir>` for an existing output directory;
+an explicit `--baseline-summary` always wins.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

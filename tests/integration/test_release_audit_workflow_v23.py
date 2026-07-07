@@ -855,6 +855,135 @@ def test_release_collect_evidence_auto_selects_latest_matrix_baseline(
 
 
 @pytest.mark.integration
+def test_release_collect_evidence_history_root_retains_runs_and_reuses_previous_baseline(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_root = tmp_path / "release_history"
+    capsys.readouterr()
+
+    first_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-001",
+        ]
+    )
+    second_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-002",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    first_root = history_root / "run-001"
+    second_root = history_root / "run-002"
+    summary = json.loads((second_root / "release_evidence_summary.json").read_text(encoding="utf-8"))
+    handoff = (second_root / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert first_exit == 0
+    assert second_exit == 0
+    assert f"Release evidence JSON: {first_root / 'release_evidence_summary.json'}" in stdout
+    assert f"Release evidence JSON: {second_root / 'release_evidence_summary.json'}" in stdout
+    assert summary["status"] == "passed"
+    assert summary["evidence_root"] == str(second_root)
+    assert summary["release_history"] == {
+        "mode": "retained_history",
+        "root": str(history_root),
+        "label": "run-002",
+        "path": str(second_root),
+        "baseline_search_root": str(history_root),
+    }
+    selection = summary["release_matrix_baseline_selection"]
+    assert selection["mode"] == "auto"
+    assert selection["path"] == str(first_root / "release_matrix_summary.json")
+    assert selection["search_root"] == str(history_root)
+    assert selection["candidate_count"] == 1
+    delta = summary["release_matrix_delta"]
+    assert delta["status"] == "passed"
+    assert delta["baseline_path"] == str(first_root / "release_matrix_summary.json")
+    assert "- history_mode: `retained_history`" in handoff
+    assert f"- history_root: `{history_root}`" in handoff
+    assert "- history_label: `run-002`" in handoff
+    assert "- baseline_selection: `auto`" in handoff
+
+
+@pytest.mark.integration
+def test_release_collect_evidence_history_root_rejects_unsafe_output_choices(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    history_root = tmp_path / "release_history"
+    occupied_root = history_root / "run-001"
+    occupied_root.mkdir(parents=True)
+    (occupied_root / "release_matrix_summary.json").write_text("{}", encoding="utf-8")
+    capsys.readouterr()
+
+    existing_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(tmp_path / "downloaded"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-001",
+        ]
+    )
+    combined_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(tmp_path / "downloaded"),
+            "--output-dir",
+            str(tmp_path / "release_evidence"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "run-002",
+        ]
+    )
+    bad_label_exit = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(tmp_path / "downloaded"),
+            "--history-root",
+            str(history_root),
+            "--history-label",
+            "../bad",
+        ]
+    )
+
+    stdout = capsys.readouterr().out
+    assert existing_exit == 2
+    assert combined_exit == 2
+    assert bad_label_exit == 2
+    assert "release history output directory is not empty" in stdout
+    assert "--history-root cannot be combined with --output-dir" in stdout
+    assert "release history label must be one relative directory name" in stdout
+
+
+@pytest.mark.integration
 def test_release_collect_evidence_handoff_surfaces_tampered_artifact(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

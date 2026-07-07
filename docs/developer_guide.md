@@ -195,10 +195,13 @@ reviewer-facing `release_evidence_handoff.md`, under the selected evidence
 root. Pass `--baseline-summary <previous-release_matrix_summary.json>` when the
 handoff should compare the current downloaded matrix artifacts against a prior
 collection. For retained per-run evidence directories, use
-`--baseline-search-root <history-dir>` to auto-select the newest prior
-`release_matrix_summary.json`; the collector excludes the current output
-directory and records the selected path, search root, candidate count, and
-selection mode. Explicit `--baseline-summary` takes precedence. The handoff
+`--history-root <history-dir> --history-label <run-id>` to write into
+`<history-dir>/<run-id>`, reject non-empty retained run directories, and
+auto-select the newest prior `release_matrix_summary.json` from the same
+history root. Use `--baseline-search-root <history-dir>` when `--output-dir` is
+managed manually. The collector excludes the current output directory and
+records the selected path, search root, candidate count, and selection mode.
+Explicit `--baseline-summary` takes precedence. The handoff
 lists each downloaded `qcchem-release-diagnostics-*` matrix artifact with
 status, digest/file counts, sidecar freshness, first failure, and any
 matrix-baseline delta. Keep inactive or unavailable handoff fields explicit as

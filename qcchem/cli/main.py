@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -481,6 +482,21 @@ def _build_parser() -> argparse.ArgumentParser:
             "Directory for release_artifact_verification.json, release_matrix_summary.json, "
             "workbench_smoke.json, release_evidence_summary.json, and release_evidence_handoff.md; "
             "defaults to --artifact-dir."
+        ),
+    )
+    release_collect_evidence.add_argument(
+        "--history-root",
+        type=Path,
+        help=(
+            "Retained release-evidence history root. Outputs are written under "
+            "<history-root>/<history-label>, and --baseline-search-root defaults to this root."
+        ),
+    )
+    release_collect_evidence.add_argument(
+        "--history-label",
+        help=(
+            "Single directory name for --history-root output; defaults to a UTC timestamp. "
+            "Rejected when --history-root is not set."
         ),
     )
     release_collect_evidence.add_argument(
@@ -1155,6 +1171,7 @@ def _release_evidence_summary(
     *,
     artifact_dir: Path,
     evidence_root: Path,
+    release_history: dict[str, object],
     verification_path: Path,
     verification_report: dict[str, object],
     workbench_smoke_path: Path,
@@ -1201,6 +1218,7 @@ def _release_evidence_summary(
         "first_failure": first_failure,
         "artifact_dir": str(artifact_dir),
         "evidence_root": str(evidence_root),
+        "release_history": release_history,
         "docs_path": str(docs_path),
         "outputs": {
             "release_evidence_summary": str(summary_path),
@@ -1453,6 +1471,59 @@ def _resolve_release_matrix_baseline_summary_path(
     }
 
 
+def _release_history_label_path(history_label: str | None) -> Path:
+    label = history_label or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    stripped = label.strip()
+    path = Path(stripped)
+    if not stripped or path.is_absolute() or len(path.parts) != 1 or path.parts[0] in {".", ".."}:
+        raise ValueError("release history label must be one relative directory name")
+    return path
+
+
+def _resolve_release_evidence_root(
+    *,
+    artifact_dir: Path,
+    output_dir: Path | None,
+    history_root: Path | None,
+    history_label: str | None,
+    baseline_search_root: Path | None,
+) -> tuple[Path, Path | None, dict[str, object]]:
+    if history_root is None:
+        if history_label is not None:
+            raise ValueError("--history-label requires --history-root")
+        evidence_root = output_dir if output_dir is not None else artifact_dir
+        mode = "explicit_output" if output_dir is not None else "artifact_dir"
+        return evidence_root, baseline_search_root, {
+            "mode": mode,
+            "root": None,
+            "label": None,
+            "path": str(evidence_root),
+            "baseline_search_root": str(baseline_search_root) if baseline_search_root is not None else None,
+        }
+
+    if output_dir is not None:
+        raise ValueError("--history-root cannot be combined with --output-dir")
+    if history_root.exists() and not history_root.is_dir():
+        raise ValueError(f"--history-root is not a directory: {history_root}")
+
+    label_path = _release_history_label_path(history_label)
+    evidence_root = history_root / label_path
+    try:
+        if evidence_root.exists() and any(evidence_root.iterdir()):
+            raise ValueError(f"release history output directory is not empty: {evidence_root}")
+    except OSError as exc:
+        raise ValueError(f"release history output directory is not readable: {evidence_root}") from exc
+
+    effective_baseline_search_root = baseline_search_root if baseline_search_root is not None else history_root
+    return evidence_root, effective_baseline_search_root, {
+        "mode": "retained_history",
+        "root": str(history_root),
+        "label": str(label_path),
+        "path": str(evidence_root),
+        "baseline_search_root": str(effective_baseline_search_root),
+    }
+
+
 def _release_matrix_artifacts_by_name(matrix_summary: dict[str, object]) -> dict[str, dict[str, object]]:
     artifacts = matrix_summary.get("artifacts")
     if not isinstance(artifacts, list):
@@ -1661,6 +1732,13 @@ def _local_release_evidence_summary(
         "first_failure": first_failure,
         "artifact_dir": str(audit_dir.parent),
         "evidence_root": str(output_dir),
+        "release_history": {
+            "mode": "not_applicable",
+            "root": None,
+            "label": None,
+            "path": str(output_dir),
+            "baseline_search_root": None,
+        },
         "docs_path": None,
         "outputs": {
             "release_evidence_summary": str(summary_path),
@@ -1738,6 +1816,17 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     )
     release_status = summary.get("release_status") if isinstance(summary.get("release_status"), dict) else {}
     acceptance_status = summary.get("acceptance_status") if isinstance(summary.get("acceptance_status"), dict) else {}
+    release_history = (
+        summary.get("release_history")
+        if isinstance(summary.get("release_history"), dict)
+        else {
+            "mode": "not_available",
+            "root": None,
+            "label": None,
+            "path": summary.get("evidence_root"),
+            "baseline_search_root": None,
+        }
+    )
     failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
     first_failure = verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
     first_summary_failure = summary.get("first_failure") if isinstance(summary.get("first_failure"), dict) else None
@@ -1801,6 +1890,9 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- evidence_root: `{_release_handoff_value(summary.get('evidence_root'), missing='not_available')}`",
         f"- docs_path: `{_release_handoff_value(summary.get('docs_path'))}`",
         f"- collection_mode: `{summary.get('collection_mode')}`",
+        f"- history_mode: `{_release_handoff_value(release_history.get('mode'), missing='not_available')}`",
+        f"- history_root: `{_release_handoff_value(release_history.get('root'), missing='not_provided')}`",
+        f"- history_label: `{_release_handoff_value(release_history.get('label'), missing='not_provided')}`",
         "",
         "## Generated Outputs",
         "",
@@ -1917,8 +2009,21 @@ def _run_release_collect_evidence_command(
     output_dir: Path | None,
     baseline_summary_path: Path | None,
     baseline_search_root: Path | None,
+    history_root: Path | None,
+    history_label: str | None,
 ) -> int:
-    evidence_root = output_dir if output_dir is not None else artifact_dir
+    try:
+        evidence_root, effective_baseline_search_root, release_history = _resolve_release_evidence_root(
+            artifact_dir=artifact_dir,
+            output_dir=output_dir,
+            history_root=history_root,
+            history_label=history_label,
+            baseline_search_root=baseline_search_root,
+        )
+    except ValueError as exc:
+        print(f"QCchem release evidence collection rejected: {exc}")
+        return 2
+
     evidence_root.mkdir(parents=True, exist_ok=True)
     verification_path = evidence_root / "release_artifact_verification.json"
     matrix_summary_path = evidence_root / "release_matrix_summary.json"
@@ -1933,7 +2038,7 @@ def _run_release_collect_evidence_command(
     matrix_summary_path.write_text(json.dumps(matrix_summary, indent=2, sort_keys=True), encoding="utf-8")
     resolved_baseline_summary_path, matrix_baseline_selection = _resolve_release_matrix_baseline_summary_path(
         explicit_baseline_summary_path=baseline_summary_path,
-        baseline_search_root=baseline_search_root,
+        baseline_search_root=effective_baseline_search_root,
         current_evidence_root=evidence_root,
     )
     baseline_summary, baseline_failure = _load_release_matrix_baseline(resolved_baseline_summary_path)
@@ -1975,6 +2080,7 @@ def _run_release_collect_evidence_command(
     summary = _release_evidence_summary(
         artifact_dir=artifact_dir,
         evidence_root=evidence_root,
+        release_history=release_history,
         verification_path=verification_path,
         verification_report=verification_report,
         workbench_smoke_path=workbench_smoke_path,
@@ -2531,6 +2637,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.output_dir,
                 args.baseline_summary,
                 args.baseline_search_root,
+                args.history_root,
+                args.history_label,
             )
         if args.release_command == "evidence-handoff":
             return _run_release_evidence_handoff_command(
