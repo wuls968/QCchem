@@ -714,6 +714,11 @@ failed count. When a retained-history overview is written as
 `release_history_summary.json` under the artifact root, the index classifies it
 as `release_history_summary`, startup inventory exposes its count and featured
 path, and Overview shows retained run counts plus matrix-delta status counts.
+When the retained-history Markdown is kept as `release_history_summary.md` or
+`release_history_handoff.md` next to that JSON, the index classifies it as
+`release_history_handoff`, startup inventory exposes its count and featured
+path, and Overview shows the Markdown path while reading status/count fields from
+the sibling JSON.
 When
 `release_evidence_handoff.md` is kept next to `release_evidence_summary.json`,
 the index classifies the Markdown report as `release_evidence_handoff`, and the

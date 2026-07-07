@@ -246,6 +246,79 @@ def test_artifact_indexer_discovers_release_history_summary(tmp_path: Path) -> N
     assert entry["release_history_summary_first_run"] == first_run
 
 
+def test_artifact_indexer_discovers_release_history_handoff(tmp_path: Path) -> None:
+    release_root = tmp_path / "artifacts" / "release_history"
+    release_root.mkdir(parents=True)
+    history_handoff_md = release_root / "release_history_summary.md"
+    history_summary_json = release_root / "release_history_summary.json"
+    first_failure = {
+        "label": "run-002",
+        "status": "failed",
+        "reason": "release_evidence_status_not_passed",
+    }
+    first_run = {
+        "label": "run-001",
+        "status": "passed",
+        "release_matrix_delta": {"status": "not_compared"},
+    }
+    history_handoff_md.write_text("# QCchem Release History Handoff\n", encoding="utf-8")
+    history_summary_json.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "failed",
+                "recommended_action": "inspect_release_history_failures",
+                "history_root": "/tmp/qcchem-release-history",
+                "run_count": 2,
+                "passed_run_count": 1,
+                "failed_run_count": 1,
+                "incomplete_run_count": 0,
+                "first_failure": first_failure,
+                "matrix_delta_status_counts": {"changed": 1, "not_compared": 1},
+                "release_artifact_verification_status_counts": {"passed": 2},
+                "workbench_smoke_status_counts": {"passed": 1, "failed": 1},
+                "runs": [
+                    first_run,
+                    {
+                        "label": "run-002",
+                        "status": "failed",
+                        "release_matrix_delta": {"status": "changed"},
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+
+    handoff_entries = [
+        entry for entry in index["artifacts"] if entry["artifact_kind"] == "release_history_handoff"
+    ]
+    assert index["total_artifacts"] == 2
+    assert len(handoff_entries) == 1
+    entry = handoff_entries[0]
+    assert entry["artifact_name"] == "release_history_handoff"
+    assert entry["artifact_path"] == str(history_handoff_md)
+    assert entry["result_json"] == str(history_handoff_md)
+    assert entry["schema_version"] == "qcchem.release_history_summary.v0.1-alpha"
+    assert entry["verification_status"] == "failed"
+    assert entry["recommended_action"] == "inspect_release_history_failures"
+    assert entry["release_history_handoff_status"] == "failed"
+    assert entry["release_history_handoff_recommended_action"] == "inspect_release_history_failures"
+    assert entry["release_history_handoff_summary_json"] == str(history_summary_json)
+    assert entry["release_history_handoff_run_count"] == 2
+    assert entry["release_history_handoff_passed_run_count"] == 1
+    assert entry["release_history_handoff_failed_run_count"] == 1
+    assert entry["release_history_handoff_incomplete_run_count"] == 0
+    assert entry["release_history_handoff_history_root"] == "/tmp/qcchem-release-history"
+    assert entry["release_history_handoff_first_failure"] == first_failure
+    assert entry["release_history_handoff_matrix_delta_status_counts"] == {"changed": 1, "not_compared": 1}
+    assert entry["release_history_handoff_release_artifact_verification_status_counts"] == {"passed": 2}
+    assert entry["release_history_handoff_workbench_smoke_status_counts"] == {"passed": 1, "failed": 1}
+    assert entry["release_history_handoff_first_run"] == first_run
+
+
 def test_artifact_indexer_discovers_release_evidence_handoff(tmp_path: Path) -> None:
     evidence_root = tmp_path / "artifacts" / "release_evidence"
     evidence_root.mkdir(parents=True)

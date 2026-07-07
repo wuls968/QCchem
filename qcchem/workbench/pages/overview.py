@@ -270,6 +270,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     promotion_review = research_os.get("promotion_review") or {}
     release_verification = research_os.get("release_verification") or {}
     release_history_summary = research_os.get("release_history_summary") or {}
+    release_history_handoff = research_os.get("release_history_handoff") or {}
     release_matrix_summary = research_os.get("release_matrix_summary") or {}
     release_evidence_handoff = research_os.get("release_evidence_handoff") or {}
     release_verification_summary = (
@@ -328,6 +329,38 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_history_path = release_history_summary.get("source_path")
     if release_history_path:
         release_history_detail = f"{release_history_detail} | {release_history_path}"
+    release_history_handoff_status = str(release_history_handoff.get("status") or "No release history handoff")
+    release_history_handoff_delta_counts = (
+        release_history_handoff.get("matrix_delta_status_counts")
+        if isinstance(release_history_handoff.get("matrix_delta_status_counts"), dict)
+        else {}
+    )
+    release_history_handoff_delta_text = (
+        ", ".join(f"{key}={value}" for key, value in sorted(release_history_handoff_delta_counts.items()))
+        if release_history_handoff_delta_counts
+        else "no matrix delta counts"
+    )
+    release_history_handoff_detail = (
+        f"{release_history_handoff.get('recommended_action') or 'review_release_history'}; "
+        f"{release_history_handoff.get('run_count', 0)} retained runs / "
+        f"{release_history_handoff.get('passed_run_count', 0)} passed / "
+        f"{release_history_handoff.get('failed_run_count', 0)} failed / "
+        f"{release_history_handoff.get('incomplete_run_count', 0)} incomplete; "
+        f"{release_history_handoff_delta_text}"
+        if release_history_handoff
+        else "Run qcchem release history export-markdown --history-summary <json> -o release_history_summary.md."
+    )
+    release_history_handoff_entry = release_history_handoff.get("artifact_index_entry")
+    release_history_handoff_summary_path = (
+        release_history_handoff_entry.get("release_history_handoff_summary_json")
+        if isinstance(release_history_handoff_entry, dict)
+        else None
+    )
+    if release_history_handoff_summary_path:
+        release_history_handoff_detail = f"{release_history_handoff_detail} | summary {release_history_handoff_summary_path}"
+    release_history_handoff_path = release_history_handoff.get("source_path")
+    if release_history_handoff_path:
+        release_history_handoff_detail = f"{release_history_handoff_detail} | {release_history_handoff_path}"
     release_matrix_artifacts = (
         release_matrix_summary.get("artifacts")
         if isinstance(release_matrix_summary.get("artifacts"), list)
@@ -548,6 +581,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         release_history_status,
                         release_history_detail,
                         tone=_status_tone(release_history_summary.get("status")),
+                    ),
+                    status_card(
+                        "Release history handoff",
+                        release_history_handoff_status,
+                        release_history_handoff_detail,
+                        tone=_status_tone(release_history_handoff.get("status")),
                     ),
                     status_card(
                         "Release matrix baseline",

@@ -254,6 +254,9 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     release_history_summary_entries = [
         entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_history_summary"
     ]
+    release_history_handoff_entries = [
+        entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_history_handoff"
+    ]
     release_matrix_summary_entries = [
         entry for entry in indexed_artifacts if entry.get("artifact_kind") == "release_matrix_summary"
     ]
@@ -268,6 +271,11 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     latest_release_history_summary = (
         max(release_history_summary_entries, key=lambda entry: float(entry.get("mtime") or 0.0))
         if release_history_summary_entries
+        else None
+    )
+    latest_release_history_handoff = (
+        max(release_history_handoff_entries, key=lambda entry: float(entry.get("mtime") or 0.0))
+        if release_history_handoff_entries
         else None
     )
     latest_release_matrix_summary = (
@@ -296,6 +304,21 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
     if isinstance(release_history_summary, dict) and latest_release_history_summary is not None:
         release_history_summary["source_path"] = str(latest_release_history_summary["result_json"])
         release_history_summary["artifact_index_entry"] = latest_release_history_summary
+    release_history_handoff_summary_path = (
+        latest_release_history_handoff.get("release_history_handoff_summary_json")
+        if latest_release_history_handoff is not None
+        else None
+    )
+    release_history_handoff = (
+        _load_json(Path(str(release_history_handoff_summary_path)))
+        if isinstance(release_history_handoff_summary_path, str) and release_history_handoff_summary_path
+        else {}
+    )
+    if latest_release_history_handoff is not None:
+        if not isinstance(release_history_handoff, dict):
+            release_history_handoff = {}
+        release_history_handoff["source_path"] = str(latest_release_history_handoff["result_json"])
+        release_history_handoff["artifact_index_entry"] = latest_release_history_handoff
     release_matrix_summary = (
         _load_json(Path(str(latest_release_matrix_summary["result_json"])))
         if latest_release_matrix_summary and latest_release_matrix_summary.get("result_json")
@@ -333,6 +356,7 @@ def load_research_os_snapshot(artifact_root: Path | None = None) -> dict[str, An
         "capsule": capsule or {},
         "release_verification": release_verification or {},
         "release_history_summary": release_history_summary or {},
+        "release_history_handoff": release_history_handoff or {},
         "release_matrix_summary": release_matrix_summary or {},
         "release_evidence_handoff": release_handoff or {},
         "open_evidence_gaps": missing_evidence if isinstance(missing_evidence, list) else [],

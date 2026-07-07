@@ -216,6 +216,46 @@ def test_load_research_os_snapshot_includes_release_verification(tmp_path) -> No
     assert release_verification["artifact_index_entry"]["artifact_kind"] == "release_artifact_verification"
 
 
+def test_load_research_os_snapshot_includes_release_history_handoff(tmp_path) -> None:
+    artifact_root = tmp_path / "artifacts"
+    release_root = artifact_root / "release_history"
+    release_root.mkdir(parents=True)
+    summary_path = release_root / "release_history_summary.json"
+    handoff_path = release_root / "release_history_summary.md"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_history",
+                "history_root": str(tmp_path / "release_history"),
+                "run_count": 2,
+                "passed_run_count": 2,
+                "failed_run_count": 0,
+                "incomplete_run_count": 0,
+                "matrix_delta_status_counts": {"not_compared": 1, "passed": 1},
+                "release_artifact_verification_status_counts": {"passed": 2},
+                "workbench_smoke_status_counts": {"passed": 2},
+                "runs": [
+                    {"label": "run-001", "status": "passed"},
+                    {"label": "run-002", "status": "passed"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    handoff_path.write_text("# QCchem Release History Handoff\n", encoding="utf-8")
+
+    snapshot = load_research_os_snapshot(artifact_root)
+
+    release_history_handoff = snapshot["release_history_handoff"]
+    assert release_history_handoff["status"] == "passed"
+    assert release_history_handoff["run_count"] == 2
+    assert release_history_handoff["source_path"] == str(handoff_path)
+    assert release_history_handoff["artifact_index_entry"]["artifact_kind"] == "release_history_handoff"
+    assert release_history_handoff["artifact_index_entry"]["release_history_handoff_summary_json"] == str(summary_path)
+
+
 def test_build_qcschema_payload_rejects_incomplete_payload() -> None:
     with pytest.raises(ValueError, match="missing required sections"):
         build_qcschema_payload({"problem": {"molecule_name": "H2"}})

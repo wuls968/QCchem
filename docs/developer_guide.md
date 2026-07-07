@@ -240,8 +240,12 @@ matrix count and featured path separately from the handoff delta. Keep
 `release_history_summary.json` under the artifact root when a retained-history
 overview should be reviewable in Workbench; the index classifies it as
 `release_history_summary` and the Overview page surfaces retained run counts
-plus matrix-delta status counts. Keep the Workbench Overview
-release-verification block wired to the same indexed report so the startup
+plus matrix-delta status counts. Keep `release_history_summary.md` or
+`release_history_handoff.md` next to that JSON when reviewers need the
+human-readable retained-history handoff; the index classifies it as
+`release_history_handoff`, and Workbench points to the Markdown while using the
+sibling JSON for status and counts. Keep the Workbench Overview
+release-verification block wired to the same indexed reports so the startup
 inventory and visible evidence console agree. Keep
 `workbench_smoke.json` wired to that same summary too, so route smoke evidence
 and downloaded-release verification evidence stay in one generated handoff.

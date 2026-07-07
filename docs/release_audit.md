@@ -294,6 +294,11 @@ under the artifact root, the index records it as `release_history_summary`,
 Workbench startup reports its count and featured path, and Overview shows the
 retained run counts plus matrix-delta status counts separately from the per-run
 handoff files.
+When the reviewer-facing retained-history Markdown is kept as
+`release_history_summary.md` or `release_history_handoff.md` next to that JSON,
+the index records it as `release_history_handoff`, Workbench startup reports its
+count and featured path, and Overview shows the Markdown path while reading
+status/count fields from the sibling `release_history_summary.json`.
 When `release_evidence_handoff.md` is kept next to
 `release_evidence_summary.json`, the artifact index classifies it as
 `release_evidence_handoff`, and Workbench Overview surfaces its status,

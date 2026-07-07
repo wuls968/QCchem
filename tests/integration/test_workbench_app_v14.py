@@ -867,6 +867,7 @@ def test_overview_page_surfaces_release_verification(
     )
     handoff_path = release_root / "release_evidence_handoff.md"
     history_summary_path = release_root / "release_history_summary.json"
+    history_handoff_path = release_root / "release_history_summary.md"
     history_summary_path.write_text(
         json.dumps(
             {
@@ -930,6 +931,7 @@ def test_overview_page_surfaces_release_verification(
         encoding="utf-8",
     )
     handoff_path.write_text("# QCchem Release Evidence Handoff\n", encoding="utf-8")
+    history_handoff_path.write_text("# QCchem Release History Handoff\n", encoding="utf-8")
     monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, str(artifact_root))
 
     page = build_overview_page(build_sample_view_model())
@@ -943,6 +945,10 @@ def test_overview_page_surfaces_release_verification(
     assert "2 retained runs / 2 passed / 0 failed / 0 incomplete" in page_text
     assert "not_compared=1, passed=1" in page_text
     assert str(history_summary_path) in page_text
+    assert "Release history handoff" in page_text
+    assert "review_release_history" in page_text
+    assert f"summary {history_summary_path}" in page_text
+    assert str(history_handoff_path) in page_text
     assert "Release matrix baseline" in page_text
     assert "2 matrix artifacts / 0 failed" in page_text
     assert str(matrix_summary_path) in page_text
@@ -1152,6 +1158,10 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
         "# QCchem Release Evidence Handoff\n",
         encoding="utf-8",
     )
+    (release_root / "release_history_summary.md").write_text(
+        "# QCchem Release History Handoff\n",
+        encoding="utf-8",
+    )
     monkeypatch.setenv(WORKBENCH_ARTIFACT_ROOT_ENV, "")
 
     _app, summary = prepare_workbench(
@@ -1163,10 +1173,11 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
 
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["artifact_inventory"]["artifact_root_exists"] is True
-    assert summary["artifact_inventory"]["indexed_artifacts"] == 5
+    assert summary["artifact_inventory"]["indexed_artifacts"] == 6
     assert summary["artifact_inventory"]["run_result_roots"] == 1
     assert summary["artifact_inventory"]["release_artifact_verifications"] == 1
     assert summary["artifact_inventory"]["release_history_summaries"] == 1
+    assert summary["artifact_inventory"]["release_history_handoffs"] == 1
     assert summary["artifact_inventory"]["release_matrix_summaries"] == 1
     assert summary["artifact_inventory"]["release_evidence_handoffs"] == 1
     assert summary["artifact_inventory"]["report_markdown_roots"] == 1
@@ -1175,6 +1186,9 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
     )
     assert summary["artifact_inventory"]["featured_release_history_summary"] == str(
         release_root / "release_history_summary.json"
+    )
+    assert summary["artifact_inventory"]["featured_release_history_handoff"] == str(
+        release_root / "release_history_summary.md"
     )
     assert summary["artifact_inventory"]["featured_release_matrix_summary"] == str(
         release_root / "release_matrix_summary.json"

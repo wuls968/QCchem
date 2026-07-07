@@ -160,7 +160,11 @@ run counts and matrix-delta status counts. Use
 `qcchem release history export-markdown --history-summary <json> -o <md>` to
 turn the same retained-history overview into reviewer-facing Markdown. The
 export can also read `--history-root <history-dir>` directly and supports
-`--strict` with the same non-`passed` exit-code behavior.
+`--strict` with the same non-`passed` exit-code behavior. When that Markdown is
+kept as `release_history_summary.md` or `release_history_handoff.md` next to the
+JSON under an artifact root, the index classifies it as
+`release_history_handoff`, and Workbench points reviewers to the Markdown while
+using the sibling JSON for status and run-count fields.
 
 Runtime-capable commands require an explicit `--confirm-runtime-budget` phrase
 before any real IBM Runtime submission can proceed.

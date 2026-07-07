@@ -32,6 +32,8 @@ def _artifact_kind(path: Path) -> str:
     name = path.name
     if name == "release_evidence_handoff.md":
         return "release_evidence_handoff"
+    if name in {"release_history_handoff.md", "release_history_summary.md"}:
+        return "release_history_handoff"
     if name == "release_history_summary.json":
         return "release_history_summary"
     if name == "release_matrix_summary.json":
@@ -188,6 +190,23 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         if kind == "release_history_summary" and isinstance(payload.get("first_failure"), dict)
         else None
     )
+    release_history_handoff_summary_path = artifact_root / "release_history_summary.json"
+    release_history_handoff_summary = (
+        _safe_read_json(release_history_handoff_summary_path)
+        if kind == "release_history_handoff" and release_history_handoff_summary_path.exists()
+        else {}
+    )
+    release_history_handoff_runs = (
+        release_history_handoff_summary.get("runs")
+        if kind == "release_history_handoff" and isinstance(release_history_handoff_summary.get("runs"), list)
+        else []
+    )
+    release_history_handoff_first_failure = (
+        release_history_handoff_summary.get("first_failure")
+        if kind == "release_history_handoff"
+        and isinstance(release_history_handoff_summary.get("first_failure"), dict)
+        else None
+    )
     release_evidence_matrix_delta = (
         release_evidence_summary.get("release_matrix_delta")
         if kind == "release_evidence_handoff" and isinstance(release_evidence_summary.get("release_matrix_delta"), dict)
@@ -214,6 +233,8 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "artifact_name": (
             "release_evidence_handoff"
             if kind == "release_evidence_handoff"
+            else "release_history_handoff"
+            if kind == "release_history_handoff"
             else "release_history_summary"
             if kind == "release_history_summary"
             else "release_matrix_summary"
@@ -222,16 +243,22 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         ),
         "artifact_path": str(result_path),
         "result_json": str(result_path),
-        "schema_version": payload.get("schema_version") or release_evidence_summary.get("schema_version"),
+        "schema_version": (
+            payload.get("schema_version")
+            or release_evidence_summary.get("schema_version")
+            or release_history_handoff_summary.get("schema_version")
+        ),
         "verification_status": payload.get("verification_status")
         or payload.get("status")
         or release_evidence_summary.get("status")
+        or release_history_handoff_summary.get("status")
         or release_matrix_summary_status
         or release_history_summary_status
         or evidence.get("trust_tier"),
         "trust_tier": evidence.get("trust_tier") or payload.get("verification_status") or payload.get("status"),
         "recommended_action": evidence.get("recommended_action")
         or release_evidence_summary.get("recommended_action")
+        or release_history_handoff_summary.get("recommended_action")
         or payload.get("recommended_action")
         or acceptance_summary.get("recommended_action"),
         "capsule_status": capsule.get("capsule_status"),
@@ -383,6 +410,55 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             if kind == "release_evidence_handoff" and release_evidence_summary_path.exists()
             else None
         ),
+        "release_history_handoff_status": (
+            release_history_handoff_summary.get("status") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_recommended_action": (
+            release_history_handoff_summary.get("recommended_action") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_summary_json": (
+            str(release_history_handoff_summary_path)
+            if kind == "release_history_handoff" and release_history_handoff_summary_path.exists()
+            else None
+        ),
+        "release_history_handoff_run_count": (
+            release_history_handoff_summary.get("run_count") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_passed_run_count": (
+            release_history_handoff_summary.get("passed_run_count") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_failed_run_count": (
+            release_history_handoff_summary.get("failed_run_count") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_incomplete_run_count": (
+            release_history_handoff_summary.get("incomplete_run_count") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_history_root": (
+            release_history_handoff_summary.get("history_root") if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_first_failure": (
+            release_history_handoff_first_failure if kind == "release_history_handoff" else None
+        ),
+        "release_history_handoff_matrix_delta_status_counts": (
+            release_history_handoff_summary.get("matrix_delta_status_counts")
+            if kind == "release_history_handoff"
+            else None
+        ),
+        "release_history_handoff_release_artifact_verification_status_counts": (
+            release_history_handoff_summary.get("release_artifact_verification_status_counts")
+            if kind == "release_history_handoff"
+            else None
+        ),
+        "release_history_handoff_workbench_smoke_status_counts": (
+            release_history_handoff_summary.get("workbench_smoke_status_counts")
+            if kind == "release_history_handoff"
+            else None
+        ),
+        "release_history_handoff_first_run": (
+            release_history_handoff_runs[0]
+            if kind == "release_history_handoff" and release_history_handoff_runs
+            else None
+        ),
         "release_matrix_summary_artifact_count": (
             payload.get("artifact_count") if kind == "release_matrix_summary" else None
         ),
@@ -465,12 +541,21 @@ def build_artifact_index(root: Path) -> dict[str, object]:
         "release_history_summary.json",
         "release_matrix_summary.json",
         "release_evidence_handoff.md",
+        "release_history_handoff.md",
+        "release_history_summary.md",
+    }
+    markdown_result_names = {
+        "release_evidence_handoff.md",
+        "release_history_handoff.md",
+        "release_history_summary.md",
     }
     skipped_generated_paths: list[str] = []
     skipped_generated_count = 0
     result_paths = [
         path for path in resolved_root.rglob("*.json") if path.is_file() and path.name in result_names
-    ] + [path for path in resolved_root.rglob("release_evidence_handoff.md") if path.is_file()]
+    ]
+    for name in markdown_result_names:
+        result_paths.extend(path for path in resolved_root.rglob(name) if path.is_file())
     for result_json in sorted(result_paths):
         if _generated_artifact_skip_reason(result_json, root=resolved_root) is not None:
             skipped_generated_count += 1
