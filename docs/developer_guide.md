@@ -30,7 +30,9 @@ or ignored file is still in the Git index and should be removed from tracking.
 The diff and status probes should print nothing, except for intentionally
 ignored local outputs such as `artifacts/artifact_index.json`,
 `artifacts/workbench_smoke.json`, `artifacts/release_audit/`,
-`artifacts/release_evidence/`, and `artifacts/workflows/`.
+`artifacts/release_evidence/`, `artifacts/release_history/`,
+`artifacts/release_history_summary.json`,
+`artifacts/release_history_summary.md`, and `artifacts/workflows/`.
 
 Release acceptance sidecars are not scratch output. When a path is listed in
 `configs/release/trust_first_audit.yaml`, its sibling `acceptance_summary.json`
@@ -42,6 +44,9 @@ git check-ignore --no-index -q artifacts/release_audit/release_handoff.json
 git check-ignore --no-index -q artifacts/release_audit/release_status.json
 git check-ignore --no-index -q artifacts/release_evidence/release_evidence_summary.json
 git check-ignore --no-index -q artifacts/release_evidence/release_evidence_handoff.md
+git check-ignore --no-index -q artifacts/release_history/current/release_evidence_summary.json
+git check-ignore --no-index -q artifacts/release_history_summary.json
+git check-ignore --no-index -q artifacts/release_history_summary.md
 git check-ignore --no-index -q artifacts/artifact_index.json
 git check-ignore --no-index -q artifacts/workbench_smoke.json
 git check-ignore --no-index -q artifacts/workflows/research_os_review_workflow/workflow_result.json

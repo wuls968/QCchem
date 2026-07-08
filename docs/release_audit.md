@@ -118,7 +118,8 @@ artifact name and diagnostics manifest path. CI uploads those handoff files,
 readiness files, Workbench smoke JSON, compact `release_status.json` summaries,
 the `release_diagnostics_manifest.json` digest/size summary, release sidecar
 freshness JSON, and the CI-side `release_evidence_summary.json` /
-`release_evidence_handoff.md` as `qcchem-release-diagnostics-*` artifacts so
+`release_evidence_handoff.md` plus the single-run `release_history_summary.json`
+and `release_history_summary.md` as `qcchem-release-diagnostics-*` artifacts so
 failed runs keep their handoff bundle without tracking generated outputs in git.
 The CLI prints both `Report: <...>/release_readiness.md` and
 `Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact

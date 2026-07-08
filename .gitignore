@@ -15,3 +15,6 @@ artifacts/workflows/
 artifacts/lr_ace_local_molecule_sweep_*/
 artifacts/release_audit/
 artifacts/release_evidence/
+artifacts/release_history/
+artifacts/release_history_summary.json
+artifacts/release_history_summary.md

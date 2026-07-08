@@ -686,6 +686,12 @@ def test_release_git_hygiene_keeps_outputs_ignored_and_sidecars_tracked() -> Non
     if git_probe.returncode != 0:
         pytest.skip("release git hygiene checks require a git checkout")
 
+    assert {
+        "artifacts/release_history/current/release_evidence_summary.json",
+        "artifacts/release_history_summary.json",
+        "artifacts/release_history_summary.md",
+    }.issubset(set(release_generated_output_paths()))
+
     for path in release_generated_output_paths():
         ignored = _run_git(["check-ignore", "--no-index", "-q", path])
         assert ignored.returncode == 0, f"{path} should stay ignored as local generated output"
