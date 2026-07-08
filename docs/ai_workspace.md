@@ -47,6 +47,7 @@ runtime environment or external secret manager.
 3. Accept the ticket.
 4. Run the ticket through `qcchem ai run-ticket <ticket.json>`.
 5. Review the updated lane in the workspace page and the delivery record under `artifacts/ai_workspace/deliveries/`.
+6. Mark the delivery accepted or returned with `qcchem ai delivery review` or `qcchem ai delivery return`.
 
 The floating assistant preview is no longer just a request echo. When the ticket links a QCchem artifact, the preview can now surface:
 
@@ -84,7 +85,11 @@ status counts, kind counts, and the source directory visible. Returned delivery
 notes are also linked back to tickets with the same `task_id`, so the returned
 lane and floating preview show the revision reason without opening the delivery
 JSON first. When the Workbench `Return` action is used directly, the current
-risk notes are preserved as ticket-level return notes.
+risk notes are preserved as ticket-level return notes. The same review loop is
+available from the CLI: `qcchem ai delivery return <delivery.json>
+--return-notes "..."` marks the delivery as returned and writes the revision
+reason plus linked delivery path back to the matching ticket when both records
+live under the same AI workspace.
 
 ## Default AI posture
 
@@ -135,6 +140,8 @@ qcchem ai draft-ticket --provider-config examples/ai_workspace/provider.openai-c
 qcchem ai run-ticket examples/ai_workspace/tickets/analysis_h2_campaign.json
 qcchem ai summarize-evidence --artifact artifacts/hardware_calibration_suite_v1 -o artifacts/ai_workspace/evidence/hardware_campaign.json
 qcchem ai review --target artifacts/hardware_calibration_suite_v1 --claim "hardware_verified proves publication-grade chemical accuracy" -o artifacts/ai_workspace/reviews/hardware_boundary
+qcchem ai delivery review artifacts/ai_workspace/deliveries/delivery-example.json --status accepted
+qcchem ai delivery return artifacts/ai_workspace/deliveries/delivery-example.json --return-notes "Clarify the hardware verification boundary before acceptance."
 qcchem workbench serve
 ```
 

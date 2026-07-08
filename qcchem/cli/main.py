@@ -31,6 +31,13 @@ RELEASE_MATRIX_COMPARE_FIELDS = (
     "acceptance_repair_plan_count",
     "failure_count",
 )
+AI_DELIVERY_REVIEW_STATUS_CHOICES = (
+    "submitted",
+    "pending_review",
+    "accepted",
+    "returned",
+    "needs_revision",
+)
 
 
 def _load_attr(module_name: str, attribute: str):
@@ -792,6 +799,38 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ai_review.add_argument("--claim", help="Claim text to review. Defaults to artifact claims.")
     ai_review.add_argument("-o", "--output-dir", type=Path, help="Optional output directory for review files.")
+    ai_delivery = ai_subparsers.add_parser("delivery", help="Review persisted AI workspace delivery records.")
+    ai_delivery_subparsers = ai_delivery.add_subparsers(dest="ai_delivery_command", required=True)
+    ai_delivery_review = ai_delivery_subparsers.add_parser(
+        "review",
+        help="Set the review status for one delivery record.",
+    )
+    ai_delivery_review.add_argument("delivery", type=Path, help="Path to one delivery JSON file.")
+    ai_delivery_review.add_argument(
+        "--status",
+        choices=AI_DELIVERY_REVIEW_STATUS_CHOICES,
+        required=True,
+        help="Review status to persist on the delivery record.",
+    )
+    ai_delivery_review.add_argument("--return-notes", help="Reviewer notes to store when returning a delivery.")
+    ai_delivery_review.add_argument("--return-notes-file", type=Path, help="Read reviewer notes from a text file.")
+    ai_delivery_review.add_argument(
+        "--no-link-ticket",
+        action="store_true",
+        help="Do not update the matching ticket when the delivery is returned.",
+    )
+    ai_delivery_return = ai_delivery_subparsers.add_parser(
+        "return",
+        help="Mark one delivery record as returned and link notes back to its ticket.",
+    )
+    ai_delivery_return.add_argument("delivery", type=Path, help="Path to one delivery JSON file.")
+    ai_delivery_return.add_argument("--return-notes", help="Reviewer notes to store on the delivery and ticket.")
+    ai_delivery_return.add_argument("--return-notes-file", type=Path, help="Read reviewer notes from a text file.")
+    ai_delivery_return.add_argument(
+        "--no-link-ticket",
+        action="store_true",
+        help="Do not update the matching ticket when the delivery is returned.",
+    )
     return parser
 
 
@@ -2885,6 +2924,14 @@ def recommend_active_space_from_config(config: Path) -> dict[str, object]:
     return to_primitive(payload)
 
 
+def _return_notes_from_args(return_notes: str | None, return_notes_file: Path | None) -> str | None:
+    if return_notes and return_notes_file is not None:
+        raise ValueError("Use either --return-notes or --return-notes-file, not both.")
+    if return_notes_file is None:
+        return return_notes
+    return return_notes_file.read_text(encoding="utf-8").strip()
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the QCchem CLI."""
     parser = _build_parser()
@@ -3544,7 +3591,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
     if args.command == "ai":
-        from qcchem.workflow.ai_workspace import draft_ticket_from_request, run_ticket
+        from qcchem.workflow.ai_workspace import draft_ticket_from_request, review_delivery_record, run_ticket
 
         if args.ai_command == "draft-ticket":
             ticket_path = draft_ticket_from_request(
@@ -3585,6 +3632,21 @@ def main(argv: list[str] | None = None) -> int:
                     artifacts=[str(item) for item in args.target],
                     metadata=outputs,
                 )
+            print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
+            return 0
+        if args.ai_command == "delivery":
+            try:
+                return_notes = _return_notes_from_args(args.return_notes, args.return_notes_file)
+                review_status = "returned" if args.ai_delivery_command == "return" else args.status
+                result = review_delivery_record(
+                    args.delivery,
+                    review_status=review_status,
+                    return_notes=return_notes,
+                    link_ticket=not args.no_link_ticket,
+                )
+            except (FileNotFoundError, ValueError) as exc:
+                print(f"QCchem AI delivery review rejected: {exc}")
+                return 2
             print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
             return 0
 

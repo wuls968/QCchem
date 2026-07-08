@@ -24,7 +24,7 @@ from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_markdown_report
 from qcchem.reporting.jsonio import write_result_json
 from qcchem.workflow.ai_assistant import draft_analysis_ticket
-from qcchem.workflow.ai_store import workspace_root, write_delivery_record, write_ticket_record
+from qcchem.workflow.ai_store import read_delivery_record, workspace_root, write_delivery_record, write_ticket_record
 from qcchem.workflow.agent import run_analysis_ticket
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
@@ -53,6 +53,16 @@ from qcchem.workflow.scan import run_scan_from_config
 from qcchem.workflow.study import run_study_from_config
 
 
+AI_DELIVERY_REVIEW_STATUSES = (
+    "submitted",
+    "pending_review",
+    "accepted",
+    "returned",
+    "needs_revision",
+)
+AI_DELIVERY_RETURN_STATUSES = frozenset({"returned", "needs_revision"})
+
+
 def _ticket_record(ticket: AITaskTicket) -> dict[str, Any]:
     return asdict(ticket)
 
@@ -78,6 +88,28 @@ def _ticket_workspace_base(path: Path) -> Path:
     ):
         return resolved_path.parents[3]
     return resolved_path.parent
+
+
+def _delivery_workspace_root(path: Path) -> Path:
+    resolved_path = path.expanduser().resolve()
+    if resolved_path.parent.name == "deliveries" and resolved_path.parent.parent.name == "ai_workspace":
+        return resolved_path.parent.parent
+    return workspace_root(resolved_path.parent, create=False)
+
+
+def _normalize_delivery_review_status(status: str) -> str:
+    normalized = str(status or "").strip().lower().replace("-", "_")
+    if normalized not in AI_DELIVERY_REVIEW_STATUSES:
+        expected = ", ".join(AI_DELIVERY_REVIEW_STATUSES)
+        raise ValueError(f"Unsupported delivery review status {status!r}; expected one of: {expected}.")
+    return normalized
+
+
+def _delivery_ticket_path(delivery_path: Path, payload: dict[str, Any]) -> Path | None:
+    task_id = str(payload.get("task_id") or "").strip()
+    if not task_id:
+        return None
+    return _delivery_workspace_root(delivery_path) / "tickets" / f"{task_id}.json"
 
 
 def _resolved_ticket_payload(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -810,6 +842,68 @@ def return_ticket(
         returned["linked_return_delivery_record"] = normalized_delivery
     returned["ticket_path"] = str(updated_path)
     return returned
+
+
+def review_delivery_record(
+    path: Path,
+    *,
+    review_status: str,
+    return_notes: str | None = None,
+    link_ticket: bool = True,
+) -> dict[str, Any]:
+    delivery_path = path.expanduser().resolve()
+    payload = read_delivery_record(delivery_path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"Delivery record is not a JSON object: {delivery_path}")
+
+    normalized_status = _normalize_delivery_review_status(review_status)
+    explicit_notes = str(return_notes or "").strip()
+    if explicit_notes and normalized_status not in AI_DELIVERY_RETURN_STATUSES:
+        raise ValueError("Return notes can only be set for returned or needs_revision delivery statuses.")
+    normalized_notes = explicit_notes or str(payload.get("return_notes") or "").strip()
+    if normalized_status in AI_DELIVERY_RETURN_STATUSES and not normalized_notes:
+        raise ValueError("Return notes are required when returning a delivery.")
+
+    updated_payload = dict(payload)
+    updated_payload["review_status"] = normalized_status
+    if normalized_notes:
+        updated_payload["return_notes"] = normalized_notes
+    else:
+        updated_payload["return_notes"] = ""
+    if normalized_status not in AI_DELIVERY_RETURN_STATUSES:
+        updated_payload["return_notes"] = ""
+    delivery_path.write_text(json.dumps(updated_payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    ticket_path = _delivery_ticket_path(delivery_path, updated_payload)
+    ticket_link_status = "not_applicable"
+    ticket_result: dict[str, Any] | None = None
+    if not link_ticket:
+        ticket_link_status = "disabled"
+    elif ticket_path is None:
+        ticket_link_status = "task_id_missing"
+    elif normalized_status in AI_DELIVERY_RETURN_STATUSES:
+        if ticket_path.exists():
+            ticket_result = return_ticket(
+                ticket_path,
+                return_notes=normalized_notes,
+                linked_return_delivery_record=str(delivery_path),
+            )
+            ticket_link_status = "updated"
+        else:
+            ticket_link_status = "ticket_missing"
+
+    return {
+        "delivery_record": str(delivery_path),
+        "delivery_id": str(updated_payload.get("delivery_id") or delivery_path.stem),
+        "task_id": str(updated_payload.get("task_id") or ""),
+        "review_status": normalized_status,
+        "return_notes": str(updated_payload.get("return_notes") or ""),
+        "linked_outputs": updated_payload.get("linked_outputs") or [],
+        "did_update_ticket": ticket_result is not None,
+        "ticket_link_status": ticket_link_status,
+        "ticket_record": str(ticket_path) if ticket_path is not None else "",
+        "ticket_status": str(ticket_result.get("status") or "") if ticket_result else "",
+    }
 
 
 def _write_delivery(

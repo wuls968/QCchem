@@ -65,6 +65,7 @@ def test_ai_workspace_docs_and_examples_exist() -> None:
     docs_body = docs_path.read_text(encoding="utf-8")
     assert "examples/ai_workspace/tickets/analysis_h2_campaign.json" in docs_body
     assert "qcchem ai run-ticket examples/ai_workspace/tickets/analysis_h2_campaign.json" in docs_body
+    assert "qcchem ai delivery return" in docs_body
 
     readme_body = readme_path.read_text(encoding="utf-8")
     assert "## AI Workspace" in readme_body
@@ -310,3 +311,170 @@ def test_ai_run_ticket_command_writes_delivery_record_for_supported_task_types(
     else:
         expected_output = str((workspace / "artifacts" / "suite_a").resolve())
         assert payload["linked_outputs"] == [expected_output]
+
+
+def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workspace = tmp_path / "workspace"
+    root = workspace_root(workspace)
+    ticket_path = root / "tickets" / "analysis-003.json"
+    ticket_path.write_text(
+        json.dumps(
+            {
+                "task_id": "analysis-003",
+                "task_type": "analysis",
+                "title": "Review delivery handoff",
+                "request_text": "Review the persisted delivery.",
+                "plan_summary": "Keep revision reasons attached to the ticket.",
+                "expected_outputs": ["review"],
+                "risk_notes": ["Clarify evidence boundary."],
+                "linked_artifacts": ["artifacts/suite_a"],
+                "status": "completed",
+                "execution_target": "analysis_only_assistant",
+            }
+        ),
+        encoding="utf-8",
+    )
+    delivery_path = root / "deliveries" / "delivery-review-001.json"
+    delivery_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-review-001",
+                "task_id": "analysis-003",
+                "delivery_kind": "analysis_note",
+                "summary": "Needs a clearer evidence boundary before acceptance.",
+                "linked_outputs": ["artifacts/suite_a/hardware_runtime_campaign_report.md"],
+                "review_status": "submitted",
+                "return_notes": "",
+            }
+        ),
+        encoding="utf-8",
+    )
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    monkeypatch.chdir(outside_dir)
+
+    exit_code = main(
+        [
+            "ai",
+            "delivery",
+            "return",
+            str(delivery_path),
+            "--return-notes",
+            "Clarify the hardware verification boundary.",
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["delivery_record"] == str(delivery_path.resolve())
+    assert payload["review_status"] == "returned"
+    assert payload["return_notes"] == "Clarify the hardware verification boundary."
+    assert payload["did_update_ticket"] is True
+    assert payload["ticket_link_status"] == "updated"
+    assert payload["ticket_record"] == str(ticket_path.resolve())
+    assert payload["ticket_status"] == "returned"
+
+    delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
+    assert delivery_record["review_status"] == "returned"
+    assert delivery_record["return_notes"] == "Clarify the hardware verification boundary."
+
+    ticket_record = json.loads(ticket_path.read_text(encoding="utf-8"))
+    assert ticket_record["status"] == "returned"
+    assert ticket_record["return_notes"] == "Clarify the hardware verification boundary."
+    assert ticket_record["linked_return_delivery_record"] == str(delivery_path.resolve())
+
+
+def test_ai_delivery_review_command_accepts_delivery_without_touching_ticket(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workspace = tmp_path / "workspace"
+    root = workspace_root(workspace)
+    ticket_path = root / "tickets" / "analysis-004.json"
+    ticket_path.write_text(
+        json.dumps(
+            {
+                "task_id": "analysis-004",
+                "task_type": "analysis",
+                "title": "Accept delivery handoff",
+                "request_text": "Accept the persisted delivery.",
+                "status": "completed",
+                "execution_target": "analysis_only_assistant",
+            }
+        ),
+        encoding="utf-8",
+    )
+    delivery_path = root / "deliveries" / "delivery-review-002.json"
+    delivery_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-review-002",
+                "task_id": "analysis-004",
+                "delivery_kind": "analysis_note",
+                "summary": "Evidence boundary is clear.",
+                "linked_outputs": [],
+                "review_status": "submitted",
+                "return_notes": "Old revision note.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    monkeypatch.chdir(outside_dir)
+
+    exit_code = main(["ai", "delivery", "review", str(delivery_path), "--status", "accepted"])
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["review_status"] == "accepted"
+    assert payload["did_update_ticket"] is False
+    assert payload["ticket_link_status"] == "not_applicable"
+
+    delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
+    assert delivery_record["review_status"] == "accepted"
+    assert delivery_record["return_notes"] == ""
+
+    ticket_record = json.loads(ticket_path.read_text(encoding="utf-8"))
+    assert ticket_record["status"] == "completed"
+    assert "return_notes" not in ticket_record
+
+
+def test_ai_delivery_return_command_requires_return_notes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workspace = tmp_path / "workspace"
+    root = workspace_root(workspace)
+    delivery_path = root / "deliveries" / "delivery-review-003.json"
+    delivery_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-review-003",
+                "task_id": "analysis-005",
+                "delivery_kind": "analysis_note",
+                "summary": "Needs revision.",
+                "linked_outputs": [],
+                "review_status": "submitted",
+                "return_notes": "",
+            }
+        ),
+        encoding="utf-8",
+    )
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    monkeypatch.chdir(outside_dir)
+
+    exit_code = main(["ai", "delivery", "return", str(delivery_path)])
+
+    assert exit_code == 2
+    assert "Return notes are required" in capsys.readouterr().out
+    delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
+    assert delivery_record["review_status"] == "submitted"
+    assert delivery_record["return_notes"] == ""
