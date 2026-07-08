@@ -430,6 +430,8 @@ def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
             str(delivery_path),
             "--return-notes",
             "Clarify the hardware verification boundary.",
+            "--reviewed-by",
+            "lead-reviewer",
         ]
     )
 
@@ -437,6 +439,9 @@ def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
     payload = json.loads(capsys.readouterr().out)
     assert payload["delivery_record"] == str(delivery_path.resolve())
     assert payload["review_status"] == "returned"
+    assert payload["reviewed_at"].endswith("Z")
+    assert payload["reviewed_by"] == "lead-reviewer"
+    assert payload["review_source"] == "cli"
     assert payload["return_notes"] == "Clarify the hardware verification boundary."
     assert payload["did_update_ticket"] is True
     assert payload["ticket_link_status"] == "updated"
@@ -445,6 +450,9 @@ def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
 
     delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
     assert delivery_record["review_status"] == "returned"
+    assert delivery_record["reviewed_at"].endswith("Z")
+    assert delivery_record["reviewed_by"] == "lead-reviewer"
+    assert delivery_record["review_source"] == "cli"
     assert delivery_record["return_notes"] == "Clarify the hardware verification boundary."
 
     ticket_record = json.loads(ticket_path.read_text(encoding="utf-8"))
@@ -498,11 +506,17 @@ def test_ai_delivery_review_command_accepts_delivery_without_touching_ticket(
     assert exit_code == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["review_status"] == "accepted"
+    assert payload["reviewed_at"].endswith("Z")
+    assert payload["reviewed_by"] == "user"
+    assert payload["review_source"] == "cli"
     assert payload["did_update_ticket"] is False
     assert payload["ticket_link_status"] == "not_applicable"
 
     delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
     assert delivery_record["review_status"] == "accepted"
+    assert delivery_record["reviewed_at"].endswith("Z")
+    assert delivery_record["reviewed_by"] == "user"
+    assert delivery_record["review_source"] == "cli"
     assert delivery_record["return_notes"] == ""
 
     ticket_record = json.loads(ticket_path.read_text(encoding="utf-8"))

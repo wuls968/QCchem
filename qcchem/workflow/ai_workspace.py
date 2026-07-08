@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,10 @@ AI_DELIVERY_REVIEW_STATUSES = (
     "needs_revision",
 )
 AI_DELIVERY_RETURN_STATUSES = frozenset({"returned", "needs_revision"})
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _ticket_record(ticket: AITaskTicket) -> dict[str, Any]:
@@ -908,6 +913,9 @@ def review_delivery_record(
     review_status: str,
     return_notes: str | None = None,
     link_ticket: bool = True,
+    reviewed_by: str | None = None,
+    review_source: str = "cli",
+    reviewed_at: str | None = None,
 ) -> dict[str, Any]:
     delivery_path = path.expanduser().resolve()
     payload = read_delivery_record(delivery_path)
@@ -924,6 +932,9 @@ def review_delivery_record(
 
     updated_payload = dict(payload)
     updated_payload["review_status"] = normalized_status
+    updated_payload["reviewed_at"] = str(reviewed_at or _utc_now_iso()).strip()
+    updated_payload["reviewed_by"] = str(reviewed_by or "user").strip()
+    updated_payload["review_source"] = str(review_source or "cli").strip()
     if normalized_notes:
         updated_payload["return_notes"] = normalized_notes
     else:
@@ -955,6 +966,9 @@ def review_delivery_record(
         "delivery_id": str(updated_payload.get("delivery_id") or delivery_path.stem),
         "task_id": str(updated_payload.get("task_id") or ""),
         "review_status": normalized_status,
+        "reviewed_at": str(updated_payload.get("reviewed_at") or ""),
+        "reviewed_by": str(updated_payload.get("reviewed_by") or ""),
+        "review_source": str(updated_payload.get("review_source") or ""),
         "return_notes": str(updated_payload.get("return_notes") or ""),
         "linked_outputs": updated_payload.get("linked_outputs") or [],
         "did_update_ticket": ticket_result is not None,

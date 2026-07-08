@@ -394,6 +394,9 @@ def test_ai_workspace_delivery_renders_artifact_handoff_and_return_notes(tmp_pat
                 "artifacts/ai_workspace/reviews/h2_claim/claim_review.md",
             ],
             "review_status": "returned",
+            "reviewed_at": "2026-07-08T10:30:00Z",
+            "reviewed_by": "lead-reviewer",
+            "review_source": "cli",
             "return_notes": "Attach the exact baseline result path before closing.",
             "evidence_scope": "artifacts/h2_local",
             "limitation_notes": "Do not promote exploratory wording.",
@@ -419,6 +422,9 @@ def test_ai_workspace_delivery_renders_artifact_handoff_and_return_notes(tmp_pat
     assert "claim_review.md" in rendered
     assert "Review action" in rendered
     assert "address return notes (address_return_notes)" in rendered
+    assert "Reviewed" in rendered
+    assert "2026-07-08T10:30:00Z" in rendered
+    assert "lead-reviewer via cli" in rendered
     assert "Return notes" in rendered
     assert "Attach the exact baseline result path before closing." in rendered
 
@@ -448,6 +454,9 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
             "summary": "Returned workflow handoff.",
             "linked_outputs": ["artifacts/workflows/demo_flow/workflow_result.json"],
             "review_status": "returned",
+            "reviewed_at": "2026-07-08T10:45:00Z",
+            "reviewed_by": "science-reviewer",
+            "review_source": "cli",
             "return_notes": "Missing acceptance evidence.",
             "evidence_summary": {"recommended_action": "review_evidence_boundary"},
         },
@@ -477,10 +486,14 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
     assert summary["return_note_count"] == 1
     returned_handoff = next(item for item in summary["handoffs"] if item["delivery_id"] == "delivery-returned-002")
     assert returned_handoff["review_action"] == "address_return_notes"
+    assert returned_handoff["reviewed_at"] == "2026-07-08T10:45:00Z"
+    assert returned_handoff["reviewed_by"] == "science-reviewer"
+    assert returned_handoff["review_source"] == "cli"
     assert "1 / 2" in rendered
     assert "Filter" in rendered
     assert "review=returned, kind=artifact_bundle" in rendered
     assert "Returned workflow handoff." in rendered
+    assert "science-reviewer via cli" in rendered
     assert "Submitted analysis handoff." not in rendered
 
 

@@ -829,6 +829,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ai_delivery_review.add_argument("--return-notes", help="Reviewer notes to store when returning a delivery.")
     ai_delivery_review.add_argument("--return-notes-file", type=Path, help="Read reviewer notes from a text file.")
+    ai_delivery_review.add_argument("--reviewed-by", help="Reviewer label to persist on the delivery record.")
     ai_delivery_review.add_argument(
         "--no-link-ticket",
         action="store_true",
@@ -841,6 +842,7 @@ def _build_parser() -> argparse.ArgumentParser:
     ai_delivery_return.add_argument("delivery", type=Path, help="Path to one delivery JSON file.")
     ai_delivery_return.add_argument("--return-notes", help="Reviewer notes to store on the delivery and ticket.")
     ai_delivery_return.add_argument("--return-notes-file", type=Path, help="Read reviewer notes from a text file.")
+    ai_delivery_return.add_argument("--reviewed-by", help="Reviewer label to persist on the delivery record.")
     ai_delivery_return.add_argument(
         "--no-link-ticket",
         action="store_true",
@@ -3671,6 +3673,8 @@ def main(argv: list[str] | None = None) -> int:
                     review_status=review_status,
                     return_notes=return_notes,
                     link_ticket=not args.no_link_ticket,
+                    reviewed_by=args.reviewed_by,
+                    review_source="cli",
                 )
             except (FileNotFoundError, ValueError) as exc:
                 print(f"QCchem AI delivery review rejected: {exc}")

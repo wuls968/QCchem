@@ -334,23 +334,26 @@ def build_delivery_handoff_summary(
             return_note_count += 1
         if len(handoffs) < handoff_limit:
             artifact_rows = _delivery_artifact_rows(delivery, workflow, outputs)
-            handoffs.append(
-                {
-                    "delivery_id": delivery.get("delivery_id"),
-                    "task_id": delivery.get("task_id"),
-                    "summary": delivery.get("summary"),
-                    "delivery_kind": delivery_kind,
-                    "review_status": review_status,
-                    "review_action": _delivery_review_action(delivery, evidence, workflow, outputs),
-                    "artifact_count": len(artifact_rows),
-                    "artifacts": [
-                        {"label": label, "path": path}
-                        for label, path in artifact_rows[:handoff_limit]
-                    ],
-                    "artifacts_truncated": len(artifact_rows) > handoff_limit,
-                    "return_notes": return_notes or None,
-                }
-            )
+            handoff = {
+                "delivery_id": delivery.get("delivery_id"),
+                "task_id": delivery.get("task_id"),
+                "summary": delivery.get("summary"),
+                "delivery_kind": delivery_kind,
+                "review_status": review_status,
+                "review_action": _delivery_review_action(delivery, evidence, workflow, outputs),
+                "artifact_count": len(artifact_rows),
+                "artifacts": [
+                    {"label": label, "path": path}
+                    for label, path in artifact_rows[:handoff_limit]
+                ],
+                "artifacts_truncated": len(artifact_rows) > handoff_limit,
+                "return_notes": return_notes or None,
+            }
+            for field in ("reviewed_at", "reviewed_by", "review_source"):
+                value = _compact_string(delivery.get(field))
+                if value:
+                    handoff[field] = value
+            handoffs.append(handoff)
     latest_delivery = deliveries[-1] if deliveries else None
     return {
         "available": bool(deliveries),
@@ -376,6 +379,9 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
     workflow = _workflow_delivery_summary(record)
     review_action_text = _action_text(_delivery_review_action(record, evidence, workflow, outputs))
     artifact_rows = _delivery_artifact_rows(record, workflow, outputs)
+    reviewed_at = _compact_string(record.get("reviewed_at")) or "not reviewed"
+    reviewed_by = _compact_string(record.get("reviewed_by")) or "n/a"
+    review_source = _compact_string(record.get("review_source")) or "n/a"
     return_notes = _compact_string(record.get("return_notes"))
     return_note_children = (
         [
@@ -434,6 +440,8 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
                 children=[
                     html.Div([html.Span("Evidence scope"), html.Strong(str(record.get("evidence_scope") or "Artifact evidence not scoped"))]),
                     html.Div([html.Span("Evidence claim"), html.Strong(str(evidence.get("primary_scientific_claim") or "n/a"))]),
+                    html.Div([html.Span("Reviewed"), html.Strong(reviewed_at)]),
+                    html.Div([html.Span("Reviewer"), html.Strong(f"{reviewed_by} via {review_source}")]),
                 ],
             ),
             *workflow_children,
