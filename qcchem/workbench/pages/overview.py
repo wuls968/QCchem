@@ -295,11 +295,21 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     runtime_status_label = str(runtime_status_raw).replace("_", " ").title()
     runtime_gap = float(runtime_chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
     release_verification_status = str(release_verification.get("status") or "No verification report")
+    release_history_handoff_count = release_verification_summary.get("release_history_handoff_count")
+    release_history_handoff_count_text = ""
+    if isinstance(release_history_handoff_count, int):
+        release_history_handoff_label = (
+            "history handoff" if release_history_handoff_count == 1 else "history handoffs"
+        )
+        release_history_handoff_count_text = (
+            f"; {release_history_handoff_count} {release_history_handoff_label}"
+        )
     release_verification_detail = (
         f"{release_verification_summary.get('release_status_count', 0)} status bundles / "
         f"{release_verification_summary.get('diagnostics_manifest_count', 0)} manifests / "
         f"{release_verification_summary.get('acceptance_status_count', 0)} sidecar reports; "
         f"{release_verification_summary.get('failure_count', 0)} failures"
+        f"{release_history_handoff_count_text}"
         if release_verification
         else "No downloaded CI diagnostics verification report has been indexed."
     )

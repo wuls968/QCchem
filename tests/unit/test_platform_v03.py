@@ -111,6 +111,7 @@ def test_artifact_indexer_discovers_release_artifact_verification(tmp_path: Path
                     "release_status_count": 6,
                     "diagnostics_manifest_count": 3,
                     "acceptance_status_count": 3,
+                    "release_history_handoff_count": 1,
                     "failure_count": 0,
                 },
                 "failures": [],
@@ -131,6 +132,7 @@ def test_artifact_indexer_discovers_release_artifact_verification(tmp_path: Path
     assert entry["release_artifact_verification_release_status_count"] == 6
     assert entry["release_artifact_verification_diagnostics_manifest_count"] == 3
     assert entry["release_artifact_verification_acceptance_status_count"] == 3
+    assert entry["release_artifact_verification_release_history_handoff_count"] == 1
     assert entry["release_artifact_verification_first_failure"] is None
 
 

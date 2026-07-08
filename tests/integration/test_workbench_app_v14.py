@@ -858,6 +858,7 @@ def test_overview_page_surfaces_release_verification(
                     "release_status_count": 6,
                     "diagnostics_manifest_count": 3,
                     "acceptance_status_count": 3,
+                    "release_history_handoff_count": 1,
                     "failure_count": 0,
                 },
                 "failures": [],
@@ -940,6 +941,7 @@ def test_overview_page_surfaces_release_verification(
     assert "Release verification" in page_text
     assert "passed" in page_text
     assert "6 status bundles / 3 manifests / 3 sidecar reports; 0 failures" in page_text
+    assert "1 history handoff" in page_text
     assert str(verification_path) in page_text
     assert "Release history" in page_text
     assert "2 retained runs / 2 passed / 0 failed / 0 incomplete" in page_text
@@ -1099,6 +1101,7 @@ def test_prepare_workbench_accepts_explicit_artifact_root(
                     "release_status_count": 6,
                     "diagnostics_manifest_count": 3,
                     "acceptance_status_count": 3,
+                    "release_history_handoff_count": 1,
                     "failure_count": 0,
                 },
                 "failures": [],
@@ -1337,6 +1340,7 @@ def test_workbench_smoke_summary_records_release_verification(tmp_path: Path) ->
                     "release_status_count": 6,
                     "diagnostics_manifest_count": 3,
                     "acceptance_status_count": 3,
+                    "release_history_handoff_count": 1,
                     "failure_count": 0,
                 },
                 "failures": [],
@@ -1358,6 +1362,7 @@ def test_workbench_smoke_summary_records_release_verification(tmp_path: Path) ->
     assert release_verification["release_status_count"] == 6
     assert release_verification["diagnostics_manifest_count"] == 3
     assert release_verification["acceptance_status_count"] == 3
+    assert release_verification["release_history_handoff_count"] == 1
     assert release_verification["failure_count"] == 0
     assert release_verification["first_failure"] is None
 

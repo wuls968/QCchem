@@ -367,6 +367,11 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
             if kind == "release_artifact_verification"
             else None
         ),
+        "release_artifact_verification_release_history_handoff_count": (
+            release_verification_summary.get("release_history_handoff_count")
+            if kind == "release_artifact_verification"
+            else None
+        ),
         "release_artifact_verification_first_failure": (
             release_verification_failures[0] if kind == "release_artifact_verification" and release_verification_failures else None
         ),

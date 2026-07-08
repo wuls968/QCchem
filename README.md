@@ -149,6 +149,9 @@ to run `gh run download` first and then retain the collected evidence in one
 step. The retained verifier summary and handoff include the downloaded release
 history handoff count/status, and the command leaves the downloaded artifact
 directory on disk so the summary path remains inspectable.
+When the retained verifier summary is indexed as `release_artifact_verification`,
+Workbench Overview and smoke output surface that release history handoff count
+beside the CI diagnostics status counts.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, and first failures

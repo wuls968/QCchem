@@ -199,6 +199,7 @@ def test_load_research_os_snapshot_includes_release_verification(tmp_path) -> No
                     "release_status_count": 6,
                     "diagnostics_manifest_count": 3,
                     "acceptance_status_count": 3,
+                    "release_history_handoff_count": 1,
                     "failure_count": 0,
                 },
                 "failures": [],
@@ -212,8 +213,12 @@ def test_load_research_os_snapshot_includes_release_verification(tmp_path) -> No
     release_verification = snapshot["release_verification"]
     assert release_verification["status"] == "passed"
     assert release_verification["summary"]["release_status_count"] == 6
+    assert release_verification["summary"]["release_history_handoff_count"] == 1
     assert release_verification["source_path"] == str(verification_path)
     assert release_verification["artifact_index_entry"]["artifact_kind"] == "release_artifact_verification"
+    assert release_verification["artifact_index_entry"][
+        "release_artifact_verification_release_history_handoff_count"
+    ] == 1
 
 
 def test_load_research_os_snapshot_includes_release_history_handoff(tmp_path) -> None:

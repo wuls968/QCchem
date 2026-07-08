@@ -157,7 +157,9 @@ unregistered route, an active-label mismatch, rendered content drift, or a
 component render failure. It also includes a compact `release_verification`
 summary for the latest indexed `release_artifact_verification.json`, or
 `status: missing` when that report is not present under the selected artifact
-root. The same linked handoff can be generated after a CI artifact download:
+root, including the retained release-history handoff count when the verifier
+summary provides it. The same linked handoff can be generated after a CI artifact
+download:
 
 ```bash
 qcchem release collect-evidence --artifact-dir <downloaded-artifacts> --docs docs/workbench.md
@@ -171,6 +173,8 @@ the Overview page shows its status, recommended action, first failure, and path.
 When `release_matrix_summary.json` is retained from the same collection, the
 inventory also reports a `release_matrix_summary` entry and the Overview page
 shows the baseline matrix-artifact count, failed count, and source path.
+The release verification card also shows the retained history handoff count from
+the latest `release_artifact_verification.json` summary when present.
 When `release_history_summary.json` is written under the artifact root by
 `qcchem release history summarize -o`, the inventory reports a
 `release_history_summary` entry and the Overview page shows retained run counts,

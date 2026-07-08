@@ -171,6 +171,7 @@ def _release_verification_summary(artifact_root: Path) -> dict[str, object]:
             "release_status_count": 0,
             "diagnostics_manifest_count": 0,
             "acceptance_status_count": 0,
+            "release_history_handoff_count": 0,
             "failure_count": 0,
             "first_failure": None,
         }
@@ -184,6 +185,7 @@ def _release_verification_summary(artifact_root: Path) -> dict[str, object]:
         "release_status_count": summary.get("release_status_count"),
         "diagnostics_manifest_count": summary.get("diagnostics_manifest_count"),
         "acceptance_status_count": summary.get("acceptance_status_count"),
+        "release_history_handoff_count": summary.get("release_history_handoff_count"),
         "failure_count": summary.get("failure_count", len(failures)),
         "first_failure": first_failure,
     }
