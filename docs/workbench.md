@@ -80,7 +80,8 @@ Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
 indexed artifacts when they exist. The built-in sample models remain only as
 empty-workspace fallbacks.
 
-The Research OS surfaces are also read-only:
+The Research OS surfaces are read-mostly and keep mutation scoped to AI
+Workspace state records:
 
 - `/overview` shows the latest Research Objective plan/status, open evidence
   gaps, Claim Compiler support level, and Promotion Gate status when the
@@ -117,7 +118,8 @@ The AI surface now includes:
   notes
 - Workbench-side delivery `Accept` / `Return` controls for existing delivery
   records under `artifacts/ai_workspace/deliveries`, stamped with
-  `review_source=workbench`
+  `review_source=workbench` and append-only `delivery_reviewed` provenance
+  events
 - returned delivery notes linked back into matching ticket cards and the
   floating preview
 

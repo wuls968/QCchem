@@ -108,6 +108,17 @@ def _delivery_workspace_root(path: Path) -> Path:
     return workspace_root(resolved_path.parent, create=False)
 
 
+def _delivery_workspace_base(path: Path) -> Path:
+    resolved_path = path.expanduser().resolve()
+    if (
+        resolved_path.parent.name == "deliveries"
+        and resolved_path.parent.parent.name == "ai_workspace"
+        and resolved_path.parent.parent.parent.name == "artifacts"
+    ):
+        return resolved_path.parents[3]
+    return resolved_path.parent
+
+
 def _normalize_delivery_review_status(status: str) -> str:
     normalized = str(status or "").strip().lower().replace("-", "_")
     if normalized not in AI_DELIVERY_REVIEW_STATUSES:
@@ -961,6 +972,33 @@ def review_delivery_record(
         else:
             ticket_link_status = "ticket_missing"
 
+    artifacts = [str(delivery_path)]
+    if ticket_path is not None and ticket_path.exists():
+        artifacts.append(str(ticket_path))
+    linked_outputs = updated_payload.get("linked_outputs") or []
+    if isinstance(linked_outputs, str):
+        linked_outputs = [linked_outputs]
+    artifacts.extend(str(output) for output in linked_outputs if output)
+    provenance_event = append_ai_provenance_event(
+        workspace_base=_delivery_workspace_base(delivery_path),
+        event_type="delivery_reviewed",
+        summary=f"Reviewed delivery {updated_payload.get('delivery_id') or delivery_path.stem} as {normalized_status}.",
+        artifacts=artifacts,
+        metadata={
+            "delivery_id": updated_payload.get("delivery_id") or delivery_path.stem,
+            "delivery_record": str(delivery_path),
+            "task_id": updated_payload.get("task_id") or "",
+            "review_status": normalized_status,
+            "reviewed_at": updated_payload.get("reviewed_at") or "",
+            "reviewed_by": updated_payload.get("reviewed_by") or "",
+            "review_source": updated_payload.get("review_source") or "",
+            "return_notes": updated_payload.get("return_notes") or "",
+            "ticket_record": str(ticket_path) if ticket_path is not None else "",
+            "ticket_link_status": ticket_link_status,
+            "did_update_ticket": ticket_result is not None,
+        },
+    )
+
     return {
         "delivery_record": str(delivery_path),
         "delivery_id": str(updated_payload.get("delivery_id") or delivery_path.stem),
@@ -975,6 +1013,8 @@ def review_delivery_record(
         "ticket_link_status": ticket_link_status,
         "ticket_record": str(ticket_path) if ticket_path is not None else "",
         "ticket_status": str(ticket_result.get("status") or "") if ticket_result else "",
+        "provenance_event": provenance_event,
+        "provenance_log": str(provenance_event.get("provenance_log") or ""),
     }
 
 

@@ -37,6 +37,12 @@ def _write_hardware_suite(suite_dir: Path, *, suite_name: str, best_case_name: s
     )
 
 
+def _read_ai_provenance_events(root: Path) -> list[dict[str, object]]:
+    path = root / "provenance" / "ai_provenance.jsonl"
+    assert path.exists()
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 def test_ai_workspace_docs_and_examples_exist() -> None:
     root = REPO_ROOT
     docs_path = root / "docs" / "ai_workspace.md"
@@ -447,6 +453,8 @@ def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
     assert payload["ticket_link_status"] == "updated"
     assert payload["ticket_record"] == str(ticket_path.resolve())
     assert payload["ticket_status"] == "returned"
+    assert payload["provenance_log"] == str(root / "provenance" / "ai_provenance.jsonl")
+    assert payload["provenance_event"]["event_type"] == "delivery_reviewed"
 
     delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
     assert delivery_record["review_status"] == "returned"
@@ -459,6 +467,20 @@ def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
     assert ticket_record["status"] == "returned"
     assert ticket_record["return_notes"] == "Clarify the hardware verification boundary."
     assert ticket_record["linked_return_delivery_record"] == str(delivery_path.resolve())
+
+    events = _read_ai_provenance_events(root)
+    assert len(events) == 1
+    event = events[0]
+    assert event["event_type"] == "delivery_reviewed"
+    assert event["summary"] == "Reviewed delivery delivery-review-001 as returned."
+    assert event["artifacts"][:2] == [str(delivery_path.resolve()), str(ticket_path.resolve())]
+    assert event["metadata"]["delivery_id"] == "delivery-review-001"
+    assert event["metadata"]["review_status"] == "returned"
+    assert event["metadata"]["reviewed_by"] == "lead-reviewer"
+    assert event["metadata"]["review_source"] == "cli"
+    assert event["metadata"]["return_notes"] == "Clarify the hardware verification boundary."
+    assert event["metadata"]["ticket_link_status"] == "updated"
+    assert event["metadata"]["did_update_ticket"] is True
 
 
 def test_ai_delivery_review_command_accepts_delivery_without_touching_ticket(
@@ -511,6 +533,8 @@ def test_ai_delivery_review_command_accepts_delivery_without_touching_ticket(
     assert payload["review_source"] == "cli"
     assert payload["did_update_ticket"] is False
     assert payload["ticket_link_status"] == "not_applicable"
+    assert payload["provenance_log"] == str(root / "provenance" / "ai_provenance.jsonl")
+    assert payload["provenance_event"]["metadata"]["review_status"] == "accepted"
 
     delivery_record = json.loads(delivery_path.read_text(encoding="utf-8"))
     assert delivery_record["review_status"] == "accepted"
@@ -522,6 +546,18 @@ def test_ai_delivery_review_command_accepts_delivery_without_touching_ticket(
     ticket_record = json.loads(ticket_path.read_text(encoding="utf-8"))
     assert ticket_record["status"] == "completed"
     assert "return_notes" not in ticket_record
+
+    events = _read_ai_provenance_events(root)
+    assert len(events) == 1
+    event = events[0]
+    assert event["event_type"] == "delivery_reviewed"
+    assert event["summary"] == "Reviewed delivery delivery-review-002 as accepted."
+    assert event["metadata"]["review_status"] == "accepted"
+    assert event["metadata"]["reviewed_by"] == "user"
+    assert event["metadata"]["review_source"] == "cli"
+    assert event["metadata"]["return_notes"] == ""
+    assert event["metadata"]["ticket_link_status"] == "not_applicable"
+    assert event["metadata"]["did_update_ticket"] is False
 
 
 def test_ai_delivery_return_command_requires_return_notes(

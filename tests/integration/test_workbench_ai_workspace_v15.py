@@ -58,6 +58,12 @@ def _find_component(component: object, target_id: str) -> object | None:
     return None
 
 
+def _read_ai_provenance_events(root: Path) -> list[dict[str, object]]:
+    path = root / "provenance" / "ai_provenance.jsonl"
+    assert path.exists()
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
 @pytest.mark.integration
 def test_workbench_registers_ai_workspace_page() -> None:
     app = create_app()
@@ -548,12 +554,24 @@ def test_workbench_delivery_review_action_persists_workbench_provenance_and_link
     assert result["reviewed_by"] == "workbench-reviewer"
     assert result["review_source"] == "workbench"
     assert result["did_update_ticket"] is True
+    assert result["provenance_log"] == str(ticket_root / "provenance" / "ai_provenance.jsonl")
     assert updated_delivery["review_status"] == "returned"
     assert updated_delivery["reviewed_by"] == "workbench-reviewer"
     assert updated_delivery["review_source"] == "workbench"
     assert updated_delivery["return_notes"] == "Add the exact release audit path before acceptance."
     assert returned_ticket["return_notes"] == "Add the exact release audit path before acceptance."
     assert returned_ticket["linked_return_delivery_record"] == str(delivery_path.resolve())
+
+    events = _read_ai_provenance_events(ticket_root)
+    assert len(events) == 1
+    event = events[0]
+    assert event["event_type"] == "delivery_reviewed"
+    assert event["summary"] == "Reviewed delivery delivery-review-workbench-001 as returned."
+    assert event["metadata"]["review_status"] == "returned"
+    assert event["metadata"]["reviewed_by"] == "workbench-reviewer"
+    assert event["metadata"]["review_source"] == "workbench"
+    assert event["metadata"]["ticket_link_status"] == "updated"
+    assert event["metadata"]["did_update_ticket"] is True
 
 
 @pytest.mark.integration

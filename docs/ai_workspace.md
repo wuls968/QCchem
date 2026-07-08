@@ -91,13 +91,18 @@ delivery JSON records under the current AI workspace. Those Workbench actions
 use the same delivery review path as the CLI, require return notes before a
 delivery can be returned, write the revision reason plus linked delivery path
 back to the matching ticket, and stamp `reviewed_at`, `reviewed_by`, and
-`review_source=workbench`. The same review loop is available from the CLI:
+`review_source=workbench`. Each accepted or returned delivery review also
+appends a `delivery_reviewed` event to
+`artifacts/ai_workspace/provenance/ai_provenance.jsonl`, including the delivery
+record, reviewer label, review source, ticket-link status, and linked output
+paths. The same review loop is available from the CLI:
 `qcchem ai delivery list` reports review-status and delivery-kind counts plus
 the delivery JSON paths; `qcchem ai delivery return <delivery.json>
 --return-notes "..."` marks the delivery as returned and writes the revision
 reason plus linked delivery path back to the matching ticket when both records
 live under the same AI workspace. CLI review and return actions stamp
-`review_source=cli` with the same reviewer provenance fields.
+`review_source=cli` with the same reviewer provenance fields and append-only
+review event.
 
 ## Default AI posture
 
