@@ -12,6 +12,7 @@ from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_SUBMITTED,
 )
 from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records, workspace_root
+from qcchem.workflow.ai_workspace import review_delivery_record
 from qcchem.workbench.components.cards import callout_card, metric_card, status_card
 from qcchem.workbench.evidence_console import format_action_label
 
@@ -25,6 +26,9 @@ LANE_NEXT_ACTIONS = {
 }
 
 DELIVERY_FILTER_ALL = "__all__"
+DELIVERY_REVIEW_ACTION_TYPE = "qcchem-ai-delivery-review-action"
+DELIVERY_REVIEWER_TYPE = "qcchem-ai-delivery-reviewer"
+DELIVERY_RETURN_NOTES_TYPE = "qcchem-ai-delivery-return-notes"
 
 
 def _compact_record_label(record: dict[str, object] | None, *, fallback: str) -> str:
@@ -45,6 +49,50 @@ def _compact_delivery_label(record: dict[str, object] | None, *, fallback: str) 
     if record_id and summary:
         return f"{record_id} - {summary}"
     return record_id or summary or fallback
+
+
+def _delivery_record_path(
+    record: dict[str, object],
+    *,
+    workspace_root_path: Path | None = None,
+) -> str:
+    existing = _compact_string(record.get("delivery_record"))
+    if existing:
+        return existing
+    delivery_id = _compact_string(record.get("delivery_id"))
+    if delivery_id and workspace_root_path is not None:
+        return str((workspace_root_path / "deliveries" / f"{delivery_id}.json").resolve())
+    return ""
+
+
+def _resolve_workbench_delivery_path(delivery_record_path: str, workspace_root_path: Path) -> Path:
+    deliveries_dir = (workspace_root_path / "deliveries").expanduser().resolve()
+    raw_path = Path(delivery_record_path).expanduser()
+    resolved = raw_path if raw_path.is_absolute() else (Path.cwd() / raw_path)
+    resolved = resolved.resolve()
+    if not resolved.is_relative_to(deliveries_dir):
+        raise ValueError("Workbench delivery review path must stay under the current AI workspace deliveries directory.")
+    if resolved.suffix != ".json":
+        raise ValueError("Workbench delivery review path must point to a JSON delivery record.")
+    return resolved
+
+
+def handle_delivery_review_action(
+    *,
+    delivery_record_path: str,
+    review_status: str,
+    return_notes: str | None,
+    reviewed_by: str | None,
+    workspace_root_path: Path,
+) -> dict[str, object]:
+    delivery_path = _resolve_workbench_delivery_path(delivery_record_path, workspace_root_path)
+    return review_delivery_record(
+        delivery_path,
+        review_status=review_status,
+        return_notes=return_notes,
+        reviewed_by=reviewed_by or "workbench-user",
+        review_source="workbench",
+    )
 
 
 def _linked_return_delivery_for_ticket(
@@ -369,7 +417,81 @@ def build_delivery_handoff_summary(
     }
 
 
-def build_delivery_card(record: dict[str, object]) -> html.Div:
+def _delivery_review_controls(record: dict[str, object], delivery_record_path: str) -> list[object]:
+    if not delivery_record_path:
+        return []
+    current_reviewer = _compact_string(record.get("reviewed_by")) or "workbench-user"
+    current_notes = _compact_string(record.get("return_notes"))
+    return [
+        html.P("Review decision", className="qcchem-ai-workspace-page__ticket-meta"),
+        html.Div(
+            className="qcchem-ai-workspace-page__review-controls",
+            children=[
+                html.Div(
+                    className="qcchem-ai-workspace-page__review-field",
+                    children=[
+                        html.Label("Reviewer"),
+                        dcc.Input(
+                            id={
+                                "type": DELIVERY_REVIEWER_TYPE,
+                                "delivery_record": delivery_record_path,
+                            },
+                            className="qcchem-ai-workspace-page__review-input",
+                            type="text",
+                            value=current_reviewer,
+                            debounce=True,
+                        ),
+                    ],
+                ),
+                html.Div(
+                    className="qcchem-ai-workspace-page__review-field qcchem-ai-workspace-page__review-field--wide",
+                    children=[
+                        html.Label("Return notes"),
+                        dcc.Textarea(
+                            id={
+                                "type": DELIVERY_RETURN_NOTES_TYPE,
+                                "delivery_record": delivery_record_path,
+                            },
+                            className="qcchem-ai-workspace-page__review-textarea",
+                            value=current_notes,
+                        ),
+                    ],
+                ),
+                html.Div(
+                    className="qcchem-ai-workspace-page__review-actions",
+                    children=[
+                        html.Button(
+                            "Accept",
+                            id={
+                                "type": DELIVERY_REVIEW_ACTION_TYPE,
+                                "delivery_record": delivery_record_path,
+                                "review_status": "accepted",
+                            },
+                            className="qcchem-ai-workspace-page__review-button",
+                            type="button",
+                        ),
+                        html.Button(
+                            "Return",
+                            id={
+                                "type": DELIVERY_REVIEW_ACTION_TYPE,
+                                "delivery_record": delivery_record_path,
+                                "review_status": "returned",
+                            },
+                            className="qcchem-ai-workspace-page__review-button qcchem-ai-workspace-page__review-button--return",
+                            type="button",
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    ]
+
+
+def build_delivery_card(
+    record: dict[str, object],
+    *,
+    workspace_root_path: Path | None = None,
+) -> html.Div:
     raw_evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
     evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
     outputs = _string_list(record.get("linked_outputs"))
@@ -382,6 +504,7 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
     reviewed_at = _compact_string(record.get("reviewed_at")) or "not reviewed"
     reviewed_by = _compact_string(record.get("reviewed_by")) or "n/a"
     review_source = _compact_string(record.get("review_source")) or "n/a"
+    delivery_record_path = _delivery_record_path(record, workspace_root_path=workspace_root_path)
     return_notes = _compact_string(record.get("return_notes"))
     return_note_children = (
         [
@@ -450,6 +573,7 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
             html.P("Limitation notes", className="qcchem-ai-workspace-page__ticket-meta"),
             html.P("; ".join(str(note) for note in limitation_notes) or "No limitation notes recorded.", className="qcchem-card-note qcchem-card-note--compact"),
             *return_note_children,
+            *_delivery_review_controls(record, delivery_record_path),
             html.P(str(record.get("task_id", "")), className="qcchem-card-note qcchem-card-note--compact"),
         ],
     )
@@ -616,7 +740,10 @@ def build_delivery_history_children(
             ],
         ),
         html.Div(
-            [build_delivery_card(delivery) for delivery in filtered_deliveries]
+            [
+                build_delivery_card(delivery, workspace_root_path=workspace_root_path)
+                for delivery in filtered_deliveries
+            ]
             or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
             className="qcchem-ai-workspace-page__delivery-stack",
         ),
@@ -753,11 +880,17 @@ def layout() -> html.Div:
             html.Section(
                 className="qcchem-card qcchem-ai-workspace-page__delivery-history",
                 children=[
+                    dcc.Store(id="qcchem-ai-delivery-review-state", data=None),
                     html.P("Delivery Surface", className="qcchem-card-eyebrow"),
                     html.H2("Delivery History", className="qcchem-card-title"),
                     html.P(
                         "Deliveries are the durable handoff object: summary, linked outputs, review status, and the evidence posture that produced them.",
                         className="qcchem-panel__note",
+                    ),
+                    html.Div(
+                        id="qcchem-ai-delivery-review-feedback",
+                        className="qcchem-ai-workspace-page__review-feedback",
+                        children=[],
                     ),
                     build_delivery_filter_controls(deliveries),
                     html.Div(

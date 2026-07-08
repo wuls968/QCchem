@@ -3,15 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 
 import dash
-from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
+from dash import ALL, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from qcchem.workbench.components.cards import callout_card
 from qcchem.workbench.components.layout import build_shell, ordered_pages, page_focus
 from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
 from qcchem.workbench.pages.ai_workspace import (
+    DELIVERY_RETURN_NOTES_TYPE,
+    DELIVERY_REVIEW_ACTION_TYPE,
+    DELIVERY_REVIEWER_TYPE,
     build_delivery_history_children,
     build_lane_children,
     delivery_filter_options,
+    handle_delivery_review_action,
 )
 from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps
 from qcchem.core.ai_workspace import (
@@ -348,8 +352,12 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-task-inbox", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_ticket_inbox(_current_ticket_record: dict[str, object] | None):
+    def _render_ticket_inbox(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         root = _current_workspace_root()
         inbox = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_INBOX)
         deliveries = list_delivery_records(root)
@@ -365,8 +373,12 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-task-running", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_ticket_running(_current_ticket_record: dict[str, object] | None):
+    def _render_ticket_running(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         root = _current_workspace_root()
         running = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RUNNING)
         deliveries = list_delivery_records(root)
@@ -382,8 +394,12 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-task-submitted", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_ticket_submitted(_current_ticket_record: dict[str, object] | None):
+    def _render_ticket_submitted(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         root = _current_workspace_root()
         submitted = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED)
         deliveries = list_delivery_records(root)
@@ -399,8 +415,12 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-task-completed", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_ticket_completed(_current_ticket_record: dict[str, object] | None):
+    def _render_ticket_completed(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         root = _current_workspace_root()
         completed = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_COMPLETED)
         deliveries = list_delivery_records(root)
@@ -416,8 +436,12 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-task-returned", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_ticket_returned(_current_ticket_record: dict[str, object] | None):
+    def _render_ticket_returned(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         root = _current_workspace_root()
         returned = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)
         deliveries = list_delivery_records(root)
@@ -433,11 +457,13 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-delivery-history", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
         Input("qcchem-ai-delivery-review-filter", "value"),
         Input("qcchem-ai-delivery-kind-filter", "value"),
     )
     def _render_delivery_history(
         _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
         review_filter: str | None,
         kind_filter: str | None,
     ):
@@ -454,8 +480,12 @@ def create_app() -> Dash:
         Output("qcchem-ai-delivery-review-filter", "options"),
         Output("qcchem-ai-delivery-kind-filter", "options"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-state", "data"),
     )
-    def _render_delivery_filter_options(_current_ticket_record: dict[str, object] | None):
+    def _render_delivery_filter_options(
+        _current_ticket_record: dict[str, object] | None,
+        _delivery_review_state: dict[str, object] | None,
+    ):
         deliveries = list_delivery_records(_current_workspace_root())
         return (
             delivery_filter_options(
@@ -469,5 +499,75 @@ def create_app() -> Dash:
                 all_label="All delivery kinds",
             ),
         )
+
+    @app.callback(
+        Output("qcchem-ai-delivery-review-state", "data"),
+        Output("qcchem-ai-delivery-review-feedback", "children"),
+        Input(
+            {
+                "type": DELIVERY_REVIEW_ACTION_TYPE,
+                "delivery_record": ALL,
+                "review_status": ALL,
+            },
+            "n_clicks",
+        ),
+        State({"type": DELIVERY_REVIEWER_TYPE, "delivery_record": ALL}, "id"),
+        State({"type": DELIVERY_REVIEWER_TYPE, "delivery_record": ALL}, "value"),
+        State({"type": DELIVERY_RETURN_NOTES_TYPE, "delivery_record": ALL}, "id"),
+        State({"type": DELIVERY_RETURN_NOTES_TYPE, "delivery_record": ALL}, "value"),
+        prevent_initial_call=True,
+    )
+    def _handle_delivery_review(
+        _action_clicks: list[int | None],
+        reviewer_ids: list[dict[str, object]] | None,
+        reviewer_values: list[str | None] | None,
+        notes_ids: list[dict[str, object]] | None,
+        notes_values: list[str | None] | None,
+    ):
+        triggered = ctx.triggered_id
+        if not isinstance(triggered, dict):
+            return no_update, no_update
+        delivery_record_path = str(triggered.get("delivery_record") or "")
+        review_status = str(triggered.get("review_status") or "")
+        reviewer_by_delivery = {
+            str(item.get("delivery_record") or ""): value
+            for item, value in zip(reviewer_ids or [], reviewer_values or [], strict=False)
+        }
+        notes_by_delivery = {
+            str(item.get("delivery_record") or ""): value
+            for item, value in zip(notes_ids or [], notes_values or [], strict=False)
+        }
+        reviewed_by = reviewer_by_delivery.get(delivery_record_path)
+        return_notes = notes_by_delivery.get(delivery_record_path) if review_status in {"returned", "needs_revision"} else None
+        try:
+            result = handle_delivery_review_action(
+                delivery_record_path=delivery_record_path,
+                review_status=review_status,
+                return_notes=return_notes,
+                reviewed_by=reviewed_by,
+                workspace_root_path=_current_workspace_root(),
+            )
+        except Exception as exc:
+            state = {
+                "status": "error",
+                "message": f"{type(exc).__name__}: {exc}",
+                "delivery_record": delivery_record_path,
+            }
+            return state, html.Div(state["message"], className="qcchem-ai-workspace-page__review-feedback-error")
+
+        state = {
+            "status": "updated",
+            "delivery_record": result.get("delivery_record"),
+            "delivery_id": result.get("delivery_id"),
+            "review_status": result.get("review_status"),
+            "reviewed_by": result.get("reviewed_by"),
+            "review_source": result.get("review_source"),
+            "ticket_link_status": result.get("ticket_link_status"),
+        }
+        feedback = (
+            f"Updated {state['delivery_id']} to {state['review_status']} "
+            f"by {state['reviewed_by']} via {state['review_source']}."
+        )
+        return state, html.Div(feedback, className="qcchem-ai-workspace-page__review-feedback-ok")
 
     return app

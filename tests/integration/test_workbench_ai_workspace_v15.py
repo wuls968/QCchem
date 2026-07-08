@@ -161,6 +161,8 @@ def test_workbench_shell_registers_ticket_editor_callbacks() -> None:
     assert "qcchem-ai-current-ticket-preview.children" in app.callback_map
     assert "qcchem-ai-current-ticket-record.data" in callback_outputs
     assert "qcchem-ai-current-ticket-path.data" in callback_outputs
+    assert "qcchem-ai-delivery-review-state.data" in callback_outputs
+    assert "qcchem-ai-delivery-review-feedback.children" in callback_outputs
     assert "qcchem-ai-task-inbox.children" in app.callback_map
     assert "qcchem-ai-delivery-history.children" in app.callback_map
     assert "qcchem-ai-delivery-review-filter.options" in callback_outputs
@@ -427,6 +429,10 @@ def test_ai_workspace_delivery_renders_artifact_handoff_and_return_notes(tmp_pat
     assert "lead-reviewer via cli" in rendered
     assert "Return notes" in rendered
     assert "Attach the exact baseline result path before closing." in rendered
+    assert "Review decision" in rendered
+    assert "qcchem-ai-delivery-review-action" in rendered
+    assert "qcchem-ai-delivery-return-notes" in rendered
+    assert "qcchem-ai-delivery-reviewer" in rendered
 
 
 @pytest.mark.integration
@@ -495,6 +501,77 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
     assert "Returned workflow handoff." in rendered
     assert "science-reviewer via cli" in rendered
     assert "Submitted analysis handoff." not in rendered
+
+
+@pytest.mark.integration
+def test_workbench_delivery_review_action_persists_workbench_provenance_and_links_ticket(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    write_ticket_record(
+        ticket_root,
+        {
+            "task_id": "delivery-review-workbench-001",
+            "task_type": "delivery",
+            "title": "Review Workbench delivery",
+            "request_text": "Review the handoff from Workbench.",
+            "status": AI_WORKSPACE_TICKET_STATUS_COMPLETED,
+        },
+    )
+    delivery_path = write_delivery_record(
+        ticket_root,
+        {
+            "delivery_id": "delivery-review-workbench-001",
+            "task_id": "delivery-review-workbench-001",
+            "delivery_kind": "artifact_bundle",
+            "summary": "Workbench review target.",
+            "linked_outputs": ["artifacts/ai_workspace/reviews/workbench_review.md"],
+            "review_status": "submitted",
+        },
+    )
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    result = page_module.handle_delivery_review_action(
+        delivery_record_path=str(delivery_path),
+        review_status="returned",
+        return_notes="Add the exact release audit path before acceptance.",
+        reviewed_by="workbench-reviewer",
+        workspace_root_path=ticket_root,
+    )
+
+    updated_delivery = json.loads(delivery_path.read_text(encoding="utf-8"))
+    returned_ticket = list_ticket_records(ticket_root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)[0]
+
+    assert result["review_status"] == "returned"
+    assert result["reviewed_by"] == "workbench-reviewer"
+    assert result["review_source"] == "workbench"
+    assert result["did_update_ticket"] is True
+    assert updated_delivery["review_status"] == "returned"
+    assert updated_delivery["reviewed_by"] == "workbench-reviewer"
+    assert updated_delivery["review_source"] == "workbench"
+    assert updated_delivery["return_notes"] == "Add the exact release audit path before acceptance."
+    assert returned_ticket["return_notes"] == "Add the exact release audit path before acceptance."
+    assert returned_ticket["linked_return_delivery_record"] == str(delivery_path.resolve())
+
+
+@pytest.mark.integration
+def test_workbench_delivery_review_action_rejects_outside_delivery_paths(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    outside_delivery = tmp_path / "outside-delivery.json"
+    outside_delivery.write_text("{}", encoding="utf-8")
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    with pytest.raises(ValueError, match="must stay under"):
+        page_module.handle_delivery_review_action(
+            delivery_record_path=str(outside_delivery),
+            review_status="accepted",
+            return_notes=None,
+            reviewed_by="workbench-reviewer",
+            workspace_root_path=ticket_root,
+        )
 
 
 @pytest.mark.integration

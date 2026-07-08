@@ -84,15 +84,20 @@ those handoffs by review status and delivery kind while keeping total counts,
 status counts, kind counts, and the source directory visible. Returned delivery
 notes are also linked back to tickets with the same `task_id`, so the returned
 lane and floating preview show the revision reason without opening the delivery
-JSON first. When the Workbench `Return` action is used directly, the current
-risk notes are preserved as ticket-level return notes. The same review loop is
-available from the CLI: `qcchem ai delivery list` reports review-status and
-delivery-kind counts plus the delivery JSON paths; `qcchem ai delivery return
-<delivery.json> --return-notes "..."` marks the delivery as returned and writes
-the revision reason plus linked delivery path back to the matching ticket when
-both records live under the same AI workspace. CLI review and return actions
-also stamp `reviewed_at`, `reviewed_by`, and `review_source` on the delivery
-record so later handoffs preserve reviewer provenance.
+JSON first. When the Workbench ticket `Return` action is used directly, the
+current risk notes are preserved as ticket-level return notes. Delivery History
+also exposes per-delivery `Accept` and `Return` review controls for existing
+delivery JSON records under the current AI workspace. Those Workbench actions
+use the same delivery review path as the CLI, require return notes before a
+delivery can be returned, write the revision reason plus linked delivery path
+back to the matching ticket, and stamp `reviewed_at`, `reviewed_by`, and
+`review_source=workbench`. The same review loop is available from the CLI:
+`qcchem ai delivery list` reports review-status and delivery-kind counts plus
+the delivery JSON paths; `qcchem ai delivery return <delivery.json>
+--return-notes "..."` marks the delivery as returned and writes the revision
+reason plus linked delivery path back to the matching ticket when both records
+live under the same AI workspace. CLI review and return actions stamp
+`review_source=cli` with the same reviewer provenance fields.
 
 ## Default AI posture
 

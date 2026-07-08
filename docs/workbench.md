@@ -45,7 +45,13 @@ The canonical landing route is `/overview`. The `/` route is kept as an alias fo
 
 ## Artifact Story
 
-The workbench is intentionally read-only. It does not create new chemistry results; it summarizes what already exists in `artifacts/` and helps you navigate toward the highest-signal evidence.
+The workbench is intentionally chemistry-result read-only. It does not create
+new chemistry results; it summarizes what already exists in `artifacts/` and
+helps you navigate toward the highest-signal evidence. The AI Workspace page is
+the narrow exception for local review state: ticket editor actions and delivery
+`Accept` / `Return` controls may update JSON records under
+`artifacts/ai_workspace/` so reviewer provenance and return notes remain
+durable.
 
 At startup, the server summary reads the repo's artifact inventory and reports:
 
@@ -109,6 +115,9 @@ The AI surface now includes:
 - a filterable delivery history section that preserves review state, review
   actions, downstream output paths, workflow result/report paths, and return
   notes
+- Workbench-side delivery `Accept` / `Return` controls for existing delivery
+  records under `artifacts/ai_workspace/deliveries`, stamped with
+  `review_source=workbench`
 - returned delivery notes linked back into matching ticket cards and the
   floating preview
 

@@ -818,6 +818,93 @@ select {
   border-radius: 12px;
 }
 
+.qcchem-ai-workspace-page__review-feedback {
+  min-height: 0;
+}
+
+.qcchem-ai-workspace-page__review-feedback-ok,
+.qcchem-ai-workspace-page__review-feedback-error {
+  padding: 8px 10px;
+  border-radius: var(--qcchem-radius-sm);
+  font-size: 0.84rem;
+}
+
+.qcchem-ai-workspace-page__review-feedback-ok {
+  color: var(--qcchem-status-validated);
+  background: rgba(25, 128, 56, 0.08);
+}
+
+.qcchem-ai-workspace-page__review-feedback-error {
+  color: var(--qcchem-status-unstable);
+  background: rgba(218, 30, 40, 0.08);
+}
+
+.qcchem-ai-workspace-page__review-controls {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.75fr) minmax(220px, 1.25fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.qcchem-ai-workspace-page__review-field {
+  display: grid;
+  gap: 5px;
+}
+
+.qcchem-ai-workspace-page__review-field label {
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qcchem-text-muted);
+}
+
+.qcchem-ai-workspace-page__review-input,
+.qcchem-ai-workspace-page__review-textarea {
+  width: 100%;
+  border: 1px solid rgba(193, 199, 205, 0.9);
+  border-radius: var(--qcchem-radius-sm);
+  background: white;
+  color: var(--qcchem-text-primary);
+}
+
+.qcchem-ai-workspace-page__review-input {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.qcchem-ai-workspace-page__review-textarea {
+  min-height: 52px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.qcchem-ai-workspace-page__review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.qcchem-ai-workspace-page__review-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(15, 98, 254, 0.24);
+  border-radius: var(--qcchem-radius-sm);
+  background: white;
+  color: var(--qcchem-text-primary);
+  cursor: pointer;
+}
+
+.qcchem-ai-workspace-page__review-button:hover {
+  background: rgba(15, 98, 254, 0.06);
+  border-color: rgba(15, 98, 254, 0.38);
+}
+
+.qcchem-ai-workspace-page__review-button--return {
+  color: var(--qcchem-status-unstable);
+  border-color: rgba(218, 30, 40, 0.28);
+}
+
 .qcchem-ai-workspace-page__ticket-topline {
   display: flex;
   align-items: flex-start;
@@ -1099,6 +1186,7 @@ select {
   .qcchem-ai-assistant-window__preview-grid,
   .qcchem-ai-workspace-page__ticket-grid,
   .qcchem-ai-workspace-page__filter-bar,
+  .qcchem-ai-workspace-page__review-controls,
   .qcchem-workflow-studio__split,
   .qcchem-workflow-studio__graph {
     grid-template-columns: 1fr;
