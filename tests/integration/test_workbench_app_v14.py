@@ -884,8 +884,40 @@ def test_overview_page_surfaces_release_verification(
                 "release_artifact_verification_status_counts": {"passed": 2},
                 "workbench_smoke_status_counts": {"passed": 2},
                 "runs": [
-                    {"label": "run-001", "status": "passed"},
-                    {"label": "run-002", "status": "passed"},
+                    {
+                        "label": "run-001",
+                        "status": "passed",
+                        "summary_path": str(tmp_path / "release_history" / "run-001" / "release_evidence_summary.json"),
+                        "release_artifact_verification": {
+                            "status": "passed",
+                            "failure_count": 0,
+                            "release_history_handoff_count": 1,
+                            "first_failure": None,
+                        },
+                        "release_matrix_delta": {"status": "not_compared", "first_failure": None},
+                        "workbench_smoke": {
+                            "status": "passed",
+                            "failed_check_count": 0,
+                            "first_failed_check": None,
+                        },
+                    },
+                    {
+                        "label": "run-002",
+                        "status": "passed",
+                        "summary_path": str(tmp_path / "release_history" / "run-002" / "release_evidence_summary.json"),
+                        "release_artifact_verification": {
+                            "status": "passed",
+                            "failure_count": 0,
+                            "release_history_handoff_count": 1,
+                            "first_failure": None,
+                        },
+                        "release_matrix_delta": {"status": "passed", "first_failure": None},
+                        "workbench_smoke": {
+                            "status": "passed",
+                            "failed_check_count": 0,
+                            "first_failed_check": None,
+                        },
+                    },
                 ],
             }
         ),
@@ -949,6 +981,12 @@ def test_overview_page_surfaces_release_verification(
     assert "verifier passed=2" in page_text
     assert "smoke passed=2" in page_text
     assert str(history_summary_path) in page_text
+    assert "Release history retained runs" in page_text
+    assert "run-001" in page_text
+    assert "history_handoffs=1" in page_text
+    assert "delta=not_compared" in page_text
+    assert "first_failure=none" in page_text
+    assert str(tmp_path / "release_history" / "run-002" / "release_evidence_summary.json") in page_text
     assert "Release history handoff" in page_text
     assert "review_release_history" in page_text
     assert f"summary {history_summary_path}" in page_text

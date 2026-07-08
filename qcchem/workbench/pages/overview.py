@@ -234,6 +234,77 @@ def _format_count_map(value: object, *, empty: str) -> str:
     return empty
 
 
+def _format_release_failure(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "none"
+    return str(
+        value.get("reason")
+        or value.get("status")
+        or value.get("check")
+        or value.get("path")
+        or "unknown"
+    )
+
+
+def _release_history_run_failure_text(run: dict[str, Any]) -> str:
+    first_failure = run.get("first_failure")
+    if isinstance(first_failure, dict):
+        return _format_release_failure(first_failure)
+    matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
+    delta_failure = matrix_delta.get("first_failure") if isinstance(matrix_delta.get("first_failure"), dict) else None
+    if delta_failure is not None:
+        return _format_release_failure(delta_failure)
+    verification = (
+        run.get("release_artifact_verification")
+        if isinstance(run.get("release_artifact_verification"), dict)
+        else {}
+    )
+    verification_failure = (
+        verification.get("first_failure") if isinstance(verification.get("first_failure"), dict) else None
+    )
+    if verification_failure is not None:
+        return _format_release_failure(verification_failure)
+    workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+    first_failed_check = workbench_smoke.get("first_failed_check")
+    return str(first_failed_check) if first_failed_check else "none"
+
+
+def _release_history_run_rows(summary: dict[str, Any], *, limit: int = 5) -> list[tuple[str, str]]:
+    runs = summary.get("runs") if isinstance(summary.get("runs"), list) else []
+    retained_runs = [run for run in runs if isinstance(run, dict)]
+    if not retained_runs:
+        return [("Retained runs", "No per-run release history entries indexed.")]
+    rows: list[tuple[str, str]] = []
+    for run in retained_runs[:limit]:
+        verification = (
+            run.get("release_artifact_verification")
+            if isinstance(run.get("release_artifact_verification"), dict)
+            else {}
+        )
+        matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
+        workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+        source_path = run.get("summary_path") or run.get("evidence_root") or run.get("artifact_dir") or "not recorded"
+        handoff_count = verification.get("release_history_handoff_count")
+        handoff_text = str(handoff_count) if handoff_count is not None else "n/a"
+        rows.append(
+            (
+                str(run.get("label") or source_path),
+                (
+                    f"status={run.get('status', 'unknown')}; "
+                    f"verifier={verification.get('status', 'not_available')}; "
+                    f"smoke={workbench_smoke.get('status', 'not_available')}; "
+                    f"history_handoffs={handoff_text}; "
+                    f"delta={matrix_delta.get('status', 'not_available')}; "
+                    f"first_failure={_release_history_run_failure_text(run)}; "
+                    f"source={source_path}"
+                ),
+            )
+        )
+    if len(retained_runs) > limit:
+        rows.append(("Additional retained runs", f"{len(retained_runs) - limit} more in release_history_summary.json"))
+    return rows
+
+
 def _overview_threshold(view: dict[str, Any], benchmark: dict[str, Any]) -> float:
     return float(
         (
@@ -390,6 +461,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_history_handoff_path = release_history_handoff.get("source_path")
     if release_history_handoff_path:
         release_history_handoff_detail = f"{release_history_handoff_detail} | {release_history_handoff_path}"
+    release_history_run_source = release_history_summary if release_history_summary else release_history_handoff
+    release_history_run_rows = _release_history_run_rows(release_history_run_source)
     release_matrix_artifacts = (
         release_matrix_summary.get("artifacts")
         if isinstance(release_matrix_summary.get("artifacts"), list)
@@ -716,6 +789,11 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                             ("Path", str(artifact_entry_path)),
                         ],
                         eyebrow="Read-only Index",
+                    ),
+                    detail_card(
+                        "Release history retained runs",
+                        release_history_run_rows,
+                        eyebrow="Release history",
                     ),
                     detail_card(
                         "Execution posture",

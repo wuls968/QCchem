@@ -161,7 +161,8 @@ when the compact overview should be archived. When that output is named
 `release_history_summary.json` under an artifact root,
 `qcchem artifacts index` classifies it as
 `release_history_summary`, and Workbench startup/Overview surface the retained
-run counts plus matrix-delta, verifier, and Workbench smoke status counts. Use
+run counts plus matrix-delta, verifier, Workbench smoke status counts, and a
+bounded per-run drilldown with first-failure and source-path breadcrumbs. Use
 `qcchem release history export-markdown --history-summary <json> -o <md>` to
 turn the same retained-history overview into reviewer-facing Markdown. The
 export can also read `--history-root <history-dir>` directly and supports

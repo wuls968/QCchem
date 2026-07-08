@@ -429,6 +429,7 @@ select {
 .qcchem-rail-checklist__item strong,
 .qcchem-detail-card__value {
   color: var(--qcchem-text-primary);
+  overflow-wrap: anywhere;
 }
 
 .qcchem-overview__hero,
