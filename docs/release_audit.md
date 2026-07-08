@@ -226,8 +226,10 @@ qcchem release fetch-ci-evidence \
 This wrapper calls `gh run download <run-id> --dir <download-dir>`, then runs
 the same retained `collect-evidence` flow with `--history-label` defaulting to
 the run id. The `gh` command is invoked with explicit argv arguments, not a
-shell string. If `--download-dir` is omitted, a unique `/tmp` directory is
-created and left on disk for provenance review; if supplied, it must be empty.
+shell string. Retained summaries and handoffs preserve the release-history
+handoff verifier count and per-artifact history status. If `--download-dir` is
+omitted, a unique `/tmp` directory is created and left on disk for provenance
+review; if supplied, it must be empty.
 
 To review the retained history without downloading or rewriting any run
 directory, summarize the history root:

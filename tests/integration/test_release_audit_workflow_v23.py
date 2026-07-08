@@ -1147,10 +1147,28 @@ def test_release_fetch_ci_evidence_downloads_and_retains_history(
     assert first_summary["status"] == "passed"
     assert first_summary["artifact_dir"] == str(first_download_root)
     assert first_summary["release_history"]["label"] == "123456"
+    assert first_summary["release_artifact_verification"]["summary"]["release_history_handoff_count"] == 1
+    assert first_summary["release_artifact_verification"]["matrix_artifacts"][0]["release_history_status"] == "passed"
+    assert first_summary["release_artifact_verification"]["matrix_artifacts"][0]["release_history_run_count"] == 1
+    assert (
+        first_summary["release_artifact_verification"]["matrix_artifacts"][0][
+            "release_history_current_evidence_status"
+        ]
+        == "passed"
+    )
     assert first_summary["release_matrix_baseline_selection"]["mode"] == "auto_not_found"
     assert second_summary["status"] == "passed"
     assert second_summary["artifact_dir"] == str(second_download_root)
     assert second_summary["release_history"]["label"] == "123457"
+    assert second_summary["release_artifact_verification"]["summary"]["release_history_handoff_count"] == 1
+    assert second_summary["release_artifact_verification"]["matrix_artifacts"][0]["release_history_status"] == "passed"
+    assert second_summary["release_artifact_verification"]["matrix_artifacts"][0]["release_history_run_count"] == 1
+    assert (
+        second_summary["release_artifact_verification"]["matrix_artifacts"][0][
+            "release_history_current_evidence_status"
+        ]
+        == "passed"
+    )
     assert second_summary["release_matrix_baseline_selection"]["mode"] == "auto"
     assert second_summary["release_matrix_baseline_selection"]["path"] == str(
         history_root / "123456" / "release_matrix_summary.json"
@@ -1158,6 +1176,8 @@ def test_release_fetch_ci_evidence_downloads_and_retains_history(
     assert second_summary["release_matrix_delta"]["status"] == "passed"
     assert "- history_label: `123457`" in handoff
     assert "- baseline_selection: `auto`" in handoff
+    assert "- release_history_handoff_count: `1`" in handoff
+    assert "history=`passed`" in handoff
 
 
 @pytest.mark.integration

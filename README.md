@@ -146,8 +146,9 @@ Use `--baseline-search-root <history-dir>` for an existing output directory;
 an explicit `--baseline-summary` always wins.
 Use `qcchem release fetch-ci-evidence --run-id <github-run-id> --history-root <history-dir>`
 to run `gh run download` first and then retain the collected evidence in one
-step. The command leaves the downloaded artifact directory on disk so the
-summary path remains inspectable.
+step. The retained verifier summary and handoff include the downloaded release
+history handoff count/status, and the command leaves the downloaded artifact
+directory on disk so the summary path remains inspectable.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 Workbench smoke status, and first failures without rereading GitHub or

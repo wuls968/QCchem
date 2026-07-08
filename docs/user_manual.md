@@ -665,7 +665,9 @@ qcchem release fetch-ci-evidence \
 This requires the GitHub CLI `gh`. It downloads the run artifacts into an empty
 `--download-dir`, or into a generated `/tmp` directory when `--download-dir` is
 omitted, then runs the retained `collect-evidence` flow with the run id as the
-default `--history-label`.
+default `--history-label`. The retained summary and Markdown handoff carry the
+same release history handoff verifier count and status reported by
+`verify-artifacts`.
 
 To inspect retained runs later, use:
 

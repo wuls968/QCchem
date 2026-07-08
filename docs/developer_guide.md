@@ -225,7 +225,9 @@ When the artifacts still need to be downloaded, use
 instead of hand-assembling `gh run download` plus `collect-evidence`. The
 wrapper invokes `gh` with an argv list, leaves the downloaded artifact directory
 on disk for provenance review, and rejects a non-empty explicit `--download-dir`
-before calling GitHub.
+before calling GitHub. Its retained summary and handoff must preserve the
+release-history handoff verifier count and per-artifact history status from
+`verify-artifacts`.
 Use `qcchem release history summarize --history-root <dir> --strict` as the
 read-only retained-history gate after multiple runs have been collected. The
 summary walks only direct child run directories, reports missing or unreadable
