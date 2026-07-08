@@ -335,7 +335,7 @@ def test_ai_delivery_list_command_reports_reviewable_delivery_paths(
         ),
         encoding="utf-8",
     )
-    returned_path = root / "deliveries" / "delivery-list-returned.json"
+    returned_path = root / "deliveries" / "manual-returned-delivery.json"
     returned_path.write_text(
         json.dumps(
             {

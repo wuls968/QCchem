@@ -72,5 +72,7 @@ def list_delivery_records(root: Path) -> list[dict[str, Any]]:
     if not deliveries_dir.exists():
         return deliveries
     for path in sorted(deliveries_dir.glob("*.json")):
-        deliveries.append(read_delivery_record(path))
+        payload = read_delivery_record(path)
+        payload.setdefault("delivery_record", str(path.resolve()))
+        deliveries.append(payload)
     return deliveries

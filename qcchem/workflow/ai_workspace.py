@@ -884,7 +884,9 @@ def summarize_delivery_records(
         record["review_status"] = normalized_status
         record["delivery_kind"] = normalized_kind
         delivery_id = str(record.get("delivery_id") or "").strip()
-        record["delivery_record"] = str((root / "deliveries" / f"{delivery_id}.json").resolve()) if delivery_id else ""
+        actual_record_path = str(record.get("delivery_record") or "").strip()
+        fallback_record_path = str((root / "deliveries" / f"{delivery_id}.json").resolve()) if delivery_id else ""
+        record["delivery_record"] = actual_record_path or fallback_record_path
         deliveries.append(record)
     return {
         "workspace_root": str(root.resolve()),
