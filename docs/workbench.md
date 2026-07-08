@@ -158,8 +158,10 @@ component render failure. It also includes a compact `release_verification`
 summary for the latest indexed `release_artifact_verification.json`, or
 `status: missing` when that report is not present under the selected artifact
 root, including the retained release-history handoff count when the verifier
-summary provides it. The same linked handoff can be generated after a CI artifact
-download:
+summary provides it. The documented `/overview` smoke row is anchored to the
+retained-run drilldown so route smoke fails if that release-history review block
+falls out of the Overview component tree. The same linked handoff can be
+generated after a CI artifact download:
 
 ```bash
 qcchem release collect-evidence --artifact-dir <downloaded-artifacts> --docs docs/workbench.md
@@ -197,7 +199,7 @@ Check each route directly, not only through in-app navigation:
 
 | Route | Active route label | Route-specific text to confirm |
 | --- | --- | --- |
-| `/overview` | Overview | Release verification |
+| `/overview` | Overview | Release history retained runs |
 | `/result-confidence` | Result Confidence | Result Confidence Report |
 | `/benchmarks` | Benchmarks | Benchmark credibility bands |
 | `/hardware-campaign` | Hardware Campaign | Hardware Campaign |

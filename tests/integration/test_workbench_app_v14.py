@@ -1334,6 +1334,7 @@ def test_workbench_smoke_checklist_matches_rendered_pages() -> None:
         "/ai-workspace",
         "/workflow-studio",
     ]
+    assert summary["routes"][0]["expected_text"] == "Release history retained runs"
     assert all(route["checks"]["registered"] for route in summary["routes"])
     assert all(route["checks"]["active_label"] for route in summary["routes"])
     assert all(route["checks"]["expected_text"] for route in summary["routes"])
@@ -1361,6 +1362,72 @@ def test_workbench_smoke_summary_records_artifact_root() -> None:
     assert summary["status"] == "passed"
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["release_verification"]["status"] in {"missing", "passed", "failed"}
+
+
+@pytest.mark.integration
+def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    docs = tmp_path / "workbench.md"
+    docs.write_text(
+        (REPO_ROOT / "docs" / "workbench.md")
+        .read_text(encoding="utf-8")
+        .replace(
+            "| `/overview` | Overview | Release history retained runs |",
+            "| `/overview` | Overview | history_handoffs=1 |",
+        ),
+        encoding="utf-8",
+    )
+    artifact_root = tmp_path / "artifacts"
+    release_root = artifact_root / "release_evidence"
+    release_root.mkdir(parents=True)
+    summary_path = release_root / "release_history_summary.json"
+    run_summary_path = tmp_path / "release_history" / "run-001" / "release_evidence_summary.json"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_history_summary.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_history",
+                "history_root": str(tmp_path / "release_history"),
+                "run_count": 1,
+                "passed_run_count": 1,
+                "failed_run_count": 0,
+                "incomplete_run_count": 0,
+                "matrix_delta_status_counts": {"not_compared": 1},
+                "release_artifact_verification_status_counts": {"passed": 1},
+                "workbench_smoke_status_counts": {"passed": 1},
+                "runs": [
+                    {
+                        "label": "run-001",
+                        "status": "passed",
+                        "summary_path": str(run_summary_path),
+                        "release_artifact_verification": {
+                            "status": "passed",
+                            "failure_count": 0,
+                            "release_history_handoff_count": 1,
+                            "first_failure": None,
+                        },
+                        "release_matrix_delta": {"status": "not_compared", "first_failure": None},
+                        "workbench_smoke": {
+                            "status": "passed",
+                            "failed_check_count": 0,
+                            "first_failed_check": None,
+                        },
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    summary = run_workbench_smoke_from_docs(docs, artifact_root=artifact_root)
+
+    overview_route = next(route for route in summary["routes"] if route["route"] == "/overview")
+    assert summary["status"] == "passed"
+    assert overview_route["expected_text"] == "history_handoffs=1"
+    assert overview_route["checks"]["expected_text"] is True
+    assert overview_route["failed_checks"] == []
 
 
 @pytest.mark.integration
