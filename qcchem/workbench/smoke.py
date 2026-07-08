@@ -158,10 +158,7 @@ def _page_registry_result(page: dict[str, Any]) -> dict[str, object]:
     }
 
 
-def _release_verification_summary(artifact_root: Path) -> dict[str, object]:
-    from qcchem.workbench.data import load_research_os_snapshot
-
-    snapshot = load_research_os_snapshot(artifact_root)
+def _release_verification_summary(snapshot: dict[str, object]) -> dict[str, object]:
     report = snapshot.get("release_verification")
     if not isinstance(report, dict) or not report:
         return {
@@ -191,18 +188,129 @@ def _release_verification_summary(artifact_root: Path) -> dict[str, object]:
     }
 
 
+def _release_history_failure_text(value: object) -> str | None:
+    if not isinstance(value, dict) or not value:
+        return None
+    return str(
+        value.get("reason")
+        or value.get("status")
+        or value.get("check")
+        or value.get("path")
+        or "unknown"
+    )
+
+
+def _release_history_run_failure_text(run: dict[str, object]) -> str | None:
+    first_failure = run.get("first_failure")
+    failure_text = _release_history_failure_text(first_failure)
+    if failure_text is not None:
+        return failure_text
+    matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
+    failure_text = _release_history_failure_text(matrix_delta.get("first_failure"))
+    if failure_text is not None:
+        return failure_text
+    verification = (
+        run.get("release_artifact_verification")
+        if isinstance(run.get("release_artifact_verification"), dict)
+        else {}
+    )
+    failure_text = _release_history_failure_text(verification.get("first_failure"))
+    if failure_text is not None:
+        return failure_text
+    workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+    first_failed_check = workbench_smoke.get("first_failed_check")
+    return str(first_failed_check) if first_failed_check else None
+
+
+def _release_history_run_summary(run: dict[str, object]) -> dict[str, object]:
+    verification = (
+        run.get("release_artifact_verification")
+        if isinstance(run.get("release_artifact_verification"), dict)
+        else {}
+    )
+    matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
+    workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+    return {
+        "label": run.get("label"),
+        "status": run.get("status"),
+        "summary_path": run.get("summary_path"),
+        "evidence_root": run.get("evidence_root"),
+        "release_artifact_verification_status": verification.get("status"),
+        "release_history_handoff_count": verification.get("release_history_handoff_count"),
+        "workbench_smoke_status": workbench_smoke.get("status"),
+        "workbench_smoke_failed_check_count": workbench_smoke.get("failed_check_count"),
+        "matrix_delta_status": matrix_delta.get("status"),
+        "first_failure": _release_history_run_failure_text(run),
+    }
+
+
+def _release_history_summary(snapshot: dict[str, object], *, run_limit: int = 5) -> dict[str, object]:
+    summary = snapshot.get("release_history_summary")
+    handoff = snapshot.get("release_history_handoff")
+    report = summary if isinstance(summary, dict) and summary else handoff
+    if not isinstance(report, dict) or not report:
+        return {
+            "available": False,
+            "status": "missing",
+            "source_path": None,
+            "handoff_source_path": None,
+            "run_count": 0,
+            "passed_run_count": 0,
+            "failed_run_count": 0,
+            "incomplete_run_count": 0,
+            "matrix_delta_status_counts": {},
+            "release_artifact_verification_status_counts": {},
+            "workbench_smoke_status_counts": {},
+            "first_failure": None,
+            "retained_runs": [],
+            "retained_runs_truncated": False,
+        }
+    runs = report.get("runs") if isinstance(report.get("runs"), list) else []
+    retained_runs = [run for run in runs if isinstance(run, dict)]
+    handoff_source_path = handoff.get("source_path") if isinstance(handoff, dict) and handoff else None
+    return {
+        "available": True,
+        "status": str(report.get("status") or "unknown"),
+        "source_path": report.get("source_path"),
+        "handoff_source_path": handoff_source_path,
+        "run_count": report.get("run_count", len(retained_runs)),
+        "passed_run_count": report.get("passed_run_count"),
+        "failed_run_count": report.get("failed_run_count"),
+        "incomplete_run_count": report.get("incomplete_run_count"),
+        "matrix_delta_status_counts": (
+            report.get("matrix_delta_status_counts")
+            if isinstance(report.get("matrix_delta_status_counts"), dict)
+            else {}
+        ),
+        "release_artifact_verification_status_counts": (
+            report.get("release_artifact_verification_status_counts")
+            if isinstance(report.get("release_artifact_verification_status_counts"), dict)
+            else {}
+        ),
+        "workbench_smoke_status_counts": (
+            report.get("workbench_smoke_status_counts")
+            if isinstance(report.get("workbench_smoke_status_counts"), dict)
+            else {}
+        ),
+        "first_failure": report.get("first_failure") if isinstance(report.get("first_failure"), dict) else None,
+        "retained_runs": [_release_history_run_summary(run) for run in retained_runs[:run_limit]],
+        "retained_runs_truncated": len(retained_runs) > run_limit,
+    }
+
+
 def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Path | None = None) -> dict[str, object]:
     import dash
 
     from qcchem.workbench.app import create_app
     from qcchem.workbench.components.layout import page_focus
-    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, resolve_workbench_artifact_root
+    from qcchem.workbench.data import WORKBENCH_ARTIFACT_ROOT_ENV, load_research_os_snapshot, resolve_workbench_artifact_root
 
     resolved_artifact_root = resolve_workbench_artifact_root(artifact_root)
     original_artifact_root = os.environ.get(WORKBENCH_ARTIFACT_ROOT_ENV)
     os.environ[WORKBENCH_ARTIFACT_ROOT_ENV] = str(resolved_artifact_root)
     try:
         app = create_app()
+        research_os_snapshot = load_research_os_snapshot(resolved_artifact_root)
         page_registry = getattr(app, "page_registry", dash.page_registry)
         registered_pages = _registered_pages(page_registry)
         pages_by_path = {str(page.get("path")): page for page in registered_pages}
@@ -255,7 +363,8 @@ def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Pat
             "failed_checks": failed_checks,
             "scope": "component_tree",
             "artifact_root": str(resolved_artifact_root),
-            "release_verification": _release_verification_summary(resolved_artifact_root),
+            "release_verification": _release_verification_summary(research_os_snapshot),
+            "release_history": _release_history_summary(research_os_snapshot),
             "notes": [
                 "Validates the documented showcase routes and all registered pages without starting a server or browser.",
                 "Run the real browser checklist separately before release candidates.",

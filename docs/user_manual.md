@@ -726,7 +726,10 @@ as `release_history_summary`, startup inventory exposes its count and featured
 path, and Overview shows retained run counts plus matrix-delta, verifier, and
 Workbench smoke status counts. It also shows a bounded per-run drilldown with
 each retained run's verifier status, Workbench smoke status, history-handoff
-count, matrix-delta status, first failure, and summary path.
+count, matrix-delta status, first failure, and summary path. The Workbench smoke
+JSON mirrors that retained-history state in a compact top-level
+`release_history` summary so CI artifacts can be reviewed without rendering the
+page.
 When the retained-history Markdown is kept as `release_history_summary.md` or
 `release_history_handoff.md` next to that JSON, the index classifies it as
 `release_history_handoff`, startup inventory exposes its count and featured

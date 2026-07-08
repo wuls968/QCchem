@@ -1321,6 +1321,8 @@ def test_workbench_smoke_checklist_matches_rendered_pages() -> None:
     assert summary["status"] == "passed"
     assert summary["scope"] == "component_tree"
     assert summary["failed_checks"] == []
+    assert summary["release_history"]["available"] in {False, True}
+    assert "retained_runs" in summary["release_history"]
     assert summary["route_count"] == 6
     assert summary["failed_routes"] == 0
     assert summary["page_count"] == 14
@@ -1362,6 +1364,7 @@ def test_workbench_smoke_summary_records_artifact_root() -> None:
     assert summary["status"] == "passed"
     assert summary["artifact_root"] == str(artifact_root.resolve())
     assert summary["release_verification"]["status"] in {"missing", "passed", "failed"}
+    assert summary["release_history"]["status"] in {"missing", "passed", "failed"}
 
 
 @pytest.mark.integration
@@ -1424,10 +1427,33 @@ def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: 
     summary = run_workbench_smoke_from_docs(docs, artifact_root=artifact_root)
 
     overview_route = next(route for route in summary["routes"] if route["route"] == "/overview")
+    release_history = summary["release_history"]
     assert summary["status"] == "passed"
     assert overview_route["expected_text"] == "history_handoffs=1"
     assert overview_route["checks"]["expected_text"] is True
     assert overview_route["failed_checks"] == []
+    assert release_history["available"] is True
+    assert release_history["status"] == "passed"
+    assert release_history["source_path"] == str(summary_path)
+    assert release_history["run_count"] == 1
+    assert release_history["matrix_delta_status_counts"] == {"not_compared": 1}
+    assert release_history["release_artifact_verification_status_counts"] == {"passed": 1}
+    assert release_history["workbench_smoke_status_counts"] == {"passed": 1}
+    assert release_history["retained_runs_truncated"] is False
+    assert release_history["retained_runs"] == [
+        {
+            "label": "run-001",
+            "status": "passed",
+            "summary_path": str(run_summary_path),
+            "evidence_root": None,
+            "release_artifact_verification_status": "passed",
+            "release_history_handoff_count": 1,
+            "workbench_smoke_status": "passed",
+            "workbench_smoke_failed_check_count": 0,
+            "matrix_delta_status": "not_compared",
+            "first_failure": None,
+        }
+    ]
 
 
 @pytest.mark.integration
