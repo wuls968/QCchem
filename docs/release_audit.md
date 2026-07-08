@@ -244,9 +244,10 @@ qcchem release history summarize \
 The summary JSON uses `qcchem.release_history_summary.v0.1-alpha` and lists one
 direct child directory per retained run. Each run records the release evidence
 status, selected baseline, matrix delta status/counts, release artifact
-verifier status, Workbench smoke status, and first failure. Missing, unreadable,
-or non-object `release_evidence_summary.json` files are reported as incomplete
-runs instead of crashing the review. `--strict` returns exit code `2` unless
+verifier status, release-history handoff count, Workbench smoke status, and
+first failure. Missing, unreadable, or non-object
+`release_evidence_summary.json` files are reported as incomplete runs instead
+of crashing the review. `--strict` returns exit code `2` unless
 the retained history summary is `passed`.
 
 Export the same retained-history review as Markdown when handing it to a

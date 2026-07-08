@@ -2423,6 +2423,7 @@ def _release_history_run_summary(run_root: Path) -> dict[str, object]:
         )
 
     verification = _release_history_dict(payload.get("release_artifact_verification"))
+    verification_summary = _release_history_dict(verification.get("summary"))
     matrix_summary = _release_history_dict(payload.get("release_matrix_summary"))
     matrix_artifacts = matrix_summary.get("artifacts") if isinstance(matrix_summary.get("artifacts"), list) else []
     failed_matrix_artifacts = [
@@ -2466,6 +2467,7 @@ def _release_history_run_summary(run_root: Path) -> dict[str, object]:
         "release_artifact_verification": {
             "status": verification.get("status") or "not_available",
             "failure_count": verification.get("failure_count"),
+            "release_history_handoff_count": verification_summary.get("release_history_handoff_count"),
             "first_failure": verification.get("first_failure")
             if isinstance(verification.get("first_failure"), dict)
             else None,
@@ -2694,6 +2696,7 @@ def _release_history_markdown(summary: dict[str, object], *, output_path: Path) 
                 f"- `{run.get('label')}`: status=`{run.get('status')}`; "
                 f"verification=`{verification.get('status')}`; "
                 f"workbench=`{workbench.get('status')}`; "
+                f"history_handoffs=`{_release_handoff_value(verification.get('release_history_handoff_count'))}`; "
                 f"matrix_artifacts=`{_release_handoff_value(matrix_summary.get('artifact_count'))}`; "
                 f"matrix_failures=`{_release_handoff_value(matrix_summary.get('failed_artifact_count'))}`; "
                 f"delta=`{delta.get('status')}`; "

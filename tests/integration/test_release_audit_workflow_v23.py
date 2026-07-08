@@ -1179,6 +1179,55 @@ def test_release_fetch_ci_evidence_downloads_and_retains_history(
     assert "- release_history_handoff_count: `1`" in handoff
     assert "history=`passed`" in handoff
 
+    history_summary_path = tmp_path / "fetched_release_history_summary.json"
+    history_markdown_path = tmp_path / "fetched_release_history_summary.md"
+    summarize_exit = main(
+        [
+            "release",
+            "history",
+            "summarize",
+            "--history-root",
+            str(history_root),
+            "-o",
+            str(history_summary_path),
+            "--strict",
+        ]
+    )
+    export_exit = main(
+        [
+            "release",
+            "history",
+            "export-markdown",
+            "--history-summary",
+            str(history_summary_path),
+            "-o",
+            str(history_markdown_path),
+            "--strict",
+        ]
+    )
+    history_stdout = capsys.readouterr().out
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    history_runs = {run["label"]: run for run in history_summary["runs"]}
+    history_markdown = history_markdown_path.read_text(encoding="utf-8")
+    assert summarize_exit == 0
+    assert export_exit == 0
+    assert "Release history summary: passed" in history_stdout
+    assert "Runs: 2 total, 2 passed, 0 failed, 0 incomplete" in history_stdout
+    assert history_summary["status"] == "passed"
+    assert history_summary["run_count"] == 2
+    assert history_summary["matrix_delta_status_counts"] == {"not_compared": 1, "passed": 1}
+    assert history_summary["release_artifact_verification_status_counts"] == {"passed": 2}
+    assert history_summary["workbench_smoke_status_counts"] == {"passed": 2}
+    assert history_runs["123456"]["release_artifact_verification"]["release_history_handoff_count"] == 1
+    assert history_runs["123457"]["release_artifact_verification"]["release_history_handoff_count"] == 1
+    assert history_runs["123457"]["release_matrix_baseline_selection"]["mode"] == "auto"
+    assert history_runs["123457"]["release_matrix_delta"]["status"] == "passed"
+    assert "# QCchem Release History Handoff" in history_markdown
+    assert "- matrix_delta_status_counts: `not_compared=1, passed=1`" in history_markdown
+    assert "- release_artifact_verification_status_counts: `passed=2`" in history_markdown
+    assert "`123456`: status=`passed`; verification=`passed`; workbench=`passed`; history_handoffs=`1`" in history_markdown
+    assert "`123457`: status=`passed`; verification=`passed`; workbench=`passed`; history_handoffs=`1`" in history_markdown
+
 
 @pytest.mark.integration
 def test_release_fetch_ci_evidence_rejects_non_empty_download_dir(
