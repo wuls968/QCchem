@@ -33,6 +33,53 @@ def _normalize_lines(value: str | None) -> list[str]:
     return [line.strip() for line in (value or "").splitlines() if line.strip()]
 
 
+def build_provider_config(
+    base_url: str | None,
+    model: str | None,
+    api_key_ref: str | None,
+) -> dict[str, object]:
+    normalized = {
+        "provider_kind": "openai_compatible",
+        "base_url": str(base_url or "").strip(),
+        "model": str(model or "").strip(),
+        "api_key_ref": str(api_key_ref or "").strip(),
+    }
+    if normalized["model"] and normalized["api_key_ref"]:
+        status = "reference_ready"
+    elif normalized["base_url"] or normalized["model"] or normalized["api_key_ref"]:
+        status = "partial"
+    else:
+        status = "not_configured"
+    normalized["status"] = status
+    return normalized
+
+
+def build_provider_summary_content(config: dict[str, object] | None) -> list[html.Component]:
+    profile = build_provider_config(
+        str((config or {}).get("base_url") or ""),
+        str((config or {}).get("model") or ""),
+        str((config or {}).get("api_key_ref") or ""),
+    )
+    status_label = {
+        "reference_ready": "Reference ready",
+        "partial": "Partial",
+        "not_configured": "Not configured",
+    }.get(str(profile["status"]), "Not configured")
+    return [
+        html.P("Provider Profile", className="qcchem-ai-assistant-window__preview-title"),
+        html.Div(
+            className="qcchem-ai-assistant-window__preview-grid",
+            children=[
+                html.Div([html.Span("Status"), html.Strong(status_label)]),
+                html.Div([html.Span("Kind"), html.Strong(str(profile["provider_kind"]))]),
+                html.Div([html.Span("Base URL"), html.Strong(str(profile["base_url"] or "default"))]),
+                html.Div([html.Span("Model"), html.Strong(str(profile["model"] or "unset"))]),
+                html.Div([html.Span("Key ref"), html.Strong(str(profile["api_key_ref"] or "unset"))]),
+            ],
+        ),
+    ]
+
+
 def _read_json(path: Path) -> dict[str, object] | None:
     if not path.exists():
         return None
@@ -189,6 +236,7 @@ def build_floating_assistant() -> html.Div:
             dcc.Store(id="qcchem-ai-current-ticket-path", data=None),
             dcc.Store(id="qcchem-ai-current-ticket-record", data=None),
             dcc.Store(id="qcchem-ai-ticket-guard-state", data={"visible": False}),
+            dcc.Store(id="qcchem-ai-provider-config", data=build_provider_config(None, None, None)),
             html.Div(
                 className="qcchem-ai-assistant-window__header",
                 children=[
@@ -422,10 +470,6 @@ def build_floating_assistant() -> html.Div:
                         children=[
                             html.P("Provider Drawer", className="qcchem-ai-provider-drawer__eyebrow"),
                             html.H3("Provider Settings", className="qcchem-ai-provider-drawer__title"),
-                            html.P(
-                                "Placeholder controls only for now. Real state binding lands in the next task.",
-                                className="qcchem-ai-provider-drawer__note",
-                            ),
                         ],
                     ),
                     html.Div(
@@ -450,6 +494,11 @@ def build_floating_assistant() -> html.Div:
                                 type="text",
                             ),
                         ],
+                    ),
+                    html.Div(
+                        id="qcchem-ai-provider-summary",
+                        className="qcchem-ai-provider-drawer__summary qcchem-ai-assistant-window__preview-block",
+                        children=build_provider_summary_content(build_provider_config(None, None, None)),
                     ),
                 ],
             ),

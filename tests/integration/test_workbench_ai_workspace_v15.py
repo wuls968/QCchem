@@ -22,6 +22,7 @@ from qcchem.workflow.ai_workspace import (
     run_ticket,
 )
 from qcchem.workbench.app import create_app
+from qcchem.workbench.components.assistant import build_provider_config, build_provider_summary_content
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -66,7 +67,10 @@ def test_workbench_shell_contains_floating_assistant_ids() -> None:
 
     assert "qcchem-ai-assistant-window" in rendered
     assert "qcchem-ai-provider-drawer" in rendered
+    assert "qcchem-ai-provider-config" in rendered
+    assert "qcchem-ai-provider-summary" in rendered
     assert "qcchem-ai-current-ticket-preview" in rendered
+    assert "Placeholder controls only for now" not in rendered
 
 
 @pytest.mark.integration
@@ -105,6 +109,40 @@ def test_workbench_shell_registers_dash_owned_ai_shell_state_callbacks() -> None
     assert "qcchem-ai-assistant-body.hidden" in app.callback_map
     assert "qcchem-ai-assistant-minimize.children" in app.callback_map
     assert "qcchem-ai-provider-drawer.hidden" in app.callback_map
+    assert "qcchem-ai-provider-config.data" in app.callback_map
+    assert "qcchem-ai-provider-summary.children" in app.callback_map
+
+
+@pytest.mark.integration
+def test_provider_drawer_normalizes_state_without_secret_storage() -> None:
+    config = build_provider_config(
+        " https://api.example.com/v1 ",
+        " gpt-5.4 ",
+        " OPENAI_API_KEY ",
+    )
+
+    assert config == {
+        "provider_kind": "openai_compatible",
+        "base_url": "https://api.example.com/v1",
+        "model": "gpt-5.4",
+        "api_key_ref": "OPENAI_API_KEY",
+        "status": "reference_ready",
+    }
+
+    summary = str(build_provider_summary_content(config))
+    assert "Reference ready" in summary
+    assert "https://api.example.com/v1" in summary
+    assert "gpt-5.4" in summary
+    assert "OPENAI_API_KEY" in summary
+    assert "sk-" not in summary
+
+
+@pytest.mark.integration
+def test_provider_drawer_marks_partial_profiles() -> None:
+    config = build_provider_config("", "gpt-5.4", "")
+
+    assert config["status"] == "partial"
+    assert "Partial" in str(build_provider_summary_content(config))
 
 
 @pytest.mark.integration

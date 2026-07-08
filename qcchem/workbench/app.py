@@ -21,7 +21,11 @@ from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records,
 from qcchem.workflow.ai_workspace import handle_ticket_editor_action
 from qcchem.io.workflow_config import load_workflow_spec_from_text
 from qcchem.workflow.custom_workflow import validate_workflow_plugins
-from qcchem.workbench.components.assistant import build_ticket_preview_content
+from qcchem.workbench.components.assistant import (
+    build_provider_config,
+    build_provider_summary_content,
+    build_ticket_preview_content,
+)
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
@@ -194,6 +198,26 @@ def create_app() -> Dash:
     def _render_ai_provider_drawer_visibility(state: dict[str, object] | None) -> bool:
         current = state or {}
         return bool(current.get("minimized", False)) or not bool(current.get("provider_drawer_open", False))
+
+    @app.callback(
+        Output("qcchem-ai-provider-config", "data"),
+        Input("qcchem-ai-provider-base-url", "value"),
+        Input("qcchem-ai-provider-model", "value"),
+        Input("qcchem-ai-provider-key-ref", "value"),
+    )
+    def _update_ai_provider_config(
+        base_url: str | None,
+        model: str | None,
+        api_key_ref: str | None,
+    ) -> dict[str, object]:
+        return build_provider_config(base_url, model, api_key_ref)
+
+    @app.callback(
+        Output("qcchem-ai-provider-summary", "children"),
+        Input("qcchem-ai-provider-config", "data"),
+    )
+    def _render_ai_provider_summary(config: dict[str, object] | None):
+        return build_provider_summary_content(config)
 
     @app.callback(
         Output("qcchem-ai-current-ticket-preview", "children"),

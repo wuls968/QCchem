@@ -34,6 +34,10 @@ ai_provider:
 ```
 
 The example file includes the same shape plus the runtime defaults QCchem expects for the workbench flow.
+The Workbench provider drawer mirrors the same `base_url`, `model`, and
+`api_key_ref` fields in Dash session state and renders a compact provider
+profile summary. It stores the key reference name only; real API keys stay in the
+runtime environment or external secret manager.
 
 ## Ticket flow
 

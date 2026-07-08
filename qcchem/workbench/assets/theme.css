@@ -263,7 +263,6 @@ select {
 .qcchem-panel__note,
 .qcchem-card-note,
 .qcchem-page-placeholder__body,
-.qcchem-ai-provider-drawer__note,
 .qcchem-ai-assistant-window__preview-body {
   color: var(--qcchem-text-secondary);
   line-height: 1.55;
