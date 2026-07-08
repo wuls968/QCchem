@@ -106,8 +106,9 @@ The AI surface now includes:
 - evidence scope, limitation notes, and recommended action in ticket previews and delivery cards
 - safe floating-window recovery through `Reset`, title-grip double click, and viewport clamping
 - an AI Workspace board for inbox/running/submitted/completed/returned lanes
-- a delivery history section that preserves review state, review actions,
-  downstream output paths, workflow result/report paths, and return notes
+- a filterable delivery history section that preserves review state, review
+  actions, downstream output paths, workflow result/report paths, and return
+  notes
 
 This path is designed to answer, in order:
 
@@ -161,9 +162,13 @@ summary for the latest indexed `release_artifact_verification.json`, or
 root, including the retained release-history handoff count when the verifier
 summary provides it. It also includes a compact `release_history` summary with
 retained run counts, status-count maps, first failure, and a bounded retained-run
-drilldown. The documented `/overview` smoke row is anchored to the retained-run
-drilldown so route smoke fails if that release-history review block falls out of
-the Overview component tree. The same linked handoff can be generated after a CI
+drilldown. It also includes `ai_workspace_delivery`, a compact summary of
+`artifacts/ai_workspace/deliveries` with delivery counts, review-status counts,
+delivery-kind counts, linked output path counts, return-note counts, and a
+bounded list of review handoffs with labeled artifact paths. The documented
+`/overview` smoke row is anchored to the retained-run drilldown so route smoke
+fails if that release-history review block falls out of the Overview component
+tree. The same linked handoff can be generated after a CI
 artifact download:
 
 ```bash

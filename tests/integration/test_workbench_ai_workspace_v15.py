@@ -160,6 +160,9 @@ def test_workbench_shell_registers_ticket_editor_callbacks() -> None:
     assert "qcchem-ai-current-ticket-record.data" in callback_outputs
     assert "qcchem-ai-current-ticket-path.data" in callback_outputs
     assert "qcchem-ai-task-inbox.children" in app.callback_map
+    assert "qcchem-ai-delivery-history.children" in app.callback_map
+    assert "qcchem-ai-delivery-review-filter.options" in callback_outputs
+    assert "qcchem-ai-delivery-kind-filter.options" in callback_outputs
 
 
 @pytest.mark.integration
@@ -416,6 +419,67 @@ def test_ai_workspace_delivery_renders_artifact_handoff_and_return_notes(tmp_pat
     assert "address return notes (address_return_notes)" in rendered
     assert "Return notes" in rendered
     assert "Attach the exact baseline result path before closing." in rendered
+
+
+@pytest.mark.integration
+def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    write_delivery_record(
+        ticket_root,
+        {
+            "delivery_id": "delivery-submitted-001",
+            "task_id": "analysis-submitted-001",
+            "delivery_kind": "analysis_note",
+            "summary": "Submitted analysis handoff.",
+            "linked_outputs": ["artifacts/ai_workspace/evidence/summary.json"],
+            "review_status": "submitted",
+            "evidence_summary": {"recommended_action": "review_evidence_boundary"},
+        },
+    )
+    write_delivery_record(
+        ticket_root,
+        {
+            "delivery_id": "delivery-returned-002",
+            "task_id": "workflow-returned-002",
+            "delivery_kind": "artifact_bundle",
+            "summary": "Returned workflow handoff.",
+            "linked_outputs": ["artifacts/workflows/demo_flow/workflow_result.json"],
+            "review_status": "returned",
+            "return_notes": "Missing acceptance evidence.",
+            "evidence_summary": {"recommended_action": "review_evidence_boundary"},
+        },
+    )
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    deliveries = list_delivery_records(ticket_root)
+    filtered = page_module.filter_delivery_records(
+        deliveries,
+        review_status="returned",
+        delivery_kind="artifact_bundle",
+    )
+    summary = page_module.build_delivery_handoff_summary(deliveries, workspace_root_path=ticket_root)
+    children = page_module.build_delivery_history_children(
+        deliveries,
+        workspace_root_path=ticket_root,
+        review_status_filter="returned",
+        delivery_kind_filter="artifact_bundle",
+    )
+    rendered = str(children)
+
+    assert [delivery["delivery_id"] for delivery in filtered] == ["delivery-returned-002"]
+    assert summary["delivery_count"] == 2
+    assert summary["review_status_counts"] == {"returned": 1, "submitted": 1}
+    assert summary["delivery_kind_counts"] == {"analysis_note": 1, "artifact_bundle": 1}
+    assert summary["linked_output_path_count"] == 2
+    assert summary["return_note_count"] == 1
+    returned_handoff = next(item for item in summary["handoffs"] if item["delivery_id"] == "delivery-returned-002")
+    assert returned_handoff["review_action"] == "address_return_notes"
+    assert "1 / 2" in rendered
+    assert "Filter" in rendered
+    assert "review=returned, kind=artifact_bundle" in rendered
+    assert "Returned workflow handoff." in rendered
+    assert "Submitted analysis handoff." not in rendered
 
 
 @pytest.mark.integration

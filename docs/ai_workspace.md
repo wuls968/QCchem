@@ -78,7 +78,9 @@ summarizes the delivery record count, latest delivery, review-status counts, and
 the `artifacts/ai_workspace/deliveries` source path before listing individual
 delivery cards. Each card includes a review action, labeled linked output paths,
 workflow result/report paths when present, evidence scope, and return notes when
-a handoff is sent back for revision.
+a handoff is sent back for revision. The Delivery History controls can filter
+those handoffs by review status and delivery kind while keeping total counts,
+status counts, kind counts, and the source directory visible.
 
 ## Default AI posture
 

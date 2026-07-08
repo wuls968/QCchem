@@ -298,6 +298,17 @@ def _release_history_summary(snapshot: dict[str, object], *, run_limit: int = 5)
     }
 
 
+def _ai_workspace_delivery_summary(artifact_root: Path) -> dict[str, object]:
+    from qcchem.workbench.pages.ai_workspace import build_delivery_handoff_summary
+    from qcchem.workflow.ai_store import list_delivery_records
+
+    workspace = artifact_root / "ai_workspace"
+    return build_delivery_handoff_summary(
+        list_delivery_records(workspace),
+        workspace_root_path=workspace,
+    )
+
+
 def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Path | None = None) -> dict[str, object]:
     import dash
 
@@ -365,6 +376,7 @@ def run_workbench_smoke(routes: list[WorkbenchSmokeRoute], *, artifact_root: Pat
             "artifact_root": str(resolved_artifact_root),
             "release_verification": _release_verification_summary(research_os_snapshot),
             "release_history": _release_history_summary(research_os_snapshot),
+            "ai_workspace_delivery": _ai_workspace_delivery_summary(resolved_artifact_root),
             "notes": [
                 "Validates the documented showcase routes and all registered pages without starting a server or browser.",
                 "Run the real browser checklist separately before release candidates.",

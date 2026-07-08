@@ -1368,6 +1368,77 @@ def test_workbench_smoke_summary_records_artifact_root() -> None:
 
 
 @pytest.mark.integration
+def test_workbench_smoke_summary_records_ai_workspace_delivery_handoff(tmp_path: Path) -> None:
+    from qcchem.workbench.smoke import run_workbench_smoke_from_docs
+
+    artifact_root = tmp_path / "artifacts"
+    deliveries_dir = artifact_root / "ai_workspace" / "deliveries"
+    deliveries_dir.mkdir(parents=True)
+    delivery_path = deliveries_dir / "delivery-returned-001.json"
+    delivery_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-returned-001",
+                "task_id": "analysis-returned-001",
+                "delivery_kind": "analysis_note",
+                "summary": "Returned claim review handoff.",
+                "linked_outputs": [
+                    "artifacts/ai_workspace/reviews/h2_claim/claim_review.json",
+                    "artifacts/ai_workspace/reviews/h2_claim/claim_review.md",
+                ],
+                "review_status": "returned",
+                "return_notes": "Attach exact baseline evidence before closing.",
+                "evidence_scope": "artifacts/h2_local",
+                "evidence_summary": {
+                    "primary_scientific_claim": "H2 claim needs baseline review.",
+                    "recommended_action": "review_evidence_boundary",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    summary = run_workbench_smoke_from_docs(
+        REPO_ROOT / "docs" / "workbench.md",
+        artifact_root=artifact_root,
+    )
+
+    ai_delivery = summary["ai_workspace_delivery"]
+    assert summary["status"] == "passed"
+    assert ai_delivery["available"] is True
+    assert ai_delivery["source_path"] == str(deliveries_dir)
+    assert ai_delivery["delivery_count"] == 1
+    assert ai_delivery["review_status_counts"] == {"returned": 1}
+    assert ai_delivery["delivery_kind_counts"] == {"analysis_note": 1}
+    assert ai_delivery["linked_output_path_count"] == 2
+    assert ai_delivery["return_note_count"] == 1
+    assert ai_delivery["handoffs"] == [
+        {
+            "delivery_id": "delivery-returned-001",
+            "task_id": "analysis-returned-001",
+            "summary": "Returned claim review handoff.",
+            "delivery_kind": "analysis_note",
+            "review_status": "returned",
+            "review_action": "address_return_notes",
+            "artifact_count": 3,
+            "artifacts": [
+                {"label": "Evidence scope", "path": "artifacts/h2_local"},
+                {
+                    "label": "Linked output 1",
+                    "path": "artifacts/ai_workspace/reviews/h2_claim/claim_review.json",
+                },
+                {
+                    "label": "Linked output 2",
+                    "path": "artifacts/ai_workspace/reviews/h2_claim/claim_review.md",
+                },
+            ],
+            "artifacts_truncated": False,
+            "return_notes": "Attach exact baseline evidence before closing.",
+        }
+    ]
+
+
+@pytest.mark.integration
 def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: Path) -> None:
     from qcchem.workbench.smoke import run_workbench_smoke_from_docs
 

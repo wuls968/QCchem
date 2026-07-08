@@ -8,7 +8,11 @@ from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 from qcchem.workbench.components.cards import callout_card
 from qcchem.workbench.components.layout import build_shell, ordered_pages, page_focus
 from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
-from qcchem.workbench.pages.ai_workspace import build_delivery_history_children, build_lane_children
+from qcchem.workbench.pages.ai_workspace import (
+    build_delivery_history_children,
+    build_lane_children,
+    delivery_filter_options,
+)
 from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
@@ -419,10 +423,41 @@ def create_app() -> Dash:
     @app.callback(
         Output("qcchem-ai-delivery-history", "children"),
         Input("qcchem-ai-current-ticket-record", "data"),
+        Input("qcchem-ai-delivery-review-filter", "value"),
+        Input("qcchem-ai-delivery-kind-filter", "value"),
     )
-    def _render_delivery_history(_current_ticket_record: dict[str, object] | None):
+    def _render_delivery_history(
+        _current_ticket_record: dict[str, object] | None,
+        review_filter: str | None,
+        kind_filter: str | None,
+    ):
         root = _current_workspace_root()
         deliveries = list_delivery_records(root)
-        return build_delivery_history_children(deliveries, workspace_root_path=root)
+        return build_delivery_history_children(
+            deliveries,
+            workspace_root_path=root,
+            review_status_filter=review_filter,
+            delivery_kind_filter=kind_filter,
+        )
+
+    @app.callback(
+        Output("qcchem-ai-delivery-review-filter", "options"),
+        Output("qcchem-ai-delivery-kind-filter", "options"),
+        Input("qcchem-ai-current-ticket-record", "data"),
+    )
+    def _render_delivery_filter_options(_current_ticket_record: dict[str, object] | None):
+        deliveries = list_delivery_records(_current_workspace_root())
+        return (
+            delivery_filter_options(
+                deliveries,
+                field="review_status",
+                all_label="All review states",
+            ),
+            delivery_filter_options(
+                deliveries,
+                field="delivery_kind",
+                all_label="All delivery kinds",
+            ),
+        )
 
     return app

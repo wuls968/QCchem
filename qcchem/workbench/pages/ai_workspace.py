@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dash import html
+from dash import dcc, html
 
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
@@ -23,6 +23,8 @@ LANE_NEXT_ACTIONS = {
     AI_WORKSPACE_TICKET_LANE_COMPLETED: "Use completed tickets as the evidence-backed outcome list.",
     AI_WORKSPACE_TICKET_LANE_RETURNED: "Resolve returned scope notes before retrying execution.",
 }
+
+DELIVERY_FILTER_ALL = "__all__"
 
 
 def _compact_record_label(record: dict[str, object] | None, *, fallback: str) -> str:
@@ -205,6 +207,97 @@ def _delivery_artifact_list(rows: list[tuple[str, str]]) -> html.Div:
     )
 
 
+def delivery_filter_options(
+    deliveries: list[dict[str, object]],
+    *,
+    field: str,
+    all_label: str,
+) -> list[dict[str, str]]:
+    values = sorted({_compact_string(record.get(field)) for record in deliveries if _compact_string(record.get(field))})
+    return [{"label": all_label, "value": DELIVERY_FILTER_ALL}, *[{"label": value, "value": value} for value in values]]
+
+
+def filter_delivery_records(
+    deliveries: list[dict[str, object]],
+    *,
+    review_status: str | None = None,
+    delivery_kind: str | None = None,
+) -> list[dict[str, object]]:
+    review_filter = _compact_string(review_status)
+    kind_filter = _compact_string(delivery_kind)
+    if review_filter == DELIVERY_FILTER_ALL:
+        review_filter = ""
+    if kind_filter == DELIVERY_FILTER_ALL:
+        kind_filter = ""
+    filtered: list[dict[str, object]] = []
+    for delivery in deliveries:
+        if review_filter and _compact_string(delivery.get("review_status")) != review_filter:
+            continue
+        if kind_filter and _compact_string(delivery.get("delivery_kind")) != kind_filter:
+            continue
+        filtered.append(delivery)
+    return filtered
+
+
+def build_delivery_handoff_summary(
+    deliveries: list[dict[str, object]],
+    *,
+    workspace_root_path: Path | None = None,
+    handoff_limit: int = 5,
+) -> dict[str, object]:
+    deliveries_dir = (workspace_root_path / "deliveries") if workspace_root_path is not None else Path("artifacts/ai_workspace/deliveries")
+    review_statuses: dict[str, int] = {}
+    delivery_kinds: dict[str, int] = {}
+    handoffs: list[dict[str, object]] = []
+    total_output_paths = 0
+    return_note_count = 0
+    for delivery in deliveries:
+        raw_evidence = delivery.get("evidence_summary") or delivery.get("linked_evidence_summary") or {}
+        evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
+        outputs = _string_list(delivery.get("linked_outputs"))
+        workflow = _workflow_delivery_summary(delivery)
+        review_status = _compact_string(delivery.get("review_status")) or "pending_review"
+        delivery_kind = _compact_string(delivery.get("delivery_kind")) or "delivery"
+        review_statuses[review_status] = review_statuses.get(review_status, 0) + 1
+        delivery_kinds[delivery_kind] = delivery_kinds.get(delivery_kind, 0) + 1
+        total_output_paths += len(outputs)
+        return_notes = _compact_string(delivery.get("return_notes"))
+        if return_notes:
+            return_note_count += 1
+        if len(handoffs) < handoff_limit:
+            artifact_rows = _delivery_artifact_rows(delivery, workflow, outputs)
+            handoffs.append(
+                {
+                    "delivery_id": delivery.get("delivery_id"),
+                    "task_id": delivery.get("task_id"),
+                    "summary": delivery.get("summary"),
+                    "delivery_kind": delivery_kind,
+                    "review_status": review_status,
+                    "review_action": _delivery_review_action(delivery, evidence, workflow, outputs),
+                    "artifact_count": len(artifact_rows),
+                    "artifacts": [
+                        {"label": label, "path": path}
+                        for label, path in artifact_rows[:handoff_limit]
+                    ],
+                    "artifacts_truncated": len(artifact_rows) > handoff_limit,
+                    "return_notes": return_notes or None,
+                }
+            )
+    latest_delivery = deliveries[-1] if deliveries else None
+    return {
+        "available": bool(deliveries),
+        "source_path": str(deliveries_dir),
+        "delivery_count": len(deliveries),
+        "review_status_counts": review_statuses,
+        "delivery_kind_counts": delivery_kinds,
+        "linked_output_path_count": total_output_paths,
+        "return_note_count": return_note_count,
+        "latest": _compact_record_label(latest_delivery, fallback="none"),
+        "handoffs": handoffs,
+        "handoffs_truncated": len(deliveries) > handoff_limit,
+    }
+
+
 def build_delivery_card(record: dict[str, object]) -> html.Div:
     raw_evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
     evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
@@ -340,18 +433,79 @@ def _lane(
     )
 
 
-def build_delivery_history_children(deliveries: list[dict[str, object]], *, workspace_root_path: Path | None = None) -> list[object]:
+def build_delivery_filter_controls(deliveries: list[dict[str, object]]) -> html.Div:
+    return html.Div(
+        className="qcchem-ai-workspace-page__filter-bar",
+        children=[
+            html.Div(
+                className="qcchem-ai-workspace-page__filter-control",
+                children=[
+                    html.Label("Review status", htmlFor="qcchem-ai-delivery-review-filter"),
+                    dcc.Dropdown(
+                        id="qcchem-ai-delivery-review-filter",
+                        options=delivery_filter_options(
+                            deliveries,
+                            field="review_status",
+                            all_label="All review states",
+                        ),
+                        value=DELIVERY_FILTER_ALL,
+                        clearable=False,
+                        searchable=False,
+                    ),
+                ],
+            ),
+            html.Div(
+                className="qcchem-ai-workspace-page__filter-control",
+                children=[
+                    html.Label("Delivery kind", htmlFor="qcchem-ai-delivery-kind-filter"),
+                    dcc.Dropdown(
+                        id="qcchem-ai-delivery-kind-filter",
+                        options=delivery_filter_options(
+                            deliveries,
+                            field="delivery_kind",
+                            all_label="All delivery kinds",
+                        ),
+                        value=DELIVERY_FILTER_ALL,
+                        clearable=False,
+                        searchable=False,
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def build_delivery_history_children(
+    deliveries: list[dict[str, object]],
+    *,
+    workspace_root_path: Path | None = None,
+    review_status_filter: str | None = None,
+    delivery_kind_filter: str | None = None,
+) -> list[object]:
     deliveries_dir = (workspace_root_path / "deliveries") if workspace_root_path is not None else Path("artifacts/ai_workspace/deliveries")
-    latest_delivery = deliveries[-1] if deliveries else None
-    review_statuses: dict[str, int] = {}
-    for delivery in deliveries:
-        status = str(delivery.get("review_status") or "pending_review")
-        review_statuses[status] = review_statuses.get(status, 0) + 1
+    filtered_deliveries = filter_delivery_records(
+        deliveries,
+        review_status=review_status_filter,
+        delivery_kind=delivery_kind_filter,
+    )
+    summary = build_delivery_handoff_summary(deliveries, workspace_root_path=workspace_root_path)
+    latest_delivery = filtered_deliveries[-1] if filtered_deliveries else None
+    review_statuses = summary["review_status_counts"] if isinstance(summary["review_status_counts"], dict) else {}
+    delivery_kinds = summary["delivery_kind_counts"] if isinstance(summary["delivery_kind_counts"], dict) else {}
     status_text = ", ".join(f"{status}={count}" for status, count in sorted(review_statuses.items())) or "none"
+    kind_text = ", ".join(f"{kind}={count}" for kind, count in sorted(delivery_kinds.items())) or "none"
+    active_filters = []
+    if _compact_string(review_status_filter) not in {"", DELIVERY_FILTER_ALL}:
+        active_filters.append(f"review={review_status_filter}")
+    if _compact_string(delivery_kind_filter) not in {"", DELIVERY_FILTER_ALL}:
+        active_filters.append(f"kind={delivery_kind_filter}")
+    filter_text = ", ".join(active_filters) if active_filters else "all"
     empty_message = (
         f"0 persisted delivery records found under {deliveries_dir}. "
         "Run an accepted ticket or submit a delivery to create a durable handoff."
     )
+    if deliveries and not filtered_deliveries:
+        empty_message = f"0 delivery records match filters {filter_text} under {deliveries_dir}."
     return [
         html.Div(
             className="qcchem-ai-workspace-page__state-card",
@@ -359,16 +513,18 @@ def build_delivery_history_children(deliveries: list[dict[str, object]], *, work
                 html.Div(
                     className="qcchem-ai-workspace-page__ticket-grid",
                     children=[
-                        html.Div([html.Span("Records"), html.Strong(str(len(deliveries)))]),
+                        html.Div([html.Span("Records"), html.Strong(f"{len(filtered_deliveries)} / {len(deliveries)}")]),
                         html.Div([html.Span("Latest"), html.Strong(_compact_record_label(latest_delivery, fallback="none"))]),
                         html.Div([html.Span("Review"), html.Strong(status_text)]),
+                        html.Div([html.Span("Kinds"), html.Strong(kind_text)]),
+                        html.Div([html.Span("Filter"), html.Strong(filter_text)]),
                         html.Div([html.Span("Source"), html.Strong(str(deliveries_dir))]),
                     ],
                 )
             ],
         ),
         html.Div(
-            [build_delivery_card(delivery) for delivery in deliveries]
+            [build_delivery_card(delivery) for delivery in filtered_deliveries]
             or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
             className="qcchem-ai-workspace-page__delivery-stack",
         ),
@@ -506,6 +662,7 @@ def layout() -> html.Div:
                         "Deliveries are the durable handoff object: summary, linked outputs, review status, and the evidence posture that produced them.",
                         className="qcchem-panel__note",
                     ),
+                    build_delivery_filter_controls(deliveries),
                     html.Div(
                         id="qcchem-ai-delivery-history",
                         className="qcchem-ai-workspace-page__delivery-history-body",

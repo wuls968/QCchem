@@ -791,6 +791,24 @@ select {
   background: rgba(248, 250, 252, 0.82);
 }
 
+.qcchem-ai-workspace-page__filter-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.qcchem-ai-workspace-page__filter-control {
+  display: grid;
+  gap: 5px;
+}
+
+.qcchem-ai-workspace-page__filter-control label {
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--qcchem-text-muted);
+}
+
 .qcchem-ai-workspace-page__ticket {
   display: grid;
   gap: 6px;
@@ -1080,6 +1098,7 @@ select {
   .qcchem-ai-assistant-window__field-grid,
   .qcchem-ai-assistant-window__preview-grid,
   .qcchem-ai-workspace-page__ticket-grid,
+  .qcchem-ai-workspace-page__filter-bar,
   .qcchem-workflow-studio__split,
   .qcchem-workflow-studio__graph {
     grid-template-columns: 1fr;
