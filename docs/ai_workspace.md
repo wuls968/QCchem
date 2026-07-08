@@ -76,7 +76,9 @@ scope, limitation notes, and recommended action so later agents do not have to
 reinterpret raw artifacts from scratch. The Workbench delivery panel also
 summarizes the delivery record count, latest delivery, review-status counts, and
 the `artifacts/ai_workspace/deliveries` source path before listing individual
-delivery cards.
+delivery cards. Each card includes a review action, labeled linked output paths,
+workflow result/report paths when present, evidence scope, and return notes when
+a handoff is sent back for revision.
 
 ## Default AI posture
 
@@ -159,8 +161,8 @@ The custom workflow route adds:
 
 Workflow deliveries keep the parsed workflow status, acceptance summary, step
 counts, result JSON, and report path in the delivery record. The `/ai-workspace`
-Delivery History renders those fields directly, so workflow review does not
-depend on opening the raw JSON first.
+Delivery History renders those fields directly as labeled review artifacts, so
+workflow review does not depend on opening the raw JSON first.
 
 These actions keep `best evidence`, `trust tier`, `baseline strength`,
 `chemical accuracy status`, `runtime evidence status`, `recommended next

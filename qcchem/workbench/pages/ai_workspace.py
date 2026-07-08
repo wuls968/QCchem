@@ -103,21 +103,127 @@ def _workflow_delivery_summary(record: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _compact_string(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _string_list(value: object) -> list[str]:
+    if isinstance(value, str):
+        item = value.strip()
+        return [item] if item else []
+    if not isinstance(value, list):
+        return []
+    items: list[str] = []
+    for item in value:
+        if item is None:
+            continue
+        text = str(item).strip()
+        if text:
+            items.append(text)
+    return items
+
+
+def _action_text(action: object) -> str:
+    raw_action = _compact_string(action) or "n/a"
+    action_label = format_action_label(raw_action)
+    if raw_action != action_label:
+        return f"{action_label} ({raw_action})"
+    return action_label
+
+
+def _delivery_review_action(
+    record: dict[str, object],
+    evidence: dict[str, object],
+    workflow: dict[str, object],
+    outputs: list[str],
+) -> str:
+    explicit_action = _compact_string(record.get("review_action"))
+    if explicit_action:
+        return explicit_action
+    review_status = _compact_string(record.get("review_status")).lower()
+    if _compact_string(record.get("return_notes")) or review_status in {
+        "returned",
+        "needs_revision",
+        "changes_requested",
+    }:
+        return "address_return_notes"
+    if workflow and workflow.get("accepted_label") == "not accepted":
+        return "review_workflow_acceptance"
+    if outputs:
+        return "review_linked_outputs"
+    recommended_action = _compact_string(
+        record.get("recommended_action") or evidence.get("recommended_action")
+    )
+    return recommended_action or "attach_delivery_outputs"
+
+
+def _delivery_artifact_rows(
+    record: dict[str, object],
+    workflow: dict[str, object],
+    outputs: list[str],
+) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    seen_paths: set[str] = set()
+
+    def append_row(label: str, value: object) -> None:
+        path = _compact_string(value)
+        if not path or path == "n/a" or path in seen_paths:
+            return
+        rows.append((label, path))
+        seen_paths.add(path)
+
+    evidence_scope = _compact_string(record.get("evidence_scope"))
+    if evidence_scope and evidence_scope != "Artifact evidence not scoped":
+        append_row("Evidence scope", evidence_scope)
+    append_row("Artifact root", record.get("artifact_root"))
+    if workflow:
+        append_row("Workflow result", workflow.get("workflow_result_json"))
+        append_row("Workflow report", workflow.get("workflow_report_markdown"))
+    for index, output in enumerate(outputs, start=1):
+        label = "Linked output" if len(outputs) == 1 else f"Linked output {index}"
+        append_row(label, output)
+    return rows
+
+
+def _delivery_artifact_list(rows: list[tuple[str, str]]) -> html.Div:
+    if not rows:
+        return html.Div(
+            "No linked output paths recorded.",
+            className="qcchem-ai-workspace-page__artifact-empty",
+        )
+    return html.Div(
+        className="qcchem-ai-workspace-page__artifact-list",
+        children=[
+            html.Div(
+                className="qcchem-ai-workspace-page__artifact-row",
+                children=[html.Span(label), html.Code(path)],
+            )
+            for label, path in rows
+        ],
+    )
+
+
 def build_delivery_card(record: dict[str, object]) -> html.Div:
-    evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
-    outputs = record.get("linked_outputs") or []
-    if not isinstance(outputs, list):
-        outputs = []
-    limitation_notes = record.get("limitation_notes") or []
-    if isinstance(limitation_notes, str):
-        limitation_notes = [limitation_notes]
-    if not isinstance(limitation_notes, list):
-        limitation_notes = []
+    raw_evidence = record.get("evidence_summary") or record.get("linked_evidence_summary") or {}
+    evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
+    outputs = _string_list(record.get("linked_outputs"))
+    limitation_notes = _string_list(record.get("limitation_notes"))
     recommended_action = record.get("recommended_action") or evidence.get("recommended_action") or "n/a"
-    recommended_action_text = format_action_label(recommended_action)
-    if str(recommended_action) != recommended_action_text:
-        recommended_action_text = f"{recommended_action_text} ({recommended_action})"
+    recommended_action_text = _action_text(recommended_action)
     workflow = _workflow_delivery_summary(record)
+    review_action_text = _action_text(_delivery_review_action(record, evidence, workflow, outputs))
+    artifact_rows = _delivery_artifact_rows(record, workflow, outputs)
+    return_notes = _compact_string(record.get("return_notes"))
+    return_note_children = (
+        [
+            html.P("Return notes", className="qcchem-ai-workspace-page__ticket-meta"),
+            html.P(return_notes, className="qcchem-card-note qcchem-card-note--compact"),
+        ]
+        if return_notes
+        else []
+    )
     workflow_children: list[object] = []
     if workflow:
         workflow_children = [
@@ -141,8 +247,6 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
                     html.Div([html.Span("Workflow action"), html.Strong(str(workflow["recommended_action"]))]),
                 ],
             ),
-            html.P(str(workflow["workflow_result_json"]), className="qcchem-card-note qcchem-card-note--compact"),
-            html.P(str(workflow["workflow_report_markdown"]), className="qcchem-card-note qcchem-card-note--compact"),
         ]
     return html.Div(
         className="qcchem-ai-workspace-page__ticket",
@@ -161,6 +265,7 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
                     html.Div([html.Span("Trust tier"), html.Strong(str(evidence.get("trust_tier") or "n/a"))]),
                     html.Div([html.Span("Next action"), html.Strong(recommended_action_text)]),
                     html.Div([html.Span("Outputs"), html.Strong(str(len(outputs)))]),
+                    html.Div([html.Span("Review action"), html.Strong(review_action_text)]),
                 ],
             ),
             html.Div(
@@ -171,8 +276,11 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
                 ],
             ),
             *workflow_children,
+            html.P("Review artifacts", className="qcchem-ai-workspace-page__ticket-meta"),
+            _delivery_artifact_list(artifact_rows),
             html.P("Limitation notes", className="qcchem-ai-workspace-page__ticket-meta"),
             html.P("; ".join(str(note) for note in limitation_notes) or "No limitation notes recorded.", className="qcchem-card-note qcchem-card-note--compact"),
+            *return_note_children,
             html.P(str(record.get("task_id", "")), className="qcchem-card-note qcchem-card-note--compact"),
         ],
     )

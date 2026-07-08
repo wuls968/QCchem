@@ -14,7 +14,13 @@ from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_STATUS_COMPLETED,
     AI_WORKSPACE_TICKET_STATUS_NEEDS_CONFIRMATION,
 )
-from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records, workspace_root, write_ticket_record
+from qcchem.workflow.ai_store import (
+    list_delivery_records,
+    list_ticket_records,
+    workspace_root,
+    write_delivery_record,
+    write_ticket_record,
+)
 from qcchem.workflow.ai_workspace import (
     accept_ticket,
     draft_ticket_from_form,
@@ -359,6 +365,57 @@ def test_ai_workspace_delivery_renders_workflow_summary(tmp_path, monkeypatch) -
     assert "Review" in rendered
     assert "2 completed / 0 failed / 1 generated" in rendered
     assert "promote_workflow_outputs" in rendered
+    assert "Review artifacts" in rendered
+    assert "Workflow result" in rendered
+    assert "Workflow report" in rendered
+    assert "workflow_result.json" in rendered
+    assert "workflow_report.md" in rendered
+    assert "review linked outputs (review_linked_outputs)" in rendered
+
+
+@pytest.mark.integration
+def test_ai_workspace_delivery_renders_artifact_handoff_and_return_notes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    write_delivery_record(
+        ticket_root,
+        {
+            "delivery_id": "delivery-returned-001",
+            "task_id": "analysis-returned-001",
+            "delivery_kind": "analysis_note",
+            "summary": "Review H2 evidence handoff.",
+            "linked_outputs": [
+                "artifacts/ai_workspace/reviews/h2_claim/claim_review.json",
+                "artifacts/ai_workspace/reviews/h2_claim/claim_review.md",
+            ],
+            "review_status": "returned",
+            "return_notes": "Attach the exact baseline result path before closing.",
+            "evidence_scope": "artifacts/h2_local",
+            "limitation_notes": "Do not promote exploratory wording.",
+            "evidence_summary": {
+                "trust_tier": "exploratory",
+                "primary_scientific_claim": "H2 claim needs baseline review.",
+                "recommended_action": "review_evidence_boundary",
+            },
+        },
+    )
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    page = _resolve_layout(page_module.layout)
+    delivery_history = _find_component(page, "qcchem-ai-delivery-history")
+
+    assert delivery_history is not None
+    rendered = str(delivery_history)
+    assert "Review artifacts" in rendered
+    assert "Evidence scope" in rendered
+    assert "artifacts/h2_local" in rendered
+    assert "Linked output 1" in rendered
+    assert "claim_review.json" in rendered
+    assert "claim_review.md" in rendered
+    assert "Review action" in rendered
+    assert "address return notes (address_return_notes)" in rendered
+    assert "Return notes" in rendered
+    assert "Attach the exact baseline result path before closing." in rendered
 
 
 @pytest.mark.integration

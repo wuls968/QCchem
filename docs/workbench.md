@@ -106,7 +106,8 @@ The AI surface now includes:
 - evidence scope, limitation notes, and recommended action in ticket previews and delivery cards
 - safe floating-window recovery through `Reset`, title-grip double click, and viewport clamping
 - an AI Workspace board for inbox/running/submitted/completed/returned lanes
-- a delivery history section that preserves review state and downstream outputs
+- a delivery history section that preserves review state, review actions,
+  downstream output paths, workflow result/report paths, and return notes
 
 This path is designed to answer, in order:
 
