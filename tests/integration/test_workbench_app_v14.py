@@ -946,6 +946,8 @@ def test_overview_page_surfaces_release_verification(
     assert "Release history" in page_text
     assert "2 retained runs / 2 passed / 0 failed / 0 incomplete" in page_text
     assert "not_compared=1, passed=1" in page_text
+    assert "verifier passed=2" in page_text
+    assert "smoke passed=2" in page_text
     assert str(history_summary_path) in page_text
     assert "Release history handoff" in page_text
     assert "review_release_history" in page_text

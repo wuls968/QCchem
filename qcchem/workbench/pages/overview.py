@@ -228,6 +228,12 @@ def _status_tone(value: object) -> str:
     return "informational"
 
 
+def _format_count_map(value: object, *, empty: str) -> str:
+    if isinstance(value, dict) and value:
+        return ", ".join(f"{key}={item}" for key, item in sorted(value.items()))
+    return empty
+
+
 def _overview_threshold(view: dict[str, Any], benchmark: dict[str, Any]) -> float:
     return float(
         (
@@ -322,17 +328,22 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         if isinstance(release_history_summary.get("matrix_delta_status_counts"), dict)
         else {}
     )
-    release_history_delta_text = (
-        ", ".join(f"{key}={value}" for key, value in sorted(release_history_delta_counts.items()))
-        if release_history_delta_counts
-        else "no matrix delta counts"
+    release_history_verification_text = _format_count_map(
+        release_history_summary.get("release_artifact_verification_status_counts"),
+        empty="no verifier counts",
     )
+    release_history_smoke_text = _format_count_map(
+        release_history_summary.get("workbench_smoke_status_counts"),
+        empty="no smoke counts",
+    )
+    release_history_delta_text = _format_count_map(release_history_delta_counts, empty="no matrix delta counts")
     release_history_detail = (
         f"{release_history_summary.get('run_count', 0)} retained runs / "
         f"{release_history_summary.get('passed_run_count', 0)} passed / "
         f"{release_history_summary.get('failed_run_count', 0)} failed / "
         f"{release_history_summary.get('incomplete_run_count', 0)} incomplete; "
-        f"{release_history_delta_text}"
+        f"{release_history_delta_text}; verifier {release_history_verification_text}; "
+        f"smoke {release_history_smoke_text}"
         if release_history_summary
         else "Run qcchem release history summarize --history-root <history-dir> -o release_history_summary.json."
     )
@@ -345,10 +356,17 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         if isinstance(release_history_handoff.get("matrix_delta_status_counts"), dict)
         else {}
     )
-    release_history_handoff_delta_text = (
-        ", ".join(f"{key}={value}" for key, value in sorted(release_history_handoff_delta_counts.items()))
-        if release_history_handoff_delta_counts
-        else "no matrix delta counts"
+    release_history_handoff_verification_text = _format_count_map(
+        release_history_handoff.get("release_artifact_verification_status_counts"),
+        empty="no verifier counts",
+    )
+    release_history_handoff_smoke_text = _format_count_map(
+        release_history_handoff.get("workbench_smoke_status_counts"),
+        empty="no smoke counts",
+    )
+    release_history_handoff_delta_text = _format_count_map(
+        release_history_handoff_delta_counts,
+        empty="no matrix delta counts",
     )
     release_history_handoff_detail = (
         f"{release_history_handoff.get('recommended_action') or 'review_release_history'}; "
@@ -356,7 +374,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         f"{release_history_handoff.get('passed_run_count', 0)} passed / "
         f"{release_history_handoff.get('failed_run_count', 0)} failed / "
         f"{release_history_handoff.get('incomplete_run_count', 0)} incomplete; "
-        f"{release_history_handoff_delta_text}"
+        f"{release_history_handoff_delta_text}; verifier {release_history_handoff_verification_text}; "
+        f"smoke {release_history_handoff_smoke_text}"
         if release_history_handoff
         else "Run qcchem release history export-markdown --history-summary <json> -o release_history_summary.md."
     )
