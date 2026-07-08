@@ -787,6 +787,12 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
         if isinstance(step, dict)
         and step.get("name") == "Write release diagnostics manifest"
     ]
+    history_matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Write release history handoff"
+    ]
     upload_indices = [
         index
         for index, step in enumerate(steps)
@@ -794,18 +800,30 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
         and step.get("name") == "Upload release diagnostics"
     ]
     handoff_index = steps.index(handoff_matches[0]) if handoff_matches else -1
+    history_index = steps.index(history_matches[0]) if history_matches else -1
     manifest_index = steps.index(matches[0]) if matches else -1
 
     assert len(handoff_matches) == 1
+    assert len(history_matches) == 1
     assert len(matches) == 1
     assert len(upload_indices) == 1
     assert handoff_index < manifest_index
+    assert handoff_index < history_index
+    assert history_index < manifest_index
     assert manifest_index < upload_indices[0]
     handoff_command = handoff_matches[0]["run"]
     assert isinstance(handoff_command, str)
     assert "set -euo pipefail" in handoff_command
     assert "release evidence-handoff" in handoff_command
     assert "--output-dir artifacts/release_evidence" in handoff_command
+    history_command = history_matches[0]["run"]
+    assert isinstance(history_command, str)
+    assert "set -euo pipefail" in history_command
+    assert "artifacts/release_history/current" in history_command
+    assert "release history summarize" in history_command
+    assert "release history export-markdown" in history_command
+    assert "artifacts/release_history_summary.json" in history_command
+    assert "artifacts/release_history_summary.md" in history_command
     command = matches[0]["run"]
     assert isinstance(command, str)
     assert "set -euo pipefail" in command
@@ -816,6 +834,9 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
     upload_paths = steps[upload_indices[0]]["with"]["path"]
     assert "artifacts/release_evidence/release_evidence_summary.json" in upload_paths
     assert "artifacts/release_evidence/release_evidence_handoff.md" in upload_paths
+    assert "artifacts/release_history/current/release_evidence_summary.json" in upload_paths
+    assert "artifacts/release_history_summary.json" in upload_paths
+    assert "artifacts/release_history_summary.md" in upload_paths
     assert "artifacts/release_audit/release_diagnostics_manifest.json" in upload_paths
 
 

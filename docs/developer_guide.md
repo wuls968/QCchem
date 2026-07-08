@@ -165,11 +165,15 @@ Keep the CI `Run tests` command listed in the
 audit fails when the two drift.
 CI must also keep the `Write release evidence handoff` step after the release
 status, Workbench smoke, and release acceptance freshness gates; keep the
-`Write release diagnostics manifest` step after that handoff step; and keep the
+`Write release history handoff` step after that evidence handoff; keep the
+`Write release diagnostics manifest` step after both handoff steps; and keep the
 `Upload release diagnostics` step after the manifest step. The upload step uses
 `if: always()` so failed runs preserve `artifacts/workbench_smoke.json`,
 `artifacts/release_evidence/release_evidence_summary.json`,
 `artifacts/release_evidence/release_evidence_handoff.md`,
+`artifacts/release_history/current/release_evidence_summary.json`,
+`artifacts/release_history_summary.json`,
+`artifacts/release_history_summary.md`,
 `artifacts/release_audit/release_readiness.*`,
 `artifacts/release_audit/release_handoff.*`,
 `artifacts/release_audit/release_status.json`,

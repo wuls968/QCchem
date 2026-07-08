@@ -516,8 +516,9 @@ The Trust-First profile verifies:
   pass.
 - The release audit statically confirms CI uploads release diagnostic artifacts
   with `actions/upload-artifact` and `if: always()`, including Workbench smoke,
-  release readiness, release handoff, and release sidecar freshness outputs for
-  failed-run handoff.
+  release readiness, release handoff, release evidence handoff, single-run
+  release history handoff, and release sidecar freshness outputs for failed-run
+  handoff.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.

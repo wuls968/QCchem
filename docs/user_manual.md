@@ -581,6 +581,8 @@ Outputs:
 - `release_diagnostics_manifest.json` in CI, written before diagnostic upload
 - `release_evidence/release_evidence_summary.json` in CI, written before diagnostic upload
 - `release_evidence/release_evidence_handoff.md` in CI, written before diagnostic upload
+- `release_history_summary.json` in CI, written before diagnostic upload
+- `release_history_summary.md` in CI, written before diagnostic upload
 
 Release audit reads local source files, docs, configs, and curated artifacts. It
 performs no runtime submission and should not mutate curated artifacts. On
@@ -601,10 +603,12 @@ as current. CI applies that same validator to both the source-tree and
 installed-wheel release bundles. CI diagnostic artifacts include that compact
 status JSON, `release_diagnostics_manifest.json` with uploaded-path size and
 SHA-256 summaries, the `acceptance-status` sidecar-freshness JSON with its own
-`schema_features`, and a pre-upload `release_evidence_handoff.md` /
-`release_evidence_summary.json` pair for each Python matrix; CI validates the
-acceptance-status artifact before upload so the reported counts and repair plan
-stay consistent with the item list.
+`schema_features`, a pre-upload `release_evidence_handoff.md` /
+`release_evidence_summary.json` pair, and a single-run
+`release_history_summary.json` / `release_history_summary.md` retained-history
+handoff for each Python matrix; CI validates the acceptance-status artifact
+before upload so the reported counts and repair plan stay consistent with the
+item list.
 
 The CI-side reviewer handoff is generated with:
 

@@ -96,6 +96,7 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
 )
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
 CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME = "Write release evidence handoff"
+CI_RELEASE_HISTORY_HANDOFF_STEP_NAME = "Write release history handoff"
 CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME = "Write release diagnostics manifest"
 CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v7"
 CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
@@ -104,6 +105,9 @@ CI_RELEASE_DIAGNOSTIC_REQUIRED_PATHS = (
     "artifacts/workbench_smoke.json",
     "artifacts/release_evidence/release_evidence_summary.json",
     "artifacts/release_evidence/release_evidence_handoff.md",
+    "artifacts/release_history/current/release_evidence_summary.json",
+    "artifacts/release_history_summary.json",
+    "artifacts/release_history_summary.md",
     "artifacts/release_audit/release_readiness.json",
     "artifacts/release_audit/release_readiness.md",
     "artifacts/release_audit/release_handoff.json",
@@ -124,6 +128,7 @@ CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     "Run Trust-First release audit",
     CI_ACCEPTANCE_STATUS_STEP_NAME,
     CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME,
+    CI_RELEASE_HISTORY_HANDOFF_STEP_NAME,
     CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
 )
 
@@ -1149,6 +1154,15 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                         "job": str(job_name),
                         "workflow": workflow_relative_path.as_posix(),
                         "step_name": CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME,
+                    }
+                )
+            if CI_RELEASE_HISTORY_HANDOFF_STEP_NAME not in producer_indices:
+                failures.append(
+                    {
+                        "reason": "missing_ci_release_history_handoff_step",
+                        "job": str(job_name),
+                        "workflow": workflow_relative_path.as_posix(),
+                        "step_name": CI_RELEASE_HISTORY_HANDOFF_STEP_NAME,
                     }
                 )
             manifest_index = producer_indices.get(CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME)

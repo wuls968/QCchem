@@ -355,9 +355,9 @@ qcchem release audit \
 ```
 
 Generated release-audit outputs are local review artifacts, not runtime
-submissions. In CI, release diagnostics also include a generated manifest with
-uploaded-path size and SHA-256 summaries. See `CONTRIBUTING.md` for contribution
-rules.
+submissions. In CI, release diagnostics also include release evidence and
+single-run history handoffs plus a generated manifest with uploaded-path size and
+SHA-256 summaries. See `CONTRIBUTING.md` for contribution rules.
 
 ## License, Citation, And Security
 
