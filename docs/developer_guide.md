@@ -237,7 +237,11 @@ when reviewers need a stable human-readable retained-history handoff. It can
 also read `--history-root` directly, honors `--strict`, and writes only the
 requested Markdown file.
 Use `qcchem release verify-artifacts --artifact-dir <download-dir>` when you
-only need the lower-level artifact-integrity check.
+only need the lower-level artifact-integrity check. The verifier checks release
+status bundles, acceptance freshness, diagnostics manifest size/SHA records, and
+the release-history handoff triplet:
+`release_history_summary.json`, `release_history_summary.md`, and
+`release_history/current/release_evidence_summary.json`.
 Name retained verifier outputs `release_artifact_verification.json` when they
 live under an artifact root. The normalized artifact index and Workbench startup
 inventory classify those reports as `release_artifact_verification`, exposing

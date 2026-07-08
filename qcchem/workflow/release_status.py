@@ -15,6 +15,9 @@ from qcchem.workflow.release_audit import (
 
 RELEASE_STATUS_SCHEMA_VERSION = "qcchem.release_status.v0.1-alpha"
 RELEASE_ARTIFACT_VERIFICATION_SCHEMA_VERSION = "qcchem.release_artifact_verification.v0.1-alpha"
+RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION = "qcchem.release_history_summary.v0.1-alpha"
+RELEASE_EVIDENCE_COLLECTION_SCHEMA_VERSION = "qcchem.release_evidence_collection.v0.1-alpha"
+RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING = "# QCchem Release History Handoff"
 
 
 def compact_release_audit_check(check: object) -> dict[str, object] | None:
@@ -470,6 +473,7 @@ def verify_release_diagnostics_artifacts(artifact_dir: Path) -> dict[str, object
         "release_statuses": [],
         "diagnostics_manifests": [],
         "acceptance_statuses": [],
+        "release_history_handoffs": [],
         "failures": failures,
     }
     if not artifact_dir.exists():
@@ -484,6 +488,7 @@ def verify_release_diagnostics_artifacts(artifact_dir: Path) -> dict[str, object
     release_status_paths = sorted(artifact_dir.rglob("release_status.json"))
     diagnostics_manifest_paths = sorted(artifact_dir.rglob("release_diagnostics_manifest.json"))
     acceptance_status_paths = sorted(artifact_dir.rglob("qcchem-release-acceptance-status.json"))
+    release_history_summary_paths = sorted(artifact_dir.rglob("release_history_summary.json"))
 
     release_statuses = report["release_statuses"]
     assert isinstance(release_statuses, list)
@@ -505,6 +510,13 @@ def verify_release_diagnostics_artifacts(artifact_dir: Path) -> dict[str, object
         acceptance_statuses.append(_verify_acceptance_status(status_path, failures))
     if not acceptance_status_paths:
         failures.append({"reason": "missing_acceptance_status_files", "path": str(artifact_dir)})
+
+    release_history_handoffs = report["release_history_handoffs"]
+    assert isinstance(release_history_handoffs, list)
+    for summary_path in release_history_summary_paths:
+        release_history_handoffs.append(_verify_release_history_handoff(summary_path, failures))
+    if not release_history_summary_paths:
+        failures.append({"reason": "missing_release_history_summary_files", "path": str(artifact_dir)})
 
     _finalize_release_artifact_verification_report(report)
     return report
@@ -739,6 +751,198 @@ def _verify_acceptance_status(
     return entry
 
 
+def _verify_release_history_handoff(
+    summary_path: Path,
+    failures: list[dict[str, object]],
+) -> dict[str, object]:
+    markdown_path = summary_path.with_suffix(".md")
+    current_evidence_path = summary_path.parent / "release_history" / "current" / "release_evidence_summary.json"
+    entry: dict[str, object] = {
+        "path": str(summary_path),
+        "markdown_path": str(markdown_path),
+        "current_release_evidence_summary_path": str(current_evidence_path),
+    }
+    try:
+        summary = read_release_status_json(summary_path, label="release_history_summary.json")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        failures.append(
+            {
+                "reason": "release_history_summary_unreadable",
+                "path": str(summary_path),
+                "error": str(exc),
+            }
+        )
+        entry["status"] = "unreadable"
+        _verify_release_history_markdown(markdown_path, summary_path=summary_path, failures=failures)
+        _verify_release_history_current_evidence(current_evidence_path, summary_path=summary_path, failures=failures)
+        return entry
+
+    entry.update(
+        {
+            "schema_version": summary.get("schema_version"),
+            "status": summary.get("status"),
+            "recommended_action": summary.get("recommended_action"),
+            "run_count": summary.get("run_count"),
+            "passed_run_count": summary.get("passed_run_count"),
+            "failed_run_count": summary.get("failed_run_count"),
+            "incomplete_run_count": summary.get("incomplete_run_count"),
+        }
+    )
+    if summary.get("schema_version") != RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION:
+        failures.append(
+            {
+                "reason": "release_history_summary_schema_mismatch",
+                "path": str(summary_path),
+                "expected": RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION,
+                "actual": summary.get("schema_version"),
+            }
+        )
+    if summary.get("status") != "passed":
+        failures.append(
+            {
+                "reason": "release_history_summary_not_passed",
+                "path": str(summary_path),
+                "status": summary.get("status"),
+                "recommended_action": summary.get("recommended_action"),
+            }
+        )
+    run_count = summary.get("run_count")
+    if not isinstance(run_count, int) or run_count < 1:
+        failures.append(
+            {
+                "reason": "release_history_summary_run_count_invalid",
+                "path": str(summary_path),
+                "actual": run_count,
+            }
+        )
+
+    _verify_release_history_markdown(markdown_path, summary_path=summary_path, failures=failures)
+    current_evidence = _verify_release_history_current_evidence(
+        current_evidence_path,
+        summary_path=summary_path,
+        failures=failures,
+    )
+    if current_evidence:
+        entry["current_release_evidence_status"] = current_evidence.get("status")
+        entry["current_release_evidence_schema_version"] = current_evidence.get("schema_version")
+    return entry
+
+
+def _verify_release_history_markdown(
+    markdown_path: Path,
+    *,
+    summary_path: Path,
+    failures: list[dict[str, object]],
+) -> None:
+    if not markdown_path.exists():
+        failures.append(
+            {
+                "reason": "release_history_markdown_missing",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+            }
+        )
+        return
+    if not markdown_path.is_file():
+        failures.append(
+            {
+                "reason": "release_history_markdown_not_file",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+            }
+        )
+        return
+    try:
+        markdown = markdown_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        failures.append(
+            {
+                "reason": "release_history_markdown_unreadable",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+                "error": str(exc),
+            }
+        )
+        return
+    if RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING not in markdown:
+        failures.append(
+            {
+                "reason": "release_history_markdown_heading_missing",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+                "expected": RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING,
+            }
+        )
+    if summary_path.name not in markdown:
+        failures.append(
+            {
+                "reason": "release_history_markdown_summary_reference_missing",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+                "expected": summary_path.name,
+            }
+        )
+
+
+def _verify_release_history_current_evidence(
+    evidence_path: Path,
+    *,
+    summary_path: Path,
+    failures: list[dict[str, object]],
+) -> dict[str, object] | None:
+    if not evidence_path.exists():
+        failures.append(
+            {
+                "reason": "release_history_current_evidence_missing",
+                "path": str(summary_path),
+                "current_release_evidence_summary_path": str(evidence_path),
+            }
+        )
+        return None
+    if not evidence_path.is_file():
+        failures.append(
+            {
+                "reason": "release_history_current_evidence_not_file",
+                "path": str(summary_path),
+                "current_release_evidence_summary_path": str(evidence_path),
+            }
+        )
+        return None
+    try:
+        evidence = read_release_status_json(evidence_path, label="release_evidence_summary.json")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        failures.append(
+            {
+                "reason": "release_history_current_evidence_unreadable",
+                "path": str(summary_path),
+                "current_release_evidence_summary_path": str(evidence_path),
+                "error": str(exc),
+            }
+        )
+        return None
+    if evidence.get("schema_version") != RELEASE_EVIDENCE_COLLECTION_SCHEMA_VERSION:
+        failures.append(
+            {
+                "reason": "release_history_current_evidence_schema_mismatch",
+                "path": str(summary_path),
+                "current_release_evidence_summary_path": str(evidence_path),
+                "expected": RELEASE_EVIDENCE_COLLECTION_SCHEMA_VERSION,
+                "actual": evidence.get("schema_version"),
+            }
+        )
+    if evidence.get("status") != "passed":
+        failures.append(
+            {
+                "reason": "release_history_current_evidence_not_passed",
+                "path": str(summary_path),
+                "current_release_evidence_summary_path": str(evidence_path),
+                "status": evidence.get("status"),
+                "recommended_action": evidence.get("recommended_action"),
+            }
+        )
+    return evidence
+
+
 def _verify_diagnostics_manifest_record(
     record: dict[str, object],
     *,
@@ -879,11 +1083,15 @@ def _finalize_release_artifact_verification_report(report: dict[str, object]) ->
     release_statuses = report.get("release_statuses")
     diagnostics_manifests = report.get("diagnostics_manifests")
     acceptance_statuses = report.get("acceptance_statuses")
+    release_history_handoffs = report.get("release_history_handoffs")
     report["status"] = "passed" if failure_count == 0 else "failed"
     report["summary"] = {
         "release_status_count": len(release_statuses) if isinstance(release_statuses, list) else 0,
         "diagnostics_manifest_count": len(diagnostics_manifests) if isinstance(diagnostics_manifests, list) else 0,
         "acceptance_status_count": len(acceptance_statuses) if isinstance(acceptance_statuses, list) else 0,
+        "release_history_handoff_count": (
+            len(release_history_handoffs) if isinstance(release_history_handoffs, list) else 0
+        ),
         "failure_count": failure_count,
     }
 

@@ -1256,6 +1256,7 @@ def _print_release_artifact_verification_summary(report: dict[str, object]) -> N
         print(f"Release status bundles: {summary.get('release_status_count')}")
         print(f"Diagnostics manifests: {summary.get('diagnostics_manifest_count')}")
         print(f"Acceptance status files: {summary.get('acceptance_status_count')}")
+        print(f"Release history handoffs: {summary.get('release_history_handoff_count')}")
         print(f"Failures: {summary.get('failure_count')}")
     failures = report.get("failures")
     if isinstance(failures, list) and failures:
@@ -1389,6 +1390,10 @@ def _release_verification_matrix_artifacts(report: dict[str, object]) -> list[di
                 "acceptance_fresh_count": None,
                 "acceptance_requires_update_count": None,
                 "acceptance_repair_plan_count": None,
+                "release_history_handoff_count": 0,
+                "release_history_status": None,
+                "release_history_run_count": None,
+                "release_history_current_evidence_status": None,
                 "failure_count": 0,
                 "first_failure": None,
             }
@@ -1439,6 +1444,17 @@ def _release_verification_matrix_artifacts(report: dict[str, object]) -> list[di
             artifact["acceptance_repair_plan_count"] = acceptance_entry.get("repair_plan_count")
             if acceptance_entry.get("status") != "fresh" or acceptance_entry.get("repair_plan_count") not in (0, None):
                 artifact["status"] = "failed"
+
+    release_history_handoffs = report.get("release_history_handoffs")
+    if isinstance(release_history_handoffs, list):
+        for history_entry in release_history_handoffs:
+            if not isinstance(history_entry, dict):
+                continue
+            artifact = ensure(_release_artifact_name_from_path(history_entry.get("path"), artifact_dir))
+            artifact["release_history_handoff_count"] = int(artifact["release_history_handoff_count"]) + 1
+            artifact["release_history_status"] = history_entry.get("status")
+            artifact["release_history_run_count"] = history_entry.get("run_count")
+            artifact["release_history_current_evidence_status"] = history_entry.get("current_release_evidence_status")
 
     failures = report.get("failures")
     if isinstance(failures, list):
@@ -2017,6 +2033,7 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
         f"- release_status_count: `{_release_handoff_value(verification_counts.get('release_status_count'))}`",
         f"- diagnostics_manifest_count: `{_release_handoff_value(verification_counts.get('diagnostics_manifest_count'))}`",
         f"- acceptance_status_count: `{_release_handoff_value(verification_counts.get('acceptance_status_count'))}`",
+        f"- release_history_handoff_count: `{_release_handoff_value(verification_counts.get('release_history_handoff_count'))}`",
         f"- failure_count: `{_release_handoff_value(verification.get('failure_count'))}`",
         f"- first_failure: `{first_failure_text}`",
         "",
@@ -2035,6 +2052,7 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
                 f"manifests=`{item.get('diagnostics_manifest_count')}`; "
                 f"digests=`{item.get('diagnostics_digest_count')}/{item.get('diagnostics_file_count')}`; "
                 f"acceptance=`{_release_handoff_value(item.get('acceptance_status'))}`; "
+                f"history=`{_release_handoff_value(item.get('release_history_status'))}`; "
                 f"failures=`{item.get('failure_count')}`; "
                 f"first_failure=`{_release_failure_handoff_text(item.get('first_failure'))}`"
             )

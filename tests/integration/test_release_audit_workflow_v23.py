@@ -203,6 +203,42 @@ def _write_downloaded_release_diagnostics_artifact(
         == 0
     )
 
+    history_root = tmp_path / "ci_release_history"
+    history_current_root = history_root / "current"
+    history_current_root.mkdir(parents=True)
+    history_current_summary = history_current_root / "release_evidence_summary.json"
+    shutil.copy2(ci_evidence_dir / "release_evidence_summary.json", history_current_summary)
+    history_summary_json = tmp_path / "release_history_summary.json"
+    history_summary_md = tmp_path / "release_history_summary.md"
+    assert (
+        main(
+            [
+                "release",
+                "history",
+                "summarize",
+                "--history-root",
+                str(history_root),
+                "-o",
+                str(history_summary_json),
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "release",
+                "history",
+                "export-markdown",
+                "--history-summary",
+                str(history_summary_json),
+                "-o",
+                str(history_summary_md),
+            ]
+        )
+        == 0
+    )
+
     artifact_dir = tmp_path / "downloaded" / "qcchem-release-diagnostics-3.11"
     workspace_root = "/home/runner/work/QCchem/QCchem"
     manifest_remote_path = f"{workspace_root}/artifacts/release_audit/release_diagnostics_manifest.json"
@@ -219,6 +255,21 @@ def _write_downloaded_release_diagnostics_artifact(
             "release_evidence_handoff_md",
             ci_evidence_dir / "release_evidence_handoff.md",
             "artifacts/release_evidence/release_evidence_handoff.md",
+        ),
+        (
+            "release_history_current_evidence_summary_json",
+            history_current_summary,
+            "artifacts/release_history/current/release_evidence_summary.json",
+        ),
+        (
+            "release_history_summary_json",
+            history_summary_json,
+            "artifacts/release_history_summary.json",
+        ),
+        (
+            "release_history_summary_md",
+            history_summary_md,
+            "artifacts/release_history_summary.md",
         ),
         ("release_readiness_json", output_dir / "release_readiness.json", "artifacts/release_audit/release_readiness.json"),
         ("release_readiness_md", output_dir / "release_readiness.md", "artifacts/release_audit/release_readiness.md"),
@@ -557,6 +608,7 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     assert "Release status bundles: 1" in stdout
     assert "Diagnostics manifests: 1" in stdout
     assert "Acceptance status files: 1" in stdout
+    assert "Release history handoffs: 1" in stdout
     assert f"Verification JSON: {verification_json}" in stdout
     report = json.loads(verification_json.read_text(encoding="utf-8"))
     assert report["schema_version"] == "qcchem.release_artifact_verification.v0.1-alpha"
@@ -565,8 +617,15 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
         "acceptance_status_count": 1,
         "diagnostics_manifest_count": 1,
         "failure_count": 0,
+        "release_history_handoff_count": 1,
         "release_status_count": 1,
     }
+    history_handoff = report["release_history_handoffs"][0]
+    assert history_handoff["schema_version"] == "qcchem.release_history_summary.v0.1-alpha"
+    assert history_handoff["status"] == "passed"
+    assert history_handoff["run_count"] == 1
+    assert history_handoff["current_release_evidence_status"] == "passed"
+    assert history_handoff["current_release_evidence_schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
     assert report["failures"] == []
 
 
@@ -633,6 +692,7 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
         "acceptance_status_count": 1,
         "diagnostics_manifest_count": 1,
         "failure_count": 0,
+        "release_history_handoff_count": 1,
         "release_status_count": 1,
     }
     assert summary["release_artifact_verification"]["first_failure"] is None
@@ -647,6 +707,10 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert matrix_artifact["diagnostics_manifest_count"] == 1
     assert matrix_artifact["diagnostics_digest_count"] == matrix_artifact["diagnostics_file_count"]
     assert matrix_artifact["acceptance_status"] == "fresh"
+    assert matrix_artifact["release_history_handoff_count"] == 1
+    assert matrix_artifact["release_history_status"] == "passed"
+    assert matrix_artifact["release_history_run_count"] == 1
+    assert matrix_artifact["release_history_current_evidence_status"] == "passed"
     assert matrix_artifact["failure_count"] == 0
     assert matrix_artifact["first_failure"] is None
     assert matrix_summary["schema_version"] == "qcchem.release_matrix_summary.v0.1-alpha"
@@ -679,10 +743,12 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "- required_checks: `not_applicable`" in handoff
     assert "- acceptance_status: `not_applicable`" in handoff
     assert "- release_status_count: `1`" in handoff
+    assert "- release_history_handoff_count: `1`" in handoff
     assert "## Matrix Artifact Verification" in handoff
     assert "`qcchem-release-diagnostics-3.11`: status=`passed`" in handoff
     assert "wheel=`not_applicable`" in handoff
     assert "acceptance=`fresh`" in handoff
+    assert "history=`passed`" in handoff
     assert "## Matrix Artifact Delta" in handoff
     assert "- status: `not_compared`" in handoff
     assert "- reason: `baseline_not_provided`" in handoff
@@ -1504,6 +1570,27 @@ def test_release_verify_artifacts_cli_rejects_manifest_digest_mismatch(
         "diagnostics_manifest_size_mismatch",
         "diagnostics_manifest_sha256_mismatch",
     }.issubset({failure["reason"] for failure in report["failures"]})
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_rejects_release_history_markdown_without_heading(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    copied_paths["release_history_summary_md"].write_text("release history without handoff heading\n", encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    stdout = capsys.readouterr().out
+    assert exit_code == 2
+    assert "Release artifact verification: failed" in stdout
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert "release_history_markdown_heading_missing" in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
 
 
 @pytest.mark.integration

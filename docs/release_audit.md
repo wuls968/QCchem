@@ -277,6 +277,10 @@ On failure, the top block of `release_evidence_handoff.md` includes
 reason/path before the detailed verifier and Workbench sections.
 Use `qcchem release verify-artifacts --artifact-dir /tmp/qcchem-ci-artifacts`
 when you only need the lower-level artifact-integrity check.
+The verifier also checks that each downloaded diagnostics artifact contains a
+readable `release_history_summary.json`, its `release_history_summary.md`
+handoff, and the copied `release_history/current/release_evidence_summary.json`
+with the expected schemas and passed status.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
