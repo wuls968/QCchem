@@ -24,7 +24,13 @@ from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_markdown_report
 from qcchem.reporting.jsonio import write_result_json
 from qcchem.workflow.ai_assistant import draft_analysis_ticket
-from qcchem.workflow.ai_store import read_delivery_record, workspace_root, write_delivery_record, write_ticket_record
+from qcchem.workflow.ai_store import (
+    list_delivery_records,
+    read_delivery_record,
+    workspace_root,
+    write_delivery_record,
+    write_ticket_record,
+)
 from qcchem.workflow.agent import run_analysis_ticket
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.claim_compiler import compile_claim_review, write_claim_review_outputs
@@ -110,6 +116,14 @@ def _delivery_ticket_path(delivery_path: Path, payload: dict[str, Any]) -> Path 
     if not task_id:
         return None
     return _delivery_workspace_root(delivery_path) / "tickets" / f"{task_id}.json"
+
+
+def _workspace_root_from_base(base: Path | str | None) -> Path:
+    base_path = Path(base) if base is not None else Path.cwd()
+    resolved = base_path.expanduser().resolve()
+    if resolved.name == "ai_workspace" and resolved.parent.name == "artifacts":
+        return resolved
+    return workspace_root(resolved, create=False)
 
 
 def _resolved_ticket_payload(path: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -842,6 +856,48 @@ def return_ticket(
         returned["linked_return_delivery_record"] = normalized_delivery
     returned["ticket_path"] = str(updated_path)
     return returned
+
+
+def summarize_delivery_records(
+    *,
+    workspace_base: Path | str | None = None,
+    review_status: str | None = None,
+    delivery_kind: str | None = None,
+) -> dict[str, Any]:
+    root = _workspace_root_from_base(workspace_base)
+    all_deliveries = list_delivery_records(root)
+    status_filter = _normalize_delivery_review_status(review_status) if review_status else ""
+    kind_filter = str(delivery_kind or "").strip()
+    deliveries: list[dict[str, Any]] = []
+    review_status_counts: dict[str, int] = {}
+    delivery_kind_counts: dict[str, int] = {}
+    for delivery in all_deliveries:
+        normalized_status = str(delivery.get("review_status") or "pending_review").strip()
+        normalized_kind = str(delivery.get("delivery_kind") or "delivery").strip()
+        if status_filter and normalized_status != status_filter:
+            continue
+        if kind_filter and normalized_kind != kind_filter:
+            continue
+        review_status_counts[normalized_status] = review_status_counts.get(normalized_status, 0) + 1
+        delivery_kind_counts[normalized_kind] = delivery_kind_counts.get(normalized_kind, 0) + 1
+        record = dict(delivery)
+        record["review_status"] = normalized_status
+        record["delivery_kind"] = normalized_kind
+        delivery_id = str(record.get("delivery_id") or "").strip()
+        record["delivery_record"] = str((root / "deliveries" / f"{delivery_id}.json").resolve()) if delivery_id else ""
+        deliveries.append(record)
+    return {
+        "workspace_root": str(root.resolve()),
+        "filters": {
+            "review_status": status_filter,
+            "delivery_kind": kind_filter,
+        },
+        "total_delivery_count": len(all_deliveries),
+        "filtered_delivery_count": len(deliveries),
+        "review_status_counts": review_status_counts,
+        "delivery_kind_counts": delivery_kind_counts,
+        "deliveries": deliveries,
+    }
 
 
 def review_delivery_record(

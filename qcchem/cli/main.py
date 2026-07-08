@@ -801,6 +801,21 @@ def _build_parser() -> argparse.ArgumentParser:
     ai_review.add_argument("-o", "--output-dir", type=Path, help="Optional output directory for review files.")
     ai_delivery = ai_subparsers.add_parser("delivery", help="Review persisted AI workspace delivery records.")
     ai_delivery_subparsers = ai_delivery.add_subparsers(dest="ai_delivery_command", required=True)
+    ai_delivery_list = ai_delivery_subparsers.add_parser(
+        "list",
+        help="List persisted AI workspace delivery records.",
+    )
+    ai_delivery_list.add_argument(
+        "--workspace-base",
+        type=Path,
+        help="Workspace/repository base containing artifacts/ai_workspace; defaults to the current directory.",
+    )
+    ai_delivery_list.add_argument(
+        "--status",
+        choices=AI_DELIVERY_REVIEW_STATUS_CHOICES,
+        help="Only include deliveries with this review status.",
+    )
+    ai_delivery_list.add_argument("--kind", help="Only include deliveries with this delivery_kind.")
     ai_delivery_review = ai_delivery_subparsers.add_parser(
         "review",
         help="Set the review status for one delivery record.",
@@ -3591,7 +3606,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
     if args.command == "ai":
-        from qcchem.workflow.ai_workspace import draft_ticket_from_request, review_delivery_record, run_ticket
+        from qcchem.workflow.ai_workspace import (
+            draft_ticket_from_request,
+            review_delivery_record,
+            run_ticket,
+            summarize_delivery_records,
+        )
 
         if args.ai_command == "draft-ticket":
             ticket_path = draft_ticket_from_request(
@@ -3635,6 +3655,14 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
             return 0
         if args.ai_command == "delivery":
+            if args.ai_delivery_command == "list":
+                result = summarize_delivery_records(
+                    workspace_base=args.workspace_base,
+                    review_status=args.status,
+                    delivery_kind=args.kind,
+                )
+                print(json.dumps(to_primitive(result), indent=2, sort_keys=True))
+                return 0
             try:
                 return_notes = _return_notes_from_args(args.return_notes, args.return_notes_file)
                 review_status = "returned" if args.ai_delivery_command == "return" else args.status

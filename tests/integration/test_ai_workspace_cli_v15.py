@@ -65,6 +65,7 @@ def test_ai_workspace_docs_and_examples_exist() -> None:
     docs_body = docs_path.read_text(encoding="utf-8")
     assert "examples/ai_workspace/tickets/analysis_h2_campaign.json" in docs_body
     assert "qcchem ai run-ticket examples/ai_workspace/tickets/analysis_h2_campaign.json" in docs_body
+    assert "qcchem ai delivery list" in docs_body
     assert "qcchem ai delivery return" in docs_body
 
     readme_body = readme_path.read_text(encoding="utf-8")
@@ -311,6 +312,70 @@ def test_ai_run_ticket_command_writes_delivery_record_for_supported_task_types(
     else:
         expected_output = str((workspace / "artifacts" / "suite_a").resolve())
         assert payload["linked_outputs"] == [expected_output]
+
+
+def test_ai_delivery_list_command_reports_reviewable_delivery_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workspace = tmp_path / "workspace"
+    root = workspace_root(workspace)
+    submitted_path = root / "deliveries" / "delivery-list-submitted.json"
+    submitted_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-list-submitted",
+                "task_id": "analysis-list-001",
+                "delivery_kind": "analysis_note",
+                "summary": "Submitted analysis delivery.",
+                "linked_outputs": [],
+                "review_status": "submitted",
+            }
+        ),
+        encoding="utf-8",
+    )
+    returned_path = root / "deliveries" / "delivery-list-returned.json"
+    returned_path.write_text(
+        json.dumps(
+            {
+                "delivery_id": "delivery-list-returned",
+                "task_id": "analysis-list-002",
+                "delivery_kind": "artifact_bundle",
+                "summary": "Returned artifact bundle.",
+                "linked_outputs": ["artifacts/suite_a/report.md"],
+                "review_status": "returned",
+                "return_notes": "Needs a clearer boundary.",
+            }
+        ),
+        encoding="utf-8",
+    )
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    monkeypatch.chdir(outside_dir)
+
+    exit_code = main(
+        [
+            "ai",
+            "delivery",
+            "list",
+            "--workspace-base",
+            str(workspace),
+            "--status",
+            "returned",
+        ]
+    )
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["workspace_root"] == str(root.resolve())
+    assert payload["filters"] == {"review_status": "returned", "delivery_kind": ""}
+    assert payload["total_delivery_count"] == 2
+    assert payload["filtered_delivery_count"] == 1
+    assert payload["review_status_counts"] == {"returned": 1}
+    assert payload["delivery_kind_counts"] == {"artifact_bundle": 1}
+    assert payload["deliveries"][0]["delivery_id"] == "delivery-list-returned"
+    assert payload["deliveries"][0]["delivery_record"] == str(returned_path.resolve())
 
 
 def test_ai_delivery_return_command_marks_delivery_and_ticket_returned(
