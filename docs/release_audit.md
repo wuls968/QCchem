@@ -121,6 +121,9 @@ freshness JSON, and the CI-side `release_evidence_summary.json` /
 `release_evidence_handoff.md` plus the single-run `release_history_summary.json`
 and `release_history_summary.md` as `qcchem-release-diagnostics-*` artifacts so
 failed runs keep their handoff bundle without tracking generated outputs in git.
+CI refreshes `artifacts/workbench_smoke.json` after writing that release history
+handoff, so the uploaded smoke JSON includes its compact top-level
+`release_history` summary instead of the pre-history `missing` shape.
 The CLI prints both `Report: <...>/release_readiness.md` and
 `Handoff: <...>/release_handoff.md`. In GitHub Actions it also prints the exact
 `Diagnostic artifact:` name and the `Artifact listing:` API URL recorded in

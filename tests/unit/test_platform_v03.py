@@ -801,6 +801,12 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
         if isinstance(step, dict)
         and step.get("name") == "Write release history handoff"
     ]
+    refresh_matches = [
+        step
+        for step in steps
+        if isinstance(step, dict)
+        and step.get("name") == "Refresh Workbench release smoke with release history"
+    ]
     upload_indices = [
         index
         for index, step in enumerate(steps)
@@ -809,15 +815,19 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
     ]
     handoff_index = steps.index(handoff_matches[0]) if handoff_matches else -1
     history_index = steps.index(history_matches[0]) if history_matches else -1
+    refresh_index = steps.index(refresh_matches[0]) if refresh_matches else -1
     manifest_index = steps.index(matches[0]) if matches else -1
 
     assert len(handoff_matches) == 1
     assert len(history_matches) == 1
+    assert len(refresh_matches) == 1
     assert len(matches) == 1
     assert len(upload_indices) == 1
     assert handoff_index < manifest_index
     assert handoff_index < history_index
     assert history_index < manifest_index
+    assert history_index < refresh_index
+    assert refresh_index < manifest_index
     assert manifest_index < upload_indices[0]
     handoff_command = handoff_matches[0]["run"]
     assert isinstance(handoff_command, str)
@@ -832,6 +842,12 @@ def test_ci_writes_release_diagnostics_manifest_before_upload() -> None:
     assert "release history export-markdown" in history_command
     assert "artifacts/release_history_summary.json" in history_command
     assert "artifacts/release_history_summary.md" in history_command
+    refresh_command = refresh_matches[0]["run"]
+    assert isinstance(refresh_command, str)
+    assert "set -euo pipefail" in refresh_command
+    assert "workbench smoke" in refresh_command
+    assert "--docs docs/workbench.md" in refresh_command
+    assert "-o artifacts/workbench_smoke.json" in refresh_command
     command = matches[0]["run"]
     assert isinstance(command, str)
     assert "set -euo pipefail" in command

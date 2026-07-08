@@ -294,6 +294,14 @@ jobs:
             --history-summary artifacts/release_history_summary.json \
             -o artifacts/release_history_summary.md
 
+      - name: Refresh Workbench release smoke with release history
+        if: always()
+        run: |
+          set -euo pipefail
+          python -m qcchem.cli.main workbench smoke \
+            --docs docs/workbench.md \
+            -o artifacts/workbench_smoke.json
+
       - name: Write release diagnostics manifest
         if: always()
         run: |

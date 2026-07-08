@@ -97,6 +97,7 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
 CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME = "Write release evidence handoff"
 CI_RELEASE_HISTORY_HANDOFF_STEP_NAME = "Write release history handoff"
+CI_WORKBENCH_HISTORY_REFRESH_STEP_NAME = "Refresh Workbench release smoke with release history"
 CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME = "Write release diagnostics manifest"
 CI_RELEASE_DIAGNOSTIC_UPLOAD_ACTION = "actions/upload-artifact@v7"
 CI_RELEASE_DIAGNOSTIC_ARTIFACT_NAME_PREFIX = "qcchem-release-diagnostics"
@@ -129,6 +130,7 @@ CI_RELEASE_DIAGNOSTIC_PRODUCER_STEPS = (
     CI_ACCEPTANCE_STATUS_STEP_NAME,
     CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME,
     CI_RELEASE_HISTORY_HANDOFF_STEP_NAME,
+    CI_WORKBENCH_HISTORY_REFRESH_STEP_NAME,
     CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME,
 )
 
@@ -1163,6 +1165,15 @@ def _audit_ci_release_diagnostic_artifacts(*, repo_root: Path, checks: list[dict
                         "job": str(job_name),
                         "workflow": workflow_relative_path.as_posix(),
                         "step_name": CI_RELEASE_HISTORY_HANDOFF_STEP_NAME,
+                    }
+                )
+            if CI_WORKBENCH_HISTORY_REFRESH_STEP_NAME not in producer_indices:
+                failures.append(
+                    {
+                        "reason": "missing_ci_workbench_history_refresh_step",
+                        "job": str(job_name),
+                        "workflow": workflow_relative_path.as_posix(),
+                        "step_name": CI_WORKBENCH_HISTORY_REFRESH_STEP_NAME,
                     }
                 )
             manifest_index = producer_indices.get(CI_RELEASE_DIAGNOSTIC_MANIFEST_STEP_NAME)

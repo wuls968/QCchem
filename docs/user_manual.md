@@ -652,6 +652,12 @@ precedence. The Markdown
 handoff writes inactive or unavailable fields as `not_applicable`,
 `not_available`, `not_provided`, or `none` instead of placeholder `None` text.
 
+In CI, the uploaded `artifacts/workbench_smoke.json` is refreshed after
+`release_history_summary.json` / `.md` are written. That final smoke JSON
+therefore includes the compact top-level `release_history` summary for the same
+diagnostic bundle, while the earlier smoke run remains the input used by
+`release evidence-handoff`.
+
 When the artifacts are still in GitHub Actions, fetch and retain them in one
 step:
 

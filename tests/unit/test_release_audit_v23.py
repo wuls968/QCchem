@@ -55,6 +55,7 @@ def _write_ci_workflow(
     include_acceptance_status_gate: bool = True,
     include_release_evidence_handoff: bool = True,
     include_release_history_handoff: bool = True,
+    include_workbench_history_refresh: bool = True,
     include_release_diagnostics_manifest: bool = True,
     include_release_diagnostic_upload: bool = True,
     acceptance_status_command: str | None = None,
@@ -111,6 +112,18 @@ def _write_ci_workflow(
         "            --history-summary artifacts/release_history_summary.json \\\n"
         "            -o artifacts/release_history_summary.md\n"
         if include_release_history_handoff
+        else ""
+    )
+    workbench_history_refresh_step = (
+        "\n"
+        "      - name: Refresh Workbench release smoke with release history\n"
+        "        if: always()\n"
+        "        run: |\n"
+        "          set -euo pipefail\n"
+        "          python -m qcchem.cli.main workbench smoke \\\n"
+        "            --docs docs/workbench.md \\\n"
+        "            -o artifacts/workbench_smoke.json\n"
+        if include_workbench_history_refresh
         else ""
     )
     diagnostics_manifest_step = (
@@ -185,6 +198,7 @@ jobs:
 {gate_step}
 {evidence_handoff_step}
 {history_handoff_step}
+{workbench_history_refresh_step}
 {diagnostics_manifest_step}
 {diagnostic_upload_step}
 """,
@@ -1224,7 +1238,7 @@ def test_release_audit_checks_ci_release_diagnostic_artifact_upload(tmp_path: Pa
     assert upload_check["details"]["matching_steps"] == [
         {
             "job": "test",
-            "step_index": 5,
+            "step_index": 6,
             "uses": "actions/upload-artifact@v7",
             "if_condition": "always()",
             "artifact_name": "qcchem-release-diagnostics-${{ matrix.python-version }}",
@@ -1358,6 +1372,32 @@ def test_release_audit_fails_when_ci_release_history_handoff_step_is_missing(tmp
         "job": "test",
         "workflow": ".github/workflows/ci.yml",
         "step_name": "Write release history handoff",
+    } in upload_check["details"]["failures"]
+
+
+def test_release_audit_fails_when_ci_workbench_history_refresh_step_is_missing(tmp_path: Path) -> None:
+    _write_release_fixture(tmp_path)
+    _write_ci_workflow(
+        tmp_path,
+        "python -m pytest tests/unit/test_release_audit_v23.py -q",
+        include_workbench_history_refresh=False,
+    )
+    artifact = tmp_path / "artifacts" / "qft" / "result.json"
+    _write_artifact(artifact, algorithm="qft")
+    _write_acceptance_sidecar(artifact)
+    spec = load_release_audit_spec(_write_config(tmp_path, artifact=artifact, include_exploratory_artifact=False))
+
+    summary = run_release_audit(spec, repo_root=tmp_path, output_dir=tmp_path / "out")
+
+    upload_check = next(check for check in summary["checks"] if check["id"] == "release_diagnostics:ci_artifact_upload")
+    assert summary["status"] == "failed"
+    assert upload_check["status"] == "failed"
+    assert upload_check["required"] is True
+    assert {
+        "reason": "missing_ci_workbench_history_refresh_step",
+        "job": "test",
+        "workflow": ".github/workflows/ci.yml",
+        "step_name": "Refresh Workbench release smoke with release history",
     } in upload_check["details"]["failures"]
 
 
