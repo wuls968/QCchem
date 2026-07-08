@@ -7,6 +7,7 @@ from dash import dcc, html
 
 from qcchem.workbench.data import load_artifact_bundle
 from qcchem.workbench.evidence_console import format_action_label
+from qcchem.workflow.ai_store import list_delivery_records, workspace_root
 
 
 def _status_chip(label: str, tone: str) -> html.Span:
@@ -114,6 +115,46 @@ def _artifact_evidence_summary(path_text: str | None, workspace_base: Path | str
     return str(resolved), None
 
 
+def _compact_string(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _delivery_label(record: dict[str, object] | None) -> str:
+    if not record:
+        return "none"
+    delivery_id = _compact_string(record.get("delivery_id"))
+    summary = _compact_string(record.get("summary"))
+    if delivery_id and summary:
+        return f"{delivery_id} - {summary}"
+    return delivery_id or summary or "none"
+
+
+def _read_linked_return_delivery(
+    record: dict[str, object],
+    workspace_base: Path | str | None,
+) -> dict[str, object] | None:
+    base = Path(workspace_base) if workspace_base is not None else Path.cwd()
+    linked_path = _compact_string(record.get("linked_return_delivery_record"))
+    if linked_path:
+        raw_path = Path(linked_path).expanduser()
+        path = raw_path if raw_path.is_absolute() else (base / raw_path).resolve()
+        payload = _read_json(path)
+        if payload:
+            return payload
+    task_id = _compact_string(record.get("task_id"))
+    if not task_id:
+        return None
+    deliveries = list_delivery_records(workspace_root(base, create=False))
+    matches = [delivery for delivery in deliveries if _compact_string(delivery.get("task_id")) == task_id]
+    returned_matches = [
+        delivery
+        for delivery in matches
+        if _compact_string(delivery.get("return_notes"))
+        or _compact_string(delivery.get("review_status")).lower() in {"returned", "needs_revision", "changes_requested"}
+    ]
+    return (returned_matches or matches)[-1] if (returned_matches or matches) else None
+
+
 def build_ticket_preview_content(
     *,
     current_ticket_record: dict[str, object] | None,
@@ -142,6 +183,36 @@ def build_ticket_preview_content(
     risk_notes = record.get("risk_notes")
     if not isinstance(risk_notes, list):
         risk_notes = _normalize_lines(risk_notes_text)
+
+    linked_return_delivery = _read_linked_return_delivery(record, workspace_base)
+    return_notes = _compact_string(record.get("return_notes"))
+    if linked_return_delivery is not None and not return_notes:
+        return_notes = _compact_string(linked_return_delivery.get("return_notes"))
+    return_handoff_children: list[html.Component] = []
+    if status_value == "returned" or return_notes or linked_return_delivery is not None:
+        review_status = (
+            _compact_string((linked_return_delivery or {}).get("review_status"))
+            or status_value
+            or "returned"
+        )
+        review_action = "address_return_notes" if return_notes or review_status == "returned" else "review_delivery_handoff"
+        return_handoff_children = [
+            html.Div(
+                className="qcchem-ai-assistant-window__preview-block",
+                children=[
+                    html.P("Return handoff", className="qcchem-ai-assistant-window__preview-title"),
+                    html.Div(
+                        className="qcchem-ai-assistant-window__preview-grid",
+                        children=[
+                            html.Div([html.Span("Linked delivery"), html.Strong(_delivery_label(linked_return_delivery))]),
+                            html.Div([html.Span("Review"), html.Strong(review_status)]),
+                            html.Div([html.Span("Review action"), html.Strong(format_action_label(review_action))]),
+                        ],
+                    ),
+                    html.P(return_notes or "No return notes recorded.", className="qcchem-ai-assistant-window__preview-body"),
+                ],
+            )
+        ]
 
     first_artifact = str(linked_artifacts[0]) if linked_artifacts else None
     resolved_artifact, evidence = _artifact_evidence_summary(first_artifact, workspace_base)
@@ -199,6 +270,7 @@ def build_ticket_preview_content(
                     html.Div([html.Span("Risk notes"), html.Strong(", ".join(risk_notes) or "None yet")]),
                 ],
             ),
+            *return_handoff_children,
             html.Div(
                 className="qcchem-ai-assistant-window__preview-block",
                 children=[

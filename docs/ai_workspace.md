@@ -80,7 +80,11 @@ delivery cards. Each card includes a review action, labeled linked output paths,
 workflow result/report paths when present, evidence scope, and return notes when
 a handoff is sent back for revision. The Delivery History controls can filter
 those handoffs by review status and delivery kind while keeping total counts,
-status counts, kind counts, and the source directory visible.
+status counts, kind counts, and the source directory visible. Returned delivery
+notes are also linked back to tickets with the same `task_id`, so the returned
+lane and floating preview show the revision reason without opening the delivery
+JSON first. When the Workbench `Return` action is used directly, the current
+risk notes are preserved as ticket-level return notes.
 
 ## Default AI posture
 

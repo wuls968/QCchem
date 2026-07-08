@@ -10,9 +10,11 @@ import pytest
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
     AI_WORKSPACE_TICKET_LANE_INBOX,
+    AI_WORKSPACE_TICKET_LANE_RETURNED,
     AI_WORKSPACE_TICKET_STATUS_ACCEPTED,
     AI_WORKSPACE_TICKET_STATUS_COMPLETED,
     AI_WORKSPACE_TICKET_STATUS_NEEDS_CONFIRMATION,
+    AI_WORKSPACE_TICKET_STATUS_RETURNED,
 )
 from qcchem.workflow.ai_store import (
     list_delivery_records,
@@ -480,6 +482,88 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
     assert "review=returned, kind=artifact_bundle" in rendered
     assert "Returned workflow handoff." in rendered
     assert "Submitted analysis handoff." not in rendered
+
+
+@pytest.mark.integration
+def test_ticket_return_persists_return_notes_and_surfaces_in_lane(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    ticket_path = draft_ticket_from_form(
+        task_type="analysis",
+        title="Refine claim review",
+        request_text="Review the H2 claim for overstatement.",
+        linked_artifacts_text="artifacts/h2_local",
+        plan_summary="Return this ticket until exact baseline evidence is attached.",
+        expected_outputs_text="claim review",
+        risk_notes_text="Attach exact baseline evidence before closing.",
+        workspace_base=tmp_path,
+    )
+    current_record = json.loads(ticket_path.read_text(encoding="utf-8"))
+
+    result = handle_ticket_editor_action(
+        action="return",
+        task_type="analysis",
+        title="Refine claim review",
+        request_text="Review the H2 claim for overstatement.",
+        linked_artifacts_text="artifacts/h2_local",
+        plan_summary="Return this ticket until exact baseline evidence is attached.",
+        expected_outputs_text="claim review",
+        risk_notes_text="Attach exact baseline evidence before closing.",
+        current_ticket_path=str(ticket_path),
+        current_ticket_record=current_record,
+        workspace_base=tmp_path,
+    )
+    returned = list_ticket_records(ticket_root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)[0]
+
+    assert result["current_ticket_record"]["status"] == AI_WORKSPACE_TICKET_STATUS_RETURNED
+    assert returned["return_notes"] == "Attach exact baseline evidence before closing."
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    page = _resolve_layout(page_module.layout)
+    returned_lane = _find_component(page, "qcchem-ai-task-returned")
+    assert returned_lane is not None
+    rendered = str(returned_lane)
+    assert "Return handoff" in rendered
+    assert "Attach exact baseline evidence before closing." in rendered
+
+
+@pytest.mark.integration
+def test_ai_workspace_returned_ticket_links_delivery_return_notes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    ticket_root = workspace_root(tmp_path)
+    write_ticket_record(
+        ticket_root,
+        {
+            "task_id": "analysis-returned-003",
+            "task_type": "analysis",
+            "title": "Returned evidence review",
+            "request_text": "Revise the evidence boundary.",
+            "status": AI_WORKSPACE_TICKET_STATUS_RETURNED,
+        },
+    )
+    write_delivery_record(
+        ticket_root,
+        {
+            "delivery_id": "delivery-returned-003",
+            "task_id": "analysis-returned-003",
+            "delivery_kind": "analysis_note",
+            "summary": "Returned evidence handoff.",
+            "linked_outputs": ["artifacts/ai_workspace/reviews/evidence_review.md"],
+            "review_status": "returned",
+            "return_notes": "Clarify the exploratory boundary before retrying.",
+            "evidence_summary": {"recommended_action": "review_evidence_boundary"},
+        },
+    )
+
+    page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
+    page = _resolve_layout(page_module.layout)
+    returned_lane = _find_component(page, "qcchem-ai-task-returned")
+
+    assert returned_lane is not None
+    rendered = str(returned_lane)
+    assert "delivery-returned-003 - Returned evidence handoff." in rendered
+    assert "address return notes (address_return_notes)" in rendered
+    assert "Clarify the exploratory boundary before retrying." in rendered
 
 
 @pytest.mark.integration

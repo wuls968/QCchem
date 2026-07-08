@@ -263,6 +263,51 @@ def test_floating_assistant_preview_includes_evidence_scope_limitations_and_acti
 
 
 @pytest.mark.integration
+def test_floating_assistant_preview_links_returned_delivery_notes(tmp_path: Path) -> None:
+    root = workspace_root(tmp_path)
+    write_delivery_record(
+        root,
+        {
+            "delivery_id": "delivery-returned-preview",
+            "task_id": "ticket-returned-preview",
+            "delivery_kind": "analysis_note",
+            "summary": "Returned preview handoff.",
+            "linked_outputs": ["artifacts/ai_workspace/reviews/preview.md"],
+            "review_status": "returned",
+            "return_notes": "Add exact artifact paths before retrying this review.",
+            "evidence_summary": {"recommended_action": "review_evidence_boundary"},
+        },
+    )
+
+    from qcchem.workbench.components.assistant import build_ticket_preview_content
+
+    preview = build_ticket_preview_content(
+        current_ticket_record={
+            "task_id": "ticket-returned-preview",
+            "task_type": "analysis",
+            "title": "Returned preview",
+            "request_text": "Revise the returned handoff.",
+            "status": AI_WORKSPACE_TICKET_STATUS_RETURNED,
+        },
+        task_type="analysis",
+        title="Returned preview",
+        request_text="Revise the returned handoff.",
+        linked_artifacts_text="",
+        plan_summary="Address returned scope notes.",
+        expected_outputs_text="review memo",
+        risk_notes_text="",
+        workspace_base=tmp_path,
+        current_route="/ai-workspace",
+    )
+    preview_text = _collect_text(preview)
+
+    assert "Return handoff" in preview_text
+    assert "delivery-returned-preview - Returned preview handoff." in preview_text
+    assert "address return notes" in preview_text
+    assert "Add exact artifact paths before retrying this review." in preview_text
+
+
+@pytest.mark.integration
 def test_theme_css_preserves_hidden_state_for_assistant_surfaces() -> None:
     css = (Path(__file__).resolve().parents[2] / "qcchem" / "workbench" / "assets" / "theme.css").read_text(encoding="utf-8")
 

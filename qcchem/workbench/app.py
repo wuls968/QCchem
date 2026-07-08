@@ -352,12 +352,14 @@ def create_app() -> Dash:
     def _render_ticket_inbox(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         inbox = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_INBOX)
+        deliveries = list_delivery_records(root)
         return build_lane_children(
             "Inbox",
             "New requests wait here for confirmation before any execution path is allowed.",
             inbox,
             lane=AI_WORKSPACE_TICKET_LANE_INBOX,
             workspace_root_path=root,
+            deliveries=deliveries,
         )
 
     @app.callback(
@@ -367,12 +369,14 @@ def create_app() -> Dash:
     def _render_ticket_running(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         running = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RUNNING)
+        deliveries = list_delivery_records(root)
         return build_lane_children(
             "Running",
             "Active work stays separate from drafts so the shell can show motion without implying persistence.",
             running,
             lane=AI_WORKSPACE_TICKET_LANE_RUNNING,
             workspace_root_path=root,
+            deliveries=deliveries,
         )
 
     @app.callback(
@@ -382,12 +386,14 @@ def create_app() -> Dash:
     def _render_ticket_submitted(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         submitted = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED)
+        deliveries = list_delivery_records(root)
         return build_lane_children(
             "Submitted",
             "Submitted tickets surface here once review and delivery wiring are connected.",
             submitted,
             lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED,
             workspace_root_path=root,
+            deliveries=deliveries,
         )
 
     @app.callback(
@@ -397,12 +403,14 @@ def create_app() -> Dash:
     def _render_ticket_completed(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         completed = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_COMPLETED)
+        deliveries = list_delivery_records(root)
         return build_lane_children(
             "Completed",
             "Completed tickets become reportable outcomes after state-backed delivery records land.",
             completed,
             lane=AI_WORKSPACE_TICKET_LANE_COMPLETED,
             workspace_root_path=root,
+            deliveries=deliveries,
         )
 
     @app.callback(
@@ -412,12 +420,14 @@ def create_app() -> Dash:
     def _render_ticket_returned(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         returned = list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_RETURNED)
+        deliveries = list_delivery_records(root)
         return build_lane_children(
             "Returned",
             "Returned tasks preserve scope corrections and cautionary notes instead of hiding them.",
             returned,
             lane=AI_WORKSPACE_TICKET_LANE_RETURNED,
             workspace_root_path=root,
+            deliveries=deliveries,
         )
 
     @app.callback(

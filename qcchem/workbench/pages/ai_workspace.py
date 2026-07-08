@@ -37,7 +37,74 @@ def _compact_record_label(record: dict[str, object] | None, *, fallback: str) ->
     return record_id or title or fallback
 
 
-def build_ticket_card(record: dict[str, object]) -> html.Div:
+def _compact_delivery_label(record: dict[str, object] | None, *, fallback: str) -> str:
+    if not record:
+        return fallback
+    record_id = _compact_string(record.get("delivery_id") or record.get("task_id"))
+    summary = _compact_string(record.get("summary"))
+    if record_id and summary:
+        return f"{record_id} - {summary}"
+    return record_id or summary or fallback
+
+
+def _linked_return_delivery_for_ticket(
+    record: dict[str, object],
+    deliveries: list[dict[str, object]],
+) -> dict[str, object] | None:
+    task_id = _compact_string(record.get("task_id"))
+    if not task_id:
+        return None
+    matches = [delivery for delivery in deliveries if _compact_string(delivery.get("task_id")) == task_id]
+    if not matches:
+        return None
+    returned_matches = [
+        delivery
+        for delivery in matches
+        if _compact_string(delivery.get("return_notes"))
+        or _compact_string(delivery.get("review_status")).lower() in {"returned", "needs_revision", "changes_requested"}
+    ]
+    return (returned_matches or matches)[-1]
+
+
+def _ticket_return_handoff_children(
+    record: dict[str, object],
+    linked_return_delivery: dict[str, object] | None,
+) -> list[object]:
+    return_notes = _compact_string(record.get("return_notes"))
+    if linked_return_delivery is not None and not return_notes:
+        return_notes = _compact_string(linked_return_delivery.get("return_notes"))
+    if not return_notes and linked_return_delivery is None:
+        return []
+    delivery_label = _compact_delivery_label(linked_return_delivery, fallback="none")
+    review_status = (
+        _compact_string((linked_return_delivery or {}).get("review_status"))
+        or _compact_string(record.get("status"))
+        or "returned"
+    )
+    raw_evidence = (linked_return_delivery or {}).get("evidence_summary") or {}
+    evidence = raw_evidence if isinstance(raw_evidence, dict) else {}
+    outputs = _string_list((linked_return_delivery or {}).get("linked_outputs"))
+    workflow = _workflow_delivery_summary(linked_return_delivery or {})
+    review_action = _delivery_review_action(linked_return_delivery or record, evidence, workflow, outputs)
+    return [
+        html.P("Return handoff", className="qcchem-ai-workspace-page__ticket-meta"),
+        html.Div(
+            className="qcchem-ai-workspace-page__ticket-grid",
+            children=[
+                html.Div([html.Span("Linked delivery"), html.Strong(delivery_label)]),
+                html.Div([html.Span("Review"), html.Strong(review_status)]),
+                html.Div([html.Span("Review action"), html.Strong(_action_text(review_action))]),
+            ],
+        ),
+        html.P(return_notes or "No return notes recorded.", className="qcchem-card-note qcchem-card-note--compact"),
+    ]
+
+
+def build_ticket_card(
+    record: dict[str, object],
+    *,
+    linked_return_delivery: dict[str, object] | None = None,
+) -> html.Div:
     linked_artifacts = record.get("linked_artifacts") or []
     if not isinstance(linked_artifacts, list):
         linked_artifacts = []
@@ -70,6 +137,7 @@ def build_ticket_card(record: dict[str, object]) -> html.Div:
                     html.Div([html.Span("Risk"), html.Strong(str(risk_assessment.get("risk_tier") or "standard"))]),
                 ],
             ),
+            *_ticket_return_handoff_children(record, linked_return_delivery),
         ],
     )
 
@@ -386,6 +454,7 @@ def build_lane_children(
     *,
     lane: str,
     workspace_root_path: Path | None = None,
+    deliveries: list[dict[str, object]] | None = None,
 ) -> list[object]:
     tickets_dir = (workspace_root_path / "tickets") if workspace_root_path is not None else Path("artifacts/ai_workspace/tickets")
     latest_ticket = tickets[-1] if tickets else None
@@ -411,7 +480,14 @@ def build_lane_children(
             ],
         ),
         html.Div(
-            [build_ticket_card(ticket) for ticket in tickets] or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
+            [
+                build_ticket_card(
+                    ticket,
+                    linked_return_delivery=_linked_return_delivery_for_ticket(ticket, deliveries or []),
+                )
+                for ticket in tickets
+            ]
+            or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
             className="qcchem-ai-workspace-page__lane-stack",
         ),
     ]
@@ -425,11 +501,19 @@ def _lane(
     *,
     lane: str,
     workspace_root_path: Path,
+    deliveries: list[dict[str, object]] | None = None,
 ) -> html.Section:
     return html.Section(
         id=section_id,
         className="qcchem-ai-workspace-page__lane",
-        children=build_lane_children(title, note, tickets, lane=lane, workspace_root_path=workspace_root_path),
+        children=build_lane_children(
+            title,
+            note,
+            tickets,
+            lane=lane,
+            workspace_root_path=workspace_root_path,
+            deliveries=deliveries,
+        ),
     )
 
 
@@ -618,6 +702,7 @@ def layout() -> html.Div:
                         inbox,
                         lane=AI_WORKSPACE_TICKET_LANE_INBOX,
                         workspace_root_path=root,
+                        deliveries=deliveries,
                     ),
                     _lane(
                         "qcchem-ai-task-running",
@@ -626,6 +711,7 @@ def layout() -> html.Div:
                         running,
                         lane=AI_WORKSPACE_TICKET_LANE_RUNNING,
                         workspace_root_path=root,
+                        deliveries=deliveries,
                     ),
                     _lane(
                         "qcchem-ai-task-submitted",
@@ -634,6 +720,7 @@ def layout() -> html.Div:
                         submitted,
                         lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED,
                         workspace_root_path=root,
+                        deliveries=deliveries,
                     ),
                     _lane(
                         "qcchem-ai-task-completed",
@@ -642,6 +729,7 @@ def layout() -> html.Div:
                         completed,
                         lane=AI_WORKSPACE_TICKET_LANE_COMPLETED,
                         workspace_root_path=root,
+                        deliveries=deliveries,
                     ),
                     _lane(
                         "qcchem-ai-task-returned",
@@ -650,6 +738,7 @@ def layout() -> html.Div:
                         returned,
                         lane=AI_WORKSPACE_TICKET_LANE_RETURNED,
                         workspace_root_path=root,
+                        deliveries=deliveries,
                     ),
                 ],
             ),

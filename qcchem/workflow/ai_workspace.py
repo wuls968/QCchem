@@ -519,6 +519,17 @@ def _write_ticket_status(path: Path, payload: dict[str, Any], status: str) -> Pa
     return write_ticket_record(root, updated_payload)
 
 
+def _ticket_return_notes(payload: dict[str, Any]) -> str:
+    existing = str(payload.get("return_notes") or "").strip()
+    if existing:
+        return existing
+    risk_notes = payload.get("risk_notes")
+    if isinstance(risk_notes, list):
+        notes = [str(item).strip() for item in risk_notes if str(item).strip()]
+        return "; ".join(notes)
+    return ""
+
+
 def _empty_evidence_context(linked_artifacts: list[str]) -> dict[str, Any]:
     return {
         "graph_id": "evidence-empty",
@@ -775,11 +786,28 @@ def accept_ticket(path: Path) -> dict[str, Any]:
     return accepted
 
 
-def return_ticket(path: Path) -> dict[str, Any]:
+def return_ticket(
+    path: Path,
+    *,
+    return_notes: str | None = None,
+    linked_return_delivery_record: str | None = None,
+) -> dict[str, Any]:
     payload = _load_ticket_payload(path)
-    updated_path = _write_ticket_status(path, payload, AI_WORKSPACE_TICKET_STATUS_RETURNED)
+    updated_payload = dict(payload)
+    updated_payload["status"] = AI_WORKSPACE_TICKET_STATUS_RETURNED
+    normalized_notes = str(return_notes or _ticket_return_notes(updated_payload)).strip()
+    if normalized_notes:
+        updated_payload["return_notes"] = normalized_notes
+    normalized_delivery = str(linked_return_delivery_record or updated_payload.get("linked_return_delivery_record") or "").strip()
+    if normalized_delivery:
+        updated_payload["linked_return_delivery_record"] = normalized_delivery
+    updated_path = write_ticket_record(_ticket_workspace_root(path), _sanitized_ticket_record(updated_payload))
     returned = dict(payload)
     returned["status"] = AI_WORKSPACE_TICKET_STATUS_RETURNED
+    if normalized_notes:
+        returned["return_notes"] = normalized_notes
+    if normalized_delivery:
+        returned["linked_return_delivery_record"] = normalized_delivery
     returned["ticket_path"] = str(updated_path)
     return returned
 
@@ -1024,10 +1052,13 @@ def handle_ticket_editor_action(
     if action == "return":
         persisted_path = write_ticket_record(_ticket_workspace_root(ticket_path), _sanitized_ticket_record(ticket_record))
         if persisted_path.exists():
-            returned = return_ticket(persisted_path)
+            returned = return_ticket(persisted_path, return_notes=_ticket_return_notes(ticket_record))
         else:
             returned = dict(ticket_record)
             returned["status"] = AI_WORKSPACE_TICKET_STATUS_RETURNED
+            return_notes = _ticket_return_notes(ticket_record)
+            if return_notes:
+                returned["return_notes"] = return_notes
         return {
             "action": action,
             "current_ticket_path": str(persisted_path),

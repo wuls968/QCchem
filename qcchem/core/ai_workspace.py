@@ -184,6 +184,8 @@ class AITaskTicket:
     expected_outputs: list[str] = field(default_factory=list)
     risk_notes: list[str] = field(default_factory=list)
     boundary_notes: list[str] = field(default_factory=list)
+    return_notes: str = ""
+    linked_return_delivery_record: str = ""
     confirmation_required: bool = True
     execution_target: str = "analysis_only_assistant"
     linked_artifacts: list[str] = field(default_factory=list)

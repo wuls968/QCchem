@@ -109,6 +109,8 @@ The AI surface now includes:
 - a filterable delivery history section that preserves review state, review
   actions, downstream output paths, workflow result/report paths, and return
   notes
+- returned delivery notes linked back into matching ticket cards and the
+  floating preview
 
 This path is designed to answer, in order:
 
