@@ -16,6 +16,25 @@ from qcchem.workbench.components.cards import callout_card, metric_card, status_
 from qcchem.workbench.evidence_console import format_action_label
 
 
+LANE_NEXT_ACTIONS = {
+    AI_WORKSPACE_TICKET_LANE_INBOX: "Draft or accept a ticket before execution.",
+    AI_WORKSPACE_TICKET_LANE_RUNNING: "Review active tickets before starting another run.",
+    AI_WORKSPACE_TICKET_LANE_SUBMITTED: "Inspect delivery records before closing the handoff.",
+    AI_WORKSPACE_TICKET_LANE_COMPLETED: "Use completed tickets as the evidence-backed outcome list.",
+    AI_WORKSPACE_TICKET_LANE_RETURNED: "Resolve returned scope notes before retrying execution.",
+}
+
+
+def _compact_record_label(record: dict[str, object] | None, *, fallback: str) -> str:
+    if not record:
+        return fallback
+    record_id = str(record.get("task_id") or record.get("delivery_id") or "").strip()
+    title = str(record.get("title") or record.get("summary") or "").strip()
+    if record_id and title:
+        return f"{record_id} - {title}"
+    return record_id or title or fallback
+
+
 def build_ticket_card(record: dict[str, object]) -> html.Div:
     linked_artifacts = record.get("linked_artifacts") or []
     if not isinstance(linked_artifacts, list):
@@ -159,25 +178,93 @@ def build_delivery_card(record: dict[str, object]) -> html.Div:
     )
 
 
-def build_lane_children(title: str, note: str, tickets: list[dict[str, object]]) -> list[object]:
+def build_lane_children(
+    title: str,
+    note: str,
+    tickets: list[dict[str, object]],
+    *,
+    lane: str,
+    workspace_root_path: Path | None = None,
+) -> list[object]:
+    tickets_dir = (workspace_root_path / "tickets") if workspace_root_path is not None else Path("artifacts/ai_workspace/tickets")
+    latest_ticket = tickets[-1] if tickets else None
+    empty_message = (
+        f"0 persisted {title.lower()} tickets found under {tickets_dir}. "
+        f"{LANE_NEXT_ACTIONS.get(lane, 'Create or move a ticket to populate this lane.')}"
+    )
     return [
         html.P("Task Lane", className="qcchem-panel__eyebrow"),
         html.H2(title, className="qcchem-panel__title"),
         html.P(note, className="qcchem-panel__note"),
         html.Div(
-            [build_ticket_card(ticket) for ticket in tickets]
-            or [html.Div("No persisted items in this lane yet.", className="qcchem-ai-workspace-page__empty-state")],
-            className="qcchem-ai-workspace-page__placeholder",
+            className="qcchem-ai-workspace-page__state-card",
+            children=[
+                html.Div(
+                    className="qcchem-ai-workspace-page__ticket-grid",
+                    children=[
+                        html.Div([html.Span("Records"), html.Strong(str(len(tickets)))]),
+                        html.Div([html.Span("Latest"), html.Strong(_compact_record_label(latest_ticket, fallback="none"))]),
+                        html.Div([html.Span("Source"), html.Strong(str(tickets_dir))]),
+                    ],
+                ),
+            ],
+        ),
+        html.Div(
+            [build_ticket_card(ticket) for ticket in tickets] or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
+            className="qcchem-ai-workspace-page__lane-stack",
         ),
     ]
 
 
-def _lane(section_id: str, title: str, note: str, tickets: list[dict[str, object]]) -> html.Section:
+def _lane(
+    section_id: str,
+    title: str,
+    note: str,
+    tickets: list[dict[str, object]],
+    *,
+    lane: str,
+    workspace_root_path: Path,
+) -> html.Section:
     return html.Section(
         id=section_id,
         className="qcchem-ai-workspace-page__lane",
-        children=build_lane_children(title, note, tickets),
+        children=build_lane_children(title, note, tickets, lane=lane, workspace_root_path=workspace_root_path),
     )
+
+
+def build_delivery_history_children(deliveries: list[dict[str, object]], *, workspace_root_path: Path | None = None) -> list[object]:
+    deliveries_dir = (workspace_root_path / "deliveries") if workspace_root_path is not None else Path("artifacts/ai_workspace/deliveries")
+    latest_delivery = deliveries[-1] if deliveries else None
+    review_statuses: dict[str, int] = {}
+    for delivery in deliveries:
+        status = str(delivery.get("review_status") or "pending_review")
+        review_statuses[status] = review_statuses.get(status, 0) + 1
+    status_text = ", ".join(f"{status}={count}" for status, count in sorted(review_statuses.items())) or "none"
+    empty_message = (
+        f"0 persisted delivery records found under {deliveries_dir}. "
+        "Run an accepted ticket or submit a delivery to create a durable handoff."
+    )
+    return [
+        html.Div(
+            className="qcchem-ai-workspace-page__state-card",
+            children=[
+                html.Div(
+                    className="qcchem-ai-workspace-page__ticket-grid",
+                    children=[
+                        html.Div([html.Span("Records"), html.Strong(str(len(deliveries)))]),
+                        html.Div([html.Span("Latest"), html.Strong(_compact_record_label(latest_delivery, fallback="none"))]),
+                        html.Div([html.Span("Review"), html.Strong(status_text)]),
+                        html.Div([html.Span("Source"), html.Strong(str(deliveries_dir))]),
+                    ],
+                )
+            ],
+        ),
+        html.Div(
+            [build_delivery_card(delivery) for delivery in deliveries]
+            or [html.Div(empty_message, className="qcchem-ai-workspace-page__empty-state")],
+            className="qcchem-ai-workspace-page__delivery-stack",
+        ),
+    ]
 
 
 def layout() -> html.Div:
@@ -265,30 +352,40 @@ def layout() -> html.Div:
                         "Inbox",
                         "New requests wait here for confirmation before any execution path is allowed.",
                         inbox,
+                        lane=AI_WORKSPACE_TICKET_LANE_INBOX,
+                        workspace_root_path=root,
                     ),
                     _lane(
                         "qcchem-ai-task-running",
                         "Running",
                         "Active work stays separate from drafts so the shell can show motion without implying persistence.",
                         running,
+                        lane=AI_WORKSPACE_TICKET_LANE_RUNNING,
+                        workspace_root_path=root,
                     ),
                     _lane(
                         "qcchem-ai-task-submitted",
                         "Submitted",
                         "Submitted tickets preserve the handoff boundary between analysis and delivery.",
                         submitted,
+                        lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED,
+                        workspace_root_path=root,
                     ),
                     _lane(
                         "qcchem-ai-task-completed",
                         "Completed",
                         "Completed tickets become reportable outcomes once their delivery records are available.",
                         completed,
+                        lane=AI_WORKSPACE_TICKET_LANE_COMPLETED,
+                        workspace_root_path=root,
                     ),
                     _lane(
                         "qcchem-ai-task-returned",
                         "Returned",
                         "Returned tasks preserve scope corrections and cautionary notes instead of hiding them.",
                         returned,
+                        lane=AI_WORKSPACE_TICKET_LANE_RETURNED,
+                        workspace_root_path=root,
                     ),
                 ],
             ),
@@ -303,9 +400,8 @@ def layout() -> html.Div:
                     ),
                     html.Div(
                         id="qcchem-ai-delivery-history",
-                        className="qcchem-ai-workspace-page__placeholder",
-                        children=[build_delivery_card(delivery) for delivery in deliveries]
-                        or [html.Div("No persisted deliveries yet.", className="qcchem-ai-workspace-page__empty-state")],
+                        className="qcchem-ai-workspace-page__delivery-history-body",
+                        children=build_delivery_history_children(deliveries, workspace_root_path=root),
                     ),
                 ],
             ),

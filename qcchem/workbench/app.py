@@ -8,7 +8,7 @@ from dash import Dash, Input, Output, State, ctx, dcc, html, no_update
 from qcchem.workbench.components.cards import callout_card
 from qcchem.workbench.components.layout import build_shell, ordered_pages, page_focus
 from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
-from qcchem.workbench.pages.ai_workspace import build_delivery_card, build_lane_children
+from qcchem.workbench.pages.ai_workspace import build_delivery_history_children, build_lane_children
 from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
@@ -352,6 +352,8 @@ def create_app() -> Dash:
             "Inbox",
             "New requests wait here for confirmation before any execution path is allowed.",
             inbox,
+            lane=AI_WORKSPACE_TICKET_LANE_INBOX,
+            workspace_root_path=root,
         )
 
     @app.callback(
@@ -365,6 +367,8 @@ def create_app() -> Dash:
             "Running",
             "Active work stays separate from drafts so the shell can show motion without implying persistence.",
             running,
+            lane=AI_WORKSPACE_TICKET_LANE_RUNNING,
+            workspace_root_path=root,
         )
 
     @app.callback(
@@ -378,6 +382,8 @@ def create_app() -> Dash:
             "Submitted",
             "Submitted tickets surface here once review and delivery wiring are connected.",
             submitted,
+            lane=AI_WORKSPACE_TICKET_LANE_SUBMITTED,
+            workspace_root_path=root,
         )
 
     @app.callback(
@@ -391,6 +397,8 @@ def create_app() -> Dash:
             "Completed",
             "Completed tickets become reportable outcomes after state-backed delivery records land.",
             completed,
+            lane=AI_WORKSPACE_TICKET_LANE_COMPLETED,
+            workspace_root_path=root,
         )
 
     @app.callback(
@@ -404,6 +412,8 @@ def create_app() -> Dash:
             "Returned",
             "Returned tasks preserve scope corrections and cautionary notes instead of hiding them.",
             returned,
+            lane=AI_WORKSPACE_TICKET_LANE_RETURNED,
+            workspace_root_path=root,
         )
 
     @app.callback(
@@ -413,8 +423,6 @@ def create_app() -> Dash:
     def _render_delivery_history(_current_ticket_record: dict[str, object] | None):
         root = _current_workspace_root()
         deliveries = list_delivery_records(root)
-        return [
-            build_delivery_card(delivery) for delivery in deliveries
-        ] or [html.Div("No persisted deliveries yet.", className="qcchem-ai-workspace-page__empty-state")]
+        return build_delivery_history_children(deliveries, workspace_root_path=root)
 
     return app

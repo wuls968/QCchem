@@ -776,10 +776,19 @@ select {
   gap: 12px;
 }
 
-.qcchem-ai-workspace-page__placeholder {
+.qcchem-ai-workspace-page__lane-stack,
+.qcchem-ai-workspace-page__delivery-stack,
+.qcchem-ai-workspace-page__delivery-history-body {
   display: grid;
   gap: 8px;
   margin-top: 12px;
+}
+
+.qcchem-ai-workspace-page__state-card {
+  padding: 10px;
+  border: 1px solid rgba(193, 199, 205, 0.62);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.82);
 }
 
 .qcchem-ai-workspace-page__ticket {

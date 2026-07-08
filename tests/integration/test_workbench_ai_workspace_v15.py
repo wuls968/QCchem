@@ -175,7 +175,8 @@ def test_assistant_window_asset_supports_drag_and_resize_behavior() -> None:
 
 
 @pytest.mark.integration
-def test_ai_workspace_page_exposes_placeholder_task_lanes() -> None:
+def test_ai_workspace_page_exposes_state_backed_task_lanes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
     page = _resolve_layout(page_module.layout)
     rendered = str(page)
@@ -186,6 +187,12 @@ def test_ai_workspace_page_exposes_placeholder_task_lanes() -> None:
     assert "qcchem-ai-task-submitted" in rendered
     assert "qcchem-ai-task-completed" in rendered
     assert "qcchem-ai-task-returned" in rendered
+    assert "qcchem-ai-workspace-page__placeholder" not in rendered
+    assert "Records" in rendered
+    assert "Latest" in rendered
+    assert "Source" in rendered
+    assert "0 persisted inbox tickets found" in rendered
+    assert "artifacts/ai_workspace/tickets" in rendered
 
 
 @pytest.mark.integration
@@ -207,6 +214,8 @@ def test_ai_workspace_page_reads_persisted_ticket_inbox(tmp_path, monkeypatch) -
     rendered = str(_resolve_layout(app.validation_layout))
 
     assert "ticket-inbox-001" in rendered or "Explain H2 runtime gap" in rendered
+    assert "ticket-inbox-001 - Explain H2 runtime gap" in rendered
+    assert "Records" in rendered
     assert list_ticket_records(root, lane=AI_WORKSPACE_TICKET_LANE_INBOX)[0]["task_id"] == "ticket-inbox-001"
 
 
@@ -217,9 +226,11 @@ def test_ai_workspace_page_render_does_not_create_workspace_directories(tmp_path
 
     assert not (tmp_path / "artifacts" / "ai_workspace").exists()
 
-    _resolve_layout(page_module.layout)
+    rendered = str(_resolve_layout(page_module.layout))
 
     assert not (tmp_path / "artifacts" / "ai_workspace").exists()
+    assert "0 persisted inbox tickets found" in rendered
+    assert "0 persisted delivery records found" in rendered
 
 
 @pytest.mark.integration
@@ -344,6 +355,8 @@ def test_ai_workspace_delivery_renders_workflow_summary(tmp_path, monkeypatch) -
     assert "demo_flow" in rendered
     assert "completed" in rendered
     assert "accepted" in rendered
+    assert "Records" in rendered
+    assert "Review" in rendered
     assert "2 completed / 0 failed / 1 generated" in rendered
     assert "promote_workflow_outputs" in rendered
 

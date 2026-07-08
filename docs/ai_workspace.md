@@ -16,7 +16,8 @@ AI research center:
 ## What lives where
 
 - Workbench preview shell: floating assistant, draft preview, provider drawer, position recovery control
-- Workspace page: inbox, running, submitted, completed, and returned lanes
+- Workspace page: inbox, running, submitted, completed, and returned lanes with
+  record counts, latest-record labels, and artifact-source paths
 - Example provider config: `examples/ai_workspace/provider.openai-compatible.yaml`
 - Example ticket: `examples/ai_workspace/tickets/analysis_h2_campaign.json`
 
@@ -69,7 +70,13 @@ That keeps the copilot aligned with the same Evidence Core language used by repo
 
 The floating assistant is intentionally persistent, but it must never trap the user. The `Reset` control and double-clicking the title grip both restore the assistant to a safe bottom-right position. This is useful when a previous browser session saved an awkward drag/resize state in local storage.
 
-Delivery history now mirrors that same evidence-first contract. A durable delivery should preserve the review status, linked evidence summary, evidence scope, limitation notes, and recommended action so later agents do not have to reinterpret raw artifacts from scratch.
+Delivery history now mirrors that same evidence-first contract. A durable
+delivery should preserve the review status, linked evidence summary, evidence
+scope, limitation notes, and recommended action so later agents do not have to
+reinterpret raw artifacts from scratch. The Workbench delivery panel also
+summarizes the delivery record count, latest delivery, review-status counts, and
+the `artifacts/ai_workspace/deliveries` source path before listing individual
+delivery cards.
 
 ## Default AI posture
 
