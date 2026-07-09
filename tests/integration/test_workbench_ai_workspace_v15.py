@@ -473,6 +473,32 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
             "evidence_summary": {"recommended_action": "review_evidence_boundary"},
         },
     )
+    provenance_dir = ticket_root / "provenance"
+    provenance_dir.mkdir()
+    (provenance_dir / "ai_provenance.jsonl").write_text(
+        "\n".join(
+            [
+                json.dumps({"event_type": "ticket_created", "event_id": "event-ignore"}),
+                "{malformed json",
+                json.dumps(
+                    {
+                        "event_id": "event-review-002",
+                        "timestamp": "2026-07-08T10:46:00Z",
+                        "event_type": "delivery_reviewed",
+                        "metadata": {
+                            "delivery_id": "delivery-returned-002",
+                            "review_status": "returned",
+                            "reviewed_by": "science-reviewer",
+                            "review_source": "cli",
+                            "ticket_link_status": "updated",
+                        },
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     page_module = importlib.import_module("qcchem.workbench.pages.ai_workspace")
     deliveries = list_delivery_records(ticket_root)
@@ -496,6 +522,17 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
     assert summary["delivery_kind_counts"] == {"analysis_note": 1, "artifact_bundle": 1}
     assert summary["linked_output_path_count"] == 2
     assert summary["return_note_count"] == 1
+    assert summary["review_event_count"] == 1
+    assert summary["review_provenance_log"] == str(ticket_root / "provenance" / "ai_provenance.jsonl")
+    assert summary["latest_review_event"] == {
+        "event_id": "event-review-002",
+        "timestamp": "2026-07-08T10:46:00Z",
+        "delivery_id": "delivery-returned-002",
+        "review_status": "returned",
+        "reviewed_by": "science-reviewer",
+        "review_source": "cli",
+        "ticket_link_status": "updated",
+    }
     returned_handoff = next(item for item in summary["handoffs"] if item["delivery_id"] == "delivery-returned-002")
     assert returned_handoff["review_action"] == "address_return_notes"
     assert returned_handoff["reviewed_at"] == "2026-07-08T10:45:00Z"
@@ -504,6 +541,9 @@ def test_ai_workspace_delivery_history_filters_and_summarizes_handoffs(tmp_path,
     assert "1 / 2" in rendered
     assert "Filter" in rendered
     assert "review=returned, kind=artifact_bundle" in rendered
+    assert "Review events" in rendered
+    assert "event-review-002 / delivery-returned-002 returned via cli" in rendered
+    assert str(ticket_root / "provenance" / "ai_provenance.jsonl") in rendered
     assert "Returned workflow handoff." in rendered
     assert "science-reviewer via cli" in rendered
     assert "Submitted analysis handoff." not in rendered

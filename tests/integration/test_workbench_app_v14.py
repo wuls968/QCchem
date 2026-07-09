@@ -1397,6 +1397,26 @@ def test_workbench_smoke_summary_records_ai_workspace_delivery_handoff(tmp_path:
         ),
         encoding="utf-8",
     )
+    provenance_dir = artifact_root / "ai_workspace" / "provenance"
+    provenance_dir.mkdir()
+    (provenance_dir / "ai_provenance.jsonl").write_text(
+        json.dumps(
+            {
+                "event_id": "event-review-returned-001",
+                "timestamp": "2026-07-08T10:32:00Z",
+                "event_type": "delivery_reviewed",
+                "metadata": {
+                    "delivery_id": "delivery-returned-001",
+                    "review_status": "returned",
+                    "reviewed_by": "lead-reviewer",
+                    "review_source": "workbench",
+                    "ticket_link_status": "updated",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     summary = run_workbench_smoke_from_docs(
         REPO_ROOT / "docs" / "workbench.md",
@@ -1412,6 +1432,17 @@ def test_workbench_smoke_summary_records_ai_workspace_delivery_handoff(tmp_path:
     assert ai_delivery["delivery_kind_counts"] == {"analysis_note": 1}
     assert ai_delivery["linked_output_path_count"] == 2
     assert ai_delivery["return_note_count"] == 1
+    assert ai_delivery["review_event_count"] == 1
+    assert ai_delivery["review_provenance_log"] == str(provenance_dir / "ai_provenance.jsonl")
+    assert ai_delivery["latest_review_event"] == {
+        "event_id": "event-review-returned-001",
+        "timestamp": "2026-07-08T10:32:00Z",
+        "delivery_id": "delivery-returned-001",
+        "review_status": "returned",
+        "reviewed_by": "lead-reviewer",
+        "review_source": "workbench",
+        "ticket_link_status": "updated",
+    }
     assert ai_delivery["handoffs"] == [
         {
             "delivery_id": "delivery-returned-001",

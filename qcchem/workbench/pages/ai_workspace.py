@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from dash import dcc, html
@@ -355,6 +356,47 @@ def filter_delivery_records(
     return filtered
 
 
+def _delivery_review_provenance_log(workspace_root_path: Path | None) -> Path:
+    if workspace_root_path is None:
+        return Path("artifacts/ai_workspace/provenance/ai_provenance.jsonl")
+    return workspace_root_path / "provenance" / "ai_provenance.jsonl"
+
+
+def _read_delivery_review_events(workspace_root_path: Path | None) -> list[dict[str, object]]:
+    provenance_log = _delivery_review_provenance_log(workspace_root_path)
+    if not provenance_log.exists():
+        return []
+    events: list[dict[str, object]] = []
+    for line in provenance_log.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict) and event.get("event_type") == "delivery_reviewed":
+            events.append(event)
+    return events
+
+
+def _latest_delivery_review_event_summary(
+    events: list[dict[str, object]],
+) -> dict[str, object]:
+    if not events:
+        return {}
+    latest = events[-1]
+    metadata = latest.get("metadata") if isinstance(latest.get("metadata"), dict) else {}
+    return {
+        "event_id": _compact_string(latest.get("event_id")) or "unknown",
+        "timestamp": _compact_string(latest.get("timestamp")) or "unknown",
+        "delivery_id": _compact_string(metadata.get("delivery_id")) or "unknown",
+        "review_status": _compact_string(metadata.get("review_status")) or "unknown",
+        "reviewed_by": _compact_string(metadata.get("reviewed_by")) or "unknown",
+        "review_source": _compact_string(metadata.get("review_source")) or "unknown",
+        "ticket_link_status": _compact_string(metadata.get("ticket_link_status")) or "unknown",
+    }
+
+
 def build_delivery_handoff_summary(
     deliveries: list[dict[str, object]],
     *,
@@ -362,6 +404,8 @@ def build_delivery_handoff_summary(
     handoff_limit: int = 5,
 ) -> dict[str, object]:
     deliveries_dir = (workspace_root_path / "deliveries") if workspace_root_path is not None else Path("artifacts/ai_workspace/deliveries")
+    provenance_log = _delivery_review_provenance_log(workspace_root_path)
+    review_events = _read_delivery_review_events(workspace_root_path)
     review_statuses: dict[str, int] = {}
     delivery_kinds: dict[str, int] = {}
     handoffs: list[dict[str, object]] = []
@@ -411,6 +455,9 @@ def build_delivery_handoff_summary(
         "delivery_kind_counts": delivery_kinds,
         "linked_output_path_count": total_output_paths,
         "return_note_count": return_note_count,
+        "review_event_count": len(review_events),
+        "review_provenance_log": str(provenance_log),
+        "latest_review_event": _latest_delivery_review_event_summary(review_events),
         "latest": _compact_record_label(latest_delivery, fallback="none"),
         "handoffs": handoffs,
         "handoffs_truncated": len(deliveries) > handoff_limit,
@@ -710,6 +757,15 @@ def build_delivery_history_children(
     delivery_kinds = summary["delivery_kind_counts"] if isinstance(summary["delivery_kind_counts"], dict) else {}
     status_text = ", ".join(f"{status}={count}" for status, count in sorted(review_statuses.items())) or "none"
     kind_text = ", ".join(f"{kind}={count}" for kind, count in sorted(delivery_kinds.items())) or "none"
+    latest_review_event = summary.get("latest_review_event") if isinstance(summary.get("latest_review_event"), dict) else {}
+    latest_review_label = _compact_string(latest_review_event.get("event_id")) or "none"
+    if latest_review_event:
+        latest_review_label = (
+            f"{latest_review_label} / "
+            f"{latest_review_event.get('delivery_id')} "
+            f"{latest_review_event.get('review_status')} "
+            f"via {latest_review_event.get('review_source')}"
+        )
     active_filters = []
     if _compact_string(review_status_filter) not in {"", DELIVERY_FILTER_ALL}:
         active_filters.append(f"review={review_status_filter}")
@@ -732,9 +788,12 @@ def build_delivery_history_children(
                         html.Div([html.Span("Records"), html.Strong(f"{len(filtered_deliveries)} / {len(deliveries)}")]),
                         html.Div([html.Span("Latest"), html.Strong(_compact_record_label(latest_delivery, fallback="none"))]),
                         html.Div([html.Span("Review"), html.Strong(status_text)]),
+                        html.Div([html.Span("Review events"), html.Strong(str(summary["review_event_count"]))]),
+                        html.Div([html.Span("Latest review event"), html.Strong(latest_review_label)]),
                         html.Div([html.Span("Kinds"), html.Strong(kind_text)]),
                         html.Div([html.Span("Filter"), html.Strong(filter_text)]),
                         html.Div([html.Span("Source"), html.Strong(str(deliveries_dir))]),
+                        html.Div([html.Span("Provenance"), html.Strong(str(summary["review_provenance_log"]))]),
                     ],
                 )
             ],

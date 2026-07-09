@@ -95,7 +95,10 @@ back to the matching ticket, and stamp `reviewed_at`, `reviewed_by`, and
 appends a `delivery_reviewed` event to
 `artifacts/ai_workspace/provenance/ai_provenance.jsonl`, including the delivery
 record, reviewer label, review source, ticket-link status, and linked output
-paths. The same review loop is available from the CLI:
+paths. Delivery History and the Workbench smoke JSON read that append-only log
+back as an audit summary: review event count, latest review event metadata, and
+the provenance log path are shown next to the delivery handoff summary. The same
+review loop is available from the CLI:
 `qcchem ai delivery list` reports review-status and delivery-kind counts plus
 the delivery JSON paths; `qcchem ai delivery return <delivery.json>
 --return-notes "..."` marks the delivery as returned and writes the revision

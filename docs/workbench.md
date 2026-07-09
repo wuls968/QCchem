@@ -178,7 +178,11 @@ retained run counts, status-count maps, first failure, and a bounded retained-ru
 drilldown. It also includes `ai_workspace_delivery`, a compact summary of
 `artifacts/ai_workspace/deliveries` with delivery counts, review-status counts,
 delivery-kind counts, linked output path counts, return-note counts, and a
-bounded list of review handoffs with labeled artifact paths. The documented
+bounded list of review handoffs with labeled artifact paths. That summary also
+reads the append-only `artifacts/ai_workspace/provenance/ai_provenance.jsonl`
+log and reports the delivery review event count, latest review event metadata,
+and provenance log path, so reviewers can confirm the audit trail without
+opening the JSONL first. The documented
 `/overview` smoke row is anchored to the retained-run drilldown so route smoke
 fails if that release-history review block falls out of the Overview component
 tree. The same linked handoff can be generated after a CI
