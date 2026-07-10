@@ -12,7 +12,8 @@ is refreshed to match the altered file.
 ## Requirements
 
 - MUST verify the generated handoff's top-level schema, status, recommended
-  action, run counts, and first-failure summary against the parsed JSON summary.
+  action, declared outcome counts, and first-failure summary against the parsed
+  JSON summary.
 - MUST reject missing, duplicated, or divergent core top-level Markdown fields
   with named downloaded-artifact verification failures.
 - MUST allow extra reviewer notes after the generated top-level block.
@@ -27,8 +28,9 @@ Extend `_verify_release_history_markdown` to receive the parsed summary once it
 is readable. It will isolate the generated top-level block before `## Status
 Counts`, parse each required `- field: \`value\`` entry exactly once, and compare
 the values with deterministic local renderers for the JSON summary. Required
-fields are `schema_version`, `status`, `recommended_action`, `run_count`,
-`passed_runs`, `failed_runs`, `incomplete_runs`, and `first_failure`.
+fields are `schema_version`, `status`, `recommended_action`, `run_count`, and
+`first_failure`, plus `passed_runs`, `failed_runs`, and `incomplete_runs` when
+the JSON declares the complete outcome-count compatibility group.
 
 The check does not compare the full document. This preserves the reviewer note
 section and avoids duplicating the complete Markdown generator in the verifier.

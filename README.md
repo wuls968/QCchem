@@ -167,6 +167,9 @@ The verifier also derives the history `recommended_action` and `first_failure`
 from retained runs. Because these are core guidance fields, a missing or
 divergent value fails verification even when a diagnostics manifest has been
 refreshed to match the downloaded file.
+Its generated Markdown handoff is also checked against the verified JSON for
+core status, action, declared outcome counts, and first-failure text; reviewer
+notes outside that top-level block remain allowed.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, frozen AI delivery

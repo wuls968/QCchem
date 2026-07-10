@@ -12,7 +12,8 @@
 
 - Keep `qcchem.release_history_summary.v0.1-alpha` and the Markdown generator unchanged.
 - JSON remains authoritative; Markdown is a checked reviewer-facing projection.
-- Reject missing, duplicate, and divergent core Markdown fields.
+- Reject missing, duplicate, and divergent core Markdown fields; compare
+  outcome-count displays only when the JSON declares their complete group.
 - Permit appended reviewer notes outside the generated top-level block.
 - Do not validate per-run Markdown rows or browser evidence in this increment.
 

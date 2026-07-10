@@ -806,7 +806,13 @@ def _verify_release_history_handoff(
             }
         )
         entry["status"] = "unreadable"
-        _verify_release_history_markdown(markdown_path, summary_path=summary_path, failures=failures)
+        _verify_release_history_markdown(
+            markdown_path,
+            summary_path=summary_path,
+            summary=None,
+            entry=entry,
+            failures=failures,
+        )
         _verify_release_history_current_evidence(current_evidence_path, summary_path=summary_path, failures=failures)
         return entry
 
@@ -849,7 +855,13 @@ def _verify_release_history_handoff(
             }
         )
 
-    _verify_release_history_markdown(markdown_path, summary_path=summary_path, failures=failures)
+    _verify_release_history_markdown(
+        markdown_path,
+        summary_path=summary_path,
+        summary=summary,
+        entry=entry,
+        failures=failures,
+    )
     current_evidence = _verify_release_history_current_evidence(
         current_evidence_path,
         summary_path=summary_path,
@@ -872,6 +884,8 @@ def _verify_release_history_markdown(
     markdown_path: Path,
     *,
     summary_path: Path,
+    summary: dict[str, object] | None,
+    entry: dict[str, object],
     failures: list[dict[str, object]],
 ) -> None:
     if not markdown_path.exists():
@@ -882,6 +896,7 @@ def _verify_release_history_markdown(
                 "markdown_path": str(markdown_path),
             }
         )
+        entry["markdown_core_validation"] = "not_checked"
         return
     if not markdown_path.is_file():
         failures.append(
@@ -891,6 +906,7 @@ def _verify_release_history_markdown(
                 "markdown_path": str(markdown_path),
             }
         )
+        entry["markdown_core_validation"] = "not_checked"
         return
     try:
         markdown = markdown_path.read_text(encoding="utf-8")
@@ -903,6 +919,7 @@ def _verify_release_history_markdown(
                 "error": str(exc),
             }
         )
+        entry["markdown_core_validation"] = "not_checked"
         return
     if RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING not in markdown:
         failures.append(
@@ -922,6 +939,74 @@ def _verify_release_history_markdown(
                 "expected": summary_path.name,
             }
         )
+    if summary is None:
+        entry["markdown_core_validation"] = "not_checked"
+        return
+
+    top_level = markdown.split("\n## Status Counts", 1)[0]
+    expected_fields = _release_history_markdown_core_fields(summary)
+    coherent = True
+    for field, expected in expected_fields:
+        prefix = f"- {field}: `"
+        values = [line[len(prefix) : -1] for line in top_level.splitlines() if line.startswith(prefix) and line.endswith("`")]
+        if len(values) != 1:
+            coherent = False
+            failures.append(
+                {
+                    "reason": "release_history_markdown_core_field_invalid",
+                    "path": str(summary_path),
+                    "markdown_path": str(markdown_path),
+                    "field": field,
+                    "count": len(values),
+                }
+            )
+            continue
+        actual = values[0]
+        matches = actual == expected
+        if field == "first_failure" and expected != "none":
+            matches = actual == expected or actual.startswith(f"{expected} detail=")
+        if matches:
+            continue
+        coherent = False
+        failures.append(
+            {
+                "reason": "release_history_markdown_core_field_mismatch",
+                "path": str(summary_path),
+                "markdown_path": str(markdown_path),
+                "field": field,
+                "expected": expected,
+                "actual": actual,
+            }
+        )
+    entry["markdown_core_validation"] = "verified" if coherent else "inconsistent"
+
+
+def _release_history_markdown_core_fields(summary: dict[str, object]) -> tuple[tuple[str, str], ...]:
+    first_failure = summary.get("first_failure")
+    first_failure_text = "none"
+    if isinstance(first_failure, dict):
+        first_failure_text = str(first_failure.get("reason") or "unknown")
+        label = first_failure.get("label")
+        if label:
+            first_failure_text = f"label={label} {first_failure_text}"
+        path = first_failure.get("path")
+        if path:
+            first_failure_text = f"{first_failure_text} path={path}"
+    fields: list[tuple[str, str]] = [
+        ("schema_version", str(summary.get("schema_version"))),
+        ("status", str(summary.get("status"))),
+        ("recommended_action", str(summary.get("recommended_action"))),
+        ("run_count", str(summary.get("run_count"))),
+        ("first_failure", first_failure_text),
+    ]
+    outcome_count_fields = ("passed_run_count", "failed_run_count", "incomplete_run_count")
+    if all(field in summary for field in outcome_count_fields):
+        fields[4:4] = [
+            ("passed_runs", str(summary.get("passed_run_count"))),
+            ("failed_runs", str(summary.get("failed_run_count"))),
+            ("incomplete_runs", str(summary.get("incomplete_run_count"))),
+        ]
+    return tuple(fields)
 
 
 def _verify_release_history_current_evidence(

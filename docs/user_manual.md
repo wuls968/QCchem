@@ -737,6 +737,9 @@ Workbench checklist remains outside this downloaded-artifact verifier.
 The verifier also derives the history `recommended_action` and `first_failure`
 from retained runs. These core guidance fields must be present and coherent; a
 refreshed diagnostics manifest does not suppress a semantic mismatch.
+The verifier also checks the generated Markdown handoff's core status, action,
+declared outcome counts, and first-failure text against that JSON while allowing
+appended reviewer notes outside the generated top-level block.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an

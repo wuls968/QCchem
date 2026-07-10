@@ -323,6 +323,9 @@ It also derives the history `recommended_action` and `first_failure` from the
 retained run list. These are core guidance fields, so a missing or divergent
 value fails verification even if a refreshed diagnostics manifest matches the
 downloaded file.
+The generated Markdown handoff also has its core status, action, declared
+outcome-count, and first-failure fields checked against that JSON; appended
+reviewer notes remain permitted outside the generated top-level block.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
