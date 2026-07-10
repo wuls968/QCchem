@@ -158,6 +158,11 @@ AI review aggregate maps, it verifies both the normalized current AI snapshot
 and the per-run aggregate counts. `not_available` remains informational; a
 declared mismatch is a downloaded-artifact verification failure. Older summaries
 without those additive AI fields remain readable.
+It also recomputes the retained history status, run total, outcome counts, and
+non-AI matrix/verifier/Workbench status maps. A complete omitted counter or map
+group is reported as legacy-compatible; a partial group or declared mismatch
+fails downloaded-artifact verification. This structural check does not replace
+the separate manual real-browser Workbench checklist.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, frozen AI delivery

@@ -729,6 +729,11 @@ and, when present, verifies normalized AI review provenance and aggregate maps.
 `not_available` AI review context is informational; an explicitly declared
 mismatch fails verification, while older summaries without the additive fields
 remain readable.
+It separately recomputes the retained history status, run total, outcome
+counts, and non-AI matrix-delta, release-verifier, and Workbench-smoke status
+maps. Entirely omitted counter or map groups remain legacy-compatible; partial
+groups and declared mismatches fail verification. The manual real-browser
+Workbench checklist remains outside this downloaded-artifact verifier.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an

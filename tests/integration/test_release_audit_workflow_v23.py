@@ -787,6 +787,9 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     assert history_handoff["current_ai_workspace_delivery_status"] == "available"
     assert history_handoff["current_ai_workspace_delivery_source_status"] == "not_available"
     assert history_handoff["ai_workspace_delivery_validation"] == "verified"
+    assert history_handoff["structural_validation"] == "verified"
+    assert history_handoff["outcome_counts_validation"] == "verified"
+    assert history_handoff["status_maps_validation"] == "verified"
     assert report["failures"] == []
 
 
@@ -856,6 +859,152 @@ def test_release_verify_artifacts_cli_rejects_incoherent_release_history(
     assert exit_code == 2
     assert expected_reason in failure_reasons
     assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("mutation", "expected_reason"),
+    [
+        ("summary_status", "release_history_summary_status_mismatch"),
+        ("run_count", "release_history_summary_run_count_mismatch"),
+        ("outcome_counts", "release_history_summary_outcome_counts_mismatch"),
+        ("status_map", "release_history_summary_status_map_mismatch"),
+        ("status_maps_incomplete", "release_history_summary_status_maps_incomplete"),
+    ],
+)
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history_structure(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    mutation: str,
+    expected_reason: str,
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    if mutation == "summary_status":
+        history_summary["status"] = "failed"
+    elif mutation == "run_count":
+        history_summary["run_count"] = 2
+    elif mutation == "outcome_counts":
+        history_summary["passed_run_count"] = 0
+    elif mutation == "status_map":
+        history_summary["matrix_delta_status_counts"] = {"not_available": 1}
+    elif mutation == "status_maps_incomplete":
+        history_summary.pop("workbench_smoke_status_counts")
+    else:
+        raise AssertionError(f"unexpected mutation: {mutation}")
+    history_summary_path.write_text(json.dumps(history_summary), encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / f"release_artifact_verification_structure_{mutation}.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert expected_reason in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_accepts_legacy_release_history_without_structural_groups(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    for field in (
+        "passed_run_count",
+        "failed_run_count",
+        "incomplete_run_count",
+        "run_status_counts",
+        "matrix_delta_status_counts",
+        "release_artifact_verification_status_counts",
+        "workbench_smoke_status_counts",
+    ):
+        history_summary.pop(field)
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_legacy_structure.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    assert exit_code == 0
+    assert report["status"] == "passed"
+    assert history_handoff["structural_validation"] == "legacy_not_available"
+    assert history_handoff["outcome_counts_validation"] == "legacy_not_available"
+    assert history_handoff["status_maps_validation"] == "legacy_not_available"
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_accepts_partially_legacy_release_history_structure(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    for field in ("passed_run_count", "failed_run_count", "incomplete_run_count"):
+        history_summary.pop(field)
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_partially_legacy_structure.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    assert exit_code == 0
+    assert report["status"] == "passed"
+    assert history_handoff["structural_validation"] == "partially_legacy"
+    assert history_handoff["outcome_counts_validation"] == "legacy_not_available"
+    assert history_handoff["status_maps_validation"] == "verified"
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_rejects_partial_release_history_outcome_counts(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    history_summary.pop("failed_run_count")
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_partial_outcome_counts.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert history_handoff["structural_validation"] == "inconsistent"
+    assert history_handoff["outcome_counts_validation"] == "inconsistent"
+    assert history_handoff["status_maps_validation"] == "verified"
+    assert "release_history_summary_outcome_counts_incomplete" in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" not in failure_reasons
 
 
 @pytest.mark.integration

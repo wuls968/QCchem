@@ -18,6 +18,17 @@ RELEASE_ARTIFACT_VERIFICATION_SCHEMA_VERSION = "qcchem.release_artifact_verifica
 RELEASE_HISTORY_SUMMARY_SCHEMA_VERSION = "qcchem.release_history_summary.v0.1-alpha"
 RELEASE_EVIDENCE_COLLECTION_SCHEMA_VERSION = "qcchem.release_evidence_collection.v0.1-alpha"
 RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING = "# QCchem Release History Handoff"
+RELEASE_HISTORY_OUTCOME_COUNT_FIELDS = (
+    "passed_run_count",
+    "failed_run_count",
+    "incomplete_run_count",
+)
+RELEASE_HISTORY_STATUS_MAP_FIELDS = (
+    ("run_status_counts", "status"),
+    ("matrix_delta_status_counts", "release_matrix_delta"),
+    ("release_artifact_verification_status_counts", "release_artifact_verification"),
+    ("workbench_smoke_status_counts", "workbench_smoke"),
+)
 
 
 def normalize_ai_delivery_review_summary(*args: object, **kwargs: object) -> dict[str, Any]:
@@ -981,6 +992,38 @@ def _release_history_ai_status_counts(runs: list[dict[str, object]]) -> dict[str
     return {status: counts[status] for status in sorted(counts)}
 
 
+def _release_history_status_counts(runs: list[dict[str, object]], key: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for run in runs:
+        value = run.get(key)
+        if isinstance(value, dict):
+            status = str(value.get("status") or "not_available")
+        else:
+            status = str(value or "not_available")
+        counts[status] = counts.get(status, 0) + 1
+    return {status: counts[status] for status in sorted(counts)}
+
+
+def _release_history_derived_status(runs: list[dict[str, object]]) -> str:
+    passed_run_count = sum(1 for run in runs if run.get("status") == "passed")
+    failed_run_count = sum(1 for run in runs if run.get("status") == "failed")
+    if not runs:
+        return "empty"
+    if passed_run_count == len(runs):
+        return "passed"
+    if failed_run_count:
+        return "failed"
+    return "incomplete"
+
+
+def _release_history_count_map_matches(actual: object, expected: dict[str, int]) -> bool:
+    return (
+        isinstance(actual, dict)
+        and actual == expected
+        and all(isinstance(status, str) and type(count) is int for status, count in actual.items())
+    )
+
+
 def _release_history_ai_source_status(summary: dict[str, Any]) -> str:
     source_status = summary.get("source_status")
     status = source_status.strip() if isinstance(source_status, str) else ""
@@ -1016,6 +1059,126 @@ def _release_history_coherence_failure(
     failures.append({"reason": reason, "path": str(summary_path), **details})
 
 
+def _verify_release_history_structural_coherence(
+    summary: dict[str, object],
+    *,
+    runs: list[dict[str, object]],
+    summary_path: Path,
+    entry: dict[str, object],
+    failures: list[dict[str, object]],
+) -> None:
+    coherent = True
+    expected_status = _release_history_derived_status(runs)
+    actual_status = summary.get("status")
+    if actual_status != expected_status:
+        coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_status_mismatch",
+            summary_path=summary_path,
+            expected=expected_status,
+            actual=actual_status,
+        )
+
+    expected_run_count = len(runs)
+    actual_run_count = summary.get("run_count")
+    if type(actual_run_count) is not int or actual_run_count != expected_run_count:
+        coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_run_count_mismatch",
+            summary_path=summary_path,
+            expected=expected_run_count,
+            actual=actual_run_count,
+        )
+
+    present_outcome_count_fields = tuple(
+        field for field in RELEASE_HISTORY_OUTCOME_COUNT_FIELDS if field in summary
+    )
+    if not present_outcome_count_fields:
+        entry["outcome_counts_validation"] = "legacy_not_available"
+    elif len(present_outcome_count_fields) != len(RELEASE_HISTORY_OUTCOME_COUNT_FIELDS):
+        coherent = False
+        entry["outcome_counts_validation"] = "inconsistent"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_outcome_counts_incomplete",
+            summary_path=summary_path,
+            present_fields=list(present_outcome_count_fields),
+            missing_fields=[
+                field for field in RELEASE_HISTORY_OUTCOME_COUNT_FIELDS if field not in summary
+            ],
+        )
+    else:
+        expected_outcome_counts = {
+            "passed_run_count": sum(1 for run in runs if run.get("status") == "passed"),
+            "failed_run_count": sum(1 for run in runs if run.get("status") == "failed"),
+            "incomplete_run_count": sum(1 for run in runs if run.get("status") not in {"passed", "failed"}),
+        }
+        actual_outcome_counts = {field: summary.get(field) for field in RELEASE_HISTORY_OUTCOME_COUNT_FIELDS}
+        if actual_outcome_counts != expected_outcome_counts or any(
+            type(actual_outcome_counts[field]) is not int for field in RELEASE_HISTORY_OUTCOME_COUNT_FIELDS
+        ):
+            coherent = False
+            entry["outcome_counts_validation"] = "inconsistent"
+            _release_history_coherence_failure(
+                failures,
+                reason="release_history_summary_outcome_counts_mismatch",
+                summary_path=summary_path,
+                expected=expected_outcome_counts,
+                actual=actual_outcome_counts,
+            )
+        else:
+            entry["outcome_counts_validation"] = "verified"
+
+    present_status_map_fields = tuple(field for field, _ in RELEASE_HISTORY_STATUS_MAP_FIELDS if field in summary)
+    if not present_status_map_fields:
+        entry["status_maps_validation"] = "legacy_not_available"
+    elif len(present_status_map_fields) != len(RELEASE_HISTORY_STATUS_MAP_FIELDS):
+        coherent = False
+        entry["status_maps_validation"] = "inconsistent"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_status_maps_incomplete",
+            summary_path=summary_path,
+            present_fields=list(present_status_map_fields),
+            missing_fields=[field for field, _ in RELEASE_HISTORY_STATUS_MAP_FIELDS if field not in summary],
+        )
+    else:
+        status_maps_coherent = True
+        for field, run_key in RELEASE_HISTORY_STATUS_MAP_FIELDS:
+            expected_status_counts = _release_history_status_counts(runs, run_key)
+            actual_status_counts = summary.get(field)
+            if _release_history_count_map_matches(actual_status_counts, expected_status_counts):
+                continue
+            coherent = False
+            status_maps_coherent = False
+            _release_history_coherence_failure(
+                failures,
+                reason="release_history_summary_status_map_mismatch",
+                summary_path=summary_path,
+                field=field,
+                expected=expected_status_counts,
+                actual=actual_status_counts,
+            )
+        entry["status_maps_validation"] = "verified" if status_maps_coherent else "inconsistent"
+
+    if not coherent:
+        entry["structural_validation"] = "inconsistent"
+    elif (
+        entry["outcome_counts_validation"] == "legacy_not_available"
+        and entry["status_maps_validation"] == "legacy_not_available"
+    ):
+        entry["structural_validation"] = "legacy_not_available"
+    elif (
+        entry["outcome_counts_validation"] == "legacy_not_available"
+        or entry["status_maps_validation"] == "legacy_not_available"
+    ):
+        entry["structural_validation"] = "partially_legacy"
+    else:
+        entry["structural_validation"] = "verified"
+
+
 def _verify_release_history_coherence(
     summary: dict[str, object],
     *,
@@ -1026,6 +1189,9 @@ def _verify_release_history_coherence(
 ) -> None:
     raw_runs = summary.get("runs")
     if not isinstance(raw_runs, list) or not all(isinstance(run, dict) for run in raw_runs):
+        entry["structural_validation"] = "invalid"
+        entry["outcome_counts_validation"] = "not_checked"
+        entry["status_maps_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,
@@ -1037,6 +1203,9 @@ def _verify_release_history_coherence(
     runs = [run for run in raw_runs if isinstance(run, dict)]
     current_runs = [run for run in runs if run.get("label") == "current"]
     if not current_runs:
+        entry["structural_validation"] = "invalid"
+        entry["outcome_counts_validation"] = "not_checked"
+        entry["status_maps_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,
@@ -1045,6 +1214,9 @@ def _verify_release_history_coherence(
         )
         return
     if len(current_runs) > 1:
+        entry["structural_validation"] = "invalid"
+        entry["outcome_counts_validation"] = "not_checked"
+        entry["status_maps_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,
@@ -1057,6 +1229,13 @@ def _verify_release_history_coherence(
     current_run = current_runs[0]
     entry["current_run_label"] = "current"
     entry["current_run_status"] = current_run.get("status")
+    _verify_release_history_structural_coherence(
+        summary,
+        runs=runs,
+        summary_path=summary_path,
+        entry=entry,
+        failures=failures,
+    )
     if current_evidence is not None and current_run.get("status") != current_evidence.get("status"):
         _release_history_coherence_failure(
             failures,

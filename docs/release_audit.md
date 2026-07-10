@@ -314,6 +314,11 @@ when the summary declares AI review aggregate maps, recomputes those maps and
 compares the normalized current AI snapshot. An unavailable AI snapshot remains
 informational; a declared cross-artifact mismatch fails verification. Retained
 summaries from before the additive AI projection remain readable.
+The verifier also recomputes the retained history status, run total, outcome
+counts, and non-AI matrix-delta, release-verifier, and Workbench-smoke status
+maps. Entire omitted counter or map groups are retained-history compatibility
+cases; partial groups and declared mismatches fail verification. It does not
+automate the documented real-browser Workbench checklist.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
