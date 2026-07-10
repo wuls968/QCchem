@@ -8,7 +8,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from qcchem.core.ai_workspace import AI_WORKSPACE_TICKET_LANE_INBOX, AI_WORKSPACE_TICKET_LANE_RETURNED
-from qcchem.workflow.ai_store import list_ticket_records, workspace_root
+from qcchem.workflow.ai_delivery_summary import normalize_ai_delivery_review_summary
+from qcchem.workflow.ai_store import list_delivery_records, list_ticket_records, workspace_root
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.components.molecule import build_molecule_viewer
@@ -328,6 +329,66 @@ def _workspace_snapshot() -> dict[str, int]:
     }
 
 
+def _release_ai_delivery_snapshot(
+    release_evidence_handoff: dict[str, Any],
+) -> tuple[dict[str, Any], str]:
+    frozen_snapshot = normalize_ai_delivery_review_summary(
+        release_evidence_handoff.get("ai_workspace_delivery")
+    )
+    if frozen_snapshot.get("status") == "available":
+        return frozen_snapshot, "release evidence handoff"
+    from qcchem.workbench.pages.ai_workspace import build_delivery_handoff_summary
+
+    root = workspace_root(Path.cwd(), create=False)
+    live_snapshot = build_delivery_handoff_summary(
+        list_delivery_records(root),
+        workspace_root_path=root,
+    )
+    return (
+        normalize_ai_delivery_review_summary(live_snapshot),
+        "current workspace",
+    )
+
+
+def _ai_delivery_review_card_text(
+    snapshot: dict[str, Any],
+    *,
+    source: str,
+) -> tuple[str, str]:
+    delivery_count = snapshot.get("delivery_count") if isinstance(snapshot.get("delivery_count"), int) else 0
+    review_event_count = (
+        snapshot.get("review_event_count") if isinstance(snapshot.get("review_event_count"), int) else 0
+    )
+    event_label = "review event" if review_event_count == 1 else "review events"
+    delivery_label = "delivery" if delivery_count == 1 else "deliveries"
+    review_status_text = _format_count_map(
+        snapshot.get("review_status_counts"),
+        empty="no review status counts",
+    )
+    latest_review = (
+        snapshot.get("latest_review_event")
+        if isinstance(snapshot.get("latest_review_event"), dict)
+        else {}
+    )
+    latest_review_text = "none"
+    if latest_review:
+        latest_review_text = (
+            f"{latest_review.get('delivery_id', 'unknown')} "
+            f"{latest_review.get('review_status', 'unknown')} "
+            f"via {latest_review.get('review_source', 'unknown')} "
+            f"by {latest_review.get('reviewed_by', 'unknown')} "
+            f"at {latest_review.get('timestamp', 'unknown')}"
+        )
+    release_gate = str(snapshot.get("release_gate") or "informational_only").replace("_", " ")
+    provenance_log = snapshot.get("review_provenance_log") or "not available"
+    detail = (
+        f"{delivery_count} {delivery_label}; reviews {review_status_text}; "
+        f"latest {latest_review_text}; source {source}; "
+        f"provenance {provenance_log}; {release_gate}"
+    )
+    return f"{review_event_count} {event_label}", detail
+
+
 def build_overview_page(model: dict[str, Any]) -> html.Div:
     view = model
     molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
@@ -350,6 +411,11 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_history_handoff = research_os.get("release_history_handoff") or {}
     release_matrix_summary = research_os.get("release_matrix_summary") or {}
     release_evidence_handoff = research_os.get("release_evidence_handoff") or {}
+    ai_delivery_snapshot, ai_delivery_source = _release_ai_delivery_snapshot(release_evidence_handoff)
+    ai_delivery_value, ai_delivery_detail = _ai_delivery_review_card_text(
+        ai_delivery_snapshot,
+        source=ai_delivery_source,
+    )
     release_verification_summary = (
         release_verification.get("summary")
         if isinstance(release_verification.get("summary"), dict)
@@ -701,6 +767,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                         release_handoff_status,
                         release_handoff_detail,
                         tone=_status_tone(release_evidence_handoff.get("status")),
+                    ),
+                    status_card(
+                        "AI delivery review provenance",
+                        ai_delivery_value,
+                        ai_delivery_detail,
+                        tone=_status_tone(None),
                     ),
                     status_card(
                         "Best Evidence Desk",

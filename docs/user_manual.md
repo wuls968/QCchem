@@ -651,6 +651,12 @@ picked `--output-dir` manually. An explicit `--baseline-summary` takes
 precedence. The Markdown
 handoff writes inactive or unavailable fields as `not_applicable`,
 `not_available`, `not_provided`, or `none` instead of placeholder `None` text.
+It also carries an `AI Delivery Review Provenance` section copied from the
+downloaded CI `workbench_smoke.json` files named by verified diagnostics
+manifests. Matrix copies must agree before the context is marked `available`;
+missing, invalid, or divergent copies are reported as `not_available`. The
+section records `release_gate: informational_only`, so AI delivery review state
+does not change release status, first failure, or the failure list.
 
 In CI, the uploaded `artifacts/workbench_smoke.json` is refreshed after
 `release_history_summary.json` / `.md` are written. That final smoke JSON
@@ -745,7 +751,11 @@ When
 `release_evidence_handoff.md` is kept next to `release_evidence_summary.json`,
 the index classifies the Markdown report as `release_evidence_handoff`, and the
 Overview page shows the handoff status, recommended action, first failure,
-matrix artifact counts, matrix delta status, and path.
+matrix artifact counts, matrix delta status, path, and frozen AI delivery review
+provenance. If that frozen context is absent or malformed, Overview falls back
+to `artifacts/ai_workspace` under the process current working directory, which
+matches the mutable AI Workspace page rather than an alternate read-only
+`--artifact-root`.
 
 Before publishing release-facing docs, also run:
 

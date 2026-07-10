@@ -590,6 +590,7 @@ def _verify_diagnostics_manifest(
         "present_count": manifest.get("present_count"),
         "digest_count": manifest.get("digest_count"),
         "omitted_count": manifest.get("omitted_count"),
+        "workbench_smoke_paths": [],
     }
     if manifest.get("schema_version") != RELEASE_DIAGNOSTICS_MANIFEST_SCHEMA_VERSION:
         failures.append(
@@ -687,6 +688,18 @@ def _verify_diagnostics_manifest(
                 }
             )
             continue
+        remote_path = record.get("resolved_path") or record.get("path")
+        remote_parts = _portable_path_suffix_parts(remote_path)
+        local_path = _downloaded_file_path(artifact_root, remote_path)
+        workbench_smoke_paths = entry["workbench_smoke_paths"]
+        if (
+            record.get("status") == "present"
+            and remote_parts is not None
+            and remote_parts[-2:] == ("artifacts", "workbench_smoke.json")
+            and local_path is not None
+            and isinstance(workbench_smoke_paths, list)
+        ):
+            workbench_smoke_paths.append(str(local_path))
         _verify_diagnostics_manifest_record(
             record,
             artifact_root=artifact_root,
@@ -694,6 +707,9 @@ def _verify_diagnostics_manifest(
             index=index,
             failures=failures,
         )
+    workbench_smoke_paths = entry["workbench_smoke_paths"]
+    if isinstance(workbench_smoke_paths, list):
+        workbench_smoke_paths.sort()
     return entry
 
 

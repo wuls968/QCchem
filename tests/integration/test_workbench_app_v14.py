@@ -959,6 +959,25 @@ def test_overview_page_surfaces_release_verification(
                     "changed": [{"artifact_name": "qcchem-release-diagnostics-3.11"}],
                     "unchanged_count": 1,
                 },
+                "ai_workspace_delivery": {
+                    "status": "available",
+                    "release_gate": "informational_only",
+                    "available": True,
+                    "source_path": "artifacts/ai_workspace/deliveries",
+                    "delivery_count": 1,
+                    "review_status_counts": {"accepted": 1},
+                    "review_event_count": 1,
+                    "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+                    "latest_review_event": {
+                        "event_id": "evt-review-001",
+                        "timestamp": "2026-07-10T00:00:00+00:00",
+                        "delivery_id": "delivery-001",
+                        "review_status": "accepted",
+                        "reviewed_by": "release-reviewer",
+                        "review_source": "workbench",
+                        "ticket_link_status": "updated",
+                    },
+                },
             }
         ),
         encoding="utf-8",
@@ -1000,6 +1019,103 @@ def test_overview_page_surfaces_release_verification(
     assert "review_release_evidence" in page_text
     assert "no first failure" in page_text
     assert str(handoff_path) in page_text
+    assert "AI delivery review provenance" in page_text
+    assert "1 review event" in page_text
+    assert "delivery-001 accepted via workbench by release-reviewer" in page_text
+    assert "release evidence handoff" in page_text
+    assert "informational only" in page_text
+    assert "artifacts/ai_workspace/provenance/ai_provenance.jsonl" in page_text
+
+
+@pytest.mark.integration
+def test_overview_page_falls_back_to_current_ai_delivery_review_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from qcchem.workflow.ai_store import workspace_root, write_delivery_record
+    from qcchem.workbench.pages.overview import build_overview_page, build_sample_view_model
+
+    monkeypatch.chdir(tmp_path)
+    root = workspace_root(tmp_path)
+    write_delivery_record(
+        root,
+        {
+            "delivery_id": "delivery-live-001",
+            "task_id": "task-live-001",
+            "summary": "Current workspace review",
+            "delivery_kind": "analysis",
+            "review_status": "returned",
+            "linked_outputs": ["artifacts/task-live-001/result.json"],
+        },
+    )
+    provenance_dir = root / "provenance"
+    provenance_dir.mkdir(parents=True)
+    provenance_log = provenance_dir / "ai_provenance.jsonl"
+    provenance_log.write_text(
+        json.dumps(
+            {
+                "event_id": "evt-review-live-001",
+                "event_type": "delivery_reviewed",
+                "timestamp": "2026-07-10T01:00:00+00:00",
+                "metadata": {
+                    "delivery_id": "delivery-live-001",
+                    "review_status": "returned",
+                    "reviewed_by": "local-reviewer",
+                    "review_source": "workbench",
+                    "ticket_link_status": "updated",
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    release_root = tmp_path / "artifacts" / "release_evidence"
+    release_root.mkdir(parents=True)
+    (release_root / "release_evidence_handoff.md").write_text(
+        "# QCchem Release Evidence Handoff\n",
+        encoding="utf-8",
+    )
+    (release_root / "release_evidence_summary.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.release_evidence_collection.v0.1-alpha",
+                "status": "passed",
+                "recommended_action": "review_release_evidence",
+                "first_failure": None,
+                "ai_workspace_delivery": {
+                    "status": "available",
+                    "release_gate": "required",
+                    "available": True,
+                    "source_path": "artifacts/ai_workspace/deliveries",
+                    "delivery_count": 1,
+                    "review_status_counts": {"accepted": "one"},
+                    "review_event_count": 1,
+                    "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+                    "latest_review_event": {
+                        "event_id": "evt-frozen-invalid",
+                        "timestamp": "2026-07-10T00:00:00+00:00",
+                        "delivery_id": "delivery-frozen-invalid",
+                        "review_status": "accepted",
+                        "reviewed_by": "untrusted-reviewer",
+                        "review_source": "unknown",
+                        "ticket_link_status": "unknown",
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    page = build_overview_page(build_sample_view_model())
+    page_text = _collect_text(page)
+
+    assert "AI delivery review provenance" in page_text
+    assert "1 review event" in page_text
+    assert "delivery-live-001 returned via workbench by local-reviewer" in page_text
+    assert "source current workspace" in page_text
+    assert str(provenance_log) in page_text
+    assert "delivery-frozen-invalid" not in page_text
+    assert "required" not in page_text
 
 
 @pytest.mark.integration

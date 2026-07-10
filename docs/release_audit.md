@@ -184,6 +184,18 @@ verifier recursively checks downloaded
 contracts, confirms sidecar freshness, checks manifest counts, and recomputes
 uploaded file sizes and SHA-256 digests. The Workbench smoke pass then records
 the same verifier status and matrix counts in its route handoff. The
+collector also preserves the downloaded CI smoke report's compact
+`ai_workspace_delivery` object in `release_evidence_summary.json`. It only
+reads `workbench_smoke.json` paths listed by a diagnostics manifest after size
+and SHA-256 verification. Multiple matrix copies must agree; otherwise the AI
+review context is marked `source_status: divergent` and `status: not_available`.
+The post-download smoke generated under the evidence output root remains the
+route/page verification source and does not replace the frozen CI review
+context. The copied object records delivery and review counts, the latest
+`delivery_reviewed` event, the append-only provenance log path, verified smoke
+paths/count, and `release_gate: informational_only`; AI delivery review state
+therefore remains visible to reviewers without changing release pass/fail
+status. The
 `release_matrix_summary.json` file is a compact baseline of the current
 `qcchem-release-diagnostics-*` matrix artifacts. To compare a later run against
 that baseline, pass it back to collection:
@@ -272,7 +284,14 @@ directories.
 The Markdown
 handoff summarizes the generated paths, verifier counts, per-matrix diagnostic
 artifact status, digest/file counts, Workbench route/page status, first failure,
-matrix artifact delta, and whether a real browser checklist is still required.
+matrix artifact delta, AI delivery review provenance, and whether a real browser
+checklist is still required. Its `AI Delivery Review Provenance` section shows
+the review-event count, latest decision metadata, and provenance path, and
+labels the context `informational_only` rather than treating an empty delivery
+queue as a release failure.
+Malformed, unreadable, missing, or divergent downloaded AI review context is
+reported as `not_available` with its source status; it is never added to the
+release failure list.
 Fields outside the active collection mode are rendered as explicit
 `not_applicable`, `not_available`, `not_provided`, or `none` values rather than
 placeholder `None` text.
@@ -314,7 +333,9 @@ When `release_evidence_handoff.md` is kept next to
 `release_evidence_summary.json`, the artifact index classifies it as
 `release_evidence_handoff`, and Workbench Overview surfaces its status,
 recommended action, first failure, matrix artifact counts, matrix delta status,
-and Markdown path.
+Markdown path, and frozen AI delivery review provenance. When that frozen
+context is unavailable, Overview falls back to the current local AI Workspace
+delivery/provenance summary.
 
 `release_readiness.json` includes a top-level `release_acceptance_sidecars`
 status report. When any manifest-bound sidecar is missing, stale, unreadable, or

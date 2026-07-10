@@ -9,12 +9,61 @@ from types import SimpleNamespace
 
 import pytest
 
-from qcchem.cli.main import main
+from qcchem.cli.main import (
+    _downloaded_ai_workspace_delivery_summary,
+    _release_ai_workspace_delivery_summary,
+    main,
+)
 from qcchem.io.release_audit_config import load_release_audit_spec
 from qcchem.workflow.release_audit import classify_exploratory_config
 from qcchem.workflow.release_status import build_release_status_summary
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _ai_workspace_delivery_summary_fixture() -> dict[str, object]:
+    return {
+        "available": True,
+        "source_path": "artifacts/ai_workspace/deliveries",
+        "delivery_count": 1,
+        "review_status_counts": {"accepted": 1},
+        "delivery_kind_counts": {"analysis": 1},
+        "linked_output_path_count": 1,
+        "return_note_count": 0,
+        "review_event_count": 1,
+        "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+        "latest_review_event": {
+            "event_id": "evt-review-001",
+            "timestamp": "2026-07-10T00:00:00+00:00",
+            "delivery_id": "delivery-001",
+            "review_status": "accepted",
+            "reviewed_by": "release-reviewer",
+            "review_source": "workbench",
+            "ticket_link_status": "updated",
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "raw_summary",
+    [
+        None,
+        {},
+        [],
+        {"available": True, "delivery_count": 1},
+        {**_ai_workspace_delivery_summary_fixture(), "review_status_counts": {"accepted": "one"}},
+        {**_ai_workspace_delivery_summary_fixture(), "latest_review_event": {"unexpected": True}},
+        {**_ai_workspace_delivery_summary_fixture(), "review_event_count": 0},
+    ],
+)
+def test_release_ai_workspace_delivery_summary_marks_incomplete_context_unavailable(
+    raw_summary: object,
+) -> None:
+    workbench_summary = {} if raw_summary is None else {"ai_workspace_delivery": raw_summary}
+    assert _release_ai_workspace_delivery_summary(workbench_summary) == {
+        "status": "not_available",
+        "release_gate": "informational_only",
+    }
 
 
 def _release_artifact_payload(*, bad_artifact: bool = False) -> dict[str, object]:
@@ -70,7 +119,12 @@ def _write_release_acceptance(
     )
 
 
-def _write_workbench_smoke(path: Path, *, status: str = "passed") -> None:
+def _write_workbench_smoke(
+    path: Path,
+    *,
+    status: str = "passed",
+    ai_workspace_delivery: object | None = None,
+) -> None:
     path.write_text(
         json.dumps(
             {
@@ -82,10 +136,50 @@ def _write_workbench_smoke(path: Path, *, status: str = "passed") -> None:
                 "failed_pages": 0 if status == "passed" else 1,
                 "failed_checks": [] if status == "passed" else ["route:/overview"],
                 "release_verification": {"status": "passed"},
+                "ai_workspace_delivery": (
+                    _ai_workspace_delivery_summary_fixture()
+                    if ai_workspace_delivery is None
+                    else ai_workspace_delivery
+                ),
             }
         ),
         encoding="utf-8",
     )
+
+
+def test_downloaded_ai_workspace_delivery_summary_marks_divergent_matrix_context_unavailable(
+    tmp_path: Path,
+) -> None:
+    first_smoke = tmp_path / "python-3.10" / "workbench_smoke.json"
+    second_smoke = tmp_path / "python-3.11" / "workbench_smoke.json"
+    first_smoke.parent.mkdir(parents=True)
+    second_smoke.parent.mkdir(parents=True)
+    _write_workbench_smoke(first_smoke)
+    divergent_delivery = _ai_workspace_delivery_summary_fixture()
+    divergent_delivery["latest_review_event"] = {
+        **divergent_delivery["latest_review_event"],
+        "event_id": "evt-review-002",
+    }
+    _write_workbench_smoke(second_smoke, ai_workspace_delivery=divergent_delivery)
+
+    summary = _downloaded_ai_workspace_delivery_summary(
+        {
+            "status": "passed",
+            "diagnostics_manifests": [
+                {"workbench_smoke_paths": [str(first_smoke)]},
+                {"workbench_smoke_paths": [str(second_smoke)]},
+            ],
+        }
+    )
+
+    assert summary == {
+        "status": "not_available",
+        "release_gate": "informational_only",
+        "source_status": "divergent",
+        "collection_source": "downloaded_ci_workbench_smoke",
+        "source_smoke_count": 2,
+        "source_smoke_paths": sorted([str(first_smoke), str(second_smoke)]),
+    }
 
 
 def _write_minimal_release_tree(root: Path, *, bad_artifact: bool = False) -> Path:
@@ -159,6 +253,8 @@ release_audit:
 
 def _write_downloaded_release_diagnostics_artifact(
     tmp_path: Path,
+    *,
+    ai_workspace_delivery: object | None = None,
 ) -> tuple[Path, dict[str, Path]]:
     manifest = _write_minimal_release_tree(tmp_path)
     output_dir = tmp_path / "release_audit"
@@ -183,7 +279,10 @@ def _write_downloaded_release_diagnostics_artifact(
         == 0
     )
     workbench_smoke_json = tmp_path / "workbench_smoke.json"
-    _write_workbench_smoke(workbench_smoke_json)
+    _write_workbench_smoke(
+        workbench_smoke_json,
+        ai_workspace_delivery=ai_workspace_delivery,
+    )
     ci_evidence_dir = tmp_path / "ci_release_evidence"
     assert (
         main(
@@ -517,6 +616,10 @@ def test_release_evidence_handoff_cli_writes_local_ci_handoff(
     assert summary["release_matrix_delta"]["status"] == "not_applicable"
     assert summary["release_matrix_delta"]["reason"] == "downloaded_artifact_verification_not_run"
     assert summary["workbench_smoke"]["status"] == "passed"
+    assert summary["ai_workspace_delivery"]["status"] == "available"
+    assert summary["ai_workspace_delivery"]["release_gate"] == "informational_only"
+    assert summary["ai_workspace_delivery"]["review_event_count"] == 1
+    assert summary["ai_workspace_delivery"]["latest_review_event"]["review_source"] == "workbench"
     assert summary["failures"] == []
     assert "# QCchem Release Evidence Handoff" in handoff
     assert "`None`" not in handoff
@@ -530,7 +633,44 @@ def test_release_evidence_handoff_cli_writes_local_ci_handoff(
     assert "- release_status_count: `not_applicable`" in handoff
     assert "## Matrix Artifact Delta" in handoff
     assert "- status: `not_applicable`" in handoff
+    assert "## AI Delivery Review Provenance" in handoff
+    assert "- release_gate: `informational_only`" in handoff
+    assert "- review_event_count: `1`" in handoff
+    assert "delivery_id=delivery-001 status=accepted source=workbench reviewer=release-reviewer" in handoff
     assert "`downloaded_artifact_verification` verifies downloaded CI diagnostics" in handoff
+
+    malformed_smoke = json.loads(workbench_smoke_json.read_text(encoding="utf-8"))
+    malformed_smoke["ai_workspace_delivery"]["review_status_counts"] = {"accepted": "one"}
+    workbench_smoke_json.write_text(json.dumps(malformed_smoke), encoding="utf-8")
+    malformed_evidence_root = tmp_path / "release_evidence_malformed_ai"
+    assert (
+        main(
+            [
+                "release",
+                "evidence-handoff",
+                "--audit-dir",
+                str(output_dir),
+                "--workbench-smoke",
+                str(workbench_smoke_json),
+                "--acceptance-status",
+                str(acceptance_status_json),
+                "--output-dir",
+                str(malformed_evidence_root),
+                "--strict",
+            ]
+        )
+        == 0
+    )
+    malformed_summary = json.loads(
+        (malformed_evidence_root / "release_evidence_summary.json").read_text(encoding="utf-8")
+    )
+    assert malformed_summary["status"] == "passed"
+    assert malformed_summary["first_failure"] is None
+    assert malformed_summary["failures"] == []
+    assert malformed_summary["ai_workspace_delivery"] == {
+        "status": "not_available",
+        "release_gate": "informational_only",
+    }
 
 
 @pytest.mark.integration
@@ -634,7 +774,7 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
     evidence_root = tmp_path / "release_evidence"
     capsys.readouterr()
 
@@ -673,6 +813,9 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     handoff = handoff_path.read_text(encoding="utf-8")
     assert verification["status"] == "passed"
+    assert verification["diagnostics_manifests"][0]["workbench_smoke_paths"] == [
+        str(copied_paths["workbench_smoke_json"])
+    ]
     assert smoke["status"] == "passed"
     assert smoke["release_verification"]["status"] == "passed"
     assert Path(smoke["release_verification"]["source_path"]).resolve() == verification_path.resolve()
@@ -733,6 +876,21 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
         "first_failure": None,
     }
     assert summary["workbench_smoke"]["release_verification"]["status"] == "passed"
+    assert summary["ai_workspace_delivery"]["status"] == "available"
+    assert summary["ai_workspace_delivery"]["release_gate"] == "informational_only"
+    assert summary["ai_workspace_delivery"]["delivery_count"] == 1
+    assert summary["ai_workspace_delivery"]["review_status_counts"] == {"accepted": 1}
+    assert summary["ai_workspace_delivery"]["review_event_count"] == 1
+    assert summary["ai_workspace_delivery"]["latest_review_event"]["event_id"] == "evt-review-001"
+    assert summary["ai_workspace_delivery"]["collection_source"] == "downloaded_ci_workbench_smoke"
+    assert summary["ai_workspace_delivery"]["source_status"] == "consistent"
+    assert summary["ai_workspace_delivery"]["source_smoke_count"] == 1
+    assert summary["ai_workspace_delivery"]["source_smoke_paths"] == [
+        str(copied_paths["workbench_smoke_json"])
+    ]
+    assert summary["ai_workspace_delivery"]["review_provenance_log"] == (
+        "artifacts/ai_workspace/provenance/ai_provenance.jsonl"
+    )
     assert "# QCchem Release Evidence Handoff" in handoff
     assert "`None`" not in handoff
     assert "- status: `passed`" in handoff
@@ -754,7 +912,67 @@ def test_release_collect_evidence_cli_writes_verifier_and_workbench_handoff(
     assert "- reason: `baseline_not_provided`" in handoff
     assert "- baseline_path: `not_provided`" in handoff
     assert "- linked_release_verification_status: `passed`" in handoff
+    assert "## AI Delivery Review Provenance" in handoff
+    assert "- release_gate: `informational_only`" in handoff
+    assert "- collection_source: `downloaded_ci_workbench_smoke`" in handoff
+    assert "- source_status: `consistent`" in handoff
+    assert "- source_smoke_count: `1`" in handoff
+    assert str(copied_paths["workbench_smoke_json"]) in handoff
+    assert "- review_event_count: `1`" in handoff
+    assert "delivery_id=delivery-001 status=accepted source=workbench reviewer=release-reviewer" in handoff
+    assert "artifacts/ai_workspace/provenance/ai_provenance.jsonl" in handoff
     assert "It does not replace the real browser console checklist" in handoff
+
+
+@pytest.mark.integration
+def test_release_collect_evidence_keeps_invalid_downloaded_ai_context_non_gating(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    malformed_delivery = {
+        **_ai_workspace_delivery_summary_fixture(),
+        "review_status_counts": {"accepted": "one"},
+    }
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(
+        tmp_path,
+        ai_workspace_delivery=malformed_delivery,
+    )
+    evidence_root = tmp_path / "release_evidence"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "collect-evidence",
+            "--artifact-dir",
+            str(artifact_dir),
+            "--docs",
+            str(REPO_ROOT / "docs" / "workbench.md"),
+            "--output-dir",
+            str(evidence_root),
+        ]
+    )
+
+    summary = json.loads((evidence_root / "release_evidence_summary.json").read_text(encoding="utf-8"))
+    handoff = (evidence_root / "release_evidence_handoff.md").read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert summary["status"] == "passed"
+    assert summary["first_failure"] is None
+    assert summary["release_artifact_verification"]["status"] == "passed"
+    assert summary["release_artifact_verification"]["failure_count"] == 0
+    assert summary["ai_workspace_delivery"] == {
+        "status": "not_available",
+        "release_gate": "informational_only",
+        "source_status": "invalid",
+        "collection_source": "downloaded_ci_workbench_smoke",
+        "source_smoke_count": 1,
+        "source_smoke_paths": [str(copied_paths["workbench_smoke_json"])],
+    }
+    assert "- status: `passed`" in handoff
+    assert "## AI Delivery Review Provenance" in handoff
+    assert "- status: `not_available`" in handoff
+    assert "- source_status: `invalid`" in handoff
+    assert "- release_gate: `informational_only`" in handoff
 
 
 @pytest.mark.integration

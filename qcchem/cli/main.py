@@ -96,6 +96,13 @@ def append_ai_provenance_event(*args, **kwargs):
     return _load_attr("qcchem.workflow.evidence_agent", "append_ai_provenance_event")(*args, **kwargs)
 
 
+def normalize_ai_delivery_review_summary(*args, **kwargs):
+    return _load_attr(
+        "qcchem.workflow.ai_delivery_summary",
+        "normalize_ai_delivery_review_summary",
+    )(*args, **kwargs)
+
+
 def review_claims(*args, **kwargs):
     return _load_attr("qcchem.workflow.evidence_agent", "review_claims")(*args, **kwargs)
 
@@ -1340,6 +1347,7 @@ def _release_evidence_summary(
     matrix_baseline_selection: dict[str, object],
     summary_path: Path,
     handoff_path: Path,
+    ai_workspace_delivery: dict[str, object] | None = None,
 ) -> dict[str, object]:
     verification_status = str(verification_report.get("status") or "unknown")
     workbench_status = str(workbench_summary.get("status") or "unknown")
@@ -1405,6 +1413,11 @@ def _release_evidence_summary(
             else [],
             "release_verification": release_verification if isinstance(release_verification, dict) else {},
         },
+        "ai_workspace_delivery": (
+            ai_workspace_delivery
+            if isinstance(ai_workspace_delivery, dict)
+            else _release_ai_workspace_delivery_summary(workbench_summary)
+        ),
     }
 
 
@@ -1830,6 +1843,95 @@ def _release_handoff_count_pair(passed: object, failed: object, *, missing: str 
     return f"`{_release_handoff_value(passed, missing=missing)}` passed / `{_release_handoff_value(failed, missing=missing)}` failed"
 
 
+def _release_ai_workspace_delivery_summary(workbench_summary: dict[str, object]) -> dict[str, object]:
+    return normalize_ai_delivery_review_summary(workbench_summary.get("ai_workspace_delivery"))
+
+
+def _downloaded_ai_workspace_delivery_summary(
+    verification_report: dict[str, object],
+) -> dict[str, object]:
+    collection_source = "downloaded_ci_workbench_smoke"
+    manifests = (
+        verification_report.get("diagnostics_manifests")
+        if isinstance(verification_report.get("diagnostics_manifests"), list)
+        else []
+    )
+    smoke_paths = sorted(
+        {
+            str(path)
+            for manifest in manifests
+            if isinstance(manifest, dict)
+            for path in (
+                manifest.get("workbench_smoke_paths")
+                if isinstance(manifest.get("workbench_smoke_paths"), list)
+                else []
+            )
+            if isinstance(path, str) and path
+        }
+    )
+    source_context = {
+        "collection_source": collection_source,
+        "source_smoke_count": len(smoke_paths),
+        "source_smoke_paths": smoke_paths,
+    }
+    if verification_report.get("status") != "passed":
+        return {
+            "status": "not_available",
+            "release_gate": "informational_only",
+            "source_status": "verification_failed",
+            **source_context,
+        }
+    if not smoke_paths:
+        return {
+            "status": "not_available",
+            "release_gate": "informational_only",
+            "source_status": "missing",
+            **source_context,
+        }
+
+    snapshots: list[dict[str, object]] = []
+    for smoke_path in smoke_paths:
+        try:
+            payload = json.loads(Path(smoke_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {
+                "status": "not_available",
+                "release_gate": "informational_only",
+                "source_status": "unreadable",
+                **source_context,
+            }
+        if not isinstance(payload, dict):
+            return {
+                "status": "not_available",
+                "release_gate": "informational_only",
+                "source_status": "invalid",
+                **source_context,
+            }
+        snapshot = _release_ai_workspace_delivery_summary(payload)
+        if snapshot.get("status") != "available":
+            return {
+                "status": "not_available",
+                "release_gate": "informational_only",
+                "source_status": "invalid",
+                **source_context,
+            }
+        snapshots.append(snapshot)
+
+    canonical = snapshots[0]
+    if any(snapshot != canonical for snapshot in snapshots[1:]):
+        return {
+            "status": "not_available",
+            "release_gate": "informational_only",
+            "source_status": "divergent",
+            **source_context,
+        }
+    return {
+        **canonical,
+        "source_status": "consistent",
+        **source_context,
+    }
+
+
 def _read_optional_json_object(path: Path, *, label: str, failures: list[dict[str, object]]) -> dict[str, object]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1970,6 +2072,7 @@ def _local_release_evidence_summary(
             if isinstance(workbench_summary.get("release_verification"), dict)
             else {},
         },
+        "ai_workspace_delivery": _release_ai_workspace_delivery_summary(workbench_summary),
         "failures": failures,
     }
 
@@ -1986,6 +2089,47 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
     linked_release_verification = (
         workbench.get("release_verification") if isinstance(workbench.get("release_verification"), dict) else {}
     )
+    ai_workspace_delivery = (
+        summary.get("ai_workspace_delivery")
+        if isinstance(summary.get("ai_workspace_delivery"), dict)
+        else {"status": "not_available", "release_gate": "informational_only"}
+    )
+    ai_review_status_counts = (
+        ai_workspace_delivery.get("review_status_counts")
+        if isinstance(ai_workspace_delivery.get("review_status_counts"), dict)
+        else {}
+    )
+    ai_review_status_counts_text = (
+        json.dumps(ai_review_status_counts, sort_keys=True, separators=(",", ":"))
+        if ai_review_status_counts
+        else "none"
+    )
+    ai_source_smoke_paths = (
+        ai_workspace_delivery.get("source_smoke_paths")
+        if isinstance(ai_workspace_delivery.get("source_smoke_paths"), list)
+        else []
+    )
+    ai_source_smoke_paths_text = (
+        ", ".join(str(path) for path in ai_source_smoke_paths)
+        if ai_source_smoke_paths
+        else "not_available"
+    )
+    latest_ai_review_event = (
+        ai_workspace_delivery.get("latest_review_event")
+        if isinstance(ai_workspace_delivery.get("latest_review_event"), dict)
+        else {}
+    )
+    latest_ai_review_event_text = "none"
+    if latest_ai_review_event:
+        latest_ai_review_event_text = (
+            f"event_id={_release_handoff_value(latest_ai_review_event.get('event_id'), missing='unknown')} "
+            f"timestamp={_release_handoff_value(latest_ai_review_event.get('timestamp'), missing='unknown')} "
+            f"delivery_id={_release_handoff_value(latest_ai_review_event.get('delivery_id'), missing='unknown')} "
+            f"status={_release_handoff_value(latest_ai_review_event.get('review_status'), missing='unknown')} "
+            f"source={_release_handoff_value(latest_ai_review_event.get('review_source'), missing='unknown')} "
+            f"reviewer={_release_handoff_value(latest_ai_review_event.get('reviewed_by'), missing='unknown')} "
+            f"ticket_link_status={_release_handoff_value(latest_ai_review_event.get('ticket_link_status'), missing='unknown')}"
+        )
     release_status = summary.get("release_status") if isinstance(summary.get("release_status"), dict) else {}
     acceptance_status = summary.get("acceptance_status") if isinstance(summary.get("acceptance_status"), dict) else {}
     release_history = (
@@ -2164,6 +2308,22 @@ def _release_evidence_handoff_markdown(summary: dict[str, object]) -> str:
             f"- linked_release_verification_status: `{_release_handoff_value(linked_release_verification.get('status'), missing='not_available')}`",
             f"- linked_release_verification_source: `{_release_handoff_value(linked_release_verification.get('source_path'), missing='not_available')}`",
             "",
+            "## AI Delivery Review Provenance",
+            "",
+            f"- status: `{_release_handoff_value(ai_workspace_delivery.get('status'), missing='not_available')}`",
+            f"- release_gate: `{_release_handoff_value(ai_workspace_delivery.get('release_gate'), missing='informational_only')}`",
+            f"- collection_source: `{_release_handoff_value(ai_workspace_delivery.get('collection_source'), missing='not_available')}`",
+            f"- source_status: `{_release_handoff_value(ai_workspace_delivery.get('source_status'), missing='not_available')}`",
+            f"- source_smoke_count: `{_release_handoff_value(ai_workspace_delivery.get('source_smoke_count'), missing='not_available')}`",
+            f"- source_smoke_paths: `{ai_source_smoke_paths_text}`",
+            f"- available: `{_release_handoff_value(ai_workspace_delivery.get('available'), missing='not_available')}`",
+            f"- delivery_count: `{_release_handoff_value(ai_workspace_delivery.get('delivery_count'), missing='not_available')}`",
+            f"- review_status_counts: `{ai_review_status_counts_text}`",
+            f"- review_event_count: `{_release_handoff_value(ai_workspace_delivery.get('review_event_count'), missing='not_available')}`",
+            f"- latest_review_event: `{latest_ai_review_event_text}`",
+            f"- provenance_log: `{_release_handoff_value(ai_workspace_delivery.get('review_provenance_log'), missing='not_available')}`",
+            "- This context is informational and does not change release pass/fail status.",
+            "",
             "## Review Notes",
             "",
             "- `ci_diagnostics_handoff` summarizes local CI diagnostics before artifact upload.",
@@ -2206,6 +2366,7 @@ def _run_release_collect_evidence_command(
     handoff_path = evidence_root / "release_evidence_handoff.md"
 
     verification_report = verify_release_diagnostics_artifacts(artifact_dir)
+    downloaded_ai_workspace_delivery = _downloaded_ai_workspace_delivery_summary(verification_report)
     verification_path.write_text(json.dumps(verification_report, indent=2, sort_keys=True), encoding="utf-8")
     matrix_artifacts = _release_verification_matrix_artifacts(verification_report)
     matrix_summary = _release_matrix_summary(matrix_artifacts, source_verification_path=verification_path)
@@ -2266,6 +2427,7 @@ def _run_release_collect_evidence_command(
         matrix_baseline_selection=matrix_baseline_selection,
         summary_path=summary_path,
         handoff_path=handoff_path,
+        ai_workspace_delivery=downloaded_ai_workspace_delivery,
     )
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
     handoff_path.write_text(_release_evidence_handoff_markdown(summary), encoding="utf-8")

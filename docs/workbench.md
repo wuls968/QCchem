@@ -182,7 +182,14 @@ bounded list of review handoffs with labeled artifact paths. That summary also
 reads the append-only `artifacts/ai_workspace/provenance/ai_provenance.jsonl`
 log and reports the delivery review event count, latest review event metadata,
 and provenance log path, so reviewers can confirm the audit trail without
-opening the JSONL first. The documented
+opening the JSONL first. Both `qcchem release evidence-handoff` and
+`qcchem release collect-evidence` preserve that object in
+`release_evidence_summary.json` and render an `AI Delivery Review Provenance`
+section in the Markdown handoff. It is labeled `informational_only` and does not
+change release pass/fail status. Post-download collection reads only CI smoke
+paths recorded by a successfully verified diagnostics manifest and requires
+matrix copies to agree; its newly generated smoke continues to verify the
+current route/component tree. The documented
 `/overview` smoke row is anchored to the retained-run drilldown so route smoke
 fails if that release-history review block falls out of the Overview component
 tree. The same linked handoff can be generated after a CI
@@ -196,7 +203,12 @@ That command writes both machine-readable JSON and a reviewer-facing
 `release_evidence_handoff.md` containing the linked verifier and route-smoke
 status. When that Markdown file is kept next to `release_evidence_summary.json`,
 the Workbench artifact inventory reports a `release_evidence_handoff` entry and
-the Overview page shows its status, recommended action, first failure, and path.
+the Overview page shows its status, recommended action, first failure, path, and
+frozen AI delivery review provenance. If the release handoff has no such
+snapshot, Overview reads `artifacts/ai_workspace` under the process current
+working directory, matching the mutable AI Workspace page, and labels that
+source `current workspace`. This fallback intentionally does not redirect AI
+review mutations into an alternate read-only `--artifact-root`.
 When `release_matrix_summary.json` is retained from the same collection, the
 inventory also reports a `release_matrix_summary` entry and the Overview page
 shows the baseline matrix-artifact count, failed count, and source path.
@@ -265,7 +277,10 @@ The release-facing terms `baseline strength` and `hardware verification boundary
 - `/overview` is the best-evidence research home: chemical-accuracy gap, runtime boundary, open AI work, and next action appear before deep diagnostics.
 - `/overview` also acts as the Research Objective snapshot, showing the latest
   objective status, open evidence gaps, and indexed release artifact
-  verification status when those artifacts exist.
+  verification status when those artifacts exist. Its AI delivery review card
+  prefers the frozen release-evidence snapshot and otherwise uses the current
+  workspace, while keeping that operational context informational rather than
+  release-gating.
 - `/runtime-monitoring` is the runtime decision cockpit: submission health, hardware-derived accuracy, simulator-vs-hardware gap, and budget/shot usage are separated before telemetry.
 - `/hardware-campaign` is the budget decision surface: best retrieved evidence is shown alongside whether another controlled runtime probe is worth the budget.
 - `/hardware-campaign` also surfaces `Optimization Trial` when a hardware optimization artifact is present, including selected candidate, compiled burden, budget ledger, and stop reason.
