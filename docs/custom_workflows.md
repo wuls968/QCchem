@@ -92,6 +92,9 @@ class MyStep(WorkflowStepPlugin):
 `plan_next()` is optional. When used, generated steps are not executed directly
 by the plugin. The central workflow runner validates the generated step kind,
 dependencies, limits, and artifact root before adding it to the run graph.
+When a workflow references an unavailable kind, validation reports the available
+plugin kinds and points to `qcchem workflow plugins` for installed-plugin
+metadata.
 
 ## Artifacts
 

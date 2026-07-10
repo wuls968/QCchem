@@ -116,6 +116,9 @@ workflow:
     stdout = capsys.readouterr().out
     assert "Workflow validation rejected:" in stdout
     assert "Unsupported workflow step plugin/kind 'missing_plugin'" in stdout
+    assert "Available plugins:" in stdout
+    assert "claim_check" in stdout
+    assert "Run 'qcchem workflow plugins' to inspect installed plugin metadata." in stdout
 
 
 @pytest.mark.integration

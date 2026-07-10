@@ -178,7 +178,12 @@ def render_workflow_report(result: WorkflowRunResult | dict[str, Any]) -> str:
 def _validate_step_plugin(step: WorkflowStepSpec, registry: dict[str, WorkflowStepPlugin]) -> WorkflowStepPlugin:
     key = _plugin_key(step)
     if key not in registry:
-        raise ValueError(f"Unsupported workflow step plugin/kind '{key}' for step '{step.id}'.")
+        available = ", ".join(sorted(registry)) or "none"
+        raise ValueError(
+            f"Unsupported workflow step plugin/kind '{key}' for step '{step.id}'. "
+            f"Available plugins: {available}. "
+            "Run 'qcchem workflow plugins' to inspect installed plugin metadata."
+        )
     return registry[key]
 
 

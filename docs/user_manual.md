@@ -237,6 +237,9 @@ reason.
 Installed Python plugins are discovered through the `qcchem.workflow_steps`
 entry point group. Treat installed plugins as trusted local code, but keep real
 runtime or hardware submission behind the existing QCchem confirmation gates.
+When a workflow references an unavailable kind, validation reports the available
+plugin kinds and points to `qcchem workflow plugins` for installed-plugin
+metadata.
 
 ## Preview Active-Space Recommendations
 
