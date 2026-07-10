@@ -724,6 +724,11 @@ qcchem release verify-artifacts \
 This command revalidates release status bundles, sidecar freshness reports,
 release history handoff JSON/Markdown/current evidence, diagnostics manifest
 counts, and each uploaded file's recorded size and SHA-256.
+It also cross-checks the retained `current` run against copied current evidence
+and, when present, verifies normalized AI review provenance and aggregate maps.
+`not_available` AI review context is informational; an explicitly declared
+mismatch fails verification, while older summaries without the additive fields
+remain readable.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an

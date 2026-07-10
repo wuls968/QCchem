@@ -20,6 +20,12 @@ RELEASE_EVIDENCE_COLLECTION_SCHEMA_VERSION = "qcchem.release_evidence_collection
 RELEASE_HISTORY_HANDOFF_MARKDOWN_HEADING = "# QCchem Release History Handoff"
 
 
+def normalize_ai_delivery_review_summary(*args: object, **kwargs: object) -> dict[str, Any]:
+    from qcchem.workflow.ai_delivery_summary import normalize_ai_delivery_review_summary as normalize
+
+    return normalize(*args, **kwargs)
+
+
 def compact_release_audit_check(check: object) -> dict[str, object] | None:
     if not isinstance(check, dict):
         return None
@@ -838,6 +844,13 @@ def _verify_release_history_handoff(
         summary_path=summary_path,
         failures=failures,
     )
+    _verify_release_history_coherence(
+        summary,
+        current_evidence=current_evidence,
+        summary_path=summary_path,
+        entry=entry,
+        failures=failures,
+    )
     if current_evidence:
         entry["current_release_evidence_status"] = current_evidence.get("status")
         entry["current_release_evidence_schema_version"] = current_evidence.get("schema_version")
@@ -957,6 +970,161 @@ def _verify_release_history_current_evidence(
             }
         )
     return evidence
+
+
+def _release_history_ai_status_counts(runs: list[dict[str, object]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for run in runs:
+        ai_workspace_delivery = normalize_ai_delivery_review_summary(run.get("ai_workspace_delivery"))
+        status = str(ai_workspace_delivery.get("status") or "not_available")
+        counts[status] = counts.get(status, 0) + 1
+    return {status: counts[status] for status in sorted(counts)}
+
+
+def _release_history_ai_source_status(summary: dict[str, Any]) -> str:
+    source_status = summary.get("source_status")
+    status = source_status.strip() if isinstance(source_status, str) else ""
+    return status or "not_available"
+
+
+def _release_history_ai_source_status_counts(runs: list[dict[str, object]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for run in runs:
+        ai_workspace_delivery = normalize_ai_delivery_review_summary(run.get("ai_workspace_delivery"))
+        status = _release_history_ai_source_status(ai_workspace_delivery)
+        counts[status] = counts.get(status, 0) + 1
+    return {status: counts[status] for status in sorted(counts)}
+
+
+def _compact_ai_delivery_review_summary(summary: dict[str, Any]) -> dict[str, object]:
+    return {
+        "status": summary.get("status"),
+        "source_status": _release_history_ai_source_status(summary),
+        "delivery_count": summary.get("delivery_count"),
+        "review_event_count": summary.get("review_event_count"),
+        "review_status_counts": summary.get("review_status_counts"),
+    }
+
+
+def _release_history_coherence_failure(
+    failures: list[dict[str, object]],
+    *,
+    reason: str,
+    summary_path: Path,
+    **details: object,
+) -> None:
+    failures.append({"reason": reason, "path": str(summary_path), **details})
+
+
+def _verify_release_history_coherence(
+    summary: dict[str, object],
+    *,
+    current_evidence: dict[str, object] | None,
+    summary_path: Path,
+    entry: dict[str, object],
+    failures: list[dict[str, object]],
+) -> None:
+    raw_runs = summary.get("runs")
+    if not isinstance(raw_runs, list) or not all(isinstance(run, dict) for run in raw_runs):
+        entry["ai_workspace_delivery_validation"] = "invalid"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_runs_invalid",
+            summary_path=summary_path,
+            actual_type=type(raw_runs).__name__,
+        )
+        return
+    runs = [run for run in raw_runs if isinstance(run, dict)]
+    current_runs = [run for run in runs if run.get("label") == "current"]
+    if not current_runs:
+        entry["ai_workspace_delivery_validation"] = "invalid"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_current_run_missing",
+            summary_path=summary_path,
+        )
+        return
+    if len(current_runs) > 1:
+        entry["ai_workspace_delivery_validation"] = "invalid"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_current_run_duplicate",
+            summary_path=summary_path,
+            current_run_count=len(current_runs),
+        )
+        return
+
+    current_run = current_runs[0]
+    entry["current_run_label"] = "current"
+    entry["current_run_status"] = current_run.get("status")
+    if current_evidence is not None and current_run.get("status") != current_evidence.get("status"):
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_current_run_status_mismatch",
+            summary_path=summary_path,
+            expected=current_evidence.get("status"),
+            actual=current_run.get("status"),
+        )
+
+    status_counts_present = "ai_workspace_delivery_status_counts" in summary
+    source_status_counts_present = "ai_workspace_delivery_source_status_counts" in summary
+    if not status_counts_present and not source_status_counts_present:
+        entry["ai_workspace_delivery_validation"] = "legacy_not_available"
+        return
+    if not status_counts_present or not source_status_counts_present:
+        entry["ai_workspace_delivery_validation"] = "inconsistent"
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_ai_workspace_delivery_aggregate_maps_incomplete",
+            summary_path=summary_path,
+            status_counts_present=status_counts_present,
+            source_status_counts_present=source_status_counts_present,
+        )
+        return
+
+    expected_status_counts = _release_history_ai_status_counts(runs)
+    actual_status_counts = summary.get("ai_workspace_delivery_status_counts")
+    expected_source_status_counts = _release_history_ai_source_status_counts(runs)
+    actual_source_status_counts = summary.get("ai_workspace_delivery_source_status_counts")
+    coherent = True
+    if actual_status_counts != expected_status_counts:
+        coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_ai_workspace_delivery_status_counts_mismatch",
+            summary_path=summary_path,
+            expected=expected_status_counts,
+            actual=actual_status_counts,
+        )
+    if actual_source_status_counts != expected_source_status_counts:
+        coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_ai_workspace_delivery_source_status_counts_mismatch",
+            summary_path=summary_path,
+            expected=expected_source_status_counts,
+            actual=actual_source_status_counts,
+        )
+
+    current_ai_workspace_delivery = normalize_ai_delivery_review_summary(current_run.get("ai_workspace_delivery"))
+    entry["current_ai_workspace_delivery_status"] = current_ai_workspace_delivery.get("status")
+    entry["current_ai_workspace_delivery_source_status"] = _release_history_ai_source_status(
+        current_ai_workspace_delivery
+    )
+    if current_evidence is not None:
+        current_evidence_ai_workspace_delivery = normalize_ai_delivery_review_summary(
+            current_evidence.get("ai_workspace_delivery")
+        )
+        if current_ai_workspace_delivery != current_evidence_ai_workspace_delivery:
+            coherent = False
+            _release_history_coherence_failure(
+                failures,
+                reason="release_history_current_ai_workspace_delivery_mismatch",
+                summary_path=summary_path,
+                expected=_compact_ai_delivery_review_summary(current_evidence_ai_workspace_delivery),
+                actual=_compact_ai_delivery_review_summary(current_ai_workspace_delivery),
+            )
+    entry["ai_workspace_delivery_validation"] = "verified" if coherent else "inconsistent"
 
 
 def _verify_diagnostics_manifest_record(

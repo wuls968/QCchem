@@ -439,6 +439,22 @@ def _diagnostics_manifest_file_record(
     }
 
 
+def _refresh_diagnostics_manifest_file_record(
+    manifest_path: Path,
+    *,
+    artifact_path: str,
+    local_path: Path,
+) -> None:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    records = manifest.get("files")
+    assert isinstance(records, list)
+    record = next(record for record in records if isinstance(record, dict) and record.get("path") == artifact_path)
+    payload = local_path.read_bytes()
+    record["size_bytes"] = len(payload)
+    record["sha256"] = hashlib.sha256(payload).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+
+
 @pytest.mark.integration
 def test_release_audit_cli_writes_pass_report(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     manifest = _write_minimal_release_tree(tmp_path)
@@ -766,6 +782,206 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     assert history_handoff["run_count"] == 1
     assert history_handoff["current_release_evidence_status"] == "passed"
     assert history_handoff["current_release_evidence_schema_version"] == "qcchem.release_evidence_collection.v0.1-alpha"
+    assert history_handoff["current_run_label"] == "current"
+    assert history_handoff["current_run_status"] == "passed"
+    assert history_handoff["current_ai_workspace_delivery_status"] == "available"
+    assert history_handoff["current_ai_workspace_delivery_source_status"] == "not_available"
+    assert history_handoff["ai_workspace_delivery_validation"] == "verified"
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("mutation", "expected_reason"),
+    [
+        ("runs_invalid", "release_history_runs_invalid"),
+        ("missing_current", "release_history_current_run_missing"),
+        ("duplicate_current", "release_history_current_run_duplicate"),
+        ("status_mismatch", "release_history_current_run_status_mismatch"),
+        ("ai_snapshot_mismatch", "release_history_current_ai_workspace_delivery_mismatch"),
+        (
+            "ai_status_counts_mismatch",
+            "release_history_ai_workspace_delivery_status_counts_mismatch",
+        ),
+        (
+            "ai_source_status_counts_mismatch",
+            "release_history_ai_workspace_delivery_source_status_counts_mismatch",
+        ),
+        (
+            "ai_aggregate_maps_incomplete",
+            "release_history_ai_workspace_delivery_aggregate_maps_incomplete",
+        ),
+    ],
+)
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    mutation: str,
+    expected_reason: str,
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    runs = history_summary["runs"]
+    assert isinstance(runs, list)
+    assert runs and isinstance(runs[0], dict)
+    if mutation == "runs_invalid":
+        history_summary["runs"] = "not-a-list"
+    elif mutation == "missing_current":
+        history_summary["runs"] = []
+    elif mutation == "duplicate_current":
+        history_summary["runs"] = [*runs, dict(runs[0])]
+    elif mutation == "status_mismatch":
+        runs[0]["status"] = "failed"
+    elif mutation == "ai_snapshot_mismatch":
+        ai_workspace_delivery = runs[0]["ai_workspace_delivery"]
+        assert isinstance(ai_workspace_delivery, dict)
+        ai_workspace_delivery["review_event_count"] = 0
+    elif mutation == "ai_status_counts_mismatch":
+        history_summary["ai_workspace_delivery_status_counts"] = {"not_available": 1}
+    elif mutation == "ai_source_status_counts_mismatch":
+        history_summary["ai_workspace_delivery_source_status_counts"] = {"consistent": 1}
+    elif mutation == "ai_aggregate_maps_incomplete":
+        history_summary.pop("ai_workspace_delivery_source_status_counts")
+    else:
+        raise AssertionError(f"unexpected mutation: {mutation}")
+    history_summary_path.write_text(json.dumps(history_summary), encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / f"release_artifact_verification_{mutation}.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert expected_reason in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_accepts_matching_unavailable_ai_review_context(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    unavailable_ai_workspace_delivery = {"review_status_counts": {"accepted": "one"}}
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    runs = history_summary["runs"]
+    assert isinstance(runs, list)
+    assert runs and isinstance(runs[0], dict)
+    runs[0]["ai_workspace_delivery"] = unavailable_ai_workspace_delivery
+    history_summary["ai_workspace_delivery_status_counts"] = {"not_available": 1}
+    history_summary["ai_workspace_delivery_source_status_counts"] = {"not_available": 1}
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    current_evidence_path = copied_paths["release_history_current_evidence_summary_json"]
+    current_evidence = json.loads(current_evidence_path.read_text(encoding="utf-8"))
+    current_evidence["ai_workspace_delivery"] = unavailable_ai_workspace_delivery
+    current_evidence_path.write_text(json.dumps(current_evidence, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history/current/release_evidence_summary.json",
+        local_path=current_evidence_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_unavailable_ai.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    assert exit_code == 0
+    assert report["status"] == "passed"
+    assert history_handoff["current_ai_workspace_delivery_status"] == "not_available"
+    assert history_handoff["current_ai_workspace_delivery_source_status"] == "not_available"
+    assert history_handoff["ai_workspace_delivery_validation"] == "verified"
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_normalizes_non_text_ai_review_source_status(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    runs = history_summary["runs"]
+    assert isinstance(runs, list)
+    assert runs and isinstance(runs[0], dict)
+    history_ai_workspace_delivery = runs[0]["ai_workspace_delivery"]
+    assert isinstance(history_ai_workspace_delivery, dict)
+    history_ai_workspace_delivery["source_status"] = 7
+    history_summary["ai_workspace_delivery_status_counts"] = {"available": 1}
+    history_summary["ai_workspace_delivery_source_status_counts"] = {"not_available": 1}
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    current_evidence_path = copied_paths["release_history_current_evidence_summary_json"]
+    current_evidence = json.loads(current_evidence_path.read_text(encoding="utf-8"))
+    current_ai_workspace_delivery = current_evidence["ai_workspace_delivery"]
+    assert isinstance(current_ai_workspace_delivery, dict)
+    current_ai_workspace_delivery["source_status"] = 7
+    current_evidence_path.write_text(json.dumps(current_evidence, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history/current/release_evidence_summary.json",
+        local_path=current_evidence_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_non_text_source.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    assert exit_code == 0
+    assert report["status"] == "passed"
+    assert history_handoff["current_ai_workspace_delivery_status"] == "available"
+    assert history_handoff["current_ai_workspace_delivery_source_status"] == "not_available"
+    assert history_handoff["ai_workspace_delivery_validation"] == "verified"
+    assert report["failures"] == []
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_accepts_legacy_release_history_without_ai_projection(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    history_summary.pop("ai_workspace_delivery_status_counts")
+    history_summary.pop("ai_workspace_delivery_source_status_counts")
+    runs = history_summary["runs"]
+    assert isinstance(runs, list)
+    for run in runs:
+        assert isinstance(run, dict)
+        run.pop("ai_workspace_delivery")
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_legacy_history.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    assert exit_code == 0
+    assert report["status"] == "passed"
+    assert history_handoff["ai_workspace_delivery_validation"] == "legacy_not_available"
     assert report["failures"] == []
 
 

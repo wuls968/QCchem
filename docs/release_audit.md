@@ -309,6 +309,11 @@ The verifier also checks that each downloaded diagnostics artifact contains a
 readable `release_history_summary.json`, its `release_history_summary.md`
 handoff, and the copied `release_history/current/release_evidence_summary.json`
 with the expected schemas and passed status.
+It cross-checks the summary's `current` run against that copied evidence and,
+when the summary declares AI review aggregate maps, recomputes those maps and
+compares the normalized current AI snapshot. An unavailable AI snapshot remains
+informational; a declared cross-artifact mismatch fails verification. Retained
+summaries from before the additive AI projection remain readable.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the

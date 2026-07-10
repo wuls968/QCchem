@@ -152,6 +152,12 @@ directory on disk so the summary path remains inspectable.
 When the retained verifier summary is indexed as `release_artifact_verification`,
 Workbench Overview and smoke output surface that release history handoff count
 beside the CI diagnostics status counts.
+`qcchem release verify-artifacts` also cross-checks the retained `current` run
+against the copied current release evidence. When the history summary declares
+AI review aggregate maps, it verifies both the normalized current AI snapshot
+and the per-run aggregate counts. `not_available` remains informational; a
+declared mismatch is a downloaded-artifact verification failure. Older summaries
+without those additive AI fields remain readable.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, frozen AI delivery
