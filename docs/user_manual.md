@@ -734,6 +734,9 @@ counts, and non-AI matrix-delta, release-verifier, and Workbench-smoke status
 maps. Entirely omitted counter or map groups remain legacy-compatible; partial
 groups and declared mismatches fail verification. The manual real-browser
 Workbench checklist remains outside this downloaded-artifact verifier.
+The verifier also derives the history `recommended_action` and `first_failure`
+from retained runs. These core guidance fields must be present and coherent; a
+refreshed diagnostics manifest does not suppress a semantic mismatch.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an

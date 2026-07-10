@@ -790,6 +790,7 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     assert history_handoff["structural_validation"] == "verified"
     assert history_handoff["outcome_counts_validation"] == "verified"
     assert history_handoff["status_maps_validation"] == "verified"
+    assert history_handoff["guidance_validation"] == "verified"
     assert report["failures"] == []
 
 
@@ -904,6 +905,81 @@ def test_release_verify_artifacts_cli_rejects_incoherent_release_history_structu
     assert exit_code == 2
     assert expected_reason in failure_reasons
     assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("mutation", "expected_reason"),
+    [
+        ("recommended_action", "release_history_summary_recommended_action_mismatch"),
+        ("first_failure", "release_history_summary_first_failure_mismatch"),
+        ("missing_first_failure", "release_history_summary_first_failure_mismatch"),
+    ],
+)
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history_guidance(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    mutation: str,
+    expected_reason: str,
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    if mutation == "recommended_action":
+        history_summary["recommended_action"] = "collect_release_evidence"
+    elif mutation == "first_failure":
+        history_summary["first_failure"] = {
+            "label": "current",
+            "status": "passed",
+            "reason": "spurious",
+            "path": "none",
+            "failure": None,
+        }
+    elif mutation == "missing_first_failure":
+        history_summary.pop("first_failure")
+    else:
+        raise AssertionError(f"unexpected mutation: {mutation}")
+    history_summary_path.write_text(json.dumps(history_summary), encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / f"release_artifact_verification_guidance_{mutation}.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert expected_reason in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history_guidance_with_refreshed_digest(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_summary_path = copied_paths["release_history_summary_json"]
+    history_summary = json.loads(history_summary_path.read_text(encoding="utf-8"))
+    history_summary["recommended_action"] = "collect_release_evidence"
+    history_summary_path.write_text(json.dumps(history_summary, indent=2, sort_keys=True), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(
+        copied_paths["diagnostics_manifest_json"],
+        artifact_path="artifacts/release_history_summary.json",
+        local_path=history_summary_path,
+    )
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_guidance_refreshed_digest.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert history_handoff["structural_validation"] == "inconsistent"
+    assert history_handoff["guidance_validation"] == "inconsistent"
+    assert "release_history_summary_recommended_action_mismatch" in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" not in failure_reasons
 
 
 @pytest.mark.integration

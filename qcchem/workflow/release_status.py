@@ -1016,6 +1016,29 @@ def _release_history_derived_status(runs: list[dict[str, object]]) -> str:
     return "incomplete"
 
 
+def _release_history_recommended_action(status: str) -> str:
+    if status == "passed":
+        return "review_release_history"
+    if status == "empty":
+        return "collect_release_evidence"
+    return "inspect_release_history_failures"
+
+
+def _release_history_first_failure(runs: list[dict[str, object]]) -> dict[str, object] | None:
+    for run in runs:
+        if run.get("status") == "passed":
+            continue
+        failure = run.get("first_failure") if isinstance(run.get("first_failure"), dict) else None
+        return {
+            "label": run.get("label"),
+            "status": run.get("status"),
+            "reason": failure.get("reason") if failure is not None else "release_history_run_not_passed",
+            "path": failure.get("path") if failure is not None else run.get("summary_path"),
+            "failure": failure,
+        }
+    return None
+
+
 def _release_history_count_map_matches(actual: object, expected: dict[str, int]) -> bool:
     return (
         isinstance(actual, dict)
@@ -1163,6 +1186,36 @@ def _verify_release_history_structural_coherence(
             )
         entry["status_maps_validation"] = "verified" if status_maps_coherent else "inconsistent"
 
+    guidance_coherent = True
+    expected_recommended_action = _release_history_recommended_action(expected_status)
+    actual_recommended_action = summary.get("recommended_action")
+    if actual_recommended_action != expected_recommended_action:
+        coherent = False
+        guidance_coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_recommended_action_mismatch",
+            summary_path=summary_path,
+            expected=expected_recommended_action,
+            actual=actual_recommended_action,
+        )
+
+    expected_first_failure = _release_history_first_failure(runs)
+    first_failure_present = "first_failure" in summary
+    actual_first_failure = summary.get("first_failure")
+    if not first_failure_present or actual_first_failure != expected_first_failure:
+        coherent = False
+        guidance_coherent = False
+        _release_history_coherence_failure(
+            failures,
+            reason="release_history_summary_first_failure_mismatch",
+            summary_path=summary_path,
+            expected=expected_first_failure,
+            actual=actual_first_failure,
+            present=first_failure_present,
+        )
+    entry["guidance_validation"] = "verified" if guidance_coherent else "inconsistent"
+
     if not coherent:
         entry["structural_validation"] = "inconsistent"
     elif (
@@ -1192,6 +1245,7 @@ def _verify_release_history_coherence(
         entry["structural_validation"] = "invalid"
         entry["outcome_counts_validation"] = "not_checked"
         entry["status_maps_validation"] = "not_checked"
+        entry["guidance_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,
@@ -1206,6 +1260,7 @@ def _verify_release_history_coherence(
         entry["structural_validation"] = "invalid"
         entry["outcome_counts_validation"] = "not_checked"
         entry["status_maps_validation"] = "not_checked"
+        entry["guidance_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,
@@ -1217,6 +1272,7 @@ def _verify_release_history_coherence(
         entry["structural_validation"] = "invalid"
         entry["outcome_counts_validation"] = "not_checked"
         entry["status_maps_validation"] = "not_checked"
+        entry["guidance_validation"] = "not_checked"
         entry["ai_workspace_delivery_validation"] = "invalid"
         _release_history_coherence_failure(
             failures,

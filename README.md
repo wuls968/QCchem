@@ -163,6 +163,10 @@ non-AI matrix/verifier/Workbench status maps. A complete omitted counter or map
 group is reported as legacy-compatible; a partial group or declared mismatch
 fails downloaded-artifact verification. This structural check does not replace
 the separate manual real-browser Workbench checklist.
+The verifier also derives the history `recommended_action` and `first_failure`
+from retained runs. Because these are core guidance fields, a missing or
+divergent value fails verification even when a diagnostics manifest has been
+refreshed to match the downloaded file.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, frozen AI delivery

@@ -319,6 +319,10 @@ counts, and non-AI matrix-delta, release-verifier, and Workbench-smoke status
 maps. Entire omitted counter or map groups are retained-history compatibility
 cases; partial groups and declared mismatches fail verification. It does not
 automate the documented real-browser Workbench checklist.
+It also derives the history `recommended_action` and `first_failure` from the
+retained run list. These are core guidance fields, so a missing or divergent
+value fails verification even if a refreshed diagnostics manifest matches the
+downloaded file.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
