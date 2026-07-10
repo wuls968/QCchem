@@ -691,9 +691,12 @@ qcchem release history summarize \
 
 This read-only command prints each retained run with release evidence status,
 matrix delta status, selected baseline mode, downloaded-artifact verifier
-status, release history handoff count, and Workbench smoke status. The optional
-JSON output preserves those fields plus first failures and compact status
-counts. Add `--strict` when any failed or incomplete retained run should make
+status, release history handoff count, Workbench smoke status, and frozen AI
+review status/source status/review-event count/provenance-log path. The optional
+JSON output preserves those fields plus latest review metadata, first failures,
+and compact status counts. Missing or malformed AI review context is
+`not_available` and does not alter release-history pass/fail status. Add
+`--strict` when any failed or incomplete retained run should make
 the command exit with code `2`.
 To write a reviewer-facing Markdown handoff from the same history, use:
 
@@ -706,7 +709,8 @@ qcchem release history export-markdown \
 The export can also read `--history-root` directly. It writes only the requested
 Markdown path and includes retained run counts, status-count summaries,
 selected baselines, matrix-delta counts, verifier status, release history
-handoff counts, Workbench smoke status, and first failures.
+handoff counts, Workbench smoke status, frozen AI review provenance, and first
+failures.
 
 Use the
 lower-level verifier directly when you only need the artifact-integrity check:
@@ -738,8 +742,8 @@ as `release_history_summary`, startup inventory exposes its count and featured
 path, and Overview shows retained run counts plus matrix-delta, verifier, and
 Workbench smoke status counts. It also shows a bounded per-run drilldown with
 each retained run's verifier status, Workbench smoke status, history-handoff
-count, matrix-delta status, first failure, and summary path. The Workbench smoke
-JSON mirrors that retained-history state in a compact top-level
+count, matrix-delta status, frozen AI review status/source/event count/provenance
+path, first failure, and summary path. The Workbench smoke JSON mirrors that retained-history state in a compact top-level
 `release_history` summary so CI artifacts can be reviewed without rendering the
 page.
 When the retained-history Markdown is kept as `release_history_summary.md` or

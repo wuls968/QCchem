@@ -154,15 +154,20 @@ Workbench Overview and smoke output surface that release history handoff count
 beside the CI diagnostics status counts.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
-release history handoff counts, Workbench smoke status, and first failures
-without rereading GitHub or mutating any retained run directory. Add `--strict`
+release history handoff counts, Workbench smoke status, frozen AI delivery
+review provenance, and first failures without rereading GitHub or mutating any
+retained run directory. Each retained run records the AI review status, source
+status, review-event count, latest review metadata, and provenance-log path;
+missing or malformed review context is `not_available` and never changes
+release-history pass/fail status. Add `--strict`
 when a non-`passed` history summary should return exit code `2`, and `-o <json>`
 when the compact overview should be archived. When that output is named
 `release_history_summary.json` under an artifact root,
 `qcchem artifacts index` classifies it as
 `release_history_summary`, and Workbench startup/Overview surface the retained
-run counts plus matrix-delta, verifier, Workbench smoke status counts, and a
-bounded per-run drilldown with first-failure and source-path breadcrumbs. The
+run counts plus matrix-delta, verifier, Workbench smoke, and AI review status
+counts, and a bounded per-run drilldown with first-failure, review provenance,
+and source-path breadcrumbs. The
 Workbench smoke JSON also includes a compact `release_history` summary with the
 same retained-run status breadcrumbs for CI artifact review. Use
 `qcchem release history export-markdown --history-summary <json> -o <md>` to

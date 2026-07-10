@@ -284,6 +284,9 @@ def _release_history_run_rows(summary: dict[str, Any], *, limit: int = 5) -> lis
         )
         matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
         workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+        ai_workspace_delivery = (
+            run.get("ai_workspace_delivery") if isinstance(run.get("ai_workspace_delivery"), dict) else {}
+        )
         source_path = run.get("summary_path") or run.get("evidence_root") or run.get("artifact_dir") or "not recorded"
         handoff_count = verification.get("release_history_handoff_count")
         handoff_text = str(handoff_count) if handoff_count is not None else "n/a"
@@ -296,6 +299,10 @@ def _release_history_run_rows(summary: dict[str, Any], *, limit: int = 5) -> lis
                     f"smoke={workbench_smoke.get('status', 'not_available')}; "
                     f"history_handoffs={handoff_text}; "
                     f"delta={matrix_delta.get('status', 'not_available')}; "
+                    f"ai_review={ai_workspace_delivery.get('status', 'not_available')}; "
+                    f"review_source={ai_workspace_delivery.get('source_status', 'not_available')}; "
+                    f"review_events={ai_workspace_delivery.get('review_event_count', 'n/a')}; "
+                    f"review_provenance={ai_workspace_delivery.get('review_provenance_log', 'not_available')}; "
                     f"first_failure={_release_history_run_failure_text(run)}; "
                     f"source={source_path}"
                 ),
@@ -473,6 +480,14 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         release_history_summary.get("workbench_smoke_status_counts"),
         empty="no smoke counts",
     )
+    release_history_ai_review_text = _format_count_map(
+        release_history_summary.get("ai_workspace_delivery_status_counts"),
+        empty="no AI review counts",
+    )
+    release_history_ai_source_text = _format_count_map(
+        release_history_summary.get("ai_workspace_delivery_source_status_counts"),
+        empty="no AI source counts",
+    )
     release_history_delta_text = _format_count_map(release_history_delta_counts, empty="no matrix delta counts")
     release_history_detail = (
         f"{release_history_summary.get('run_count', 0)} retained runs / "
@@ -480,7 +495,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
         f"{release_history_summary.get('failed_run_count', 0)} failed / "
         f"{release_history_summary.get('incomplete_run_count', 0)} incomplete; "
         f"{release_history_delta_text}; verifier {release_history_verification_text}; "
-        f"smoke {release_history_smoke_text}"
+        f"smoke {release_history_smoke_text}; ai review {release_history_ai_review_text}; "
+        f"ai source {release_history_ai_source_text}"
         if release_history_summary
         else "Run qcchem release history summarize --history-root <history-dir> -o release_history_summary.json."
     )

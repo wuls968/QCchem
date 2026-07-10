@@ -883,6 +883,8 @@ def test_overview_page_surfaces_release_verification(
                 "matrix_delta_status_counts": {"not_compared": 1, "passed": 1},
                 "release_artifact_verification_status_counts": {"passed": 2},
                 "workbench_smoke_status_counts": {"passed": 2},
+                "ai_workspace_delivery_status_counts": {"available": 2},
+                "ai_workspace_delivery_source_status_counts": {"consistent": 2},
                 "runs": [
                     {
                         "label": "run-001",
@@ -895,6 +897,13 @@ def test_overview_page_surfaces_release_verification(
                             "first_failure": None,
                         },
                         "release_matrix_delta": {"status": "not_compared", "first_failure": None},
+                        "ai_workspace_delivery": {
+                            "status": "available",
+                            "release_gate": "informational_only",
+                            "source_status": "consistent",
+                            "review_event_count": 1,
+                            "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+                        },
                         "workbench_smoke": {
                             "status": "passed",
                             "failed_check_count": 0,
@@ -912,6 +921,13 @@ def test_overview_page_surfaces_release_verification(
                             "first_failure": None,
                         },
                         "release_matrix_delta": {"status": "passed", "first_failure": None},
+                        "ai_workspace_delivery": {
+                            "status": "available",
+                            "release_gate": "informational_only",
+                            "source_status": "consistent",
+                            "review_event_count": 1,
+                            "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+                        },
                         "workbench_smoke": {
                             "status": "passed",
                             "failed_check_count": 0,
@@ -999,11 +1015,17 @@ def test_overview_page_surfaces_release_verification(
     assert "not_compared=1, passed=1" in page_text
     assert "verifier passed=2" in page_text
     assert "smoke passed=2" in page_text
+    assert "ai review available=2" in page_text
+    assert "ai source consistent=2" in page_text
     assert str(history_summary_path) in page_text
     assert "Release history retained runs" in page_text
     assert "run-001" in page_text
     assert "history_handoffs=1" in page_text
     assert "delta=not_compared" in page_text
+    assert "ai_review=available" in page_text
+    assert "review_source=consistent" in page_text
+    assert "review_events=1" in page_text
+    assert "review_provenance=artifacts/ai_workspace/provenance/ai_provenance.jsonl" in page_text
     assert "first_failure=none" in page_text
     assert str(tmp_path / "release_history" / "run-002" / "release_evidence_summary.json") in page_text
     assert "Release history handoff" in page_text
@@ -1618,6 +1640,8 @@ def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: 
                 "matrix_delta_status_counts": {"not_compared": 1},
                 "release_artifact_verification_status_counts": {"passed": 1},
                 "workbench_smoke_status_counts": {"passed": 1},
+                "ai_workspace_delivery_status_counts": {"available": 1},
+                "ai_workspace_delivery_source_status_counts": {"consistent": 1},
                 "runs": [
                     {
                         "label": "run-001",
@@ -1630,6 +1654,13 @@ def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: 
                             "first_failure": None,
                         },
                         "release_matrix_delta": {"status": "not_compared", "first_failure": None},
+                        "ai_workspace_delivery": {
+                            "status": "available",
+                            "release_gate": "informational_only",
+                            "source_status": "consistent",
+                            "review_event_count": 1,
+                            "review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
+                        },
                         "workbench_smoke": {
                             "status": "passed",
                             "failed_check_count": 0,
@@ -1657,6 +1688,8 @@ def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: 
     assert release_history["matrix_delta_status_counts"] == {"not_compared": 1}
     assert release_history["release_artifact_verification_status_counts"] == {"passed": 1}
     assert release_history["workbench_smoke_status_counts"] == {"passed": 1}
+    assert release_history["ai_workspace_delivery_status_counts"] == {"available": 1}
+    assert release_history["ai_workspace_delivery_source_status_counts"] == {"consistent": 1}
     assert release_history["retained_runs_truncated"] is False
     assert release_history["retained_runs"] == [
         {
@@ -1669,6 +1702,10 @@ def test_workbench_smoke_docs_can_check_release_history_run_drilldown(tmp_path: 
             "workbench_smoke_status": "passed",
             "workbench_smoke_failed_check_count": 0,
             "matrix_delta_status": "not_compared",
+            "ai_review_status": "available",
+            "ai_review_source_status": "consistent",
+            "ai_review_event_count": 1,
+            "ai_review_provenance_log": "artifacts/ai_workspace/provenance/ai_provenance.jsonl",
             "first_failure": None,
         }
     ]

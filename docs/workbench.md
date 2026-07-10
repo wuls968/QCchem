@@ -218,9 +218,13 @@ When `release_history_summary.json` is written under the artifact root by
 `qcchem release history summarize -o`, the inventory reports a
 `release_history_summary` entry and the Overview page shows retained run counts,
 failed/incomplete counts, matrix-delta status counts, release verifier status
-counts, Workbench smoke status counts, source path, and a bounded per-run
-drilldown with each retained run's verifier status, Workbench smoke status,
-history-handoff count, matrix-delta status, first failure, and summary path.
+counts, Workbench smoke status counts, AI review/source-status counts, source
+path, and a bounded per-run drilldown with each retained run's verifier status,
+Workbench smoke status, history-handoff count, matrix-delta status, frozen AI
+review status/source/event count/provenance path, first failure, and summary
+path. Missing or malformed retained AI review context renders as
+`not_available` and remains informational rather than changing release-history
+status.
 Keep the sibling Markdown produced by `qcchem release history export-markdown`
 as `release_history_summary.md` or `release_history_handoff.md` with that JSON
 when reviewers need a human-readable retained-history handoff. The inventory

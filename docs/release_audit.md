@@ -259,10 +259,13 @@ qcchem release history summarize \
 The summary JSON uses `qcchem.release_history_summary.v0.1-alpha` and lists one
 direct child directory per retained run. Each run records the release evidence
 status, selected baseline, matrix delta status/counts, release artifact
-verifier status, release-history handoff count, Workbench smoke status, and
-first failure. Missing, unreadable, or non-object
+verifier status, release-history handoff count, Workbench smoke status, frozen
+AI delivery review status/source status/review-event count/latest review
+metadata/provenance-log path, and first failure. Missing, unreadable, or
+non-object
 `release_evidence_summary.json` files are reported as incomplete runs instead
-of crashing the review. `--strict` returns exit code `2` unless
+of crashing the review. Missing or malformed AI review context is recorded as
+`not_available` and does not affect history pass/fail status. `--strict` returns exit code `2` unless
 the retained history summary is `passed`.
 
 Export the same retained-history review as Markdown when handing it to a
@@ -276,9 +279,9 @@ qcchem release history export-markdown \
 ```
 
 The Markdown export can also read `--history-root` directly. It lists top-level
-run counts, status-count summaries, each retained run, selected baseline,
-matrix-delta counts, verifier status, Workbench smoke status, and first failure.
-It writes only the requested Markdown path and does not mutate retained run
+run counts, status-count summaries including AI review/source-status maps, each
+retained run, selected baseline, matrix-delta counts, verifier status, Workbench
+smoke status, review provenance, and first failure. It writes only the requested Markdown path and does not mutate retained run
 directories.
 
 The Markdown

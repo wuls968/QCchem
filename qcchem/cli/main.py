@@ -2597,6 +2597,7 @@ def _release_history_incomplete_run_summary(
             "failed_check_count": None,
             "first_failed_check": None,
         },
+        "ai_workspace_delivery": normalize_ai_delivery_review_summary(None),
     }
 
 
@@ -2652,6 +2653,7 @@ def _release_history_run_summary(run_root: Path) -> dict[str, object]:
     baseline_selection = _release_history_dict(payload.get("release_matrix_baseline_selection"))
     matrix_delta = _release_history_matrix_delta_summary(_release_history_dict(payload.get("release_matrix_delta")))
     workbench = _release_history_dict(payload.get("workbench_smoke"))
+    ai_workspace_delivery = normalize_ai_delivery_review_summary(payload.get("ai_workspace_delivery"))
     failed_checks = workbench.get("failed_checks") if isinstance(workbench.get("failed_checks"), list) else []
     status = str(payload.get("status") or "unknown")
     first_failure = payload.get("first_failure") if isinstance(payload.get("first_failure"), dict) else None
@@ -2712,6 +2714,7 @@ def _release_history_run_summary(run_root: Path) -> dict[str, object]:
             "failed_check_count": len(failed_checks),
             "first_failed_check": _release_history_first_list_item(failed_checks),
         },
+        "ai_workspace_delivery": ai_workspace_delivery,
     }
 
 
@@ -2740,6 +2743,17 @@ def _release_history_status_counts(runs: list[dict[str, object]], key: str) -> d
             status = str(value.get("status") or "not_available")
         else:
             status = str(value or "not_available")
+        counts[status] = counts.get(status, 0) + 1
+    return {name: counts[name] for name in sorted(counts)}
+
+
+def _release_history_ai_delivery_source_status_counts(runs: list[dict[str, object]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for run in runs:
+        ai_workspace_delivery = _release_history_dict(run.get("ai_workspace_delivery"))
+        source_status = ai_workspace_delivery.get("source_status")
+        status = source_status.strip() if isinstance(source_status, str) else ""
+        status = status or "not_available"
         counts[status] = counts.get(status, 0) + 1
     return {name: counts[name] for name in sorted(counts)}
 
@@ -2789,6 +2803,8 @@ def _release_history_summary(history_root: Path) -> dict[str, object]:
             "release_artifact_verification",
         ),
         "workbench_smoke_status_counts": _release_history_status_counts(runs, "workbench_smoke"),
+        "ai_workspace_delivery_status_counts": _release_history_status_counts(runs, "ai_workspace_delivery"),
+        "ai_workspace_delivery_source_status_counts": _release_history_ai_delivery_source_status_counts(runs),
         "runs": runs,
     }
 
@@ -2811,13 +2827,18 @@ def _print_release_history_summary(summary: dict[str, object]) -> None:
         baseline = _release_history_dict(run.get("release_matrix_baseline_selection"))
         verification = _release_history_dict(run.get("release_artifact_verification"))
         workbench = _release_history_dict(run.get("workbench_smoke"))
+        ai_workspace_delivery = _release_history_dict(run.get("ai_workspace_delivery"))
         print(
             f"- {run.get('label')}: "
             f"status={run.get('status')} "
             f"delta={delta.get('status')} "
             f"baseline={baseline.get('mode')} "
             f"verification={verification.get('status')} "
-            f"workbench={workbench.get('status')}"
+            f"workbench={workbench.get('status')} "
+            f"ai_review={ai_workspace_delivery.get('status', 'not_available')} "
+            f"ai_review_source={ai_workspace_delivery.get('source_status', 'not_available')} "
+            f"ai_review_events={ai_workspace_delivery.get('review_event_count', 'not_available')} "
+            f"ai_review_provenance={ai_workspace_delivery.get('review_provenance_log', 'not_available')}"
         )
     first_failure = summary.get("first_failure")
     if isinstance(first_failure, dict):
@@ -2897,6 +2918,10 @@ def _release_history_markdown(summary: dict[str, object], *, output_path: Path) 
         "- release_artifact_verification_status_counts: "
         f"`{_release_history_counts_text(summary.get('release_artifact_verification_status_counts'))}`",
         f"- workbench_smoke_status_counts: `{_release_history_counts_text(summary.get('workbench_smoke_status_counts'))}`",
+        "- ai_workspace_delivery_status_counts: "
+        f"`{_release_history_counts_text(summary.get('ai_workspace_delivery_status_counts'))}`",
+        "- ai_workspace_delivery_source_status_counts: "
+        f"`{_release_history_counts_text(summary.get('ai_workspace_delivery_source_status_counts'))}`",
         "",
         "## Retained Runs",
         "",
@@ -2910,6 +2935,8 @@ def _release_history_markdown(summary: dict[str, object], *, output_path: Path) 
             verification = _release_history_dict(run.get("release_artifact_verification"))
             matrix_summary = _release_history_dict(run.get("release_matrix_summary"))
             workbench = _release_history_dict(run.get("workbench_smoke"))
+            ai_workspace_delivery = _release_history_dict(run.get("ai_workspace_delivery"))
+            latest_review_event = _release_history_dict(ai_workspace_delivery.get("latest_review_event"))
             lines.append(
                 f"- `{run.get('label')}`: status=`{run.get('status')}`; "
                 f"verification=`{verification.get('status')}`; "
@@ -2923,6 +2950,11 @@ def _release_history_markdown(summary: dict[str, object], *, output_path: Path) 
                 f"changed=`{_release_handoff_value(delta.get('changed_count'))}`; "
                 f"baseline=`{baseline.get('mode')}`; "
                 f"baseline_path=`{_release_handoff_value(baseline.get('path'), missing='not_provided')}`; "
+                f"ai_review=`{_release_handoff_value(ai_workspace_delivery.get('status'), missing='not_available')}`; "
+                f"ai_review_source=`{_release_handoff_value(ai_workspace_delivery.get('source_status'), missing='not_available')}`; "
+                f"ai_review_events=`{_release_handoff_value(ai_workspace_delivery.get('review_event_count'), missing='not_available')}`; "
+                f"ai_review_provenance=`{_release_handoff_value(ai_workspace_delivery.get('review_provenance_log'), missing='not_available')}`; "
+                f"ai_review_latest_event=`{_release_handoff_value(latest_review_event.get('event_id'), missing='none')}`; "
                 f"summary=`{_release_handoff_value(run.get('summary_path'), missing='not_available')}`; "
                 f"first_failure=`{_release_history_run_failure_text(run)}`"
             )

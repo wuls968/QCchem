@@ -1520,6 +1520,7 @@ def test_release_history_summarize_lists_retained_runs_and_baselines(
     capsys.readouterr()
 
     summary_json = tmp_path / "release_history_summary.json"
+    history_markdown_path = tmp_path / "release_history_summary.md"
     summarize_exit = main(
         [
             "release",
@@ -1534,15 +1535,30 @@ def test_release_history_summarize_lists_retained_runs_and_baselines(
     )
 
     stdout = capsys.readouterr().out
+    export_exit = main(
+        [
+            "release",
+            "history",
+            "export-markdown",
+            "--history-summary",
+            str(summary_json),
+            "-o",
+            str(history_markdown_path),
+            "--strict",
+        ]
+    )
     summary = json.loads(summary_json.read_text(encoding="utf-8"))
+    history_markdown = history_markdown_path.read_text(encoding="utf-8")
     runs = {run["label"]: run for run in summary["runs"]}
     assert first_exit == 0
     assert second_exit == 0
     assert summarize_exit == 0
+    assert export_exit == 0
     assert "Release history summary: passed" in stdout
     assert "Runs: 2 total, 2 passed, 0 failed, 0 incomplete" in stdout
     assert "- run-001: status=passed delta=not_compared baseline=auto_not_found" in stdout
     assert "- run-002: status=passed delta=passed baseline=auto" in stdout
+    assert "ai_review=available" in stdout
     assert summary["schema_version"] == "qcchem.release_history_summary.v0.1-alpha"
     assert summary["status"] == "passed"
     assert summary["recommended_action"] == "review_release_history"
@@ -1553,8 +1569,17 @@ def test_release_history_summarize_lists_retained_runs_and_baselines(
     assert summary["matrix_delta_status_counts"] == {"not_compared": 1, "passed": 1}
     assert summary["release_artifact_verification_status_counts"] == {"passed": 2}
     assert summary["workbench_smoke_status_counts"] == {"passed": 2}
+    assert summary["ai_workspace_delivery_status_counts"] == {"available": 2}
+    assert summary["ai_workspace_delivery_source_status_counts"] == {"consistent": 2}
     assert runs["run-001"]["release_matrix_baseline_selection"]["mode"] == "auto_not_found"
     assert runs["run-001"]["release_matrix_delta"]["status"] == "not_compared"
+    assert runs["run-001"]["ai_workspace_delivery"]["status"] == "available"
+    assert runs["run-001"]["ai_workspace_delivery"]["source_status"] == "consistent"
+    assert runs["run-001"]["ai_workspace_delivery"]["review_event_count"] == 1
+    assert runs["run-001"]["ai_workspace_delivery"]["review_provenance_log"] == (
+        "artifacts/ai_workspace/provenance/ai_provenance.jsonl"
+    )
+    assert runs["run-001"]["ai_workspace_delivery"]["latest_review_event"]["event_id"] == "evt-review-001"
     assert runs["run-002"]["release_matrix_baseline_selection"]["mode"] == "auto"
     assert runs["run-002"]["release_matrix_baseline_selection"]["path"] == str(
         history_root / "run-001" / "release_matrix_summary.json"
@@ -1565,6 +1590,71 @@ def test_release_history_summarize_lists_retained_runs_and_baselines(
     assert runs["run-002"]["release_matrix_delta"]["added_count"] == 0
     assert runs["run-002"]["release_matrix_delta"]["removed_count"] == 0
     assert runs["run-002"]["release_matrix_delta"]["changed_count"] == 0
+    assert "- ai_workspace_delivery_status_counts: `available=2`" in history_markdown
+    assert "- ai_workspace_delivery_source_status_counts: `consistent=2`" in history_markdown
+    assert "ai_review=`available`" in history_markdown
+    assert "ai_review_source=`consistent`" in history_markdown
+    assert "ai_review_events=`1`" in history_markdown
+    assert "ai_review_provenance=`artifacts/ai_workspace/provenance/ai_provenance.jsonl`" in history_markdown
+
+
+@pytest.mark.integration
+def test_release_history_summarize_keeps_malformed_ai_review_informational(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, _ = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    history_root = tmp_path / "release_history"
+
+    assert (
+        main(
+            [
+                "release",
+                "collect-evidence",
+                "--artifact-dir",
+                str(artifact_dir),
+                "--docs",
+                str(REPO_ROOT / "docs" / "workbench.md"),
+                "--history-root",
+                str(history_root),
+                "--history-label",
+                "run-001",
+            ]
+        )
+        == 0
+    )
+    summary_path = history_root / "run-001" / "release_evidence_summary.json"
+    retained_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    retained_summary["ai_workspace_delivery"] = {"review_status_counts": {"accepted": "one"}}
+    summary_path.write_text(json.dumps(retained_summary), encoding="utf-8")
+    output_path = tmp_path / "release_history_summary.json"
+    capsys.readouterr()
+
+    exit_code = main(
+        [
+            "release",
+            "history",
+            "summarize",
+            "--history-root",
+            str(history_root),
+            "-o",
+            str(output_path),
+            "--strict",
+        ]
+    )
+
+    summary = json.loads(output_path.read_text(encoding="utf-8"))
+    run = summary["runs"][0]
+    assert exit_code == 0
+    assert summary["status"] == "passed"
+    assert summary["first_failure"] is None
+    assert summary["ai_workspace_delivery_status_counts"] == {"not_available": 1}
+    assert summary["ai_workspace_delivery_source_status_counts"] == {"not_available": 1}
+    assert run["status"] == "passed"
+    assert run["ai_workspace_delivery"] == {
+        "status": "not_available",
+        "release_gate": "informational_only",
+    }
 
 
 @pytest.mark.integration

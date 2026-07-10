@@ -230,6 +230,9 @@ def _release_history_run_summary(run: dict[str, object]) -> dict[str, object]:
     )
     matrix_delta = run.get("release_matrix_delta") if isinstance(run.get("release_matrix_delta"), dict) else {}
     workbench_smoke = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+    ai_workspace_delivery = (
+        run.get("ai_workspace_delivery") if isinstance(run.get("ai_workspace_delivery"), dict) else {}
+    )
     return {
         "label": run.get("label"),
         "status": run.get("status"),
@@ -240,6 +243,10 @@ def _release_history_run_summary(run: dict[str, object]) -> dict[str, object]:
         "workbench_smoke_status": workbench_smoke.get("status"),
         "workbench_smoke_failed_check_count": workbench_smoke.get("failed_check_count"),
         "matrix_delta_status": matrix_delta.get("status"),
+        "ai_review_status": ai_workspace_delivery.get("status") or "not_available",
+        "ai_review_source_status": ai_workspace_delivery.get("source_status") or "not_available",
+        "ai_review_event_count": ai_workspace_delivery.get("review_event_count"),
+        "ai_review_provenance_log": ai_workspace_delivery.get("review_provenance_log") or "not_available",
         "first_failure": _release_history_run_failure_text(run),
     }
 
@@ -261,6 +268,8 @@ def _release_history_summary(snapshot: dict[str, object], *, run_limit: int = 5)
             "matrix_delta_status_counts": {},
             "release_artifact_verification_status_counts": {},
             "workbench_smoke_status_counts": {},
+            "ai_workspace_delivery_status_counts": {},
+            "ai_workspace_delivery_source_status_counts": {},
             "first_failure": None,
             "retained_runs": [],
             "retained_runs_truncated": False,
@@ -290,6 +299,16 @@ def _release_history_summary(snapshot: dict[str, object], *, run_limit: int = 5)
         "workbench_smoke_status_counts": (
             report.get("workbench_smoke_status_counts")
             if isinstance(report.get("workbench_smoke_status_counts"), dict)
+            else {}
+        ),
+        "ai_workspace_delivery_status_counts": (
+            report.get("ai_workspace_delivery_status_counts")
+            if isinstance(report.get("ai_workspace_delivery_status_counts"), dict)
+            else {}
+        ),
+        "ai_workspace_delivery_source_status_counts": (
+            report.get("ai_workspace_delivery_source_status_counts")
+            if isinstance(report.get("ai_workspace_delivery_source_status_counts"), dict)
             else {}
         ),
         "first_failure": report.get("first_failure") if isinstance(report.get("first_failure"), dict) else None,
