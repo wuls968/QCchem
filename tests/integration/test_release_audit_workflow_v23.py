@@ -792,6 +792,7 @@ def test_release_verify_artifacts_cli_accepts_downloaded_diagnostics(
     assert history_handoff["status_maps_validation"] == "verified"
     assert history_handoff["guidance_validation"] == "verified"
     assert history_handoff["markdown_core_validation"] == "verified"
+    assert history_handoff["markdown_runs_validation"] == "verified"
     assert report["failures"] == []
 
 
@@ -1077,7 +1078,69 @@ def test_release_verify_artifacts_cli_accepts_release_history_markdown_reviewer_
     assert exit_code == 0
     assert report["status"] == "passed"
     assert history_handoff["markdown_core_validation"] == "verified"
+    assert history_handoff["markdown_runs_validation"] == "verified"
     assert report["failures"] == []
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    ("field", "expected", "replacement"),
+    [
+        ("status", "status=`passed`", "status=`failed`"),
+        ("verification", "verification=`not_run`", "verification=`failed`"),
+        ("workbench", "workbench=`passed`", "workbench=`failed`"),
+    ],
+)
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history_markdown_run(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    field: str,
+    expected: str,
+    replacement: str,
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    markdown_path = copied_paths["release_history_summary_md"]
+    markdown = markdown_path.read_text(encoding="utf-8")
+    retained_runs, review_notes = markdown.split("## Review Notes", maxsplit=1)
+    current_prefix, current_row = retained_runs.split("- `current`:", maxsplit=1)
+    assert expected in current_row
+    markdown_path.write_text(current_prefix + "- `current`:" + current_row.replace(expected, replacement, 1) + "## Review Notes" + review_notes, encoding="utf-8")
+    capsys.readouterr()
+    verification_json = tmp_path / f"release_artifact_verification_markdown_run_{field}.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert "release_history_markdown_run_mismatch" in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" in failure_reasons
+
+
+@pytest.mark.integration
+def test_release_verify_artifacts_cli_rejects_incoherent_release_history_markdown_run_with_refreshed_digest(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifact_dir, copied_paths = _write_downloaded_release_diagnostics_artifact(tmp_path)
+    markdown_path = copied_paths["release_history_summary_md"]
+    markdown = markdown_path.read_text(encoding="utf-8")
+    current_prefix, current_row = markdown.split("- `current`:", maxsplit=1)
+    assert "verification=`not_run`" in current_row
+    markdown_path.write_text(current_prefix + "- `current`:" + current_row.replace("verification=`not_run`", "verification=`failed`", 1), encoding="utf-8")
+    _refresh_diagnostics_manifest_file_record(copied_paths["diagnostics_manifest_json"], artifact_path="artifacts/release_history_summary.md", local_path=markdown_path)
+    capsys.readouterr()
+    verification_json = tmp_path / "release_artifact_verification_markdown_run_refreshed_digest.json"
+
+    exit_code = main(["release", "verify-artifacts", "--artifact-dir", str(artifact_dir), "-o", str(verification_json)])
+
+    report = json.loads(verification_json.read_text(encoding="utf-8"))
+    history_handoff = report["release_history_handoffs"][0]
+    failure_reasons = {failure["reason"] for failure in report["failures"]}
+    assert exit_code == 2
+    assert history_handoff["markdown_runs_validation"] == "inconsistent"
+    assert "release_history_markdown_run_mismatch" in failure_reasons
+    assert "diagnostics_manifest_sha256_mismatch" not in failure_reasons
 
 
 @pytest.mark.integration

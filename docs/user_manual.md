@@ -740,6 +740,9 @@ refreshed diagnostics manifest does not suppress a semantic mismatch.
 The verifier also checks the generated Markdown handoff's core status, action,
 declared outcome counts, and first-failure text against that JSON while allowing
 appended reviewer notes outside the generated top-level block.
+Each retained Markdown run's release, artifact-verification, and Workbench
+conclusions are also checked against the JSON run; optional row details remain
+informational.
 It exits with code `2` when the downloaded artifact set is missing required
 release evidence or no longer matches the manifest.
 If you write the report as `release_artifact_verification.json` under an

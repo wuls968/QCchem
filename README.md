@@ -170,6 +170,9 @@ refreshed to match the downloaded file.
 Its generated Markdown handoff is also checked against the verified JSON for
 core status, action, declared outcome counts, and first-failure text; reviewer
 notes outside that top-level block remain allowed.
+It also checks each retained Markdown run's release, artifact-verification, and
+Workbench conclusions against the JSON run while leaving optional row details
+informational.
 Use `qcchem release history summarize --history-root <history-dir>` to list
 retained runs, selected baselines, matrix delta status, verifier status,
 release history handoff counts, Workbench smoke status, frozen AI delivery

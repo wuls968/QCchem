@@ -979,6 +979,14 @@ def _verify_release_history_markdown(
             }
         )
     entry["markdown_core_validation"] = "verified" if coherent else "inconsistent"
+    _verify_release_history_markdown_runs(
+        markdown,
+        summary=summary,
+        summary_path=summary_path,
+        markdown_path=markdown_path,
+        entry=entry,
+        failures=failures,
+    )
 
 
 def _release_history_markdown_core_fields(summary: dict[str, object]) -> tuple[tuple[str, str], ...]:
@@ -1007,6 +1015,73 @@ def _release_history_markdown_core_fields(summary: dict[str, object]) -> tuple[t
             ("incomplete_runs", str(summary.get("incomplete_run_count"))),
         ]
     return tuple(fields)
+
+
+def _verify_release_history_markdown_runs(
+    markdown: str,
+    *,
+    summary: dict[str, object],
+    summary_path: Path,
+    markdown_path: Path,
+    entry: dict[str, object],
+    failures: list[dict[str, object]],
+) -> None:
+    runs = summary.get("runs")
+    if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
+        entry["markdown_runs_validation"] = "not_checked"
+        return
+    retained_parts = markdown.split("\n## Retained Runs", 1)
+    if len(retained_parts) != 2:
+        entry["markdown_runs_validation"] = "inconsistent"
+        failures.append({"reason": "release_history_markdown_run_invalid", "path": str(summary_path), "markdown_path": str(markdown_path), "field": "section", "count": 0})
+        return
+    retained_section = retained_parts[1].split("\n## Review Notes", 1)[0]
+    rows: dict[str, list[dict[str, str]]] = {}
+    for line in retained_section.splitlines():
+        if not line.startswith("- `"):
+            continue
+        label, separator, remainder = line[3:].partition("`:")
+        if not separator:
+            continue
+        fields: dict[str, str] = {}
+        for field in ("status", "verification", "workbench"):
+            prefix = f"{field}=`"
+            start = remainder.find(prefix)
+            if start < 0:
+                continue
+            value_start = start + len(prefix)
+            value_end = remainder.find("`", value_start)
+            if value_end >= 0:
+                fields[field] = remainder[value_start:value_end]
+        rows.setdefault(label, []).append(fields)
+
+    coherent = True
+    expected_labels = {str(run.get("label")) for run in runs}
+    extra_labels = sorted(set(rows) - expected_labels)
+    for label in extra_labels:
+        coherent = False
+        failures.append({"reason": "release_history_markdown_run_invalid", "path": str(summary_path), "markdown_path": str(markdown_path), "label": label, "field": "label", "count": len(rows[label])})
+    for run in runs:
+        label = str(run.get("label"))
+        candidates = rows.get(label, [])
+        if len(candidates) != 1:
+            coherent = False
+            failures.append({"reason": "release_history_markdown_run_invalid", "path": str(summary_path), "markdown_path": str(markdown_path), "label": label, "field": "label", "count": len(candidates)})
+            continue
+        verification = run.get("release_artifact_verification") if isinstance(run.get("release_artifact_verification"), dict) else {}
+        workbench = run.get("workbench_smoke") if isinstance(run.get("workbench_smoke"), dict) else {}
+        expected = {
+            "status": str(run.get("status")),
+            "verification": str(verification.get("status")),
+            "workbench": str(workbench.get("status")),
+        }
+        for field, expected_value in expected.items():
+            actual = candidates[0].get(field)
+            if actual == expected_value:
+                continue
+            coherent = False
+            failures.append({"reason": "release_history_markdown_run_mismatch", "path": str(summary_path), "markdown_path": str(markdown_path), "label": label, "field": field, "expected": expected_value, "actual": actual})
+    entry["markdown_runs_validation"] = "verified" if coherent else "inconsistent"
 
 
 def _verify_release_history_current_evidence(

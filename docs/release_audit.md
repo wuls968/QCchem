@@ -326,6 +326,9 @@ downloaded file.
 The generated Markdown handoff also has its core status, action, declared
 outcome-count, and first-failure fields checked against that JSON; appended
 reviewer notes remain permitted outside the generated top-level block.
+Each retained Markdown run's release, artifact-verification, and Workbench
+conclusions are also checked against its JSON run; optional row details remain
+informational.
 When the output is named `release_artifact_verification.json` under an artifact
 root, `qcchem artifacts index` records it as
 `release_artifact_verification`, and the Workbench startup inventory reports the
