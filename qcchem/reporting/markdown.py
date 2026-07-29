@@ -295,6 +295,36 @@ def _runtime_evidence_frame_lines(data: dict[str, Any]) -> list[str]:
     ]
 
 
+def _ace_qvm_lines(data: dict[str, Any]) -> list[str]:
+    backend = data.get("backend") or {}
+    metadata = backend.get("metadata") if isinstance(backend.get("metadata"), dict) else {}
+    ace_qvm = metadata.get("ace_qvm") if isinstance(metadata.get("ace_qvm"), dict) else None
+    if not ace_qvm:
+        return []
+    ledger = ace_qvm.get("ledger") if isinstance(ace_qvm.get("ledger"), dict) else {}
+    partition = ace_qvm.get("partition") if isinstance(ace_qvm.get("partition"), dict) else {}
+    settings = ace_qvm.get("settings") if isinstance(ace_qvm.get("settings"), dict) else {}
+    memory_report = ace_qvm.get("memory_report") if isinstance(ace_qvm.get("memory_report"), dict) else {}
+    return [
+        "## ACE-QVM Compression Ledger",
+        "",
+        "> ACE-QVM is an exploratory compressed-entanglement local simulator; it reports observable-level evidence and does not claim hardware execution or default full-state reconstruction.",
+        "",
+        f"- settings: `{settings}`",
+        f"- partition: `{partition}`",
+        f"- capacity_status: `{ledger.get('capacity_status')}`",
+        f"- max_observed_bond_dim: `{ledger.get('max_observed_bond_dim')}`",
+        f"- max_observed_branch_rank: `{ledger.get('max_observed_branch_rank')}`",
+        f"- max_observed_memory_bytes: `{ledger.get('max_observed_memory_bytes')}`",
+        f"- memory_report: `{memory_report}`",
+        f"- total_discarded_svd_weight: `{ledger.get('total_discarded_svd_weight')}`",
+        f"- total_pruned_branch_weight: `{ledger.get('total_pruned_branch_weight')}`",
+        f"- full_state_reconstruction: `{ace_qvm.get('full_state_reconstruction')}`",
+        f"- validated_observables_only: `{ace_qvm.get('validated_observables_only')}`",
+        "",
+    ]
+
+
 def _qft_model_lines(data: dict[str, Any]) -> list[str]:
     qft = data.get("qft_model") or {}
     engine = qft.get("engine", {}) if isinstance(qft.get("engine"), dict) else {}
@@ -846,6 +876,7 @@ def render_markdown_report(result: Any) -> str:
         *_proof_lines(data),
         *_chemical_accuracy_frame_lines(data, units),
         *_runtime_evidence_frame_lines(data),
+        *_ace_qvm_lines(data),
         "## Verification",
         "",
         f"- verification_status: `{data.get('verification_status')}`",

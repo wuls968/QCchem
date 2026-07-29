@@ -38,6 +38,44 @@ def _write_lr_ace(root: Path) -> Path:
     return path
 
 
+def _write_ace_qvm(root: Path) -> Path:
+    root.mkdir(parents=True)
+    path = root / "result.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "qcchem.result.v0.8-alpha",
+                "run_id": "h2_ace_qvm_lr_ace",
+                "verification_status": "exploratory",
+                "module_origin": "exploratory",
+                "capability_tier": "exploratory",
+                "problem": {"molecule_name": "H2"},
+                "backend": {
+                    "kind": "ace_qvm",
+                    "metadata": {
+                        "ace_qvm": {
+                            "algorithm_name": "ACE-QVM",
+                            "ledger": {"capacity_status": "within_budget"},
+                        }
+                    },
+                },
+                "evidence_summary": {
+                    "trust_tier": "exploratory",
+                    "recommended_action": "collect_stronger_baseline",
+                    "chemical_accuracy_status": "unavailable",
+                    "runtime_evidence_status": "none",
+                    "primary_baseline": {"baseline_strength": "strong"},
+                    "primary_error_metric": {"metric_kind": "absolute_error_hartree", "value": 0.0},
+                    "primary_scientific_claim": "ACE-QVM local exploratory evidence.",
+                    "result_identity": {"artifact_kind": "run"},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def test_promotion_gate_blocks_exploratory_direct_validated_promotion(tmp_path: Path) -> None:
     artifact = _write_lr_ace(tmp_path / "h2_lr_ace")
 
@@ -51,3 +89,18 @@ def test_promotion_gate_blocks_exploratory_direct_validated_promotion(tmp_path: 
     assert review["module_origin"] == "lr_ace"
     assert "multiple molecules" in " ".join(review["required_studies"]).lower()
     assert "publication-grade general method" not in review["safe_claim"].lower()
+
+
+def test_promotion_gate_recognizes_ace_qvm_boundary(tmp_path: Path) -> None:
+    artifact = _write_ace_qvm(tmp_path / "h2_ace_qvm_lr_ace")
+
+    review = review_exploratory_promotion(
+        artifact=artifact,
+        target="validated_algorithm_candidate",
+    )
+
+    assert review["status"] == "blocked"
+    assert review["module_origin"] == "ace_qvm"
+    assert review["allowed_target"] == "exploratory_algorithm_candidate"
+    assert "capacity benchmark" in review["required_studies"]
+    assert "general scalable simulator" not in review["safe_claim"].lower()

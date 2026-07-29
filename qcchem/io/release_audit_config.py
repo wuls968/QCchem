@@ -11,7 +11,7 @@ import yaml
 from qcchem.io.config import resolve_user_path
 
 SUPPORTED_RELEASE_AUDIT_PROFILES = {"trust_first"}
-SUPPORTED_EXPLORATORY_ASSET_KINDS = {"qft", "lr_ace", "tc_qsci"}
+SUPPORTED_EXPLORATORY_ASSET_KINDS = {"qft", "lr_ace", "tc_qsci", "ace_qvm"}
 
 
 @dataclass(slots=True)

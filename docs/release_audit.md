@@ -374,7 +374,7 @@ records a failed `:readable` check and still writes `release_readiness.json` and
 `release_readiness.md` for handoff.
 
 Exploratory asset configs must parse as YAML mappings before they can be
-classified as QFT, LR-ACE, or TC-QSCI. Unreadable exploratory config YAML is
+classified as QFT, LR-ACE, ACE-QVM, or TC-QSCI. Unreadable exploratory config YAML is
 reported as `classified=unreadable` in the config check instead of aborting the
 audit.
 
@@ -471,6 +471,7 @@ release_audit:
       terms:
         - QFT
         - LR-ACE
+        - ACE-QVM
         - TC-QSCI
         - finite-cutoff
         - exploratory boundary
@@ -488,6 +489,7 @@ Supported exploratory asset kinds:
 
 - `qft`
 - `lr_ace`
+- `ace_qvm`
 - `tc_qsci`
 
 Boolean manifest fields such as `required` and `acceptance_required` must use
@@ -595,7 +597,7 @@ The Trust-First profile verifies:
   must list at least one `hardware_verified_cases` entry; ordinary run artifacts
   must also carry top-level `hardware_verified: true` plus a retrieved
   `runtime_submission`.
-- QFT, LR-ACE, and TC-QSCI assets remain inside the exploratory boundary.
+- QFT, LR-ACE, ACE-QVM, and TC-QSCI assets remain inside the exploratory boundary.
 - Exploratory asset config files parse as YAML mappings and classify as their
   manifest-declared kind; unreadable YAML becomes a failed config check.
 - QFT language remains finite-cutoff lattice-QED / sparse projected
@@ -691,8 +693,8 @@ warning channel only for release-gating warning policy decisions.
 - Do not add real runtime submission to release audit.
 - Do not run QFT hardware micro real suites from release audit.
 - Do not let release audit regenerate curated artifacts.
-- Do not promote QFT, LR-ACE, or TC-QSCI from exploratory to validated through a
-  documentation-only change.
+- Do not promote QFT, LR-ACE, ACE-QVM, or TC-QSCI from exploratory to validated
+  through a documentation-only change.
 - Do not treat an Evidence Capsule or Claim Compiler pass as a replacement for
   a validated baseline, chemical accuracy status, runtime evidence status, or
   release audit.

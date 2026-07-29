@@ -382,9 +382,9 @@ New result sections should be additive and nullable where practical.
 
 ## Exploratory Boundary Rules
 
-QFT, LR-ACE, and TC-QSCI may produce normal artifacts, reports, and workbench
-views. They must remain behind the exploratory boundary unless a dedicated
-validation plan adds stronger acceptance criteria.
+QFT, LR-ACE, ACE-QVM, and TC-QSCI may produce normal artifacts, reports, and
+workbench views. They must remain behind the exploratory boundary unless a
+dedicated validation plan adds stronger acceptance criteria.
 
 Do not promote an exploratory algorithm by changing docs alone. Promotion
 requires tests, release audit changes, benchmark evidence, and a clear public

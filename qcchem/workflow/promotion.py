@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from qcchem.core.promotion import (
+    ACE_QVM_REQUIRED_STUDIES,
     LR_ACE_REQUIRED_STUDIES,
     PROMOTION_SCHEMA_VERSION,
     QFT_REQUIRED_STUDIES,
@@ -30,6 +31,8 @@ def _module_origin(payload: dict[str, Any], path: Path) -> str:
     name = path.as_posix().lower()
     if "tc_qsci_result" in payload or "tc_qsci" in text:
         return "tc_qsci"
+    if "ace_qvm" in text or "ace_qvm" in name:
+        return "ace_qvm"
     if "qft_model" in payload or "lattice_qed" in text or "lattice_qed" in name:
         return "qft"
     if "lr_ace" in text or "lr_ace" in name:
@@ -65,6 +68,15 @@ def _rules_for(module: str) -> tuple[str, list[str], list[str]]:
                 "configs/exploratory/lih_active_tc_qsci.yaml",
             ],
         )
+    if module == "ace_qvm":
+        return (
+            "exploratory_algorithm_candidate",
+            ACE_QVM_REQUIRED_STUDIES,
+            [
+                "configs/exploratory/h2_ace_qvm_lr_ace.yaml",
+                "qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark",
+            ],
+        )
     return ("exploratory_algorithm_candidate", ["exact baseline", "ablation study"], [])
 
 
@@ -77,6 +89,8 @@ def _evidence_flags(payload: dict[str, Any]) -> set[str]:
         flags.add("exact baseline")
     if benchmark.get("compressed_vs_uncompressed") or "compressed_vs_uncompressed" in json.dumps(payload).lower():
         flags.add("compression-vs-uncompressed comparison")
+    if "ace_qvm" in json.dumps(payload).lower():
+        flags.add("capacity benchmark" if "capacity_benchmark" in json.dumps(payload).lower() else "ACE-QVM ledger")
     coverage = payload.get("promotion_evidence") if isinstance(payload.get("promotion_evidence"), dict) else {}
     for key, enabled in coverage.items():
         if enabled:

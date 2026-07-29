@@ -188,7 +188,7 @@ def _write_minimal_release_tree(root: Path, *, bad_artifact: bool = False) -> Pa
     docs.mkdir()
     for path in [root / "README.md", docs / "verified_scope.md", docs / "release_showcase.md"]:
         path.write_text(
-            "QFT LR-ACE TC-QSCI finite-cutoff exploratory boundary release audit",
+            "QFT LR-ACE ACE-QVM TC-QSCI finite-cutoff exploratory boundary release audit",
             encoding="utf-8",
         )
     config_dir = root / "configs" / "exploratory"
@@ -238,11 +238,11 @@ release_audit:
       required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
 """,
@@ -3045,6 +3045,7 @@ def test_real_exploratory_configs_are_classified_for_release_manifest() -> None:
     expected = {
         "configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml": "qft",
         "configs/exploratory/h2_lr_ace.yaml": "lr_ace",
+        "configs/exploratory/h2_ace_qvm_lr_ace.yaml": "ace_qvm",
         "configs/exploratory/h2_tc_qsci.yaml": "tc_qsci",
     }
 
@@ -3095,4 +3096,4 @@ def test_default_release_audit_manifest_loads() -> None:
     assert spec.warning_policy is not None
     assert spec.warning_policy.max_count == 0
     assert spec.warning_policy.allowed_ids == []
-    assert {asset.kind for asset in spec.exploratory_assets} >= {"qft", "lr_ace", "tc_qsci"}
+    assert {asset.kind for asset in spec.exploratory_assets} >= {"qft", "lr_ace", "ace_qvm", "tc_qsci"}

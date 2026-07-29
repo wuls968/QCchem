@@ -78,6 +78,7 @@ from .results import (
     VariationalResultSummary,
 )
 from .specs import (
+    ACEQVMBackendSpec,
     ActiveSpaceSpec,
     AutoActiveSpaceSpec,
     AnsatzSpec,
@@ -166,6 +167,7 @@ from .specs import (
 __all__ = [
     "AIModelCallRecord",
     "AIProvenanceEvent",
+    "ACEQVMBackendSpec",
     "ActiveSpaceSpec",
     "AutoActiveSpaceSpec",
     "AnsatzSpec",

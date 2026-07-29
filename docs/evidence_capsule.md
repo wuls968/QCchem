@@ -48,5 +48,5 @@ claim, primary baseline, primary error metric, `chemical accuracy status`,
 Hardware verification boundary: `hardware_verified` records runtime retrieval
 evidence only. It does not imply publication-grade chemistry validation.
 
-Exploratory boundary: QFT, LR-ACE, TC-QSCI, and other exploratory artifacts need
-a promotion gate before candidate or validated language.
+Exploratory boundary: QFT, LR-ACE, ACE-QVM, TC-QSCI, and other exploratory
+artifacts need a promotion gate before candidate or validated language.

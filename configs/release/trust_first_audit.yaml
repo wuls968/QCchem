@@ -49,19 +49,23 @@ release_audit:
       config: configs/exploratory/lih_active_lr_ace.yaml
       artifact: artifacts/lih_active_lr_ace/result.json
       required: true
+    - name: ace_qvm_h2_lr_ace_probe
+      kind: ace_qvm
+      config: configs/exploratory/h2_ace_qvm_lr_ace.yaml
+      required: true
     - name: tc_qsci_h2_exploratory
       kind: tc_qsci
       config: configs/exploratory/h2_tc_qsci.yaml
       required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_audit.md
       terms: [release audit, release_readiness.json, release_readiness.md, no runtime submission]
@@ -76,7 +80,7 @@ release_audit:
       terms: [claim compiler, overclaim, chemical accuracy status, runtime evidence status, safe rewrite]
       required: true
     - path: docs/promotion_gate.md
-      terms: [promotion gate, exploratory boundary, QFT, LR-ACE, TC-QSCI, validated]
+      terms: [promotion gate, exploratory boundary, QFT, LR-ACE, ACE-QVM, TC-QSCI, validated]
       required: true
     - path: docs/custom_workflows.md
       terms: [custom workflows, workflow_result.json, workflow_graph.json, provenance.jsonl, qcchem.workflow_steps]

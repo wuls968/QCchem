@@ -206,6 +206,25 @@ trust-first validation gate passes. Legacy exploratory LR-ACE assets remain
 inside the exploratory boundary, and runtime retrieval alone does not validate
 LR-ACE as a general publication-grade algorithm.
 
+### ACE-QVM
+
+ACE-QVM assets include:
+
+- `backend.kind: ace_qvm` compressed-entanglement local simulation,
+- pure NumPy MPS updates with SVD truncation ledgers,
+- swap-network routing for non-adjacent two-qubit gates,
+- operator-Schmidt branch cutting for configured cross-block gates,
+- `qcchem exploratory capacity-benchmark` local capacity artifacts for
+  low-entanglement workload stress tests, and
+- quantum-evidence resource/error-budget fields for bond dimension, branch
+  rank, discarded SVD weight, pruned branch weight, and memory estimate.
+
+Boundary: ACE-QVM is an exploratory observable simulator. It does not reconstruct
+the full state by default, does not set `hardware_verified`, and does not claim
+general scalability for volume-law random circuits. Passed small-system exact
+comparisons are local checks of the configured compressed simulation path, not a
+publication-grade validation of ACE-QVM as a general algorithm.
+
 ### TC-QSCI
 
 TC-kicked QSCI assets include:
@@ -257,7 +276,7 @@ artifacts. It performs no runtime submission. The default manifest verifies:
 - `pyproject.toml` release version,
 - required Evidence Summary fields in curated artifacts,
 - conservative runtime/hardware boundary language,
-- QFT, LR-ACE, and TC-QSCI exploratory boundary classification, and
+- QFT, LR-ACE, ACE-QVM, and TC-QSCI exploratory boundary classification, and
 - required release terms in README, verified scope, release showcase, release
   audit docs, and Research OS docs.
 

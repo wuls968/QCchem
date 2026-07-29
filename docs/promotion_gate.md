@@ -1,8 +1,8 @@
 # QCchem Promotion Gate
 
 The Promotion Gate is a read-only review for exploratory artifacts. It does not
-change artifact trust tiers and it never promotes QFT, LR-ACE, or TC-QSCI by
-documentation alone.
+change artifact trust tiers and it never promotes QFT, LR-ACE, ACE-QVM, or
+TC-QSCI by documentation alone.
 
 ## Command
 
@@ -34,6 +34,13 @@ LR-ACE:
 - requires exact baseline, multiple molecules, active-space coverage,
   compression-vs-uncompressed comparison, ansatz limitation analysis, and
   failure cases
+
+ACE-QVM:
+
+- may enter `exploratory_algorithm_candidate`
+- must not become a general scalable simulator claim by default
+- requires exact baseline, small-system dense-statevector agreement, capacity
+  benchmark, entanglement stress test, truncation error audit, and failure cases
 
 TC-QSCI:
 

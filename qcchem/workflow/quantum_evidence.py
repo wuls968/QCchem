@@ -106,8 +106,18 @@ def _final_state(
     solver_outcome: Any,
     spectrum: Any | None,
     num_qubits: int,
+    ace_qvm: dict[str, Any] | None = None,
 ) -> tuple[Statevector | None, QuantumCircuit | None, list[str]]:
     notes: list[str] = []
+    if isinstance(ace_qvm, dict):
+        settings = ace_qvm.get("settings") if isinstance(ace_qvm.get("settings"), dict) else {}
+        dense_limit = int(settings.get("debug_dense_state_qubit_limit", 10))
+        if num_qubits > dense_limit:
+            notes.append(
+                "final_state_skipped_for_ace_qvm_debug_dense_state_limit="
+                f"{dense_limit}"
+            )
+            return None, None, notes
     metadata = getattr(solver_outcome, "metadata", {}) or {}
     circuit = metadata.get("ansatz_circuit")
     parameters = getattr(solver_outcome, "optimal_parameters", []) or []
@@ -423,7 +433,13 @@ def _state_summary(
     }
 
 
-def _resource_summary(bound_circuit: QuantumCircuit | None, runtime_submission: Any | None, mapping: Any) -> dict[str, Any]:
+def _resource_summary(
+    bound_circuit: QuantumCircuit | None,
+    runtime_submission: Any | None,
+    mapping: Any,
+    *,
+    ace_qvm: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "num_qubits": int(mapping.summary.num_qubits),
         "raw_num_qubits": getattr(mapping.summary, "raw_num_qubits", None),
@@ -455,6 +471,19 @@ def _resource_summary(bound_circuit: QuantumCircuit | None, runtime_submission: 
         payload["runtime_transpiled_depth"] = runtime.get("transpiled_depth")
         payload["runtime_transpiled_two_qubit_gate_count"] = runtime.get("transpiled_two_qubit_gate_count")
         payload["runtime_selected_layout"] = runtime.get("selected_layout", [])
+    if isinstance(ace_qvm, dict):
+        ledger = ace_qvm.get("ledger") if isinstance(ace_qvm.get("ledger"), dict) else {}
+        partition = ace_qvm.get("partition") if isinstance(ace_qvm.get("partition"), dict) else {}
+        memory_report = ace_qvm.get("memory_report") if isinstance(ace_qvm.get("memory_report"), dict) else {}
+        payload["ace_qvm"] = {
+            "algorithm_name": ace_qvm.get("algorithm_name", "ACE-QVM"),
+            "settings": ace_qvm.get("settings", {}),
+            "partition": partition,
+            "ledger": ledger,
+            "memory_report": memory_report,
+            "full_state_reconstruction": bool(ace_qvm.get("full_state_reconstruction", False)),
+            "validated_observables_only": bool(ace_qvm.get("validated_observables_only", True)),
+        }
     return payload
 
 
@@ -494,6 +523,7 @@ def _error_budget(
     qft_model: Any | None,
     cavity_qed_model: Any | None,
     environment_embedding: Any | None,
+    ace_qvm: dict[str, Any] | None,
     existing_error_budget: dict[str, Any] | None,
 ) -> dict[str, Any]:
     benchmark_payload = to_primitive(benchmark)
@@ -503,6 +533,9 @@ def _error_budget(
     qft = to_primitive(qft_model) if qft_model is not None else None
     cavity = to_primitive(cavity_qed_model) if cavity_qed_model is not None else None
     embedding = to_primitive(environment_embedding) if environment_embedding is not None else None
+    ace = ace_qvm if isinstance(ace_qvm, dict) else None
+    ace_ledger = ace.get("ledger", {}) if ace else {}
+    ace_memory = ace.get("memory_report", {}) if ace else {}
     runtime_stds = None
     if runtime:
         returned = runtime.get("returned_job_metadata") or {}
@@ -543,6 +576,22 @@ def _error_budget(
             "cache_validation": (embedding or {}).get("cache_validation") if embedding else None,
             "boundary": (embedding or {}).get("boundary") if embedding else None,
         },
+        "ace_qvm": {
+            "available": ace is not None,
+            "capacity_status": ace_ledger.get("capacity_status") if ace_ledger else None,
+            "memory_report": ace_memory or None,
+            "budget_usage_fraction": ace_memory.get("budget_usage_fraction") if ace_memory else None,
+            "within_memory_budget": ace_memory.get("within_memory_budget") if ace_memory else None,
+            "total_discarded_svd_weight": ace_ledger.get("total_discarded_svd_weight") if ace_ledger else None,
+            "total_pruned_branch_weight": ace_ledger.get("total_pruned_branch_weight") if ace_ledger else None,
+            "svd_truncation_events": ace_ledger.get("svd_truncation_events") if ace_ledger else None,
+            "branch_prune_events": ace_ledger.get("branch_prune_events") if ace_ledger else None,
+            "error_certificate_scope": (
+                "compressed_observable_simulation"
+                if ace is not None
+                else None
+            ),
+        },
         "existing_error_budget": existing_error_budget or {},
     }
 
@@ -574,10 +623,14 @@ def build_and_write_quantum_evidence(
     """Build the compact summary and write the full quantum evidence sidecar."""
     qft_payload = _qft_payload(qft_model)
     pauli_skipped = _pauli_materialization_skipped(qft_payload)
+    backend_metadata = getattr(backend_summary, "metadata", {}) or {}
+    ace_qvm = backend_metadata.get("ace_qvm") if isinstance(backend_metadata, dict) else None
+    ace_qvm = ace_qvm if isinstance(ace_qvm, dict) else None
     state, bound_circuit, state_notes = _final_state(
         solver_outcome=solver_outcome,
         spectrum=spectrum,
         num_qubits=int(mapping.summary.num_qubits),
+        ace_qvm=ace_qvm,
     )
     pauli_terms, measurement_groups, hamiltonian_summary = _pauli_evidence(
         operator=mapping.qubit_hamiltonian,
@@ -618,7 +671,7 @@ def build_and_write_quantum_evidence(
         else:
             group_counts, sampling_summary = backend_counts
     state_summary = _state_summary(state=state, operator=mapping.qubit_hamiltonian, spectrum=spectrum)
-    resources = _resource_summary(bound_circuit, runtime_submission, mapping)
+    resources = _resource_summary(bound_circuit, runtime_submission, mapping, ace_qvm=ace_qvm)
     resources.update({key: value for key, value in projected_metadata.items() if value is not None})
     sparse_estimate = bool(pauli_skipped and qft_payload)
     groups_sha256 = None if pauli_skipped else _json_sha256({"groups": measurement_groups})
@@ -658,6 +711,7 @@ def build_and_write_quantum_evidence(
         qft_model=qft_model,
         cavity_qed_model=cavity_qed_model,
         environment_embedding=environment_embedding,
+        ace_qvm=ace_qvm,
         existing_error_budget=existing_error_budget,
     )
     sparse_exact_validation = (
@@ -726,6 +780,7 @@ def build_and_write_quantum_evidence(
         "sparse_exact_validation": sparse_exact_validation,
         "lattice_qed_observables": lattice_qed_observables,
         "field_and_embedding": field_payload,
+        "ace_qvm": ace_qvm or {},
         "notes": state_notes,
     }
     if sidecar_path is not None:

@@ -226,6 +226,14 @@ def run_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.runner", "run_from_config")(*args, **kwargs)
 
 
+def run_ace_qvm_capacity_benchmark(*args, **kwargs):
+    return _load_attr("qcchem.exploratory.ace_qvm_capacity", "run_ace_qvm_capacity_benchmark")(*args, **kwargs)
+
+
+def parse_ace_qvm_capacity_sizes(*args, **kwargs):
+    return _load_attr("qcchem.exploratory.ace_qvm_capacity", "parse_size_list")(*args, **kwargs)
+
+
 def collect_runtime_artifact(*args, **kwargs):
     return _load_attr("qcchem.workflow.runtime_collect", "collect_runtime_artifact")(*args, **kwargs)
 
@@ -400,6 +408,37 @@ def _build_parser() -> argparse.ArgumentParser:
     exploratory_run.add_argument(
         "--confirm-runtime-budget",
         help="Required before any exploratory config can submit a real IBM Runtime job.",
+    )
+    ace_capacity = exploratory_subparsers.add_parser(
+        "capacity-benchmark",
+        help="Run a local low-entanglement ACE-QVM capacity benchmark.",
+    )
+    ace_capacity.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path("artifacts") / "ace_qvm_capacity_benchmark",
+    )
+    ace_capacity.add_argument(
+        "--sizes",
+        default=None,
+        help="Comma-separated qubit sizes; defaults to a bounded exploratory ladder.",
+    )
+    ace_capacity.add_argument(
+        "--case",
+        action="append",
+        choices=["product_x", "cluster_chain"],
+        help="Benchmark case to run. Repeat to run more than one; defaults to both.",
+    )
+    ace_capacity.add_argument("--memory-budget-gib", type=float)
+    ace_capacity.add_argument("--block-qubits", type=int, default=64)
+    ace_capacity.add_argument("--max-bond-dim", type=int, default=64)
+    ace_capacity.add_argument("--max-branch-rank", type=int, default=64)
+    ace_capacity.add_argument("--timeout-seconds", type=float, default=120.0)
+    ace_capacity.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace an existing non-empty capacity benchmark output directory.",
     )
 
     workbench_parser = subparsers.add_parser("workbench", help="Local QCchem visual workbench.")
@@ -3511,6 +3550,32 @@ def main(argv: list[str] | None = None) -> int:
                     f"status={result.tc_qsci_result.get('verification_status')}"
                 )
             print(f"Artifacts: {result.artifacts.root}")
+            return 0
+        if args.exploratory_command == "capacity-benchmark":
+            try:
+                result = run_ace_qvm_capacity_benchmark(
+                    output_dir=args.output_dir,
+                    sizes=parse_ace_qvm_capacity_sizes(args.sizes),
+                    cases=args.case,
+                    memory_budget_gib=args.memory_budget_gib,
+                    block_qubits=args.block_qubits,
+                    max_bond_dim=args.max_bond_dim,
+                    max_branch_rank=args.max_branch_rank,
+                    timeout_seconds=args.timeout_seconds,
+                    overwrite=args.overwrite,
+                )
+            except (FileExistsError, ValueError) as exc:
+                print(f"ACE-QVM capacity benchmark rejected: {exc}")
+                return 2
+            observed = result.get("observed_capacity", {})
+            comparison = observed.get("comparison_to_dense", {})
+            print("ACE-QVM capacity benchmark completed")
+            print(f"Max ACE-QVM qubits tested: {comparison.get('max_ace_qvm_qubits_tested')}")
+            print(
+                "Ratio vs conservative dense estimate: "
+                f"{comparison.get('vs_conservative_dense_four_copy_qubits')}"
+            )
+            print(f"Artifacts: {result['artifact_root']}")
             return 0
 
     if args.command == "workbench":

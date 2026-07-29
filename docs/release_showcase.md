@@ -53,9 +53,9 @@ runtime submission. The Workbench smoke command checks the documented showcase
 routes and writes ignored local diagnostic JSON for CI triage.
 
 Do not use the showcase to upgrade a claim. If a page shows `hardware_verified`,
-QFT finite-cutoff evidence, LR-ACE flagship evidence, or TC-QSCI exploratory
-evidence, explain the same boundary used in README and the user manual before
-showing raw energy values.
+QFT finite-cutoff evidence, LR-ACE flagship evidence, ACE-QVM compressed
+simulator evidence, or TC-QSCI exploratory evidence, explain the same boundary
+used in README and the user manual before showing raw energy values.
 
 ## Showcase Order
 
@@ -243,6 +243,18 @@ trust-first validation gate. Legacy exploratory LR-ACE local gates and runtime
 probes remain exploratory algorithm evidence, not publication-grade method
 validation. Preview outputs let you regenerate the suite without overwriting the
 curated release artifact until you intentionally refresh that evidence bundle.
+
+ACE-QVM compressed-entanglement simulator:
+
+```bash
+qcchem exploratory run -c configs/exploratory/h2_ace_qvm_lr_ace.yaml
+qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark --sizes 128,512,2048
+```
+
+Boundary: ACE-QVM artifacts are observable-level compressed simulator evidence.
+They report tensor-network ledgers and local capacity probes, but do not claim
+hardware execution, default full-state reconstruction, or general volume-law
+circuit scalability.
 
 TC-QSCI:
 

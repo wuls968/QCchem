@@ -43,6 +43,8 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
             "nuclear_repulsion_energy": properties.get("nuclear_repulsion_energy"),
         },
         "mapping": extras.get("mapping") or {},
+        "backend": extras.get("backend") or {},
+        "backend_capability": extras.get("backend_capability"),
         "benchmark": extras.get("benchmark"),
         "reduction_audit": reduction_audit,
         "runtime_submission": extras.get("runtime_submission"),

@@ -112,6 +112,68 @@ def test_evidence_console_v2_pages_surface_decision_language() -> None:
 
 
 @pytest.mark.integration
+def test_runtime_page_surfaces_ace_qvm_ledger_when_available() -> None:
+    from qcchem.workbench.pages.overview import build_sample_view_model
+    from qcchem.workbench.pages.runtime_monitoring import build_runtime_monitoring_page
+
+    model = build_sample_view_model()
+    model["ace_qvm"] = {
+        "available": True,
+        "algorithm_name": "ACE-QVM",
+        "capability_tier": "exploratory",
+        "settings": {
+            "memory_budget_gib": 4,
+            "block_qubits": 2,
+            "max_bond_dim": 16,
+            "max_branch_rank": 8,
+            "cross_block_policy": "auto",
+            "routing": "swap_network",
+            "observable_mode": "pauli_expectation",
+        },
+        "partition": {"blocks": [[0, 1], [2, 3]], "partitioner": "greedy_weighted_degree"},
+        "ledger": {
+            "capacity_status": "within_budget",
+            "max_observed_bond_dim": 2,
+            "max_observed_branch_rank": 1,
+            "max_observed_memory_bytes": 4096,
+            "svd_truncation_events": 0,
+            "branch_prune_events": 0,
+            "total_discarded_svd_weight": 0.0,
+            "total_pruned_branch_weight": 0.0,
+        },
+        "memory_report": {
+            "memory_budget_bytes": 1073741824,
+            "memory_budget_gib": 1.0,
+            "max_observed_memory_bytes": 4096,
+            "budget_usage_fraction": 3.814697265625e-6,
+            "within_memory_budget": True,
+        },
+        "block_count": 2,
+        "capacity_status": "within_budget",
+        "max_observed_bond_dim": 2,
+        "max_observed_branch_rank": 1,
+        "max_observed_memory_bytes": 4096,
+        "total_discarded_svd_weight": 0.0,
+        "total_pruned_branch_weight": 0.0,
+        "full_state_reconstruction": False,
+        "validated_observables_only": True,
+        "hardware_verified": False,
+    }
+
+    page_text = _collect_text(build_runtime_monitoring_page(model))
+
+    assert "ACE-QVM ledger" in page_text
+    assert "Compressed Observable Backend" in page_text
+    assert "Capacity boundary" in page_text
+    assert "within budget" in page_text
+    assert "hardware_verified=False" in page_text
+    assert "Ledger memory" in page_text
+    assert "usage 0.000" in page_text
+    assert "Within memory budget" in page_text
+    assert "Validated observables only" in page_text
+
+
+@pytest.mark.integration
 def test_ai_workspace_page_reads_delivery_history_and_review_state(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     root = workspace_root(tmp_path)
