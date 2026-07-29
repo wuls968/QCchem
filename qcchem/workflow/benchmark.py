@@ -2952,8 +2952,10 @@ def run_benchmark_suite_from_spec(
     write_result_json(result.acceptance_summary, artifacts.root / "acceptance_summary.json")
     write_result_json(calibration_summary, artifacts.root / "calibration_summary.json")
     write_result_json(method_evidence_campaign_summary, artifacts.root / "method_evidence_summary.json")
-    write_result_json(result, artifacts.result_json)
-    result.artifact_index_entry = build_artifact_index_entry(artifacts.result_json)
+    result.artifact_index_entry = build_artifact_index_entry(
+        artifacts.result_json,
+        payload=to_primitive(result),
+    )
     write_result_json(result, artifacts.result_json)
     (artifacts.root / "calibration_report.md").write_text(
         "\n".join(
