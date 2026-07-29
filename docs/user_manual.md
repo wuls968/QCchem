@@ -395,6 +395,12 @@ TC-QSCI:
 qcchem exploratory run -c configs/exploratory/h2_tc_qsci.yaml
 ```
 
+Method Evidence / 10-method smoke:
+
+```bash
+qcchem exploratory run -c configs/exploratory/h2_method_evidence_smoke.yaml
+```
+
 Exploratory artifacts are reproducible research evidence. They are not
 validated chemistry claims unless a later release explicitly moves them through
 the required validation gate.
@@ -409,6 +415,9 @@ Expected single-run files:
 - `run.log`: execution log.
 - `exact_result.json`: exact baseline when available.
 - `quantum_evidence.json`: detailed quantum evidence sidecar.
+- `method_evidence.json`: exploratory method sidecar when E-ADAPT,
+  OO-QCASSCF, QSCI++, q-sc-EOM, Q-Embed/q-DMET, kQ-PBC, Trust-QEM, Shadow-LR,
+  FT-QPE Planner, or QSCI post-correlation is requested.
 - `runtime_submission.json`: runtime sidecar when submission is attempted.
 - `calibration.json` and `calibration_report.md`: empirical calibration when
   available.
@@ -434,6 +443,7 @@ Start with these `result.json` fields:
 - `runtime_chemical_accuracy`
 - `evidence_summary`
 - `quantum_evidence`
+- `method_evidence`
 - `field_evidence`
 - `pbc`
 - `pbc_qmmm`
@@ -526,8 +536,88 @@ validation. Legacy LR-ACE configs remain exploratory unless a release gate says
 otherwise.
 
 TC-QSCI records determinant selection, symmetry-sector checks, CAST sampling
-provenance, low-rank resource estimates, QPE resource estimates, and error
-budget fields. It remains exploratory.
+provenance, low-rank resource estimates, QPE resource estimates, selected
+subspace Ritz-vector variance/residual audits, and error budget fields. It
+remains exploratory.
+
+Method Evidence records E-ADAPT, OO-QCASSCF, QSCI++, QSCI post-correlation,
+q-sc-EOM, Q-Embed/q-DMET, kQ-PBC, Trust-QEM, Shadow-LR, and FT-QPE Planner
+summaries. These outputs are reported beside the raw solver energy and must not
+be treated as replacement energies or validated claims unless a benchmark gate
+explicitly promotes them.
+
+Shadow-LR uses the allocated shadow shot budget as `estimated_shot_cost` and
+keeps the grouped-estimator precision cost in `measurement_cost_model`. The
+cost model also records a deterministic `plan_digest`, selected-basis L1
+coverage, allocation entropy, max shot concentration, and a
+`variance_inflation_vs_grouped_precision_proxy` so budget savings are auditable
+instead of being treated as same-precision hardware evidence. Treat
+`estimated_cost_advantage_pairs` as local measurement-planning evidence, not as
+hardware-calibrated superiority.
+
+Trust-QEM PEC accepts a local `qcchem.pec_calibration_model.v1` JSON calibration
+model. When the model is executable, QCchem records the model digest, calibrated
+operation count, quasi-probability entry count, L1-overhead proxy, and configured
+sampling overhead. This supports calibration-overhead provenance only:
+`energy_replaces_primary` remains false, and accuracy/hardware claims still
+require a separate promotion gate.
+
+OO-QCASSCF is a reference diagnostic in v1. It can run a PySCF CASSCF
+orbital-relaxation calculation and report energy lowering, convergence, and
+active-space re-solve boundaries, but the delegated QCchem solver energy remains
+the primary energy. Reports and benchmark metrics compare CASSCF against a
+QCchem total-energy estimate, not directly against raw `solver_energy`, because
+PySCF `CASSCF.e_tot` and QCchem `solver_energy` use different energy scopes.
+Read `orbital_transfer_audit` and `promotion_readiness_audit` before describing
+OO-QCASSCF as a solver replacement: v1 does not rebuild the primary Hamiltonian
+from optimized orbitals.
+
+FT-QPE Planner reports coarse resource-model estimates only. Toffoli or
+physical-qubit reductions must be read with `resource_claim_status`,
+`compiled_fault_tolerant_circuit_available`, `surface_code_distance_available`,
+`logical_error_budget_available`, `promotion_readiness_audit`, and
+`promotion_blockers`; they are not compiled-circuit or hardware-resource
+claims. `resource_formula_audit` records the exact coarse formulas, input terms,
+reference encoding, best encoding, and encoding comparison count used for the
+estimate.
+
+q-sc-EOM is a conditioning/reference audit in v1. It records exact-root residual
+norms, overlap conditioning, root-tracking status, and linked transition
+property task outputs when `transition_dipole` or `oscillator_strength` is
+requested. These linked properties come from the existing exact property task
+path and do not promote q-sc-EOM to a validated general EOM or response solver.
+
+kQ-PBC is a Gamma-reference audit in v1. It records requested k-point/twist
+scope, executed Gamma-only coverage, missing twist-energy fractions,
+finite-size blockers, unsupported claims, and promotion-readiness status. These
+fields quantify the gap to a non-Gamma materials claim; they do not emit proxy
+twist energies or replace the primary energy.
+
+`method_evidence.json` includes `promotion_gate_audit` for the whole method
+bundle. Read this audit before summarizing superiority: `accuracy_claim_allowed_methods`,
+`sidecar_energy_replacement_allowed_methods`, and `hardware_claim_allowed_methods`
+must stay empty unless a separate promotion gate has supplied stronger evidence.
+
+QSCI post-correlation is intentionally conservative in v1: it reports selected
+CI coefficient provenance, missing correction inputs, double-counting audit
+status, and for `qsci_tcc` an audit-only selected-CI-to-single/double-amplitude
+mapping. It leaves dynamic-correlation energy fields empty unless an executable
+QSCI-derived TCC/NEVPT2 correction backend and double-counting model are
+available.
+
+Trust-QEM is also conservative in v1: the sidecar records requested and
+performed readout/ZNE/symmetry/PEC gates plus `claim_status`, but mitigation
+entries do not replace the primary raw solver energy. PEC claim use requires an
+executable `qcchem.pec_calibration_model.v1` JSON calibration model.
+
+Q-Embed/q-DMET is also conservative in v1. It records fragment definitions,
+bath recommendations, and optional PySCF RHF/UHF fragment-reference diagnostics,
+but does not execute q-DMET self-consistency, density matching, or
+correlation-potential optimization. The sidecar records fragment AO/atom coverage,
+fragment gross-population mismatch norms, zero executed density-matching and
+self-consistency iteration counts, and the missing self-consistency components.
+Fragment energy sums remain diagnostics and do not replace the primary
+full-system energy.
 
 ## Workbench
 

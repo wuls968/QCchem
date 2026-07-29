@@ -1,0 +1,900 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 1.9984014443252818e-15,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": false,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "cavity_qed_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    },
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": null,
+    "qft_dynamics": null,
+    "qft_dynamics_reference": {
+      "available": false,
+      "sidecar": null
+    },
+    "qft_model": {},
+    "qft_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 2.7050411297549823,
+    "energy_contribution_sum": -1.8572750302023788,
+    "expectations_available": true,
+    "measurement_group_count": 5,
+    "pauli_term_count": 15,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.8105479805373277,
+        "energy_contribution": -0.8105479805373276,
+        "expectation_value": 0.9999999999999999,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "IIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.17218393261915543,
+        "energy_contribution": -0.16789990490028897,
+        "expectation_value": -0.9751194687349715,
+        "index": 1,
+        "measurement_group_id": 4,
+        "pauli": "IIIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.22575349222402402,
+        "energy_contribution": -0.22013662540255483,
+        "expectation_value": 0.9751194687349715,
+        "index": 2,
+        "measurement_group_id": 4,
+        "pauli": "IIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.1209126326177663,
+        "energy_contribution": -0.12091263261776629,
+        "expectation_value": -0.9999999999999999,
+        "index": 3,
+        "measurement_group_id": 4,
+        "pauli": "IIZZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.17218393261915543,
+        "energy_contribution": -0.16789990490028897,
+        "expectation_value": -0.9751194687349715,
+        "index": 4,
+        "measurement_group_id": 4,
+        "pauli": "IZII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.1689275387008792,
+        "energy_contribution": 0.16892753870087918,
+        "expectation_value": 0.9999999999999999,
+        "index": 5,
+        "measurement_group_id": 4,
+        "pauli": "IZIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.22575349222402397,
+        "energy_contribution": -0.22013662540255477,
+        "expectation_value": 0.9751194687349715,
+        "index": 6,
+        "measurement_group_id": 4,
+        "pauli": "ZIII"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.16614543256382416,
+        "energy_contribution": -0.16614543256382414,
+        "expectation_value": -0.9999999999999999,
+        "index": 7,
+        "measurement_group_id": 4,
+        "pauli": "ZIIZ"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.04523279994605786,
+        "energy_contribution": -0.01002720702001679,
+        "expectation_value": -0.22167999840767502,
+        "index": 8,
+        "measurement_group_id": 0,
+        "pauli": "YYYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.04523279994605786,
+        "energy_contribution": -0.01002720702001679,
+        "expectation_value": -0.22167999840767502,
+        "index": 9,
+        "measurement_group_id": 1,
+        "pauli": "XXYY"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.04523279994605786,
+        "energy_contribution": -0.01002720702001679,
+        "expectation_value": -0.22167999840767502,
+        "index": 10,
+        "measurement_group_id": 2,
+        "pauli": "YYXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.04523279994605786,
+        "energy_contribution": -0.01002720702001679,
+        "expectation_value": -0.22167999840767502,
+        "index": 11,
+        "measurement_group_id": 3,
+        "pauli": "XXXX"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.16614543256382416,
+        "energy_contribution": -0.16614543256382414,
+        "expectation_value": -0.9999999999999999,
+        "index": 12,
+        "measurement_group_id": 4,
+        "pauli": "IZZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.17464343068300453,
+        "energy_contribution": 0.1746434306830045,
+        "expectation_value": 0.9999999999999999,
+        "index": 13,
+        "measurement_group_id": 4,
+        "pauli": "ZIZI"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.1209126326177663,
+        "energy_contribution": -0.12091263261776629,
+        "expectation_value": -0.9999999999999999,
+        "index": 14,
+        "measurement_group_id": 4,
+        "pauli": "ZZII"
+      }
+    ],
+    "pauli_terms_available": true,
+    "pbc_qmmm": null,
+    "periodic_boundary": null
+  },
+  "lattice_qed_observables": {},
+  "measurement": {
+    "counts_shots_per_group": 256,
+    "estimated_measurement_cost": 256.0,
+    "estimated_measurement_cost_is_hardware_cost": null,
+    "estimated_measurement_cost_scope": "pauli_grouping",
+    "groups": [
+      {
+        "basis": "YYYY",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "YYYY",
+          "IIII"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "XXYY",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "XXYY"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "YYXX",
+        "basis_conflicts": [],
+        "group_id": 2,
+        "pauli_labels": [
+          "YYXX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "XXXX",
+        "basis_conflicts": [],
+        "group_id": 3,
+        "pauli_labels": [
+          "XXXX"
+        ],
+        "term_count": 1
+      },
+      {
+        "basis": "ZZZZ",
+        "basis_conflicts": [],
+        "group_id": 4,
+        "pauli_labels": [
+          "IIIZ",
+          "IIZI",
+          "IIZZ",
+          "IZII",
+          "IZIZ",
+          "ZIII",
+          "ZIIZ",
+          "IZZI",
+          "ZIZI",
+          "ZZII"
+        ],
+        "term_count": 10
+      }
+    ],
+    "groups_sha256": "f637ff948988d77a7adcfb87f1cec0b573a6fd28be5e8bba06c33886fc5073f4",
+    "measurement_group_count_scope": "pauli_grouping",
+    "notes": [],
+    "plan": {
+      "basis_reuse_across_properties": true,
+      "cost_reduction_ratio": 0.2,
+      "estimated_shot_cost": 256.0,
+      "execution_mode": "estimator",
+      "group_count": 5,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {
+        "allocated_shots": 256,
+        "allocation_entropy": 0.23764207327154327,
+        "basis_count": 5,
+        "basis_l1_coverage_fraction": 1.0,
+        "budgeted_shots": 256,
+        "grouped_precision_baseline_shots": 1280.0,
+        "grouped_precision_variance_proxy": 0.005716599620051651,
+        "max_allocated_shot_fraction": 0.921875,
+        "max_circuits": 8,
+        "objective": "minimize_energy_variance",
+        "plan_digest": "4998f6d69b2762abdfa0438834e37c2c489f2e003caf1ebaf9530202e4049b94",
+        "planner": "shadow_lr",
+        "predicted_variance": 0.028582998100258255,
+        "selected_basis_count": 5,
+        "selected_basis_l1_norm": 2.705041129754983,
+        "strategies": [],
+        "term_l1_norm": 2.705041129754983,
+        "unselected_basis_count": 0,
+        "variance_inflation_vs_grouped_precision_proxy": 5.0
+      },
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.0625.",
+        "Measurement planning reflects the uncompressed execution path.",
+        "Shadow-LR planner generated locally biased shadow bases and shot allocation.",
+        "Shadow-LR estimated shot cost uses allocated shadow shots; grouped precision cost is retained in measurement_cost_model."
+      ],
+      "planner": "shadow_lr",
+      "predicted_variance": 0.028582998100258255,
+      "realized_variance": null,
+      "runtime_precision_target": 0.0625,
+      "shadow_bases": [
+        {
+          "allocated_shot_fraction": 0.921875,
+          "allocation_fraction": 0.933113327633351,
+          "basis": "ZZZZ",
+          "basis_id": 0,
+          "weight": 2.5241099299707512
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "YYYY",
+          "basis_id": 1,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "XXYY",
+          "basis_id": 2,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "YYXX",
+          "basis_id": 3,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "XXXX",
+          "basis_id": 4,
+          "weight": 0.04523279994605786
+        }
+      ],
+      "shot_allocation": [
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 0,
+          "shots": 236
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 1,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 2,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 3,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 4,
+          "shots": 5
+        }
+      ],
+      "strategy": "default",
+      "term_count": 15,
+      "uncompressed_estimated_shot_cost": 1280.0,
+      "uncompressed_group_count": 5
+    },
+    "qubit_wise_group_count": 5,
+    "sparse_estimated_group_count": null,
+    "sparse_exploratory_estimated_measurement_cost": null
+  },
+  "notes": [],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 4,
+    "operation_counts": {},
+    "qubit_term_count": 15,
+    "raw_num_qubits": 4,
+    "raw_qubit_term_count": 15,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "h2_method_evidence_smoke",
+  "sampling": {
+    "available": true,
+    "counts_sha256": "7a886b322aae84faa688d7e07aaf351e716ed1bf8aee0a339b5cea462cda4747",
+    "group_count": 5,
+    "group_counts": [
+      {
+        "available": true,
+        "basis": "YYYY",
+        "counts": {
+          "0000": 15,
+          "0001": 22,
+          "0010": 19,
+          "0011": 8,
+          "0100": 28,
+          "0101": 10,
+          "0110": 9,
+          "0111": 24,
+          "1000": 18,
+          "1001": 9,
+          "1010": 14,
+          "1011": 22,
+          "1100": 12,
+          "1101": 20,
+          "1110": 15,
+          "1111": 11
+        },
+        "group_id": 0,
+        "shots": 256,
+        "top_counts": [
+          [
+            "0100",
+            28
+          ],
+          [
+            "0111",
+            24
+          ],
+          [
+            "0001",
+            22
+          ],
+          [
+            "1011",
+            22
+          ],
+          [
+            "1101",
+            20
+          ],
+          [
+            "0010",
+            19
+          ],
+          [
+            "1000",
+            18
+          ],
+          [
+            "0000",
+            15
+          ],
+          [
+            "1110",
+            15
+          ],
+          [
+            "1010",
+            14
+          ],
+          [
+            "1100",
+            12
+          ],
+          [
+            "1111",
+            11
+          ],
+          [
+            "0101",
+            10
+          ],
+          [
+            "0110",
+            9
+          ],
+          [
+            "1001",
+            9
+          ],
+          [
+            "0011",
+            8
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XXYY",
+        "counts": {
+          "0000": 12,
+          "0001": 17,
+          "0010": 22,
+          "0011": 17,
+          "0100": 16,
+          "0101": 13,
+          "0110": 7,
+          "0111": 21,
+          "1000": 15,
+          "1001": 16,
+          "1010": 19,
+          "1011": 25,
+          "1100": 13,
+          "1101": 18,
+          "1110": 14,
+          "1111": 11
+        },
+        "group_id": 1,
+        "shots": 256,
+        "top_counts": [
+          [
+            "1011",
+            25
+          ],
+          [
+            "0010",
+            22
+          ],
+          [
+            "0111",
+            21
+          ],
+          [
+            "1010",
+            19
+          ],
+          [
+            "1101",
+            18
+          ],
+          [
+            "0001",
+            17
+          ],
+          [
+            "0011",
+            17
+          ],
+          [
+            "0100",
+            16
+          ],
+          [
+            "1001",
+            16
+          ],
+          [
+            "1000",
+            15
+          ],
+          [
+            "1110",
+            14
+          ],
+          [
+            "0101",
+            13
+          ],
+          [
+            "1100",
+            13
+          ],
+          [
+            "0000",
+            12
+          ],
+          [
+            "1111",
+            11
+          ],
+          [
+            "0110",
+            7
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "YYXX",
+        "counts": {
+          "0000": 13,
+          "0001": 17,
+          "0010": 19,
+          "0011": 17,
+          "0100": 31,
+          "0101": 15,
+          "0110": 12,
+          "0111": 17,
+          "1000": 19,
+          "1001": 14,
+          "1010": 16,
+          "1011": 22,
+          "1100": 3,
+          "1101": 17,
+          "1110": 16,
+          "1111": 8
+        },
+        "group_id": 2,
+        "shots": 256,
+        "top_counts": [
+          [
+            "0100",
+            31
+          ],
+          [
+            "1011",
+            22
+          ],
+          [
+            "0010",
+            19
+          ],
+          [
+            "1000",
+            19
+          ],
+          [
+            "0001",
+            17
+          ],
+          [
+            "0011",
+            17
+          ],
+          [
+            "0111",
+            17
+          ],
+          [
+            "1101",
+            17
+          ],
+          [
+            "1010",
+            16
+          ],
+          [
+            "1110",
+            16
+          ],
+          [
+            "0101",
+            15
+          ],
+          [
+            "1001",
+            14
+          ],
+          [
+            "0000",
+            13
+          ],
+          [
+            "0110",
+            12
+          ],
+          [
+            "1111",
+            8
+          ],
+          [
+            "1100",
+            3
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "XXXX",
+        "counts": {
+          "0000": 6,
+          "0001": 13,
+          "0010": 25,
+          "0011": 12,
+          "0100": 15,
+          "0101": 19,
+          "0110": 13,
+          "0111": 23,
+          "1000": 20,
+          "1001": 13,
+          "1010": 13,
+          "1011": 17,
+          "1100": 12,
+          "1101": 17,
+          "1110": 21,
+          "1111": 17
+        },
+        "group_id": 3,
+        "shots": 256,
+        "top_counts": [
+          [
+            "0010",
+            25
+          ],
+          [
+            "0111",
+            23
+          ],
+          [
+            "1110",
+            21
+          ],
+          [
+            "1000",
+            20
+          ],
+          [
+            "0101",
+            19
+          ],
+          [
+            "1011",
+            17
+          ],
+          [
+            "1101",
+            17
+          ],
+          [
+            "1111",
+            17
+          ],
+          [
+            "0100",
+            15
+          ],
+          [
+            "0001",
+            13
+          ],
+          [
+            "0110",
+            13
+          ],
+          [
+            "1001",
+            13
+          ],
+          [
+            "1010",
+            13
+          ],
+          [
+            "0011",
+            12
+          ],
+          [
+            "1100",
+            12
+          ],
+          [
+            "0000",
+            6
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "ZZZZ",
+        "counts": {
+          "0101": 253,
+          "1010": 3
+        },
+        "group_id": 4,
+        "shots": 256,
+        "top_counts": [
+          [
+            "0101",
+            253
+          ],
+          [
+            "1010",
+            3
+          ]
+        ]
+      }
+    ],
+    "shots_per_group": 256,
+    "source": "statevector_sampler_from_final_state"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "sparse_exact_validation": {},
+  "state": {
+    "available": true,
+    "dominant_configurations": [
+      {
+        "bitstring": "0101",
+        "probability": 0.9875597343674857
+      },
+      {
+        "bitstring": "1010",
+        "probability": 0.012440265632514214
+      },
+      {
+        "bitstring": "0011",
+        "probability": 9.684118727256242e-31
+      },
+      {
+        "bitstring": "1101",
+        "probability": 6.432992020535064e-31
+      },
+      {
+        "bitstring": "0111",
+        "probability": 5.4671440153048155e-31
+      },
+      {
+        "bitstring": "1111",
+        "probability": 4.442915448714402e-31
+      },
+      {
+        "bitstring": "0001",
+        "probability": 3.153747026396602e-31
+      },
+      {
+        "bitstring": "1100",
+        "probability": 2.602710877514126e-31
+      },
+      {
+        "bitstring": "0100",
+        "probability": 1.0847894225011337e-31
+      },
+      {
+        "bitstring": "1001",
+        "probability": 5.724451992490354e-32
+      },
+      {
+        "bitstring": "1011",
+        "probability": 3.503846313030966e-32
+      },
+      {
+        "bitstring": "0110",
+        "probability": 1.7172342290248627e-32
+      },
+      {
+        "bitstring": "1110",
+        "probability": 1.2157344792682366e-32
+      },
+      {
+        "bitstring": "0000",
+        "probability": 1.1855263557386278e-32
+      },
+      {
+        "bitstring": "0010",
+        "probability": 7.191478769542124e-33
+      },
+      {
+        "bitstring": "1000",
+        "probability": 4.4692848428693984e-33
+      }
+    ],
+    "ground_state_overlap": 0.9999999999999998,
+    "hamiltonian_expectation": -1.8572750302023793,
+    "hamiltonian_variance": 4.440892098500626e-16,
+    "variance_method": "sparse_matrix_norm"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": null,
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Z2 tapering disabled by mapping.symmetry_reduction.z2.",
+        "Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings."
+      ],
+      "status": "disabled",
+      "validation": {},
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    }
+  }
+}

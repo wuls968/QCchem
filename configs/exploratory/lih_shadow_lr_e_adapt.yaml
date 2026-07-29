@@ -1,0 +1,65 @@
+molecule:
+  name: LiH-shadow-lr-e-adapt
+  geometry:
+    - symbol: Li
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 1.6]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space:
+    num_electrons: 2
+    num_spatial_orbitals: 2
+  measurement:
+    planner: shadow_lr
+    budget:
+      total_shots: 1024
+      max_circuits: 16
+    strategies: [low_rank_grouping, locally_biased_shadows]
+    objective: minimize_energy_variance
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: e_adapt_vqe
+  experimental: true
+  optimizer:
+    kind: COBYLA
+    maxiter: 40
+  ansatz:
+    kind: uccsd
+    reps: 1
+  initial_point: zeros
+  e_adapt:
+    pool: qubit
+    gradient_threshold: 1.0e-4
+    max_operators: 4
+    use_low_rank_priority: true
+    reject_if_two_qubit_increment_gt: 12
+
+policy:
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [e_adapt_vqe, shadow_lr]
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-3
+  relative_error_threshold: 1.0e-3
+
+run:
+  seed: 23
+  output_dir: artifacts/lih_shadow_lr_e_adapt
+  overwrite: true
+  exports:
+    qcschema_json: true

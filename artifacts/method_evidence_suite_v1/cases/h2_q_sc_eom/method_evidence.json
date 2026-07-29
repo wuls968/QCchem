@@ -1,0 +1,229 @@
+{
+  "methods": {
+    "q_sc_eom": {
+      "conditioning_audit": {
+        "degenerate_root_count": 2,
+        "energy_replaces_primary": false,
+        "evidence_role": "exact_root_conditioning_reference_audit",
+        "max_root_residual_norm": 1.437408500067282e-15,
+        "min_neighbor_gap_hartree": 1.3322676295501878e-15,
+        "overlap_condition_number": 1.097155613506701,
+        "overlap_condition_threshold": 100000000.0,
+        "regularization_actions": [
+          "degenerate_subspace_root_tracking_required"
+        ],
+        "root_count": 2,
+        "root_tracking_statuses": [
+          "degenerate_subspace"
+        ],
+        "status": "degenerate_subspace_tracking_required"
+      },
+      "conditioning_status": "degenerate_subspace_tracking_required",
+      "enabled": true,
+      "energy_replaces_primary": false,
+      "max_oscillator_strength": null,
+      "max_root_residual_norm": 1.437408500067282e-15,
+      "max_transition_dipole_magnitude": 1.147720683369913e-16,
+      "method": "q_sc_eom",
+      "min_neighbor_gap_hartree": 1.3322676295501878e-15,
+      "notes": [
+        "q-sc-EOM v1 uses exact-spectrum roots as a conditioning/reference audit.",
+        "Transition properties should be requested through tasks.properties; this section records root and overlap diagnostics."
+      ],
+      "overlap_condition_number": 1.097155613506701,
+      "root_tracking_statuses": [
+        "degenerate_subspace"
+      ],
+      "states": [
+        {
+          "baseline": {
+            "proxy_mode": "exact_spectrum_for_q_sc_eom_conditioning_audit",
+            "source": "exact_spectrum"
+          },
+          "excitation_energy": 0.6009359571991343,
+          "reference_state_index": 0,
+          "solver_energy": -1.2563390730032507,
+          "solver_metadata": {
+            "method": "q_sc_eom",
+            "overlap_condition_number": 1.097155613506701,
+            "regularization_actions": [
+              "degenerate_subspace_root_tracking_required"
+            ],
+            "requested_method": "q_sc_eom",
+            "root_residual_audit": {
+              "degenerate_neighbor_indices": [
+                2
+              ],
+              "min_neighbor_gap_hartree": 1.3322676295501878e-15,
+              "next_root_gap_hartree": 1.3322676295501878e-15,
+              "previous_root_gap_hartree": 0.6009359571991344,
+              "residual_norm": 1.518558444749331e-16,
+              "root_index": 1,
+              "root_tracking_status": "degenerate_subspace"
+            },
+            "root_tracking": {
+              "ordering": "exact_spectrum_energy_order",
+              "reference_state_index": 0,
+              "requested_state_index": 1,
+              "status": "degenerate_subspace"
+            },
+            "transition_properties": {
+              "available": false,
+              "reason": "property operators are reported through tasks.properties; q_sc_eom v1 stores conditioning metadata here."
+            }
+          },
+          "state_index": 1,
+          "total_energy": -0.536370078554271,
+          "verification_status": "exploratory"
+        },
+        {
+          "baseline": {
+            "proxy_mode": "exact_spectrum_for_q_sc_eom_conditioning_audit",
+            "source": "exact_spectrum"
+          },
+          "excitation_energy": 0.6009359571991356,
+          "reference_state_index": 0,
+          "solver_energy": -1.2563390730032493,
+          "solver_metadata": {
+            "method": "q_sc_eom",
+            "overlap_condition_number": 1.097155613506701,
+            "regularization_actions": [
+              "degenerate_subspace_root_tracking_required"
+            ],
+            "requested_method": "q_sc_eom",
+            "root_residual_audit": {
+              "degenerate_neighbor_indices": [
+                1
+              ],
+              "min_neighbor_gap_hartree": 1.3322676295501878e-15,
+              "next_root_gap_hartree": null,
+              "previous_root_gap_hartree": 1.3322676295501878e-15,
+              "residual_norm": 1.437408500067282e-15,
+              "root_index": 2,
+              "root_tracking_status": "degenerate_subspace"
+            },
+            "root_tracking": {
+              "ordering": "exact_spectrum_energy_order",
+              "reference_state_index": 0,
+              "requested_state_index": 2,
+              "status": "degenerate_subspace"
+            },
+            "transition_properties": {
+              "available": false,
+              "reason": "property operators are reported through tasks.properties; q_sc_eom v1 stores conditioning metadata here."
+            }
+          },
+          "state_index": 2,
+          "total_energy": -0.5363700785542697,
+          "verification_status": "exploratory"
+        }
+      ],
+      "transition_property_audit": {
+        "energy_replaces_primary": false,
+        "evidence_role": "linked_property_task_output",
+        "max_oscillator_strength": null,
+        "max_transition_dipole_magnitude": 1.147720683369913e-16,
+        "oscillator_strengths": [],
+        "properties": [
+          {
+            "components": {
+              "x": -0.0,
+              "y": -0.0,
+              "z": -9.062359109843034e-17
+            },
+            "implementation_status": "validated",
+            "method": "exact_transition_expectation",
+            "notes": [
+              "Computed from exact transition matrix elements.",
+              "Validated for small systems when exact-spectrum statevectors are available."
+            ],
+            "property_name": "transition_dipole",
+            "provenance": {
+              "source": "exact_transition_expectation",
+              "statevector_source": "exact_spectrum",
+              "validated_scope": "small_exact_spectrum_transition_property"
+            },
+            "state_indices": [
+              0,
+              1
+            ],
+            "units": "a.u.",
+            "value": 1.147720683369913e-16
+          }
+        ],
+        "property_bundle_status": "validated",
+        "property_names": [
+          "transition_dipole"
+        ],
+        "requested_transition_property_count": 1,
+        "state_pairs": [
+          [
+            0,
+            1
+          ]
+        ],
+        "status": "validated_transition_properties_linked",
+        "transition_dipole_magnitudes": [
+          1.147720683369913e-16
+        ],
+        "validated_transition_property_count": 1
+      },
+      "transition_property_count": 1,
+      "transition_property_names": [
+        "transition_dipole"
+      ],
+      "transition_property_status": "validated_transition_properties_linked",
+      "trust_gate": "exploratory",
+      "validated_transition_property_count": 1,
+      "verification_status": "exploratory"
+    }
+  },
+  "notes": [
+    "Method evidence is reported alongside the primary solver result.",
+    "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+  ],
+  "promotion_gate_audit": {
+    "accuracy_claim_allowed_methods": [],
+    "hardware_claim_allowed_methods": [],
+    "method_records": {
+      "q_sc_eom": {
+        "accuracy_claim_allowed": false,
+        "claim_status": "conditioning_reference_audit",
+        "conditioning_status": "degenerate_subspace_tracking_required",
+        "energy_replacement_allowed": false,
+        "evidence_role": "excited_state_conditioning_audit",
+        "hardware_claim_allowed": false,
+        "method": "q_sc_eom",
+        "overlap_condition_number": 1.097155613506701,
+        "planning_metric_allowed": false,
+        "primary_solver_selected": false,
+        "promotion_blockers": [
+          "exact_root_audit_not_general_eom_solver",
+          "excited_state_benchmark_gate_required"
+        ],
+        "promotion_required_for_validated_claim": true,
+        "resource_model_claim_allowed": false,
+        "transition_property_names": [
+          "transition_dipole"
+        ],
+        "transition_property_status": "validated_transition_properties_linked",
+        "validated_transition_property_count": 1
+      }
+    },
+    "notes": [
+      "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+      "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+    ],
+    "overall_claim_status": "promotion_required",
+    "planning_metric_methods": [],
+    "primary_energy_policy": "raw_solver_energy_remains_primary",
+    "primary_solver_kind": "exact",
+    "promotion_required_for_validated_claims": true,
+    "resource_model_only_methods": [],
+    "schema": "qcchem.method_promotion_gate_audit.v1",
+    "sidecar_energy_replacement_allowed_methods": [],
+    "unsupported_for_claim_methods": []
+  },
+  "schema": "qcchem.method_evidence.v1",
+  "trust_tier": "exploratory"
+}

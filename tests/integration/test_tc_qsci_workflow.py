@@ -93,9 +93,21 @@ def test_h2_tc_qsci_run_persists_exploratory_artifact_sections(tmp_path: Path) -
     assert payload["tc_qsci_result"]["algorithm_name"] == "TC-kicked QSCI"
     assert payload["determinant_selection"]["selected_determinant_count"] > 0
     assert payload["symmetry_sector"]["particle_number_conserved"] is True
+    subspace_audit = payload["tc_qsci_result"]["subspace_audit"]
+    assert subspace_audit["variance_method"] == "embedded_ritz_vector_sparse_hamiltonian"
+    assert subspace_audit["selected_determinant_count"] == payload["tc_qsci_result"]["subspace_dimension"]
+    assert payload["error_budget"]["subspace_audit"] == subspace_audit
+    assert payload["error_budget"]["selected_subspace_residual_norm"] == subspace_audit[
+        "ground_state_residual_norm"
+    ]
+    assert payload["error_budget"]["variational_upper_bound_passed"] == subspace_audit[
+        "variational_upper_bound_passed"
+    ]
     assert payload["cast_hamiltonian"]["kind"] == "identity"
     assert payload["qpe_resource_estimate"]["estimator_scope"] == "coarse_fault_tolerant_resource_estimate_only"
-    assert "## TC-Kicked QSCI" in result.artifacts.report_markdown.read_text(encoding="utf-8")
+    report_text = result.artifacts.report_markdown.read_text(encoding="utf-8")
+    assert "## TC-Kicked QSCI" in report_text
+    assert "subspace_audit" in report_text
 
 
 @pytest.mark.integration

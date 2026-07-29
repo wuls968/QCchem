@@ -1,0 +1,208 @@
+{
+  "methods": {
+    "kq_pbc_result": {
+      "available": true,
+      "band_window_metadata": {
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "finite_size_correction": {
+        "available_twist_energy_count": 0,
+        "energy_correction_hartree": null,
+        "missing_twist_energy_count": 2,
+        "missing_twist_energy_fraction": 1.0,
+        "reason": "No non-Gamma/twist energies are available for finite-size correction in kQ-PBC v1.",
+        "required_twist_energy_count": 2,
+        "status": "not_evaluated",
+        "twist_average_requested": true,
+        "twist_energy_coverage_fraction": 0.0
+      },
+      "kpoints": [
+        "gamma",
+        "x_half"
+      ],
+      "non_gamma_mapping_audit": {
+        "coverage_audit": {
+          "available_twist_energy_count": 0,
+          "executed_named_kpoint_count": 1,
+          "executed_requested_named_kpoint_count": 1,
+          "execution_mesh_kpoint_count": 1,
+          "mesh_kpoint_execution_coverage_fraction": 0.5,
+          "missing_twist_energy_count": 2,
+          "missing_twist_energy_fraction": 1.0,
+          "named_kpoint_execution_coverage_fraction": 0.5,
+          "proxy_energy_present": false,
+          "requested_mesh_kpoint_count": 2,
+          "requested_named_kpoint_count": 2,
+          "required_twist_energy_count": 2,
+          "status": "gamma_reference_only_coverage_gap",
+          "twist_energy_coverage_fraction": 0.0
+        },
+        "energy_replaces_primary": false,
+        "executable_scope": "gamma_reference_hamiltonian_only",
+        "executed_named_kpoints": [
+          "gamma"
+        ],
+        "executed_requested_named_kpoints": [
+          "gamma"
+        ],
+        "execution_kpoint_count": 1,
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "forces_stress_cell_optimization": "out_of_scope",
+        "gamma_reference_energy_hartree": -1.2980888491137033,
+        "mesh_kpoint_execution_coverage_fraction": 0.5,
+        "mesh_mismatch": true,
+        "named_kpoint_execution_coverage_fraction": 0.5,
+        "non_gamma_energy_available": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "non_gamma_quantum_mapping_not_executed",
+          "twist_energies_not_evaluated",
+          "finite_size_correction_not_evaluated",
+          "forces_stress_cell_optimization_out_of_scope"
+        ],
+        "requested_kpoint_count": 2,
+        "requested_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "requested_named_kpoints": [
+          "gamma",
+          "x_half"
+        ],
+        "runtime_submission_allowed": false,
+        "status": "audit_only",
+        "unsupported_claim_count": 4,
+        "unsupported_claims": [
+          "non_gamma_materials_accuracy",
+          "twist_averaged_energy",
+          "finite_size_corrected_energy",
+          "forces_or_stress"
+        ]
+      },
+      "notes": [
+        "kQ-PBC v1 is an exploratory audit and does not validate non-Gamma materials accuracy.",
+        "Requested k/twist entries do not contain proxy energies; only the Gamma reference Hamiltonian is executed."
+      ],
+      "pbc_trust_tier": "exploratory",
+      "promotion_readiness_audit": {
+        "coverage_audit": {
+          "available_twist_energy_count": 0,
+          "executed_named_kpoint_count": 1,
+          "executed_requested_named_kpoint_count": 1,
+          "execution_mesh_kpoint_count": 1,
+          "mesh_kpoint_execution_coverage_fraction": 0.5,
+          "missing_twist_energy_count": 2,
+          "missing_twist_energy_fraction": 1.0,
+          "named_kpoint_execution_coverage_fraction": 0.5,
+          "proxy_energy_present": false,
+          "requested_mesh_kpoint_count": 2,
+          "requested_named_kpoint_count": 2,
+          "required_twist_energy_count": 2,
+          "status": "gamma_reference_only_coverage_gap",
+          "twist_energy_coverage_fraction": 0.0
+        },
+        "energy_replaces_primary": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "non_gamma_quantum_mapping_not_executed",
+          "twist_energies_not_evaluated",
+          "finite_size_correction_not_evaluated",
+          "forces_stress_cell_optimization_out_of_scope"
+        ],
+        "readiness_level": "not_ready_for_validated_non_gamma_claim",
+        "required_promotion_evidence": [
+          "executable_non_gamma_quantum_mapping",
+          "evaluated_twist_energies",
+          "finite_size_correction_model",
+          "forces_stress_cell_optimization_support"
+        ],
+        "runtime_submission_allowed": false,
+        "status": "blocked_exploratory_audit_only",
+        "unsupported_claim_count": 4,
+        "unsupported_claims": [
+          "non_gamma_materials_accuracy",
+          "twist_averaged_energy",
+          "finite_size_corrected_energy",
+          "forces_or_stress"
+        ]
+      },
+      "twist_energies": [
+        {
+          "energy_status": "not_evaluated",
+          "execution_reference": "gamma_reference_hamiltonian",
+          "kpoint": "gamma",
+          "mapping_status": "audit_only",
+          "reason": "kQ-PBC v1 records requested non-Gamma/twist metadata but does not execute non-Gamma quantum mappings.",
+          "requested_twist_index": 0,
+          "solver_energy_hartree": null
+        },
+        {
+          "energy_status": "not_evaluated",
+          "execution_reference": "gamma_reference_hamiltonian",
+          "kpoint": "x_half",
+          "mapping_status": "audit_only",
+          "reason": "kQ-PBC v1 records requested non-Gamma/twist metadata but does not execute non-Gamma quantum mappings.",
+          "requested_twist_index": 1,
+          "solver_energy_hartree": null
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Method evidence is reported alongside the primary solver result.",
+    "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+  ],
+  "promotion_gate_audit": {
+    "accuracy_claim_allowed_methods": [],
+    "hardware_claim_allowed_methods": [],
+    "method_records": {
+      "kq_pbc_result": {
+        "accuracy_claim_allowed": false,
+        "claim_status": "audit_only",
+        "energy_replacement_allowed": false,
+        "evidence_role": "pbc_k_twist_audit",
+        "hardware_claim_allowed": false,
+        "mesh_kpoint_execution_coverage_fraction": 0.5,
+        "method": "kq_pbc_result",
+        "missing_twist_energy_fraction": 1.0,
+        "named_kpoint_execution_coverage_fraction": 0.5,
+        "planning_metric_allowed": false,
+        "primary_solver_selected": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "non_gamma_quantum_mapping_not_executed",
+          "twist_energies_not_evaluated",
+          "finite_size_correction_not_evaluated",
+          "forces_stress_cell_optimization_out_of_scope"
+        ],
+        "promotion_readiness_status": "blocked_exploratory_audit_only",
+        "promotion_required_for_validated_claim": true,
+        "readiness_level": "not_ready_for_validated_non_gamma_claim",
+        "resource_model_claim_allowed": false,
+        "twist_energy_coverage_fraction": 0.0,
+        "unsupported_claim_count": 4
+      }
+    },
+    "notes": [
+      "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+      "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+    ],
+    "overall_claim_status": "promotion_required",
+    "planning_metric_methods": [],
+    "primary_energy_policy": "raw_solver_energy_remains_primary",
+    "primary_solver_kind": "exact",
+    "promotion_required_for_validated_claims": true,
+    "resource_model_only_methods": [],
+    "schema": "qcchem.method_promotion_gate_audit.v1",
+    "sidecar_energy_replacement_allowed_methods": [],
+    "unsupported_for_claim_methods": []
+  },
+  "schema": "qcchem.method_evidence.v1",
+  "trust_tier": "exploratory"
+}

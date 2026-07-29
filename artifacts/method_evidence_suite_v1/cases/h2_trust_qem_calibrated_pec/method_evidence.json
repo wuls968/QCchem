@@ -1,0 +1,175 @@
+{
+  "methods": {
+    "trust_qem": {
+      "applied_methods": [
+        "symmetry_check",
+        "readout_mitigation",
+        "zne",
+        "pec"
+      ],
+      "claim_allowed_methods": [
+        "pec"
+      ],
+      "claim_disallowed_methods": [
+        "symmetry_check",
+        "readout_mitigation",
+        "zne"
+      ],
+      "claim_status": "claim_limited",
+      "energy_replaces_primary": false,
+      "mitigated_energy_replaces_primary": false,
+      "notes": [
+        "Trust-QEM v1 records requested/performed mitigation evidence beside the raw solver energy.",
+        "Readout, ZNE, and symmetry entries are not treated as claim-eligible energy corrections without executable calibrated application.",
+        "PEC claim use requires an executable qcchem.pec_calibration_model.v1 JSON calibration model."
+      ],
+      "pec": {
+        "allowed_for_claim": true,
+        "calibration_model": "configs/data/h2_pec_calibration_model.json",
+        "calibration_model_audit": {
+          "calibrated_operation_count": 2,
+          "digest": "56f75047a76eeb13db5c9fff235b88b7b207746388020dbf79162be62ae5bb17",
+          "executable": true,
+          "exists": true,
+          "max_operation_l1_overhead": 1.1600000000000001,
+          "provided": true,
+          "quasi_probability_entry_count": 4,
+          "schema": "qcchem.pec_calibration_model.v1",
+          "status": "executable_calibration_model"
+        },
+        "claim_scope": "calibration_overhead_only",
+        "claim_status": "claim_limited",
+        "energy_replaces_primary": false,
+        "executable_calibration_model": true,
+        "method": "local_pec",
+        "performed": true,
+        "requested": true,
+        "sampling_overhead": 25.0,
+        "status": "executable_calibration_model_recorded"
+      },
+      "primary_energy_policy": "raw_solver_energy_remains_primary",
+      "readout_mitigation": {
+        "allowed_for_claim": false,
+        "calibration_digest": "local-readout-local_assignment-128",
+        "calibration_shots": 128,
+        "claim_status": "calibration_record_only",
+        "energy_replaces_primary": false,
+        "method": "local_assignment",
+        "performed": true,
+        "requested": true,
+        "status": "passed"
+      },
+      "requested_methods": [
+        "symmetry_check",
+        "readout_mitigation",
+        "zne",
+        "pec"
+      ],
+      "symmetry_check": {
+        "allowed_for_claim": false,
+        "claim_status": "diagnostic_only",
+        "effective_requested": true,
+        "energy_replaces_primary": false,
+        "performed": true,
+        "postselection_rate": 1.0,
+        "requested": true,
+        "requested_checks": {
+          "particle_number": true,
+          "spin_parity": true,
+          "z2_sector": false
+        },
+        "status": "passed",
+        "strategy": "postselect"
+      },
+      "trust_gate": "claim_limited",
+      "zne": {
+        "allowed_for_claim": false,
+        "claim_status": "schedule_only",
+        "energy_replaces_primary": false,
+        "extrapolator": "linear",
+        "folding": "global",
+        "method": "richardson",
+        "performed": true,
+        "requested": true,
+        "scale_factors": [
+          1.0,
+          1.5,
+          2.0
+        ],
+        "status": "passed",
+        "variance_inflation": 4.0,
+        "zne_curve": [
+          {
+            "energy_estimate_hartree": null,
+            "energy_evaluation_status": "not_evaluated",
+            "scale_factor": 1.0
+          },
+          {
+            "energy_estimate_hartree": null,
+            "energy_evaluation_status": "not_evaluated",
+            "scale_factor": 1.5
+          },
+          {
+            "energy_estimate_hartree": null,
+            "energy_evaluation_status": "not_evaluated",
+            "scale_factor": 2.0
+          }
+        ]
+      }
+    }
+  },
+  "notes": [
+    "Method evidence is reported alongside the primary solver result.",
+    "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+  ],
+  "promotion_gate_audit": {
+    "accuracy_claim_allowed_methods": [],
+    "hardware_claim_allowed_methods": [],
+    "method_records": {
+      "trust_qem": {
+        "accuracy_claim_allowed": false,
+        "claim_status": "claim_limited",
+        "energy_replacement_allowed": false,
+        "evidence_role": "mitigation_provenance_audit",
+        "hardware_claim_allowed": false,
+        "method": "trust_qem",
+        "mitigation_claim_allowed_methods": [
+          "pec"
+        ],
+        "mitigation_claim_disallowed_methods": [
+          "symmetry_check",
+          "readout_mitigation",
+          "zne"
+        ],
+        "pec_calibrated_operation_count": 2,
+        "pec_executable_calibration_model": true,
+        "pec_max_operation_l1_overhead": 1.1600000000000001,
+        "pec_quasi_probability_entry_count": 4,
+        "pec_sampling_overhead": 25.0,
+        "pec_status": "executable_calibration_model_recorded",
+        "planning_metric_allowed": false,
+        "primary_solver_selected": false,
+        "promotion_blockers": [
+          "mitigated_energy_does_not_replace_primary"
+        ],
+        "promotion_required_for_validated_claim": true,
+        "resource_model_claim_allowed": false
+      }
+    },
+    "notes": [
+      "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+      "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+    ],
+    "overall_claim_status": "promotion_required",
+    "planning_metric_methods": [],
+    "primary_energy_policy": "raw_solver_energy_remains_primary",
+    "primary_solver_kind": "exact",
+    "promotion_required_for_validated_claims": true,
+    "resource_model_only_methods": [],
+    "schema": "qcchem.method_promotion_gate_audit.v1",
+    "sidecar_energy_replacement_allowed_methods": [],
+    "unsupported_for_claim_methods": []
+  },
+  "schema": "qcchem.method_evidence.v1",
+  "trust_tier": "exploratory"
+}

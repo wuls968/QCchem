@@ -1,0 +1,292 @@
+{
+  "methods": {
+    "q_embed": {
+      "bath_threshold": 0.05,
+      "correlation_potential_parameter_count": 0,
+      "density_matching_iteration_count": 0,
+      "density_matching_performed": false,
+      "density_mismatch_audit_status": "balanced_reference_density",
+      "density_mismatch_status": "reference_audit_only",
+      "density_mismatch_threshold": 1e-08,
+      "embedding_execution_status": "fragment_reference_only",
+      "enabled": true,
+      "energy_replaces_primary": false,
+      "environment_metadata": {
+        "bath_orbitals": [
+          {
+            "fragment": "left_h",
+            "recommended_active_space": {
+              "num_electrons": 2,
+              "num_spatial_orbitals": 2
+            }
+          },
+          {
+            "fragment": "right_h",
+            "recommended_active_space": {
+              "num_electrons": 2,
+              "num_spatial_orbitals": 2
+            }
+          }
+        ],
+        "correlation_potential_parameter_count": 0,
+        "density_matching_iteration_count": 0,
+        "density_mismatch_audit": {
+          "density_matching_iteration_count": 0,
+          "density_matching_performed": false,
+          "l1_norm": 8.881784197001252e-16,
+          "l2_norm": 7.021666937153402e-16,
+          "max_abs": 6.661338147750939e-16,
+          "metric": "fragment_population_delta",
+          "self_consistency_iteration_count": 0,
+          "signed_sum": -4.440892098500626e-16,
+          "status": "balanced_reference_density",
+          "threshold": 1e-08
+        },
+        "density_mismatch_history": [
+          {
+            "density_mismatch_l1_norm": 8.881784197001252e-16,
+            "density_mismatch_norm": 7.021666937153402e-16,
+            "density_mismatch_signed_sum": -4.440892098500626e-16,
+            "density_mismatch_threshold": 1e-08,
+            "macro_iteration": 0,
+            "max_fragment_population_delta_abs": 6.661338147750939e-16,
+            "metric": "fragment_population_delta_norm",
+            "mismatch_status": "balanced_reference_density",
+            "reason": "q-DMET self-consistency loop is not implemented in v1; this is a one-shot fragment population audit.",
+            "status": "reference_audit_only"
+          }
+        ],
+        "embedding_boundary_audit": {
+          "assembled_energy_replaces_primary": false,
+          "bath_threshold": 0.05,
+          "correlation_potential_optimized": false,
+          "correlation_potential_parameter_count": 0,
+          "density_matching_iteration_count": 0,
+          "density_matching_performed": false,
+          "density_mismatch_status": "balanced_reference_density",
+          "fragment_ao_coverage_fraction": 1.0,
+          "fragment_atom_coverage_fraction": 1.0,
+          "fragment_count": 2,
+          "fragment_coverage_status": "complete_nonoverlapping_fragment_coverage",
+          "fragment_energy_sum_gap_abs_hartree": 0.18383529763945283,
+          "fragment_energy_sum_gap_hartree": 0.18383529763945283,
+          "fragment_energy_sum_gap_per_fragment_hartree": 0.09191764881972642,
+          "fragment_energy_sum_replaces_primary": false,
+          "fragment_population_delta_l1_norm": 8.881784197001252e-16,
+          "fragment_population_delta_norm": 7.021666937153402e-16,
+          "fragment_population_delta_signed_sum": -4.440892098500626e-16,
+          "fragment_reference_execution_validated": true,
+          "max_fragment_population_delta_abs": 6.661338147750939e-16,
+          "missing_self_consistency_components": [
+            "correlation_potential_optimizer",
+            "density_matching_loop",
+            "bath_update_loop"
+          ],
+          "self_consistency_iteration_count": 0,
+          "self_consistency_loop_executed": false,
+          "trust_gate": "exploratory"
+        },
+        "embedding_execution_status": "fragment_reference_only",
+        "embedding_method": "q_dmet",
+        "environment_model": "mean_field_density_matrix",
+        "fragment_coverage_audit": {
+          "ao_coverage_fraction": 1.0,
+          "atom_coverage_fraction": 1.0,
+          "covered_ao_count": 2,
+          "covered_atom_count": 2,
+          "overlapping_ao_assignment_count": 0,
+          "overlapping_atom_assignment_count": 0,
+          "status": "complete_nonoverlapping_fragment_coverage",
+          "total_ao_count": 2,
+          "total_atom_count": 2,
+          "unassigned_ao_count": 0,
+          "unassigned_atom_count": 0
+        },
+        "fragment_density_audit": [
+          {
+            "ao_indices": [
+              0
+            ],
+            "atom_indices": [
+              0
+            ],
+            "density_matching_performed": false,
+            "fragment": "left_h",
+            "full_system_gross_population": 1.0000000000000002,
+            "neutral_fragment_electron_count": 1,
+            "population_delta": 2.220446049250313e-16,
+            "population_delta_abs": 2.220446049250313e-16,
+            "status": "reference_audit_only"
+          },
+          {
+            "ao_indices": [
+              1
+            ],
+            "atom_indices": [
+              1
+            ],
+            "density_matching_performed": false,
+            "fragment": "right_h",
+            "full_system_gross_population": 0.9999999999999993,
+            "neutral_fragment_electron_count": 1,
+            "population_delta": -6.661338147750939e-16,
+            "population_delta_abs": 6.661338147750939e-16,
+            "status": "reference_audit_only"
+          }
+        ],
+        "fragment_execution": {
+          "execution_enabled": true,
+          "fragment_count_executed": 2,
+          "fragment_energy_sum": -0.9331636991145507,
+          "full_system_mean_field_energy": -1.1169989967540035,
+          "plugin": "pyscf_rhf_fragment",
+          "validate_against_full_system": true
+        },
+        "fragment_solvers": {
+          "left_h": "exact",
+          "right_h": "exact"
+        },
+        "mean_field_energy": -1.1169989967540035,
+        "num_fragments": 2,
+        "self_consistency_converged": false,
+        "self_consistency_iteration_count": 0,
+        "self_consistency_loop_executed": false
+      },
+      "fragment_ao_coverage_fraction": 1.0,
+      "fragment_atom_coverage_fraction": 1.0,
+      "fragment_coverage_status": "complete_nonoverlapping_fragment_coverage",
+      "fragment_energy_sum_gap_abs_hartree": 0.18383529763945283,
+      "fragment_energy_sum_gap_hartree": 0.18383529763945283,
+      "fragment_energy_sum_gap_per_fragment_hartree": 0.09191764881972642,
+      "fragment_energy_sum_replaces_primary": false,
+      "fragment_population_delta_l1_norm": 8.881784197001252e-16,
+      "fragment_population_delta_norm": 7.021666937153402e-16,
+      "fragment_population_delta_signed_sum": -4.440892098500626e-16,
+      "fragments": [
+        {
+          "ao_count": 1,
+          "ao_labels": [
+            "0 H 1s    "
+          ],
+          "atom_indices": [
+            0
+          ],
+          "execution_result": {
+            "fragment_charge": 0,
+            "fragment_multiplicity": 2,
+            "fragment_spin": 1,
+            "method": "pyscf_uhf",
+            "neutral_fragment_charge_assumed": true,
+            "plugin": "pyscf_rhf_fragment",
+            "total_energy": -0.46658184955727533,
+            "verification_status": "validated"
+          },
+          "name": "left_h",
+          "recommended_active_space": {
+            "num_electrons": 2,
+            "num_spatial_orbitals": 2
+          },
+          "solver": "exact"
+        },
+        {
+          "ao_count": 1,
+          "ao_labels": [
+            "1 H 1s    "
+          ],
+          "atom_indices": [
+            1
+          ],
+          "execution_result": {
+            "fragment_charge": 0,
+            "fragment_multiplicity": 2,
+            "fragment_spin": 1,
+            "method": "pyscf_uhf",
+            "neutral_fragment_charge_assumed": true,
+            "plugin": "pyscf_rhf_fragment",
+            "total_energy": -0.46658184955727533,
+            "verification_status": "validated"
+          },
+          "name": "right_h",
+          "recommended_active_space": {
+            "num_electrons": 2,
+            "num_spatial_orbitals": 2
+          },
+          "solver": "exact"
+        }
+      ],
+      "max_fragment_population_delta_abs": 6.661338147750939e-16,
+      "method": "q_dmet",
+      "missing_self_consistency_components": [
+        "correlation_potential_optimizer",
+        "density_matching_loop",
+        "bath_update_loop"
+      ],
+      "notes": [
+        "Current embedding path is a DMET-style skeleton built from PySCF mean-field density information.",
+        "Fragment execution is validated only for PySCF RHF/UHF small-fragment reference runs; assembled embedding energy is a diagnostic, not a replacement for the full-system benchmark.",
+        "Q-Embed/q-DMET v1 records fragment, bath, and optional fragment-reference diagnostics only.",
+        "No q-DMET self-consistency, density matching, or correlation-potential optimization is executed in v1.",
+        "Fragment reference energies are diagnostics and do not replace the primary full-system energy."
+      ],
+      "self_consistency_iteration_count": 0,
+      "self_consistency_loop_executed": false,
+      "solver_plugin": "qcchem_fragment_exact",
+      "trust_gate": "exploratory",
+      "verification_status": "exploratory"
+    }
+  },
+  "notes": [
+    "Method evidence is reported alongside the primary solver result.",
+    "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+  ],
+  "promotion_gate_audit": {
+    "accuracy_claim_allowed_methods": [],
+    "hardware_claim_allowed_methods": [],
+    "method_records": {
+      "q_embed": {
+        "accuracy_claim_allowed": false,
+        "claim_status": "fragment_reference_only",
+        "correlation_potential_parameter_count": 0,
+        "density_matching_iteration_count": 0,
+        "density_mismatch_audit_status": "balanced_reference_density",
+        "energy_replacement_allowed": false,
+        "evidence_role": "embedding_fragment_reference_audit",
+        "fragment_ao_coverage_fraction": 1.0,
+        "fragment_atom_coverage_fraction": 1.0,
+        "fragment_coverage_status": "complete_nonoverlapping_fragment_coverage",
+        "hardware_claim_allowed": false,
+        "method": "q_embed",
+        "missing_self_consistency_components": [
+          "correlation_potential_optimizer",
+          "density_matching_loop",
+          "bath_update_loop"
+        ],
+        "planning_metric_allowed": false,
+        "primary_solver_selected": false,
+        "promotion_blockers": [
+          "q_dmet_self_consistency_not_executed",
+          "density_matching_not_performed",
+          "fragment_energy_sum_does_not_replace_primary"
+        ],
+        "promotion_required_for_validated_claim": true,
+        "resource_model_claim_allowed": false,
+        "self_consistency_iteration_count": 0
+      }
+    },
+    "notes": [
+      "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+      "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+    ],
+    "overall_claim_status": "promotion_required",
+    "planning_metric_methods": [],
+    "primary_energy_policy": "raw_solver_energy_remains_primary",
+    "primary_solver_kind": "exact",
+    "promotion_required_for_validated_claims": true,
+    "resource_model_only_methods": [],
+    "schema": "qcchem.method_promotion_gate_audit.v1",
+    "sidecar_energy_replacement_allowed_methods": [],
+    "unsupported_for_claim_methods": []
+  },
+  "schema": "qcchem.method_evidence.v1",
+  "trust_tier": "exploratory"
+}

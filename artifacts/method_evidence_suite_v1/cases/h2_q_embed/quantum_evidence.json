@@ -1,0 +1,287 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 0.0,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": false,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "cavity_qed_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    },
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": null,
+    "qft_dynamics": null,
+    "qft_dynamics_reference": {
+      "available": false,
+      "sidecar": null
+    },
+    "qft_model": {},
+    "qft_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 2.0178991909872144,
+    "energy_contribution_sum": -1.8572750302023784,
+    "expectations_available": true,
+    "measurement_group_count": 2,
+    "pauli_term_count": 3,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -1.0410931415166242,
+        "energy_contribution": -1.041093141516624,
+        "expectation_value": 0.9999999999999999,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "I"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.7958748496863585,
+        "energy_contribution": -0.7760730606056871,
+        "expectation_value": 0.9751194687349715,
+        "index": 1,
+        "measurement_group_id": 0,
+        "pauli": "Z"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.18093119978423144,
+        "energy_contribution": -0.040108828080067195,
+        "expectation_value": -0.22167999840767522,
+        "index": 2,
+        "measurement_group_id": 1,
+        "pauli": "X"
+      }
+    ],
+    "pauli_terms_available": true,
+    "pbc_qmmm": null,
+    "periodic_boundary": null
+  },
+  "lattice_qed_observables": {},
+  "measurement": {
+    "counts_shots_per_group": 4096,
+    "estimated_measurement_cost": 20000.0,
+    "estimated_measurement_cost_is_hardware_cost": null,
+    "estimated_measurement_cost_scope": "pauli_grouping",
+    "groups": [
+      {
+        "basis": "Z",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "Z",
+          "I"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "X",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "X"
+        ],
+        "term_count": 1
+      }
+    ],
+    "groups_sha256": "709c84fbcf66765924c44c58f1738014433d1afca44aa6ec2f81c6293e737634",
+    "measurement_group_count_scope": "pauli_grouping",
+    "notes": [],
+    "plan": {
+      "basis_reuse_across_properties": false,
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {},
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "planner": "default",
+      "predicted_variance": null,
+      "realized_variance": null,
+      "runtime_precision_target": 0.01,
+      "shadow_bases": [],
+      "shot_allocation": [],
+      "strategy": "default",
+      "term_count": 3,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "qubit_wise_group_count": 2,
+    "sparse_estimated_group_count": null,
+    "sparse_exploratory_estimated_measurement_cost": null
+  },
+  "notes": [],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 1,
+    "operation_counts": {},
+    "qubit_term_count": 3,
+    "raw_num_qubits": 4,
+    "raw_qubit_term_count": 15,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "h2_q_embed",
+  "sampling": {
+    "available": true,
+    "counts_sha256": "b0593a03b071c1204b45ac0caffa14b6d10dbdde0c56cbdcddaed3676f47d5e6",
+    "group_count": 2,
+    "group_counts": [
+      {
+        "available": true,
+        "basis": "Z",
+        "counts": {
+          "0": 4048,
+          "1": 48
+        },
+        "group_id": 0,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "0",
+            4048
+          ],
+          [
+            "1",
+            48
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "X",
+        "counts": {
+          "0": 1624,
+          "1": 2472
+        },
+        "group_id": 1,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "1",
+            2472
+          ],
+          [
+            "0",
+            1624
+          ]
+        ]
+      }
+    ],
+    "shots_per_group": 4096,
+    "source": "statevector_sampler_from_final_state"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "sparse_exact_validation": {},
+  "state": {
+    "available": true,
+    "dominant_configurations": [
+      {
+        "bitstring": "0",
+        "probability": 0.9875597343674857
+      },
+      {
+        "bitstring": "1",
+        "probability": 0.01244026563251424
+      }
+    ],
+    "ground_state_overlap": 0.9999999999999998,
+    "hamiltonian_expectation": -1.8572750302023784,
+    "hamiltonian_variance": 4.440892098500626e-16,
+    "variance_method": "sparse_matrix_norm"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": null,
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+        "Exact-spectrum validation passed with delta=1.11022e-15 Hartree."
+      ],
+      "status": "applied_z2",
+      "validation": {
+        "absolute_delta": 1.1102230246251565e-15,
+        "available": true,
+        "max_qubits": 12,
+        "method": "exact_ground_state_delta",
+        "raw_ground_energy": -1.8572750302023777,
+        "tapered_ground_energy": -1.8572750302023788
+      },
+      "z2_symmetry_count": 3,
+      "z2_tapering_values": [
+        -1,
+        1,
+        -1
+      ]
+    }
+  }
+}

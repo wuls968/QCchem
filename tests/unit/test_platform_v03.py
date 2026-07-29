@@ -550,6 +550,118 @@ def test_artifact_indexer_marks_empty_acceptance_sidecar_readable(tmp_path: Path
     assert entry["recommended_action"] is None
 
 
+def test_artifact_indexer_reads_method_evidence_summary_sidecar(tmp_path: Path) -> None:
+    artifact_root = tmp_path / "artifacts" / "method_suite"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "benchmark_result.json").write_text(
+        """
+{
+  "suite_name": "method_evidence_suite_v1",
+  "schema_version": "qcchem.benchmark.v0.4-alpha"
+}
+""",
+        encoding="utf-8",
+    )
+    (artifact_root / "method_evidence_summary.json").write_text(
+        """
+{
+  "schema_version": "qcchem.method_evidence_benchmark_summary.v0.1-alpha",
+  "method_case_count": 9,
+  "accuracy_advantage_pairs": [],
+  "exact_match_pairs": ["h2_qsci_plus_vs_h2_exact_baseline"],
+  "planning_metric_cost_advantage_pairs": ["lih_shadow_lr_e_adapt_vs_lih_active_vqe_statevector_baseline"],
+  "contract_matrix": {
+    "schema_version": "qcchem.method_evidence_contract_matrix.v0.1-alpha",
+    "expected_method_count": 10,
+    "covered_method_count": 10,
+    "status": "complete",
+    "missing_methods": []
+  },
+  "ft_qpe_resource_findings": {
+    "h2_ft_qpe_planner": {
+      "recommended_encoding": "tensor_hypercontraction"
+    }
+  },
+  "promotion_boundary": "Exploratory methods require separate benchmark gates."
+}
+""",
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+    entry = index["artifacts"][0]
+
+    assert entry["artifact_kind"] == "benchmark_suite"
+    assert entry["has_method_evidence_summary"] is True
+    assert entry["method_evidence_summary_path"] == str(artifact_root / "method_evidence_summary.json")
+    assert entry["method_evidence_method_case_count"] == 9
+    assert entry["method_evidence_accuracy_advantage_pairs"] == []
+    assert entry["method_evidence_exact_match_pairs"] == ["h2_qsci_plus_vs_h2_exact_baseline"]
+    assert entry["method_evidence_planning_metric_cost_advantage_pairs"] == [
+        "lih_shadow_lr_e_adapt_vs_lih_active_vqe_statevector_baseline"
+    ]
+    assert entry["method_evidence_ft_qpe_resource_case_count"] == 1
+    assert entry["method_evidence_contract_matrix_status"] == "complete"
+    assert entry["method_evidence_contract_covered_method_count"] == 10
+    assert entry["method_evidence_contract_expected_method_count"] == 10
+    assert entry["method_evidence_contract_missing_methods"] == []
+    assert entry["method_evidence_promotion_boundary"] == (
+        "Exploratory methods require separate benchmark gates."
+    )
+
+
+def test_artifact_indexer_reads_method_evidence_promotion_gate_sidecar(tmp_path: Path) -> None:
+    artifact_root = tmp_path / "artifacts" / "method_run"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "result.json").write_text("{}", encoding="utf-8")
+    (artifact_root / "method_evidence.json").write_text(
+        """
+{
+  "schema": "qcchem.method_evidence.v1",
+  "trust_tier": "exploratory",
+  "methods": {
+    "shadow_lr": {"trust_gate": "planning_metric_only"},
+    "ft_qpe_resource_estimate": {"trust_gate": "resource_model_only"},
+    "trust_qem": {"trust_gate": "unsupported_for_claim"}
+  },
+  "promotion_gate_audit": {
+    "overall_claim_status": "promotion_required",
+    "sidecar_energy_replacement_allowed_methods": [],
+    "accuracy_claim_allowed_methods": [],
+    "hardware_claim_allowed_methods": [],
+    "planning_metric_methods": ["shadow_lr", "ft_qpe_resource_estimate"],
+    "resource_model_only_methods": ["ft_qpe_resource_estimate"],
+    "unsupported_for_claim_methods": ["trust_qem"]
+  }
+}
+""",
+        encoding="utf-8",
+    )
+
+    index = build_artifact_index(tmp_path / "artifacts")
+    entry = index["artifacts"][0]
+
+    assert entry["has_method_evidence"] is True
+    assert entry["method_evidence_methods"] == [
+        "ft_qpe_resource_estimate",
+        "shadow_lr",
+        "trust_qem",
+    ]
+    assert entry["has_method_evidence_promotion_gate_audit"] is True
+    assert entry["method_evidence_promotion_gate_status"] == "promotion_required"
+    assert entry["method_evidence_sidecar_energy_replacement_allowed_methods"] == []
+    assert entry["method_evidence_accuracy_claim_allowed_methods"] == []
+    assert entry["method_evidence_hardware_claim_allowed_methods"] == []
+    assert entry["method_evidence_planning_metric_methods"] == [
+        "shadow_lr",
+        "ft_qpe_resource_estimate",
+    ]
+    assert entry["method_evidence_resource_model_only_methods"] == [
+        "ft_qpe_resource_estimate"
+    ]
+    assert entry["method_evidence_unsupported_for_claim_methods"] == ["trust_qem"]
+
+
 def test_prepare_clean_output_root_rejects_non_empty_directory_without_overwrite(tmp_path: Path) -> None:
     root = tmp_path / "aggregate"
     root.mkdir()

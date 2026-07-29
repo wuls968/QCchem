@@ -1,0 +1,17 @@
+2026-07-08 12:20:43,643 INFO Loading config from /Users/a0000/.codex/worktrees/881e/QCchem/configs/exploratory/h2_method_evidence_smoke.yaml
+2026-07-08 12:20:43,643 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=f17f21bd4c02
+2026-07-08 12:20:43,648 INFO Building electronic structure problem
+2026-07-08 12:20:43,662 INFO Applying mapping: jordan_wigner
+2026-07-08 12:20:43,668 INFO Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings.
+2026-07-08 12:20:43,669 INFO Prepared measurement plan: groups=5, cost=256
+2026-07-08 12:20:43,669 INFO Skipping backend construction for solver: exact
+2026-07-08 12:20:43,669 INFO Running solver: exact
+2026-07-08 12:20:43,669 INFO Computing exact spectrum for 2 states
+2026-07-08 12:20:43,670 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_method_evidence_smoke/exact_result.json
+2026-07-08 12:20:43,670 INFO Computed empirical calibration: wall_time=0.000s, measured_cost=None
+2026-07-08 12:20:43,670 INFO Computed perturbative correction: qsci_tcc
+2026-07-08 12:20:43,671 INFO Computed QSCI++ selected-subspace workflow: determinants=4
+2026-07-08 12:20:43,675 INFO Wrote integrated method evidence sidecar
+2026-07-08 12:20:43,683 INFO Writing JSON result to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_method_evidence_smoke/result.json
+2026-07-08 12:20:43,685 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_method_evidence_smoke/report.md
+2026-07-08 12:20:43,687 INFO Run completed

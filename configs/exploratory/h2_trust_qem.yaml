@@ -1,0 +1,67 @@
+molecule:
+  name: H2-trust-qem
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: shot_estimator
+  shots: 512
+  seed: 7
+
+solver:
+  kind: exact
+
+mitigation:
+  symmetry_check:
+    enabled: true
+    strategy: postselect
+    particle_number: true
+    spin_parity: true
+  readout:
+    enabled: true
+    method: local_assignment
+    calibration_shots: 128
+  zne:
+    enabled: true
+    method: richardson
+    folding: global
+    scale_factors: [1.0, 1.5, 2.0]
+    extrapolator: linear
+  pec:
+    enabled: true
+    method: local_pec
+    calibration_model: null
+    max_overhead: 25.0
+  experimental: true
+
+policy:
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [trust_qem]
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-8
+  relative_error_threshold: 1.0e-8
+
+run:
+  seed: 7
+  output_dir: artifacts/h2_trust_qem
+  overwrite: true
+  exports:
+    qcschema_json: true

@@ -1,0 +1,1450 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 1.9984014443252818e-15,
+      "available": true,
+      "estimated_measurement_cost": 256.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.00038745799975004047,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.0625,
+      "reference_target": "exact_baseline"
+    },
+    "cast_hamiltonian": null,
+    "cavity_qed_model": null,
+    "chemical_accuracy": {
+      "absolute_error_hartree": 2.220446049250313e-15,
+      "absolute_error_kcal_mol": 1.393350932410442e-12,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.1373060357533973,
+      "continuum_chemistry_accuracy": {},
+      "finite_model_exactness": {},
+      "hardware_accuracy": {},
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.1373060357533995,
+      "relative_error": 1.952373397701522e-15,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "determinant_selection": null,
+    "e_adapt_result": null,
+    "environment_embedding": null,
+    "error_budget": null,
+    "evidence_summary": {
+      "chemical_accuracy_status": "met",
+      "comparison_evidence": {
+        "absolute_error": 1.9984014443252818e-15,
+        "baseline_strength": "strong",
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "relative_error": 1.0759857381529137e-15,
+        "statistical_error": null
+      },
+      "decision_worthiness": {
+        "blocking_issues": [],
+        "compression_context": {
+          "method": null,
+          "verification_status": null
+        },
+        "recommended_action": "collect_stronger_baseline",
+        "reduction_context": {
+          "selection_mode": "none",
+          "transformers_applied": []
+        },
+        "why": [
+          "trust_tier=exploratory",
+          "chemical_accuracy_status=met",
+          "runtime_evidence_status=none",
+          "runtime_accuracy_status=unavailable"
+        ]
+      },
+      "energy_evidence": {
+        "constant_energy_correction": 0.0,
+        "electronic_energy": -1.857275030202377,
+        "perturbative_correction": 0.0,
+        "solver_energy": -1.857275030202377,
+        "total_energy": -1.1373060357533973
+      },
+      "execution_evidence": {
+        "field_model_kind": null,
+        "measured_shot_usage": null,
+        "measurement_group_count": 5,
+        "measurement_strategy": "default",
+        "runtime_backend": null,
+        "runtime_job_id": null,
+        "shots": 256,
+        "wall_time_seconds": 0.04419429100016714
+      },
+      "primary_baseline": {
+        "baseline_kind": "exact",
+        "baseline_scope": "single_run",
+        "baseline_source": "exact_diagonalization",
+        "baseline_strength": "strong"
+      },
+      "primary_error_metric": {
+        "comparison_target": "exact_baseline",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 1e-08,
+        "units": "Hartree",
+        "value": 1.9984014443252818e-15
+      },
+      "primary_scientific_claim": "H2-method-evidence-smoke stays within chemical accuracy against exact_baseline for the defended local execution path.",
+      "recommended_action": "collect_stronger_baseline",
+      "result_identity": {
+        "artifact_kind": "run",
+        "artifact_name": "h2_method_evidence_smoke",
+        "backend_kind": "shot_estimator",
+        "basis": "sto3g",
+        "field_model_kind": null,
+        "mapping_kind": "jordan_wigner",
+        "molecule_name": "H2-method-evidence-smoke"
+      },
+      "runtime_derived_accuracy": {
+        "absolute_error_hartree": null,
+        "assessment_target": null,
+        "meets_chemical_accuracy": null,
+        "status": "unavailable",
+        "threshold_hartree": null
+      },
+      "runtime_evidence_status": "none",
+      "scientific_accuracy": {
+        "absolute_error_hartree": 2.220446049250313e-15,
+        "assessment_target": "local_execution",
+        "continuum_chemistry_accuracy": {},
+        "finite_model_exactness": {},
+        "hardware_accuracy": {},
+        "meets_chemical_accuracy": true,
+        "status": "met",
+        "threshold_hartree": 0.0016
+      },
+      "trust_judgment": {
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "lr_ace_trust_label": null,
+        "lr_ace_validation_gate": null,
+        "module_origin": "core",
+        "scientific_risk_notes": [],
+        "verification_notes": [],
+        "verification_status": "exploratory"
+      },
+      "trust_tier": "exploratory"
+    },
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "ft_qpe_resource_estimate": {
+      "available": true,
+      "dominant_cost_terms": {
+        "coefficient_l1_norm": 2.705041129754983,
+        "pauli_term_count": 15,
+        "phase_estimation_steps": {
+          "double_factorization": 2706,
+          "tensor_hypercontraction": 1759
+        },
+        "precision_hartree": 0.001,
+        "qubit_count": 4,
+        "surface_code_overhead_factor": 1000
+      },
+      "encodings_compared": [
+        "double_factorization",
+        "tensor_hypercontraction"
+      ],
+      "lambda_norms": {
+        "double_factorization": 2.705041129754983,
+        "tensor_hypercontraction": 1.7582767343407388
+      },
+      "logical_qubits": {
+        "double_factorization": 23,
+        "tensor_hypercontraction": 23
+      },
+      "notes": [
+        "FT-QPE planner is a coarse resource estimator, not a compiled fault-tolerant circuit.",
+        "Encoding reductions are model assumptions until backed by executable factorization and logical-resource gates."
+      ],
+      "physical_qubits": {
+        "double_factorization": 23000,
+        "tensor_hypercontraction": 23000
+      },
+      "promotion_readiness_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "best_to_reference_toffoli_ratio": 0.65,
+        "compiled_fault_tolerant_circuit_available": false,
+        "encoding_comparison_count": 2,
+        "executable_factorization_available": false,
+        "lambda_reduction_vs_reference": 0.35,
+        "logical_error_budget_available": false,
+        "promotion_blocker_count": 5,
+        "promotion_blockers": [
+          "encoding_scale_assumptions_not_derived_from_integral_factorization",
+          "no_compiled_fault_tolerant_circuit",
+          "surface_code_distance_not_estimated",
+          "logical_error_budget_not_allocated",
+          "hardware_architecture_cycle_model_not_calibrated"
+        ],
+        "readiness_level": "resource_model_only_not_compiled",
+        "reference_encoding": "double_factorization",
+        "required_promotion_evidence": [
+          "executable_integral_factorization_for_each_encoding",
+          "compiled_fault_tolerant_phase_estimation_circuit",
+          "surface_code_distance_and_physical_qubit_layout",
+          "logical_error_budget_allocation",
+          "hardware_architecture_specific_cycle_model"
+        ],
+        "required_promotion_evidence_count": 5,
+        "resource_model_claim_allowed": true,
+        "schema": "qcchem.ft_qpe_promotion_readiness.v1",
+        "status": "blocked_missing_compiled_fault_tolerant_evidence",
+        "surface_code_distance_available": false,
+        "toffoli_reduction_vs_reference": 0.35,
+        "validated_resource_advantage_claim_allowed": false
+      },
+      "recommended_encoding": "tensor_hypercontraction",
+      "resource_formula_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "encoding_comparison_count": 2,
+        "encoding_formula_components": {
+          "double_factorization": {
+            "encoding_scale_assumption": 1.0,
+            "lambda_norm": 2.705041129754983,
+            "logical_qubits": 23,
+            "phase_estimation_steps": 2706,
+            "physical_qubits": 23000,
+            "runtime_seconds": 0.01082016451901993,
+            "toffoli_count": 10820.16451901993
+          },
+          "tensor_hypercontraction": {
+            "encoding_scale_assumption": 0.65,
+            "lambda_norm": 1.7582767343407388,
+            "logical_qubits": 23,
+            "phase_estimation_steps": 1759,
+            "physical_qubits": 23000,
+            "runtime_seconds": 0.007033106937362955,
+            "toffoli_count": 7033.106937362955
+          }
+        },
+        "encoding_scale_assumptions": {
+          "double_factorization": 1.0,
+          "first_quantization_active_basis": 0.85,
+          "symmetry_compressed_double_factorization": 0.75,
+          "tensor_hypercontraction": 0.65
+        },
+        "formulae": {
+          "lambda_norm": "coefficient_l1_norm * encoding_scale_assumption",
+          "logical_qubits": "num_qubits + 4 + pauli_term_count",
+          "phase_estimation_steps": "ceil(lambda_norm / precision_hartree)",
+          "physical_qubits": "logical_qubits * surface_code_overhead_factor",
+          "runtime_seconds": "toffoli_count * cycle_time_ns * 1e-9",
+          "surface_code_overhead_factor": "round(1 / physical_error_rate)",
+          "toffoli_count": "lambda_norm / precision_hartree * max(num_qubits, 1)"
+        },
+        "input_terms": {
+          "coefficient_l1_norm": 2.705041129754983,
+          "cycle_time_ns": 1000.0,
+          "num_qubits": 4,
+          "pauli_term_count": 15,
+          "physical_error_rate": 0.001,
+          "precision_hartree": 0.001,
+          "surface_code_overhead_factor": 1000
+        },
+        "reference_encoding": "double_factorization",
+        "schema": "qcchem.ft_qpe_resource_formula_audit.v1",
+        "scope": "coarse_pauli_l1_phase_estimation_scaling"
+      },
+      "resource_model_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "best_to_reference_toffoli_ratio": 0.65,
+        "compiled_fault_tolerant_circuit_available": false,
+        "cycle_time_ns": 1000.0,
+        "encoding_comparison_count": 2,
+        "encoding_scale_assumptions": {
+          "double_factorization": 1.0,
+          "first_quantization_active_basis": 0.85,
+          "symmetry_compressed_double_factorization": 0.75,
+          "tensor_hypercontraction": 0.65
+        },
+        "lambda_reduction_vs_reference": 0.35,
+        "logical_error_budget_available": false,
+        "model_scope": "coarse_pauli_l1_phase_estimation_scaling",
+        "phase_estimation_steps": {
+          "double_factorization": 2706,
+          "tensor_hypercontraction": 1759
+        },
+        "physical_error_rate": 0.001,
+        "promotion_blocker_count": 5,
+        "promotion_blockers": [
+          "encoding_scale_assumptions_not_derived_from_integral_factorization",
+          "no_compiled_fault_tolerant_circuit",
+          "surface_code_distance_not_estimated",
+          "logical_error_budget_not_allocated",
+          "hardware_architecture_cycle_model_not_calibrated"
+        ],
+        "promotion_readiness_status": "blocked_missing_compiled_fault_tolerant_evidence",
+        "readiness_level": "resource_model_only_not_compiled",
+        "recommended_encoding": "tensor_hypercontraction",
+        "reference_encoding": "double_factorization",
+        "required_promotion_evidence": [
+          "executable_integral_factorization_for_each_encoding",
+          "compiled_fault_tolerant_phase_estimation_circuit",
+          "surface_code_distance_and_physical_qubit_layout",
+          "logical_error_budget_allocation",
+          "hardware_architecture_specific_cycle_model"
+        ],
+        "required_promotion_evidence_count": 5,
+        "resource_claim_status": "resource_model_only",
+        "surface_code_distance_available": false,
+        "surface_code_overhead_factor": 1000,
+        "surface_code_overhead_model": "logical_qubits * round(1 / physical_error_rate)",
+        "toffoli_reduction_vs_reference": 0.35,
+        "validated_resource_advantage_claim_allowed": false
+      },
+      "runtime_estimates": {
+        "double_factorization": 0.01082016451901993,
+        "tensor_hypercontraction": 0.007033106937362955
+      },
+      "toffoli_counts": {
+        "double_factorization": 10820.16451901993,
+        "tensor_hypercontraction": 7033.106937362955
+      }
+    },
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "input_provenance": [
+      {
+        "atom_count": 2,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "f17f21bd4c0255c706d3cf8377ac9a5f1dcfa6c8cd1dc5a67bdb5d0cf7596534",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "periodic": {
+          "enabled": false
+        },
+        "periodic_fingerprint": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+        "unit": "angstrom"
+      }
+    ],
+    "kq_pbc_result": null,
+    "low_rank_resource_estimate": null,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "jordan_wigner",
+      "num_qubits": 4,
+      "qubit_term_count": 15,
+      "raw_num_qubits": 4,
+      "raw_qubit_term_count": 15,
+      "symmetry_reduction_notes": [
+        "Z2 tapering disabled by mapping.symmetry_reduction.z2.",
+        "Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings."
+      ],
+      "symmetry_reduction_status": "disabled",
+      "symmetry_reduction_validation": {},
+      "symmetry_tapered_qubits": 0,
+      "z2_symmetry_count": 0,
+      "z2_tapering_values": null
+    },
+    "measurement": {
+      "basis_reuse_across_properties": true,
+      "cost_reduction_ratio": 0.2,
+      "estimated_shot_cost": 256.0,
+      "execution_mode": "estimator",
+      "group_count": 5,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {
+        "allocated_shots": 256,
+        "allocation_entropy": 0.23764207327154327,
+        "basis_count": 5,
+        "basis_l1_coverage_fraction": 1.0,
+        "budgeted_shots": 256,
+        "grouped_precision_baseline_shots": 1280.0,
+        "grouped_precision_variance_proxy": 0.005716599620051651,
+        "max_allocated_shot_fraction": 0.921875,
+        "max_circuits": 8,
+        "objective": "minimize_energy_variance",
+        "plan_digest": "4998f6d69b2762abdfa0438834e37c2c489f2e003caf1ebaf9530202e4049b94",
+        "planner": "shadow_lr",
+        "predicted_variance": 0.028582998100258255,
+        "selected_basis_count": 5,
+        "selected_basis_l1_norm": 2.705041129754983,
+        "strategies": [],
+        "term_l1_norm": 2.705041129754983,
+        "unselected_basis_count": 0,
+        "variance_inflation_vs_grouped_precision_proxy": 5.0
+      },
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.0625.",
+        "Measurement planning reflects the uncompressed execution path.",
+        "Shadow-LR planner generated locally biased shadow bases and shot allocation.",
+        "Shadow-LR estimated shot cost uses allocated shadow shots; grouped precision cost is retained in measurement_cost_model."
+      ],
+      "planner": "shadow_lr",
+      "predicted_variance": 0.028582998100258255,
+      "realized_variance": null,
+      "runtime_precision_target": 0.0625,
+      "shadow_bases": [
+        {
+          "allocated_shot_fraction": 0.921875,
+          "allocation_fraction": 0.933113327633351,
+          "basis": "ZZZZ",
+          "basis_id": 0,
+          "weight": 2.5241099299707512
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "YYYY",
+          "basis_id": 1,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "XXYY",
+          "basis_id": 2,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "YYXX",
+          "basis_id": 3,
+          "weight": 0.04523279994605786
+        },
+        {
+          "allocated_shot_fraction": 0.01953125,
+          "allocation_fraction": 0.016721668091662235,
+          "basis": "XXXX",
+          "basis_id": 4,
+          "weight": 0.04523279994605786
+        }
+      ],
+      "shot_allocation": [
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 0,
+          "shots": 236
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 1,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 2,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 3,
+          "shots": 5
+        },
+        {
+          "allocation_policy": "coefficient_l1_covariance_proxy",
+          "basis_id": 4,
+          "shots": 5
+        }
+      ],
+      "strategy": "default",
+      "term_count": 15,
+      "uncompressed_estimated_shot_cost": 1280.0,
+      "uncompressed_group_count": 5
+    },
+    "method_evidence": {
+      "available": true,
+      "methods": {
+        "ft_qpe_resource_estimate": {
+          "available": true,
+          "trust_tier": "exploratory"
+        },
+        "post_correlation": {
+          "available": true,
+          "trust_tier": "unsupported_for_claim"
+        },
+        "q_sc_eom": {
+          "available": true,
+          "trust_tier": "exploratory"
+        },
+        "qsci_plus_result": {
+          "available": true,
+          "trust_tier": "exploratory"
+        },
+        "shadow_lr": {
+          "available": true,
+          "trust_tier": "exploratory"
+        },
+        "trust_qem": {
+          "available": true,
+          "trust_tier": "unsupported_for_claim"
+        }
+      },
+      "notes": [
+        "Method evidence is reported alongside the primary solver result.",
+        "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+      ],
+      "promotion_gate_audit": {
+        "accuracy_claim_allowed_methods": [],
+        "hardware_claim_allowed_methods": [],
+        "method_records": {
+          "ft_qpe_resource_estimate": {
+            "accuracy_claim_allowed": false,
+            "best_encoding": "tensor_hypercontraction",
+            "claim_status": "resource_model_only",
+            "encoding_comparison_count": 2,
+            "energy_replacement_allowed": false,
+            "evidence_role": "fault_tolerant_resource_model",
+            "hardware_claim_allowed": false,
+            "logical_error_budget_available": false,
+            "method": "ft_qpe_resource_estimate",
+            "planning_metric_allowed": true,
+            "primary_solver_selected": false,
+            "promotion_blocker_count": 5,
+            "promotion_blockers": [
+              "encoding_scale_assumptions_not_derived_from_integral_factorization",
+              "no_compiled_fault_tolerant_circuit",
+              "surface_code_distance_not_estimated",
+              "logical_error_budget_not_allocated",
+              "hardware_architecture_cycle_model_not_calibrated"
+            ],
+            "promotion_readiness_status": "blocked_missing_compiled_fault_tolerant_evidence",
+            "promotion_required_for_validated_claim": true,
+            "readiness_level": "resource_model_only_not_compiled",
+            "reference_encoding": "double_factorization",
+            "required_promotion_evidence": [
+              "executable_integral_factorization_for_each_encoding",
+              "compiled_fault_tolerant_phase_estimation_circuit",
+              "surface_code_distance_and_physical_qubit_layout",
+              "logical_error_budget_allocation",
+              "hardware_architecture_specific_cycle_model"
+            ],
+            "required_promotion_evidence_count": 5,
+            "resource_formula_scope": "coarse_pauli_l1_phase_estimation_scaling",
+            "resource_model_claim_allowed": true,
+            "validated_resource_advantage_claim_allowed": false
+          },
+          "post_correlation": {
+            "accuracy_claim_allowed": false,
+            "amplitude_mapping_status": "constructed_for_audit_only",
+            "backend_executable": false,
+            "claim_status": "unsupported_for_claim",
+            "correction_eligibility_status": "tcc_amplitude_mapping_audit_only",
+            "correction_energy_emitted": false,
+            "eligible_coefficient_count": 4,
+            "energy_replacement_allowed": false,
+            "energy_replaces_primary": false,
+            "evidence_role": "correction_eligibility_audit",
+            "hardware_claim_allowed": false,
+            "mapped_double_count": 1,
+            "mapped_single_count": 0,
+            "method": "post_correlation",
+            "planning_metric_allowed": false,
+            "primary_solver_selected": false,
+            "promotion_blockers": [
+              "cluster-amplitude contraction equations",
+              "double-counting correction model",
+              "double_counting_not_evaluated",
+              "executable QSCI-to-TCC amplitude backend",
+              "external orbital-space partition",
+              "external_correlation_energy_not_emitted",
+              "qcchem_qsci_correction_backend_missing"
+            ],
+            "promotion_required_for_validated_claim": true,
+            "required_input_missing_count": 4,
+            "resource_model_claim_allowed": false
+          },
+          "q_sc_eom": {
+            "accuracy_claim_allowed": false,
+            "claim_status": "conditioning_reference_audit",
+            "conditioning_status": "well_conditioned_reference_roots",
+            "energy_replacement_allowed": false,
+            "evidence_role": "excited_state_conditioning_audit",
+            "hardware_claim_allowed": false,
+            "method": "q_sc_eom",
+            "overlap_condition_number": 1.0,
+            "planning_metric_allowed": false,
+            "primary_solver_selected": false,
+            "promotion_blockers": [
+              "exact_root_audit_not_general_eom_solver",
+              "excited_state_benchmark_gate_required"
+            ],
+            "promotion_required_for_validated_claim": true,
+            "resource_model_claim_allowed": false,
+            "transition_property_names": [],
+            "transition_property_status": "transition_properties_missing",
+            "validated_transition_property_count": 0
+          },
+          "qsci_plus_result": {
+            "accuracy_claim_allowed": false,
+            "claim_status": "selected_ci_subspace_audit",
+            "energy_replacement_allowed": false,
+            "evidence_role": "selected_ci_variational_audit",
+            "hardware_claim_allowed": false,
+            "method": "qsci_plus_result",
+            "planning_metric_allowed": false,
+            "primary_solver_selected": false,
+            "promotion_blockers": [
+              "selected_subspace_benchmark_gate_required",
+              "primary_energy_replacement_disallowed"
+            ],
+            "promotion_required_for_validated_claim": true,
+            "resource_model_claim_allowed": false
+          },
+          "shadow_lr": {
+            "accuracy_claim_allowed": false,
+            "allocated_shots": 256,
+            "allocation_entropy": 0.23764207327154327,
+            "basis_l1_coverage_fraction": 1.0,
+            "claim_status": "planning_metric_only",
+            "energy_replacement_allowed": false,
+            "estimated_cost_claim_status": "planning_metric_only",
+            "evidence_role": "measurement_planning_cost_model",
+            "grouped_precision_baseline_shots": 1280.0,
+            "grouped_precision_variance_proxy": 0.005716599620051651,
+            "hardware_claim_allowed": false,
+            "hardware_cost_claim_allowed": false,
+            "max_allocated_shot_fraction": 0.921875,
+            "method": "shadow_lr",
+            "plan_digest": "4998f6d69b2762abdfa0438834e37c2c489f2e003caf1ebaf9530202e4049b94",
+            "planning_metric_allowed": true,
+            "primary_solver_selected": false,
+            "promotion_blockers": [
+              "not_hardware_calibrated",
+              "accuracy_claim_not_supported_by_measurement_plan_alone"
+            ],
+            "promotion_required_for_validated_claim": true,
+            "resource_model_claim_allowed": false,
+            "unselected_basis_count": 0,
+            "variance_inflation_vs_grouped_precision_proxy": 5.0
+          },
+          "trust_qem": {
+            "accuracy_claim_allowed": false,
+            "claim_status": "unsupported_for_claim",
+            "energy_replacement_allowed": false,
+            "evidence_role": "mitigation_provenance_audit",
+            "hardware_claim_allowed": false,
+            "method": "trust_qem",
+            "mitigation_claim_allowed_methods": [],
+            "mitigation_claim_disallowed_methods": [
+              "symmetry_check",
+              "readout_mitigation"
+            ],
+            "pec_calibrated_operation_count": 0,
+            "pec_executable_calibration_model": false,
+            "pec_max_operation_l1_overhead": null,
+            "pec_quasi_probability_entry_count": 0,
+            "pec_sampling_overhead": 0.0,
+            "pec_status": "not_requested",
+            "planning_metric_allowed": false,
+            "primary_solver_selected": false,
+            "promotion_blockers": [
+              "no_mitigation_component_allowed_for_energy_claim"
+            ],
+            "promotion_required_for_validated_claim": true,
+            "resource_model_claim_allowed": false
+          }
+        },
+        "notes": [
+          "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+          "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+        ],
+        "overall_claim_status": "promotion_required",
+        "planning_metric_methods": [
+          "ft_qpe_resource_estimate",
+          "shadow_lr"
+        ],
+        "primary_energy_policy": "raw_solver_energy_remains_primary",
+        "primary_solver_kind": "exact",
+        "promotion_required_for_validated_claims": true,
+        "resource_model_only_methods": [
+          "ft_qpe_resource_estimate"
+        ],
+        "schema": "qcchem.method_promotion_gate_audit.v1",
+        "sidecar_energy_replacement_allowed_methods": [],
+        "unsupported_for_claim_methods": [
+          "post_correlation",
+          "trust_qem"
+        ]
+      },
+      "schema": "qcchem.method_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_method_evidence_smoke/method_evidence.json",
+      "sidecar_sha256": "25e109ae8d7a02eb1dbb1e5e71516e624aae345e56ef472eba6bbddfccbf2c82",
+      "trust_tier": "exploratory"
+    },
+    "orbital_optimization": null,
+    "pbc": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": null,
+    "perturbative_correction_result": {
+      "active_space_energy": 0.0,
+      "compressed_active_space_energy": null,
+      "corrected_total_energy": 0.0,
+      "enabled": true,
+      "method": "qsci_tcc",
+      "notes": [
+        "NEVPT2 correction requires an active-space specification."
+      ],
+      "perturbative_correction": 0.0,
+      "plugin": "pyscf",
+      "provenance": {
+        "reason": "active_space_required",
+        "source": "placeholder"
+      },
+      "reduced_active_space_energy": -1.1373060357533973,
+      "verification_status": "exploratory"
+    },
+    "post_correlation": {
+      "active_ci_coefficients_digest": "17d2350cc0a4b7cb1a5215e37255e93461297d956ff0041a218409094d2d76aa",
+      "amplitude_mapping_audit": {
+        "coefficient_count": 4,
+        "coefficient_norm": 0.9999999999999999,
+        "doubles": [
+          {
+            "amplitude_abs": 0.1122362479418307,
+            "amplitude_imag": -0.0,
+            "amplitude_real": -0.1122362479418307,
+            "coefficient_abs": 0.1115359387485228,
+            "determinant": 10,
+            "excitation_rank": 2,
+            "hamming_distance": 4,
+            "reference_determinant": 5
+          }
+        ],
+        "energy_correction_backend_executable": false,
+        "energy_replaces_primary": false,
+        "mapped_double_count": 1,
+        "mapped_single_count": 0,
+        "max_mapped_amplitude_abs": 0.1122362479418307,
+        "negligible_coefficient_count": 2,
+        "negligible_coefficients": [
+          {
+            "amplitude_abs": 0.0,
+            "amplitude_imag": -0.0,
+            "amplitude_real": -0.0,
+            "coefficient_abs": 0.0,
+            "determinant": 9,
+            "excitation_rank": 1,
+            "hamming_distance": 2,
+            "reference_determinant": 5
+          },
+          {
+            "amplitude_abs": 0.0,
+            "amplitude_imag": -0.0,
+            "amplitude_real": -0.0,
+            "coefficient_abs": 0.0,
+            "determinant": 6,
+            "excitation_rank": 1,
+            "hamming_distance": 2,
+            "reference_determinant": 5
+          }
+        ],
+        "notes": [
+          "Selected-CI coefficients are mapped to relative single/double amplitudes for audit only.",
+          "No QSCI-derived TCC energy is emitted without an executable external-correlation backend."
+        ],
+        "reference_coefficient_abs": 0.993760400885186,
+        "reference_determinant": 5,
+        "reference_policy": "largest_abs_selected_ci_coefficient",
+        "schema": "qcchem.qsci_tcc_amplitude_mapping_audit.v1",
+        "singles": [],
+        "status": "constructed_for_audit_only",
+        "unsupported_excitation_count": 0,
+        "unsupported_excitations": []
+      },
+      "available": true,
+      "classical_solver": null,
+      "correction_eligibility_audit": {
+        "amplitude_mapping_status": "constructed_for_audit_only",
+        "backend_executable": false,
+        "ci_coefficients_digest": "17d2350cc0a4b7cb1a5215e37255e93461297d956ff0041a218409094d2d76aa",
+        "ci_energy_hartree": -1.8572750302023795,
+        "correction_energy_emitted": false,
+        "eligible_coefficient_count": 4,
+        "energy_replaces_primary": false,
+        "method": "qsci_tcc",
+        "promotion_blockers": [
+          "external_correlation_energy_not_emitted",
+          "double_counting_not_evaluated",
+          "qcchem_qsci_correction_backend_missing",
+          "external orbital-space partition",
+          "executable QSCI-to-TCC amplitude backend",
+          "cluster-amplitude contraction equations",
+          "double-counting correction model"
+        ],
+        "required_input_missing_count": 4,
+        "required_inputs_missing": [
+          "external orbital-space partition",
+          "executable QSCI-to-TCC amplitude backend",
+          "cluster-amplitude contraction equations",
+          "double-counting correction model"
+        ],
+        "schema": "qcchem.qsci_post_correlation_eligibility.v1",
+        "selected_subspace_size": 4,
+        "source_wavefunction": "qsci_plus",
+        "status": "tcc_amplitude_mapping_audit_only",
+        "total_corrected_energy_emitted": false,
+        "variance_estimate": 0.0
+      },
+      "double_counting_audit": {
+        "active_space_ci_energy_hartree": -1.8572750302023795,
+        "active_space_energy_available": true,
+        "backend_executable": false,
+        "dynamic_correlation_energy_emitted": false,
+        "energy_replaces_primary": false,
+        "reason": "No executable QSCI-derived TCC/NEVPT2 correction model is available in v1.",
+        "required_input_missing_count": 4,
+        "status": "not_evaluated"
+      },
+      "external_correlation_energy": null,
+      "method": "qsci_tcc",
+      "notes": [
+        "QSCI post-correlation v1 records coefficient provenance and correction eligibility only.",
+        "No external-correlation or corrected-total energy is emitted without an executable QSCI-derived TCC/NEVPT2 backend.",
+        "Use the validated classical NEVPT2 perturbative-correction task for PySCF-backed NEVPT2 corrections."
+      ],
+      "source_wavefunction": "qsci_plus",
+      "tailored_amplitudes": {
+        "eligible_coefficient_count": 4,
+        "mapped_double_count": 1,
+        "mapped_single_count": 0,
+        "required_inputs_missing": [
+          "external orbital-space partition",
+          "executable QSCI-to-TCC amplitude backend",
+          "cluster-amplitude contraction equations",
+          "double-counting correction model"
+        ],
+        "selected_subspace_size": 4,
+        "source": "selected_ci_coefficients_digest",
+        "status": "constructed_for_audit_only"
+      },
+      "total_corrected_energy": null,
+      "trust_gate": "unsupported_for_claim"
+    },
+    "qcchem_run_id": "h2_method_evidence_smoke",
+    "qft_dynamics": null,
+    "qft_model": null,
+    "qpe_resource_estimate": null,
+    "qsci_plus_result": {
+      "available": true,
+      "ci_energy": -1.8572750302023795,
+      "excited_state_energies": [],
+      "notes": [
+        "QSCI++ v1 selects a determinant subspace with local sampling proxies and diagonalizes the physical Hamiltonian.",
+        "Variance and residual diagnostics are computed from the embedded Ritz vector in the physical qubit Hamiltonian.",
+        "The selected CI energy is reported as method evidence and does not replace the primary run energy."
+      ],
+      "raw_bitstrings": {
+        "0000": 1,
+        "0001": 13,
+        "0010": 2,
+        "0011": 8,
+        "0100": 9,
+        "0101": 17,
+        "0110": 11,
+        "0111": 10,
+        "1000": 4,
+        "1001": 12,
+        "1010": 3,
+        "1011": 5,
+        "1100": 10,
+        "1101": 12,
+        "1110": 9,
+        "1111": 2
+      },
+      "repaired_determinants": [
+        {
+          "alpha_electrons": 1,
+          "beta_electrons": 1,
+          "bitstring": "0101",
+          "index": 5,
+          "occupied_spin_orbitals": [
+            0,
+            2
+          ],
+          "probability": 0.15103890665495304,
+          "selection_origin": "sampled",
+          "selection_origins": [
+            "hartree_fock_reference",
+            "sampled",
+            "sector_repaired"
+          ],
+          "spin_projection": 0.0,
+          "total_electrons": 2
+        },
+        {
+          "alpha_electrons": 1,
+          "beta_electrons": 1,
+          "bitstring": "1001",
+          "index": 9,
+          "occupied_spin_orbitals": [
+            0,
+            3
+          ],
+          "probability": 0.06970156859192993,
+          "selection_origin": "sampled",
+          "selection_origins": [
+            "sampled",
+            "sector_repaired"
+          ],
+          "spin_projection": 0.0,
+          "total_electrons": 2
+        },
+        {
+          "alpha_electrons": 1,
+          "beta_electrons": 1,
+          "bitstring": "0110",
+          "index": 6,
+          "occupied_spin_orbitals": [
+            1,
+            2
+          ],
+          "probability": 0.0697015685919299,
+          "selection_origin": "sampled",
+          "selection_origins": [
+            "sampled",
+            "sector_repaired"
+          ],
+          "spin_projection": 0.0,
+          "total_electrons": 2
+        },
+        {
+          "alpha_electrons": 1,
+          "beta_electrons": 1,
+          "bitstring": "1010",
+          "index": 10,
+          "occupied_spin_orbitals": [
+            1,
+            3
+          ],
+          "probability": 0.030746856587182885,
+          "selection_origin": "sampled",
+          "selection_origins": [
+            "sampled",
+            "sector_repaired"
+          ],
+          "spin_projection": 0.0,
+          "total_electrons": 2
+        }
+      ],
+      "sampler": "local_energy_proxy",
+      "selected_subspace_size": 4,
+      "selection_bias_audit": {
+        "ci_coefficients_digest": "17d2350cc0a4b7cb1a5215e37255e93461297d956ff0041a218409094d2d76aa",
+        "classical_diagonalizer": "dense_exact",
+        "hamming_expansion_radius": 1,
+        "hamming_seed_count": 4,
+        "hartree_fock_determinant": 5,
+        "hartree_fock_selected": true,
+        "initial_selected_subspace_size": 8,
+        "leading_coefficients": [
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": -0.993760400885186,
+            "determinant": 5
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.0,
+            "determinant": 9
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.0,
+            "determinant": 6
+          },
+          {
+            "coefficient_imag": 0.0,
+            "coefficient_real": 0.1115359387485228,
+            "determinant": 10
+          }
+        ],
+        "max_selected_subspace_size": 8,
+        "pre_repair_ranked_count": 16,
+        "raw_unique_determinants": 16,
+        "residual_expansion": {
+          "added_determinant_count": 0,
+          "batch_size": 8,
+          "enabled": false,
+          "history": [],
+          "iteration_count": 0,
+          "max_additional_determinants": 0,
+          "max_iterations": 0,
+          "scorer": "external_residual_coupling",
+          "target_residual_norm": 1e-06
+        },
+        "sector_rejected_count": 12,
+        "selected_multi_origin_counts": {
+          "hartree_fock_reference": 1,
+          "sampled": 4,
+          "sector_repaired": 4
+        },
+        "selected_origin_counts": {
+          "sampled": 4
+        },
+        "selected_probability_mass": 0.32118890042599574
+      },
+      "subspace_audit": {
+        "energy_error_to_exact_hartree": -1.1102230246251565e-15,
+        "ground_state_external_coupling_residual_norm": 0.0,
+        "ground_state_residual_norm": 6.684427777288335e-16,
+        "ground_state_variance": 0.0,
+        "root_residuals": [
+          {
+            "energy": -1.8572750302023802,
+            "external_coupling_residual_norm": 0.0,
+            "hamiltonian_variance": 0.0,
+            "projected_residual_norm": 6.684427777288335e-16,
+            "projected_subspace_energy": -1.8572750302023795,
+            "residual_norm": 6.684427777288335e-16,
+            "root_index": 0
+          },
+          {
+            "energy": -1.2445845498133274,
+            "external_coupling_residual_norm": 0.0,
+            "hamiltonian_variance": 0.0,
+            "projected_residual_norm": 4.577566798522237e-16,
+            "projected_subspace_energy": -1.244584549813327,
+            "residual_norm": 4.577566798522237e-16,
+            "root_index": 1
+          },
+          {
+            "energy": -0.8827221502448642,
+            "external_coupling_residual_norm": 0.0,
+            "hamiltonian_variance": 0.0,
+            "projected_residual_norm": 1.1102230246251565e-16,
+            "projected_subspace_energy": -0.8827221502448641,
+            "residual_norm": 1.1102230246251565e-16,
+            "root_index": 2
+          },
+          {
+            "energy": -0.2249112528308701,
+            "external_coupling_residual_norm": 0.0,
+            "hamiltonian_variance": 0.0,
+            "projected_residual_norm": 5.551115123125783e-17,
+            "projected_subspace_energy": -0.22491125283087,
+            "residual_norm": 5.551115123125783e-17,
+            "root_index": 3
+          }
+        ],
+        "sector_determinant_count": 4,
+        "selected_bitstrings": [
+          "0101",
+          "1001",
+          "0110",
+          "1010"
+        ],
+        "selected_determinant_count": 4,
+        "selected_sector_coverage_fraction": 1.0,
+        "variance_method": "embedded_ritz_vector_sparse_hamiltonian",
+        "variational_upper_bound_margin_hartree": -1.1102230246251565e-15,
+        "variational_upper_bound_passed": true
+      },
+      "variance_estimate": 0.0,
+      "variational_upper_bound": true
+    },
+    "quantum_evidence": {
+      "available": true,
+      "error_budget": {
+        "ansatz_error": {
+          "absolute_error_hartree": 1.9984014443252818e-15,
+          "available": false,
+          "baseline": "exact_baseline"
+        },
+        "compression_error": {
+          "available": false,
+          "compressed_vs_uncompressed": null,
+          "reconstruction_error": null
+        },
+        "existing_error_budget": {},
+        "field_model": {
+          "cavity_error_budget": null,
+          "finite_cutoff_boundary": false,
+          "qft_error_budget": null
+        },
+        "hardware_noise": {
+          "available": false,
+          "mitigation_metadata": null,
+          "verification_status": null
+        },
+        "qmmm_embedding": {
+          "available": false,
+          "boundary": null,
+          "cache_validation": null,
+          "mm_environment_quantized": null,
+          "one_body_environment": null
+        },
+        "shot_noise": {
+          "available": false,
+          "benchmark_statistical_error": null,
+          "runtime_reported_std": null,
+          "sampled_standard_error": null
+        }
+      },
+      "hamiltonian": {
+        "coefficient_l1_norm": 2.7050411297549823,
+        "energy_contribution_sum": -1.8572750302023788,
+        "expectations_available": true,
+        "measurement_group_count": 5,
+        "pauli_term_count": 15,
+        "pauli_terms_available": true,
+        "pbc_qmmm": null,
+        "periodic_boundary": null
+      },
+      "lattice_qed_observables": {},
+      "measurement": {
+        "counts_shots_per_group": 256,
+        "estimated_measurement_cost": 256.0,
+        "estimated_measurement_cost_is_hardware_cost": null,
+        "estimated_measurement_cost_scope": "pauli_grouping",
+        "groups_sha256": "f637ff948988d77a7adcfb87f1cec0b573a6fd28be5e8bba06c33886fc5073f4",
+        "measurement_group_count_scope": "pauli_grouping",
+        "notes": [],
+        "plan": {
+          "basis_reuse_across_properties": true,
+          "cost_reduction_ratio": 0.2,
+          "estimated_shot_cost": 256.0,
+          "execution_mode": "estimator",
+          "group_count": 5,
+          "grouping_policy": "default",
+          "low_rank_aware": false,
+          "measurement_cost_model": {
+            "allocated_shots": 256,
+            "allocation_entropy": 0.23764207327154327,
+            "basis_count": 5,
+            "basis_l1_coverage_fraction": 1.0,
+            "budgeted_shots": 256,
+            "grouped_precision_baseline_shots": 1280.0,
+            "grouped_precision_variance_proxy": 0.005716599620051651,
+            "max_allocated_shot_fraction": 0.921875,
+            "max_circuits": 8,
+            "objective": "minimize_energy_variance",
+            "plan_digest": "4998f6d69b2762abdfa0438834e37c2c489f2e003caf1ebaf9530202e4049b94",
+            "planner": "shadow_lr",
+            "predicted_variance": 0.028582998100258255,
+            "selected_basis_count": 5,
+            "selected_basis_l1_norm": 2.705041129754983,
+            "strategies": [],
+            "term_l1_norm": 2.705041129754983,
+            "unselected_basis_count": 0,
+            "variance_inflation_vs_grouped_precision_proxy": 5.0
+          },
+          "notes": [
+            "Measurement groups estimated with strategy 'default'.",
+            "Per-group shot estimate derived from precision target 0.0625.",
+            "Measurement planning reflects the uncompressed execution path.",
+            "Shadow-LR planner generated locally biased shadow bases and shot allocation.",
+            "Shadow-LR estimated shot cost uses allocated shadow shots; grouped precision cost is retained in measurement_cost_model."
+          ],
+          "planner": "shadow_lr",
+          "predicted_variance": 0.028582998100258255,
+          "realized_variance": null,
+          "runtime_precision_target": 0.0625,
+          "shadow_bases": [
+            {
+              "allocated_shot_fraction": 0.921875,
+              "allocation_fraction": 0.933113327633351,
+              "basis": "ZZZZ",
+              "basis_id": 0,
+              "weight": 2.5241099299707512
+            },
+            {
+              "allocated_shot_fraction": 0.01953125,
+              "allocation_fraction": 0.016721668091662235,
+              "basis": "YYYY",
+              "basis_id": 1,
+              "weight": 0.04523279994605786
+            },
+            {
+              "allocated_shot_fraction": 0.01953125,
+              "allocation_fraction": 0.016721668091662235,
+              "basis": "XXYY",
+              "basis_id": 2,
+              "weight": 0.04523279994605786
+            },
+            {
+              "allocated_shot_fraction": 0.01953125,
+              "allocation_fraction": 0.016721668091662235,
+              "basis": "YYXX",
+              "basis_id": 3,
+              "weight": 0.04523279994605786
+            },
+            {
+              "allocated_shot_fraction": 0.01953125,
+              "allocation_fraction": 0.016721668091662235,
+              "basis": "XXXX",
+              "basis_id": 4,
+              "weight": 0.04523279994605786
+            }
+          ],
+          "shot_allocation": [
+            {
+              "allocation_policy": "coefficient_l1_covariance_proxy",
+              "basis_id": 0,
+              "shots": 236
+            },
+            {
+              "allocation_policy": "coefficient_l1_covariance_proxy",
+              "basis_id": 1,
+              "shots": 5
+            },
+            {
+              "allocation_policy": "coefficient_l1_covariance_proxy",
+              "basis_id": 2,
+              "shots": 5
+            },
+            {
+              "allocation_policy": "coefficient_l1_covariance_proxy",
+              "basis_id": 3,
+              "shots": 5
+            },
+            {
+              "allocation_policy": "coefficient_l1_covariance_proxy",
+              "basis_id": 4,
+              "shots": 5
+            }
+          ],
+          "strategy": "default",
+          "term_count": 15,
+          "uncompressed_estimated_shot_cost": 1280.0,
+          "uncompressed_group_count": 5
+        },
+        "qubit_wise_group_count": 5,
+        "sparse_estimated_group_count": null,
+        "sparse_exploratory_estimated_measurement_cost": null
+      },
+      "notes": [],
+      "resources": {
+        "circuit_depth": null,
+        "num_qubits": 4,
+        "operation_counts": {},
+        "qubit_term_count": 15,
+        "raw_num_qubits": 4,
+        "raw_qubit_term_count": 15,
+        "two_qubit_gate_count": null
+      },
+      "sampling": {
+        "available": true,
+        "counts_sha256": "7a886b322aae84faa688d7e07aaf351e716ed1bf8aee0a339b5cea462cda4747",
+        "group_count": 5,
+        "shots_per_group": 256,
+        "source": "statevector_sampler_from_final_state"
+      },
+      "schema": "qcchem.quantum_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_method_evidence_smoke/quantum_evidence.json",
+      "sidecar_sha256": "d99c80d39b649122f86c42b5cf64b9ab0bd147d08dd367d5d21047de111e5a83",
+      "sparse_exact_validation": {},
+      "state": {
+        "available": true,
+        "dominant_configurations": [
+          {
+            "bitstring": "0101",
+            "probability": 0.9875597343674857
+          },
+          {
+            "bitstring": "1010",
+            "probability": 0.012440265632514214
+          },
+          {
+            "bitstring": "0011",
+            "probability": 9.684118727256242e-31
+          },
+          {
+            "bitstring": "1101",
+            "probability": 6.432992020535064e-31
+          },
+          {
+            "bitstring": "0111",
+            "probability": 5.4671440153048155e-31
+          },
+          {
+            "bitstring": "1111",
+            "probability": 4.442915448714402e-31
+          },
+          {
+            "bitstring": "0001",
+            "probability": 3.153747026396602e-31
+          },
+          {
+            "bitstring": "1100",
+            "probability": 2.602710877514126e-31
+          },
+          {
+            "bitstring": "0100",
+            "probability": 1.0847894225011337e-31
+          },
+          {
+            "bitstring": "1001",
+            "probability": 5.724451992490354e-32
+          },
+          {
+            "bitstring": "1011",
+            "probability": 3.503846313030966e-32
+          },
+          {
+            "bitstring": "0110",
+            "probability": 1.7172342290248627e-32
+          },
+          {
+            "bitstring": "1110",
+            "probability": 1.2157344792682366e-32
+          },
+          {
+            "bitstring": "0000",
+            "probability": 1.1855263557386278e-32
+          },
+          {
+            "bitstring": "0010",
+            "probability": 7.191478769542124e-33
+          },
+          {
+            "bitstring": "1000",
+            "probability": 4.4692848428693984e-33
+          }
+        ],
+        "ground_state_overlap": 0.9999999999999998,
+        "hamiltonian_expectation": -1.8572750302023793,
+        "hamiltonian_variance": 4.440892098500626e-16,
+        "variance_method": "sparse_matrix_norm"
+      },
+      "symmetry_checks": {
+        "particle_number": {
+          "deviation": null,
+          "expectation_value": null,
+          "notes": [
+            "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+          ],
+          "status": "declared_from_problem_summary",
+          "target_num_particles": [
+            1,
+            1
+          ]
+        },
+        "qft_constraints": null,
+        "spin": {
+          "notes": [
+            "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+          ],
+          "status": "not_available"
+        },
+        "z2": {
+          "notes": [
+            "Z2 tapering disabled by mapping.symmetry_reduction.z2.",
+            "Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings."
+          ],
+          "status": "disabled",
+          "validation": {},
+          "z2_symmetry_count": 0,
+          "z2_tapering_values": null
+        }
+      }
+    },
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7199689944489797
+      },
+      "nuclear_repulsion_energy": 0.7199689944489797,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "pbc_qmmm": null,
+      "periodic_boundary": null,
+      "point_group_metadata": {
+        "active_irreps": [],
+        "enabled": true,
+        "group": "Dooh",
+        "irrep_ids": [
+          0,
+          5
+        ],
+        "irrep_names": [
+          "A1g",
+          "A1u"
+        ],
+        "notes": [],
+        "orbital_energies": [
+          -0.5806289181997333,
+          0.6763362534452201
+        ],
+        "orbital_irreps": [
+          "A1g",
+          "A1u"
+        ],
+        "orbital_occupations": [
+          2.0,
+          0.0
+        ],
+        "reduction_mode": "audit",
+        "remove_irreps": [],
+        "requested_mode": "auto",
+        "requested_subgroup": "auto",
+        "status": "available",
+        "topgroup": "Dooh"
+      },
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7199689944489797,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "symmetry_sector": null,
+    "tc_qsci_result": null,
+    "verification_status": "exploratory"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-method-evidence-smoke"
+  },
+  "properties": {
+    "boundary_embedding_constant_energy": 0.0,
+    "electronic_energy": -1.857275030202377,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "return_energy": -1.1373060357533973
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "HEAD",
+    "git_commit": "47612e92da7a8141c907ae3f4caee23a6463c39c",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "b2284c48d57f32f1bf970108686b3644518dd0e6c97cc4208e923e830ad02be4"
+  },
+  "return_result": -1.1373060357533973,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

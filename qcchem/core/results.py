@@ -282,6 +282,13 @@ class MeasurementSummary:
     uncompressed_group_count: int | None = None
     uncompressed_estimated_shot_cost: float | None = None
     cost_reduction_ratio: float | None = None
+    planner: str = "default"
+    shadow_bases: list[dict[str, Any]] = field(default_factory=list)
+    shot_allocation: list[dict[str, Any]] = field(default_factory=list)
+    predicted_variance: float | None = None
+    realized_variance: float | None = None
+    measurement_cost_model: dict[str, Any] = field(default_factory=dict)
+    basis_reuse_across_properties: bool = False
     notes: list[str] = field(default_factory=list)
 
 
@@ -628,7 +635,134 @@ class MitigationSummary:
     readout_mitigation: dict[str, object]
     zne: dict[str, object] = field(default_factory=dict)
     pec: dict[str, object] = field(default_factory=dict)
+    requested_methods: list[str] = field(default_factory=list)
     applied_methods: list[str] = field(default_factory=list)
+    claim_allowed_methods: list[str] = field(default_factory=list)
+    claim_disallowed_methods: list[str] = field(default_factory=list)
+    claim_status: str = "not_requested"
+    trust_gate: str = "not_requested"
+    energy_replaces_primary: bool = False
+
+
+@dataclass(slots=True)
+class EADAPTResultSummary:
+    """Evidence-gated ADAPT-VQE summary."""
+
+    available: bool
+    selected_operators: list[dict[str, Any]] = field(default_factory=list)
+    rejected_operators: list[dict[str, Any]] = field(default_factory=list)
+    gradient_history: list[dict[str, Any]] = field(default_factory=list)
+    depth_growth: list[dict[str, Any]] = field(default_factory=list)
+    adaptive_optimization: dict[str, Any] = field(default_factory=dict)
+    symmetry_audit: dict[str, Any] = field(default_factory=dict)
+    low_rank_priority_scores: dict[str, float] = field(default_factory=dict)
+    ansatz_trust_gate: str = "exploratory"
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class OrbitalOptimizationSummary:
+    """Orbital-optimization evidence summary."""
+
+    available: bool
+    macro_iterations: list[dict[str, Any]] = field(default_factory=list)
+    orbital_rotation_norm: float = 0.0
+    rdm_source: str = "unavailable"
+    energy_lowering_hartree: float = 0.0
+    active_space_changed: bool = False
+    reference_diagnostics: dict[str, Any] = field(default_factory=dict)
+    active_space_resolve: dict[str, Any] = field(default_factory=dict)
+    orbital_transfer_audit: dict[str, Any] = field(default_factory=dict)
+    energy_scope_audit: dict[str, Any] = field(default_factory=dict)
+    promotion_readiness_audit: dict[str, Any] = field(default_factory=dict)
+    energy_replaces_primary: bool = False
+    trust_gate: str = "exploratory"
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class QSCIPlusResultSummary:
+    """Generic quantum-selected CI evidence summary."""
+
+    available: bool
+    sampler: str
+    raw_bitstrings: dict[str, int] = field(default_factory=dict)
+    repaired_determinants: list[dict[str, Any]] = field(default_factory=list)
+    selected_subspace_size: int = 0
+    ci_energy: float | None = None
+    variance_estimate: float | None = None
+    excited_state_energies: list[float] = field(default_factory=list)
+    selection_bias_audit: dict[str, Any] = field(default_factory=dict)
+    subspace_audit: dict[str, Any] = field(default_factory=dict)
+    variational_upper_bound: bool = True
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class PostCorrelationSummary:
+    """QSCI-derived post-correlation correction summary."""
+
+    available: bool
+    method: str
+    source_wavefunction: str = "unavailable"
+    active_ci_coefficients_digest: str | None = None
+    correction_eligibility_audit: dict[str, Any] = field(default_factory=dict)
+    amplitude_mapping_audit: dict[str, Any] = field(default_factory=dict)
+    tailored_amplitudes: dict[str, Any] = field(default_factory=dict)
+    external_correlation_energy: float | None = None
+    total_corrected_energy: float | None = None
+    double_counting_audit: dict[str, Any] = field(default_factory=dict)
+    classical_solver: str | None = None
+    trust_gate: str = "exploratory"
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class KQPBCResultSummary:
+    """Exploratory non-Gamma/twist PBC quantum-method audit summary."""
+
+    available: bool
+    kpoints: list[str] = field(default_factory=list)
+    twist_energies: list[dict[str, Any]] = field(default_factory=list)
+    finite_size_correction: dict[str, Any] = field(default_factory=dict)
+    band_window_metadata: dict[str, Any] = field(default_factory=dict)
+    non_gamma_mapping_audit: dict[str, Any] = field(default_factory=dict)
+    promotion_readiness_audit: dict[str, Any] = field(default_factory=dict)
+    pbc_trust_tier: str = "exploratory"
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class FTQPEResourceEstimateSummary:
+    """Fault-tolerant QPE resource-planning summary."""
+
+    available: bool
+    encodings_compared: list[str] = field(default_factory=list)
+    lambda_norms: dict[str, float] = field(default_factory=dict)
+    toffoli_counts: dict[str, float] = field(default_factory=dict)
+    logical_qubits: dict[str, int] = field(default_factory=dict)
+    physical_qubits: dict[str, int] = field(default_factory=dict)
+    runtime_estimates: dict[str, float] = field(default_factory=dict)
+    dominant_cost_terms: dict[str, Any] = field(default_factory=dict)
+    recommended_encoding: str | None = None
+    resource_formula_audit: dict[str, Any] = field(default_factory=dict)
+    resource_model_audit: dict[str, Any] = field(default_factory=dict)
+    promotion_readiness_audit: dict[str, Any] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class MethodEvidenceSummary:
+    """Compact pointer to the integrated method-evidence sidecar."""
+
+    available: bool
+    schema: str
+    sidecar_path: str | None = None
+    sidecar_sha256: str | None = None
+    methods: dict[str, Any] = field(default_factory=dict)
+    promotion_gate_audit: dict[str, Any] = field(default_factory=dict)
+    trust_tier: str = "exploratory"
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -797,6 +931,7 @@ class ArtifactPaths:
     calibration_report_markdown: Path | None = None
     runtime_submission_json: Path | None = None
     quantum_evidence_json: Path | None = None
+    method_evidence_json: Path | None = None
     field_evidence: FieldArtifactPaths | None = None
     qcschema_json: Path | None = None
     hdf5_file: Path | None = None
@@ -842,6 +977,7 @@ class RunResult:
     environment_embedding: EffectiveHamiltonianSummary | None
     hardware_error_diagnostic: dict[str, Any] | None
     quantum_evidence: QuantumEvidenceSummary | None
+    method_evidence: MethodEvidenceSummary | None
     field_evidence: FieldEvidenceSummary | None
     provenance: ProvenanceSummary
     log_summary: LogSummary
@@ -855,6 +991,12 @@ class RunResult:
     evidence_summary: EvidenceSummary | None = None
     acceptance_summary: dict[str, Any] | None = None
     artifact_index_entry: dict[str, Any] | None = None
+    e_adapt_result: EADAPTResultSummary | None = None
+    orbital_optimization: OrbitalOptimizationSummary | None = None
+    qsci_plus_result: QSCIPlusResultSummary | None = None
+    post_correlation: PostCorrelationSummary | None = None
+    kq_pbc_result: KQPBCResultSummary | None = None
+    ft_qpe_resource_estimate: FTQPEResourceEstimateSummary | None = None
     tc_qsci_result: dict[str, Any] | None = None
     determinant_selection: dict[str, Any] | None = None
     symmetry_sector: dict[str, Any] | None = None

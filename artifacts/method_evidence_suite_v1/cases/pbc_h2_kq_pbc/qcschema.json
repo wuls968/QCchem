@@ -1,0 +1,1004 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 0.0,
+      "available": true,
+      "estimated_measurement_cost": 20000.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.000101041001471458,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.01,
+      "reference_target": "exact_baseline"
+    },
+    "cast_hamiltonian": null,
+    "cavity_qed_model": null,
+    "chemical_accuracy": {
+      "absolute_error_hartree": 0.0,
+      "absolute_error_kcal_mol": 0.0,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -0.9522940695662074,
+      "continuum_chemistry_accuracy": {},
+      "finite_model_exactness": {},
+      "hardware_accuracy": {},
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -0.9522940695662074,
+      "relative_error": 0.0,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "determinant_selection": null,
+    "e_adapt_result": null,
+    "environment_embedding": null,
+    "error_budget": null,
+    "evidence_summary": {
+      "chemical_accuracy_status": "met",
+      "comparison_evidence": {
+        "absolute_error": 0.0,
+        "baseline_strength": "strong",
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "relative_error": 0.0,
+        "statistical_error": null
+      },
+      "decision_worthiness": {
+        "blocking_issues": [
+          "PBC execution is Gamma-only/supercell scoped in v1.",
+          "Non-Gamma k-point meshes, finite-size convergence, and full periodic QM/MM dynamics are not claimed."
+        ],
+        "compression_context": {
+          "method": null,
+          "verification_status": null
+        },
+        "recommended_action": "collect_stronger_baseline",
+        "reduction_context": {
+          "selection_mode": "none",
+          "transformers_applied": []
+        },
+        "why": [
+          "trust_tier=exploratory",
+          "chemical_accuracy_status=met",
+          "runtime_evidence_status=none",
+          "runtime_accuracy_status=unavailable"
+        ]
+      },
+      "energy_evidence": {
+        "constant_energy_correction": 0.0,
+        "electronic_energy": -1.2980888491137033,
+        "perturbative_correction": null,
+        "solver_energy": -1.2980888491137033,
+        "total_energy": -0.9522940695662074
+      },
+      "execution_evidence": {
+        "field_model_kind": null,
+        "measured_shot_usage": null,
+        "measurement_group_count": 2,
+        "measurement_strategy": "default",
+        "runtime_backend": null,
+        "runtime_job_id": null,
+        "shots": null,
+        "wall_time_seconds": 2.1101574999993318
+      },
+      "primary_baseline": {
+        "baseline_kind": "exact",
+        "baseline_scope": "single_run",
+        "baseline_source": "exact_diagonalization",
+        "baseline_strength": "strong"
+      },
+      "primary_error_metric": {
+        "comparison_target": "exact_baseline",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 1e-08,
+        "units": "Hartree",
+        "value": 0.0
+      },
+      "primary_scientific_claim": "H2-kq-pbc stays within chemical accuracy against exact_baseline for the defended local execution path.",
+      "recommended_action": "collect_stronger_baseline",
+      "result_identity": {
+        "artifact_kind": "run",
+        "artifact_name": "pbc_h2_kq_pbc",
+        "backend_kind": "statevector",
+        "basis": "sto3g",
+        "field_model_kind": null,
+        "mapping_kind": "jordan_wigner",
+        "molecule_name": "H2-kq-pbc"
+      },
+      "runtime_derived_accuracy": {
+        "absolute_error_hartree": null,
+        "assessment_target": null,
+        "meets_chemical_accuracy": null,
+        "status": "unavailable",
+        "threshold_hartree": null
+      },
+      "runtime_evidence_status": "none",
+      "scientific_accuracy": {
+        "absolute_error_hartree": 0.0,
+        "assessment_target": "local_execution",
+        "continuum_chemistry_accuracy": {},
+        "finite_model_exactness": {},
+        "hardware_accuracy": {},
+        "meets_chemical_accuracy": true,
+        "status": "met",
+        "threshold_hartree": 0.0016
+      },
+      "trust_judgment": {
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "lr_ace_trust_label": null,
+        "lr_ace_validation_gate": null,
+        "module_origin": "core",
+        "scientific_risk_notes": [
+          "PBC execution is Gamma-only/supercell scoped in v1.",
+          "Non-Gamma k-point meshes, finite-size convergence, and full periodic QM/MM dynamics are not claimed."
+        ],
+        "verification_notes": [
+          "validation_scope=pbc_gamma_supercell_v1"
+        ],
+        "verification_status": "exploratory"
+      },
+      "trust_tier": "exploratory"
+    },
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "ft_qpe_resource_estimate": null,
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "input_provenance": [
+      {
+        "atom_count": 2,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "033faa492d62c4db3074109099b7adf0d22c80caea37a2d7514b7ecf510f5ff3",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "periodic": {
+          "cell": {
+            "unit": "angstrom",
+            "vectors": [
+              [
+                8.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                8.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                8.0
+              ]
+            ]
+          },
+          "coordinate_mode": "cartesian",
+          "enabled": true,
+          "pbc": [
+            true,
+            true,
+            true
+          ],
+          "source": "config",
+          "wrap_policy": "preserve"
+        },
+        "periodic_fingerprint": "c84e33d932568754d92c44aa1d314a5a773da06354339de7a91f1f4475307779",
+        "unit": "angstrom"
+      }
+    ],
+    "kq_pbc_result": {
+      "available": true,
+      "band_window_metadata": {
+        "num_electrons": 2,
+        "num_spatial_orbitals": 2
+      },
+      "finite_size_correction": {
+        "available_twist_energy_count": 0,
+        "energy_correction_hartree": null,
+        "missing_twist_energy_count": 2,
+        "missing_twist_energy_fraction": 1.0,
+        "reason": "No non-Gamma/twist energies are available for finite-size correction in kQ-PBC v1.",
+        "required_twist_energy_count": 2,
+        "status": "not_evaluated",
+        "twist_average_requested": true,
+        "twist_energy_coverage_fraction": 0.0
+      },
+      "kpoints": [
+        "gamma",
+        "x_half"
+      ],
+      "non_gamma_mapping_audit": {
+        "coverage_audit": {
+          "available_twist_energy_count": 0,
+          "executed_named_kpoint_count": 1,
+          "executed_requested_named_kpoint_count": 1,
+          "execution_mesh_kpoint_count": 1,
+          "mesh_kpoint_execution_coverage_fraction": 0.5,
+          "missing_twist_energy_count": 2,
+          "missing_twist_energy_fraction": 1.0,
+          "named_kpoint_execution_coverage_fraction": 0.5,
+          "proxy_energy_present": false,
+          "requested_mesh_kpoint_count": 2,
+          "requested_named_kpoint_count": 2,
+          "required_twist_energy_count": 2,
+          "status": "gamma_reference_only_coverage_gap",
+          "twist_energy_coverage_fraction": 0.0
+        },
+        "energy_replaces_primary": false,
+        "executable_scope": "gamma_reference_hamiltonian_only",
+        "executed_named_kpoints": [
+          "gamma"
+        ],
+        "executed_requested_named_kpoints": [
+          "gamma"
+        ],
+        "execution_kpoint_count": 1,
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "forces_stress_cell_optimization": "out_of_scope",
+        "gamma_reference_energy_hartree": -1.2980888491137033,
+        "mesh_kpoint_execution_coverage_fraction": 0.5,
+        "mesh_mismatch": true,
+        "named_kpoint_execution_coverage_fraction": 0.5,
+        "non_gamma_energy_available": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "non_gamma_quantum_mapping_not_executed",
+          "twist_energies_not_evaluated",
+          "finite_size_correction_not_evaluated",
+          "forces_stress_cell_optimization_out_of_scope"
+        ],
+        "requested_kpoint_count": 2,
+        "requested_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "requested_named_kpoints": [
+          "gamma",
+          "x_half"
+        ],
+        "runtime_submission_allowed": false,
+        "status": "audit_only",
+        "unsupported_claim_count": 4,
+        "unsupported_claims": [
+          "non_gamma_materials_accuracy",
+          "twist_averaged_energy",
+          "finite_size_corrected_energy",
+          "forces_or_stress"
+        ]
+      },
+      "notes": [
+        "kQ-PBC v1 is an exploratory audit and does not validate non-Gamma materials accuracy.",
+        "Requested k/twist entries do not contain proxy energies; only the Gamma reference Hamiltonian is executed."
+      ],
+      "pbc_trust_tier": "exploratory",
+      "promotion_readiness_audit": {
+        "coverage_audit": {
+          "available_twist_energy_count": 0,
+          "executed_named_kpoint_count": 1,
+          "executed_requested_named_kpoint_count": 1,
+          "execution_mesh_kpoint_count": 1,
+          "mesh_kpoint_execution_coverage_fraction": 0.5,
+          "missing_twist_energy_count": 2,
+          "missing_twist_energy_fraction": 1.0,
+          "named_kpoint_execution_coverage_fraction": 0.5,
+          "proxy_energy_present": false,
+          "requested_mesh_kpoint_count": 2,
+          "requested_named_kpoint_count": 2,
+          "required_twist_energy_count": 2,
+          "status": "gamma_reference_only_coverage_gap",
+          "twist_energy_coverage_fraction": 0.0
+        },
+        "energy_replaces_primary": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "non_gamma_quantum_mapping_not_executed",
+          "twist_energies_not_evaluated",
+          "finite_size_correction_not_evaluated",
+          "forces_stress_cell_optimization_out_of_scope"
+        ],
+        "readiness_level": "not_ready_for_validated_non_gamma_claim",
+        "required_promotion_evidence": [
+          "executable_non_gamma_quantum_mapping",
+          "evaluated_twist_energies",
+          "finite_size_correction_model",
+          "forces_stress_cell_optimization_support"
+        ],
+        "runtime_submission_allowed": false,
+        "status": "blocked_exploratory_audit_only",
+        "unsupported_claim_count": 4,
+        "unsupported_claims": [
+          "non_gamma_materials_accuracy",
+          "twist_averaged_energy",
+          "finite_size_corrected_energy",
+          "forces_or_stress"
+        ]
+      },
+      "twist_energies": [
+        {
+          "energy_status": "not_evaluated",
+          "execution_reference": "gamma_reference_hamiltonian",
+          "kpoint": "gamma",
+          "mapping_status": "audit_only",
+          "reason": "kQ-PBC v1 records requested non-Gamma/twist metadata but does not execute non-Gamma quantum mappings.",
+          "requested_twist_index": 0,
+          "solver_energy_hartree": null
+        },
+        {
+          "energy_status": "not_evaluated",
+          "execution_reference": "gamma_reference_hamiltonian",
+          "kpoint": "x_half",
+          "mapping_status": "audit_only",
+          "reason": "kQ-PBC v1 records requested non-Gamma/twist metadata but does not execute non-Gamma quantum mappings.",
+          "requested_twist_index": 1,
+          "solver_energy_hartree": null
+        }
+      ]
+    },
+    "low_rank_resource_estimate": null,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "jordan_wigner",
+      "num_qubits": 1,
+      "qubit_term_count": 3,
+      "raw_num_qubits": 4,
+      "raw_qubit_term_count": 15,
+      "symmetry_reduction_notes": [
+        "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+        "Exact-spectrum validation passed with delta=2.22045e-15 Hartree."
+      ],
+      "symmetry_reduction_status": "applied_z2",
+      "symmetry_reduction_validation": {
+        "absolute_delta": 2.220446049250313e-15,
+        "available": true,
+        "max_qubits": 12,
+        "method": "exact_ground_state_delta",
+        "raw_ground_energy": -1.2980888491137055,
+        "tapered_ground_energy": -1.2980888491137033
+      },
+      "symmetry_tapered_qubits": 3,
+      "z2_symmetry_count": 3,
+      "z2_tapering_values": [
+        -1,
+        1,
+        -1
+      ]
+    },
+    "measurement": {
+      "basis_reuse_across_properties": false,
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {},
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "planner": "default",
+      "predicted_variance": null,
+      "realized_variance": null,
+      "runtime_precision_target": 0.01,
+      "shadow_bases": [],
+      "shot_allocation": [],
+      "strategy": "default",
+      "term_count": 3,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "method_evidence": {
+      "available": true,
+      "methods": {
+        "kq_pbc_result": {
+          "available": true,
+          "trust_tier": "exploratory"
+        }
+      },
+      "notes": [
+        "Method evidence is reported alongside the primary solver result.",
+        "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+      ],
+      "promotion_gate_audit": {
+        "accuracy_claim_allowed_methods": [],
+        "hardware_claim_allowed_methods": [],
+        "method_records": {
+          "kq_pbc_result": {
+            "accuracy_claim_allowed": false,
+            "claim_status": "audit_only",
+            "energy_replacement_allowed": false,
+            "evidence_role": "pbc_k_twist_audit",
+            "hardware_claim_allowed": false,
+            "mesh_kpoint_execution_coverage_fraction": 0.5,
+            "method": "kq_pbc_result",
+            "missing_twist_energy_fraction": 1.0,
+            "named_kpoint_execution_coverage_fraction": 0.5,
+            "planning_metric_allowed": false,
+            "primary_solver_selected": false,
+            "promotion_blocker_count": 4,
+            "promotion_blockers": [
+              "non_gamma_quantum_mapping_not_executed",
+              "twist_energies_not_evaluated",
+              "finite_size_correction_not_evaluated",
+              "forces_stress_cell_optimization_out_of_scope"
+            ],
+            "promotion_readiness_status": "blocked_exploratory_audit_only",
+            "promotion_required_for_validated_claim": true,
+            "readiness_level": "not_ready_for_validated_non_gamma_claim",
+            "resource_model_claim_allowed": false,
+            "twist_energy_coverage_fraction": 0.0,
+            "unsupported_claim_count": 4
+          }
+        },
+        "notes": [
+          "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+          "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+        ],
+        "overall_claim_status": "promotion_required",
+        "planning_metric_methods": [],
+        "primary_energy_policy": "raw_solver_energy_remains_primary",
+        "primary_solver_kind": "exact",
+        "promotion_required_for_validated_claims": true,
+        "resource_model_only_methods": [],
+        "schema": "qcchem.method_promotion_gate_audit.v1",
+        "sidecar_energy_replacement_allowed_methods": [],
+        "unsupported_for_claim_methods": []
+      },
+      "schema": "qcchem.method_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/pbc_h2_kq_pbc/method_evidence.json",
+      "sidecar_sha256": "2d357b2a3d319b4d604b34f264f6acb8c25fca118e80d237c527513917a4e123",
+      "trust_tier": "exploratory"
+    },
+    "orbital_optimization": null,
+    "pbc": {
+      "cell_unit": "angstrom",
+      "cell_vectors": [
+        [
+          8.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          8.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          8.0
+        ]
+      ],
+      "coordinate_mode": "cartesian",
+      "density_fitting": "fftdf",
+      "driver": "pyscf_pbc",
+      "enabled": true,
+      "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+      "kpoint_mesh": [
+        2,
+        1,
+        1
+      ],
+      "mode": "kq_pbc",
+      "pbc": [
+        true,
+        true,
+        true
+      ],
+      "precision": 1e-08,
+      "provenance": {
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "requested_audit_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+        "source": "config"
+      },
+      "risk_notes": [
+        "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+        "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+      ],
+      "volume": 512.0,
+      "wrap_policy": "preserve"
+    },
+    "pbc_qmmm": null,
+    "periodic_boundary": {
+      "cell_unit": "angstrom",
+      "cell_vectors": [
+        [
+          8.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          8.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          8.0
+        ]
+      ],
+      "coordinate_mode": "cartesian",
+      "density_fitting": "fftdf",
+      "driver": "pyscf_pbc",
+      "enabled": true,
+      "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+      "kpoint_mesh": [
+        2,
+        1,
+        1
+      ],
+      "mode": "kq_pbc",
+      "pbc": [
+        true,
+        true,
+        true
+      ],
+      "precision": 1e-08,
+      "provenance": {
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "requested_audit_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+        "source": "config"
+      },
+      "risk_notes": [
+        "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+        "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+      ],
+      "volume": 512.0,
+      "wrap_policy": "preserve"
+    },
+    "perturbative_correction_result": null,
+    "post_correlation": null,
+    "qcchem_run_id": "pbc_h2_kq_pbc",
+    "qft_dynamics": null,
+    "qft_model": null,
+    "qpe_resource_estimate": null,
+    "qsci_plus_result": null,
+    "quantum_evidence": {
+      "available": true,
+      "error_budget": {
+        "ansatz_error": {
+          "absolute_error_hartree": 0.0,
+          "available": false,
+          "baseline": "exact_baseline"
+        },
+        "compression_error": {
+          "available": false,
+          "compressed_vs_uncompressed": null,
+          "reconstruction_error": null
+        },
+        "existing_error_budget": {},
+        "field_model": {
+          "cavity_error_budget": null,
+          "finite_cutoff_boundary": false,
+          "qft_error_budget": null
+        },
+        "hardware_noise": {
+          "available": false,
+          "mitigation_metadata": null,
+          "verification_status": null
+        },
+        "qmmm_embedding": {
+          "available": false,
+          "boundary": null,
+          "cache_validation": null,
+          "mm_environment_quantized": null,
+          "one_body_environment": null
+        },
+        "shot_noise": {
+          "available": false,
+          "benchmark_statistical_error": null,
+          "runtime_reported_std": null,
+          "sampled_standard_error": null
+        }
+      },
+      "hamiltonian": {
+        "coefficient_l1_norm": 1.4578858641138446,
+        "energy_contribution_sum": -1.298088849113703,
+        "expectations_available": true,
+        "measurement_group_count": 2,
+        "pauli_term_count": 3,
+        "pauli_terms_available": true,
+        "pbc_qmmm": null,
+        "periodic_boundary": {
+          "cell_unit": "angstrom",
+          "cell_vectors": [
+            [
+              8.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              8.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              8.0
+            ]
+          ],
+          "coordinate_mode": "cartesian",
+          "density_fitting": "fftdf",
+          "driver": "pyscf_pbc",
+          "enabled": true,
+          "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+          "kpoint_mesh": [
+            2,
+            1,
+            1
+          ],
+          "mode": "kq_pbc",
+          "pbc": [
+            true,
+            true,
+            true
+          ],
+          "precision": 1e-08,
+          "provenance": {
+            "execution_kpoint_mesh": [
+              1,
+              1,
+              1
+            ],
+            "requested_audit_kpoint_mesh": [
+              2,
+              1,
+              1
+            ],
+            "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+            "source": "config"
+          },
+          "risk_notes": [
+            "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+            "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+          ],
+          "volume": 512.0,
+          "wrap_policy": "preserve"
+        }
+      },
+      "lattice_qed_observables": {},
+      "measurement": {
+        "counts_shots_per_group": 4096,
+        "estimated_measurement_cost": 20000.0,
+        "estimated_measurement_cost_is_hardware_cost": null,
+        "estimated_measurement_cost_scope": "pauli_grouping",
+        "groups_sha256": "709c84fbcf66765924c44c58f1738014433d1afca44aa6ec2f81c6293e737634",
+        "measurement_group_count_scope": "pauli_grouping",
+        "notes": [],
+        "plan": {
+          "basis_reuse_across_properties": false,
+          "cost_reduction_ratio": 1.0,
+          "estimated_shot_cost": 20000.0,
+          "execution_mode": "estimator",
+          "group_count": 2,
+          "grouping_policy": "default",
+          "low_rank_aware": false,
+          "measurement_cost_model": {},
+          "notes": [
+            "Measurement groups estimated with strategy 'default'.",
+            "Per-group shot estimate derived from precision target 0.01.",
+            "Measurement planning reflects the uncompressed execution path."
+          ],
+          "planner": "default",
+          "predicted_variance": null,
+          "realized_variance": null,
+          "runtime_precision_target": 0.01,
+          "shadow_bases": [],
+          "shot_allocation": [],
+          "strategy": "default",
+          "term_count": 3,
+          "uncompressed_estimated_shot_cost": 20000.0,
+          "uncompressed_group_count": 2
+        },
+        "qubit_wise_group_count": 2,
+        "sparse_estimated_group_count": null,
+        "sparse_exploratory_estimated_measurement_cost": null
+      },
+      "notes": [],
+      "resources": {
+        "circuit_depth": null,
+        "num_qubits": 1,
+        "operation_counts": {},
+        "qubit_term_count": 3,
+        "raw_num_qubits": 4,
+        "raw_qubit_term_count": 15,
+        "two_qubit_gate_count": null
+      },
+      "sampling": {
+        "available": true,
+        "counts_sha256": "f60f84ec9ee0035845cc1247f185bf620d77bfa1585788d24f3d9c395a14bfda",
+        "group_count": 2,
+        "shots_per_group": 4096,
+        "source": "statevector_sampler_from_final_state"
+      },
+      "schema": "qcchem.quantum_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/pbc_h2_kq_pbc/quantum_evidence.json",
+      "sidecar_sha256": "066d596548137386e02baf843f837b855b15a6241dd0f2e7791ed811cfff3f1f",
+      "sparse_exact_validation": {},
+      "state": {
+        "available": true,
+        "dominant_configurations": [
+          {
+            "bitstring": "0",
+            "probability": 0.9876944806845288
+          },
+          {
+            "bitstring": "1",
+            "probability": 0.012305519315471015
+          }
+        ],
+        "ground_state_overlap": 0.9999999999999996,
+        "hamiltonian_expectation": -1.2980888491137028,
+        "hamiltonian_variance": 6.661338147750939e-16,
+        "variance_method": "sparse_matrix_norm"
+      },
+      "symmetry_checks": {
+        "particle_number": {
+          "deviation": null,
+          "expectation_value": null,
+          "notes": [
+            "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+          ],
+          "status": "declared_from_problem_summary",
+          "target_num_particles": [
+            1,
+            1
+          ]
+        },
+        "qft_constraints": null,
+        "spin": {
+          "notes": [
+            "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+          ],
+          "status": "not_available"
+        },
+        "z2": {
+          "notes": [
+            "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+            "Exact-spectrum validation passed with delta=2.22045e-15 Hartree."
+          ],
+          "status": "applied_z2",
+          "validation": {
+            "absolute_delta": 2.220446049250313e-15,
+            "available": true,
+            "max_qubits": 12,
+            "method": "exact_ground_state_delta",
+            "raw_ground_energy": -1.2980888491137055,
+            "tapered_ground_energy": -1.2980888491137033
+          },
+          "z2_symmetry_count": 3,
+          "z2_tapering_values": [
+            -1,
+            1,
+            -1
+          ]
+        }
+      }
+    },
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.34579477954749577
+      },
+      "nuclear_repulsion_energy": 0.34579477954749577,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "pbc_qmmm": null,
+      "periodic_boundary": {
+        "cell_unit": "angstrom",
+        "cell_vectors": [
+          [
+            8.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            8.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            8.0
+          ]
+        ],
+        "coordinate_mode": "cartesian",
+        "density_fitting": "fftdf",
+        "driver": "pyscf_pbc",
+        "enabled": true,
+        "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+        "kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "mode": "kq_pbc",
+        "pbc": [
+          true,
+          true,
+          true
+        ],
+        "precision": 1e-08,
+        "provenance": {
+          "execution_kpoint_mesh": [
+            1,
+            1,
+            1
+          ],
+          "requested_audit_kpoint_mesh": [
+            2,
+            1,
+            1
+          ],
+          "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+          "source": "config"
+        },
+        "risk_notes": [
+          "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+          "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+        ],
+        "volume": 512.0,
+        "wrap_policy": "preserve"
+      },
+      "point_group_metadata": {
+        "pyscf_pbc": {
+          "adapter": "qcchem.pbc.pyscf_adapter.run_gamma_cell_problem",
+          "integration_recommendations": [
+            "Use GammaCellProblem.problem anywhere the molecular builder expects an ElectronicStructureProblem.",
+            "Keep non-Gamma k-point workflows out of the mapped quantum-algorithm path until full k-point support exists.",
+            "Use qcchem.pbc.ewald for periodic QM/MM constant terms before adding them to hamiltonian.constants."
+          ],
+          "mapping": {
+            "num_particles": [
+              1,
+              1
+            ],
+            "num_spatial_orbitals": 2,
+            "orbital_basis": "Gamma-point PySCF molecular orbitals",
+            "raw_integrals": "ElectronicEnergy.from_raw_integrals",
+            "target": "qiskit_nature.second_q.problems.ElectronicStructureProblem"
+          },
+          "pyscf_cell": {
+            "basis": "sto3g",
+            "charge": 0,
+            "dimension": 3,
+            "lattice_vectors_bohr": [
+              [
+                15.117808996520495,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                15.117808996520495,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                15.117808996520495
+              ]
+            ],
+            "nelectron": 2,
+            "spin": 0,
+            "unit": "Angstrom"
+          },
+          "scf": {
+            "converged": true,
+            "density_fit": true,
+            "density_fitting": "fftdf",
+            "e_tot_hartree": -1.1198957850814824,
+            "mesh": null,
+            "method": "rhf",
+            "nuclear_repulsion_energy_hartree": 0.34579477954749577
+          },
+          "schema": "qcchem.pbc.pyscf_adapter.v1",
+          "scope": {
+            "kpoint_mesh": [
+              1,
+              1,
+              1
+            ],
+            "non_gamma_policy": "rejected",
+            "periodic_images": "PySCF PBC cell integrals at Gamma point",
+            "spin_policy": "closed_shell_rhf_only"
+          }
+        },
+        "reason": "Molecular point-group symmetry is not reused for periodic Gamma-only cells.",
+        "status": "skipped_for_pbc"
+      },
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.34579477954749577,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "symmetry_sector": null,
+    "tc_qsci_result": null,
+    "verification_status": "exploratory"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-kq-pbc"
+  },
+  "properties": {
+    "boundary_embedding_constant_energy": 0.0,
+    "electronic_energy": -1.2980888491137033,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "nuclear_repulsion_energy": 0.34579477954749577,
+    "return_energy": -0.9522940695662074
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "HEAD",
+    "git_commit": "47612e92da7a8141c907ae3f4caee23a6463c39c",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "fbcfccc9d5f78b049a19f6327e8cb7c7e61ff23d0dd7c47a0a6f0d99b69ef708"
+  },
+  "return_result": -0.9522940695662074,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

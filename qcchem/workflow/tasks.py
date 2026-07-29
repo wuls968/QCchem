@@ -52,6 +52,39 @@ def _matrix_element(operator, bra: np.ndarray, ket: np.ndarray) -> complex:
     return complex(np.vdot(bra, matrix @ ket))
 
 
+def _exact_root_residual_audit(operator, spectrum: ExactSpectrum, state_index: int) -> dict[str, object]:
+    matrix = operator.to_matrix(sparse=True).tocsr()
+    statevector = np.asarray(spectrum.eigenvectors[:, state_index], dtype=complex)
+    energy = float(spectrum.eigenvalues[state_index])
+    residual = np.asarray(matrix @ statevector - energy * statevector, dtype=complex)
+    previous_gap = (
+        float(energy - spectrum.eigenvalues[state_index - 1])
+        if state_index > 0
+        else None
+    )
+    next_gap = (
+        float(spectrum.eigenvalues[state_index + 1] - energy)
+        if state_index + 1 < len(spectrum.eigenvalues)
+        else None
+    )
+    neighbor_gaps = [gap for gap in (previous_gap, next_gap) if gap is not None]
+    min_neighbor_gap = min((abs(gap) for gap in neighbor_gaps), default=None)
+    degenerate_neighbors = []
+    if previous_gap is not None and abs(previous_gap) <= 1.0e-8:
+        degenerate_neighbors.append(state_index - 1)
+    if next_gap is not None and abs(next_gap) <= 1.0e-8:
+        degenerate_neighbors.append(state_index + 1)
+    return {
+        "root_index": int(state_index),
+        "residual_norm": float(np.linalg.norm(residual)),
+        "previous_root_gap_hartree": previous_gap,
+        "next_root_gap_hartree": next_gap,
+        "min_neighbor_gap_hartree": min_neighbor_gap,
+        "degenerate_neighbor_indices": degenerate_neighbors,
+        "root_tracking_status": "degenerate_subspace" if degenerate_neighbors else "energy_order_stable",
+    }
+
+
 def _transition_dipole_components(dipole_property, mapping, bra: np.ndarray, ket: np.ndarray) -> np.ndarray:
     fermionic_ops = dipole_property.second_q_ops()
     components: list[complex] = []
@@ -68,6 +101,7 @@ def build_excited_state_result(
     spectrum: ExactSpectrum | None,
     *,
     total_constant_correction: float,
+    operator=None,
 ) -> ExcitedStateTaskResult | None:
     """Build the excited-state task result section."""
     task = spec.tasks.excited_state
@@ -82,14 +116,60 @@ def build_excited_state_result(
         )
 
     ground_total = spectrum.eigenvalues[0] + total_constant_correction
+    method = task.method.strip().lower()
+    selected_indices = sorted(set(task.state_indices))
+    overlap_condition_number: float | None = None
+    if method == "q_sc_eom":
+        selected_vectors = [
+            np.asarray(spectrum.eigenvectors[:, index], dtype=complex)
+            for index in selected_indices
+            if index < len(spectrum.eigenvalues)
+        ]
+        if selected_vectors:
+            overlap = np.asarray(
+                [[np.vdot(left, right) for right in selected_vectors] for left in selected_vectors],
+                dtype=complex,
+            )
+            overlap_condition_number = float(np.linalg.cond(overlap))
     states: list[ExcitedStateLevelResult] = []
-    for state_index in sorted(set(task.state_indices)):
+    for state_index in selected_indices:
         if state_index >= len(spectrum.eigenvalues):
             continue
         total_energy = spectrum.eigenvalues[state_index] + total_constant_correction
-        verification = "validated" if task.method == "exact_spectrum" else "exploratory"
+        verification = "validated" if method == "exact_spectrum" else "exploratory"
         baseline = {"source": "exact_spectrum"}
-        if task.method != "exact_spectrum":
+        solver_metadata: dict[str, object] = {"requested_method": task.method}
+        if method == "q_sc_eom":
+            root_residual_audit = (
+                _exact_root_residual_audit(operator, spectrum, state_index)
+                if operator is not None
+                else {"status": "not_available", "reason": "operator_not_provided"}
+            )
+            regularization_actions = []
+            if overlap_condition_number is None or overlap_condition_number >= 1.0e8:
+                regularization_actions.append("overlap_conditioning_requires_regularization")
+            if root_residual_audit.get("root_tracking_status") == "degenerate_subspace":
+                regularization_actions.append("degenerate_subspace_root_tracking_required")
+            baseline["proxy_mode"] = "exact_spectrum_for_q_sc_eom_conditioning_audit"
+            solver_metadata.update(
+                {
+                    "method": "q_sc_eom",
+                    "overlap_condition_number": overlap_condition_number,
+                    "regularization_actions": regularization_actions,
+                    "root_residual_audit": root_residual_audit,
+                    "root_tracking": {
+                        "reference_state_index": 0,
+                        "requested_state_index": state_index,
+                        "ordering": "exact_spectrum_energy_order",
+                        "status": root_residual_audit.get("root_tracking_status"),
+                    },
+                    "transition_properties": {
+                        "available": False,
+                        "reason": "property operators are reported through tasks.properties; q_sc_eom v1 stores conditioning metadata here.",
+                    },
+                }
+            )
+        elif method != "exact_spectrum":
             baseline["proxy_mode"] = "exact_spectrum_for_vqd_skeleton"
         states.append(
             ExcitedStateLevelResult(
@@ -98,7 +178,7 @@ def build_excited_state_result(
                 total_energy=float(total_energy),
                 excitation_energy=float(total_energy - ground_total),
                 reference_state_index=0,
-                solver_metadata={"requested_method": task.method},
+                solver_metadata=solver_metadata,
                 baseline=baseline,
                 verification_status=verification,
             )
@@ -106,7 +186,15 @@ def build_excited_state_result(
 
     notes: list[str] = []
     verification_status = "validated"
-    if task.method != "exact_spectrum":
+    if method == "q_sc_eom":
+        verification_status = "exploratory"
+        notes.extend(
+            [
+                "q-sc-EOM v1 uses exact-spectrum roots as a conditioning/reference audit.",
+                "Transition properties should be requested through tasks.properties; this section records root and overlap diagnostics.",
+            ]
+        )
+    elif method != "exact_spectrum":
         verification_status = "exploratory"
         notes.append(
             "Requested excited-state method is treated as an exploratory interface; values come from an exact-spectrum proxy."

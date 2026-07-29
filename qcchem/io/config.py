@@ -22,6 +22,7 @@ from qcchem.core import (
     CavityQEDModeSpec,
     CavityQEDSpec,
     CompressionSpec,
+    EADAPTSpec,
     ContinuitySpec,
     EmbeddingSpec,
     EmbeddingExecutionSpec,
@@ -31,6 +32,7 @@ from qcchem.core import (
     ExploratorySpec,
     ExternalPointChargeSpec,
     ExcitedStateTaskSpec,
+    FaultTolerantSpec,
     FragmentSpec,
     GeometryOptimizationTaskSpec,
     GradientTaskSpec,
@@ -68,6 +70,10 @@ from qcchem.core import (
     PointChargeSpec,
     ProblemSpec,
     PropertyTaskSpec,
+    QSCIClassicalDiagonalizerSpec,
+    QSCIDeterminantRepairSpec,
+    QSCIResidualExpansionSpec,
+    QSCISpec,
     ResponsePropertyTaskSpec,
     ReadoutMitigationSpec,
     RunConfig,
@@ -83,6 +89,7 @@ from qcchem.core import (
     TCQSCISpec,
     TaskSpec,
     ZNESpec,
+    OrbitalOptimizationSpec,
 )
 from qcchem.io.structure import (
     build_inline_geometry_provenance,
@@ -620,6 +627,44 @@ def _parse_lr_ace(solver_raw: dict[str, Any]) -> LRACESpec:
     )
 
 
+def _parse_e_adapt(solver_raw: dict[str, Any]) -> EADAPTSpec:
+    raw = solver_raw.get("e_adapt", {})
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise ValueError("solver.e_adapt must be a mapping.")
+    defaults = EADAPTSpec()
+    return EADAPTSpec(
+        pool=str(raw.get("pool", defaults.pool)),
+        gradient_threshold=float(raw.get("gradient_threshold", defaults.gradient_threshold)),
+        max_operators=int(raw.get("max_operators", defaults.max_operators)),
+        use_z2_tapering=bool(raw.get("use_z2_tapering", defaults.use_z2_tapering)),
+        use_point_group_filter=bool(raw.get("use_point_group_filter", defaults.use_point_group_filter)),
+        use_low_rank_priority=bool(raw.get("use_low_rank_priority", defaults.use_low_rank_priority)),
+        reject_if_two_qubit_increment_gt=int(
+            raw.get("reject_if_two_qubit_increment_gt", defaults.reject_if_two_qubit_increment_gt)
+        ),
+        finite_difference_step=float(raw.get("finite_difference_step", defaults.finite_difference_step)),
+    )
+
+
+def _parse_orbital_optimization(solver_raw: dict[str, Any]) -> OrbitalOptimizationSpec:
+    raw = solver_raw.get("orbital_optimization", {})
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise ValueError("solver.orbital_optimization must be a mapping.")
+    defaults = OrbitalOptimizationSpec()
+    return OrbitalOptimizationSpec(
+        active_active=bool(raw.get("active_active", defaults.active_active)),
+        inactive_active=bool(raw.get("inactive_active", defaults.inactive_active)),
+        active_virtual=bool(raw.get("active_virtual", defaults.active_virtual)),
+        max_macro_iterations=int(raw.get("max_macro_iterations", defaults.max_macro_iterations)),
+        gradient_tolerance=float(raw.get("gradient_tolerance", defaults.gradient_tolerance)),
+        rdm_source=str(raw.get("rdm_source", defaults.rdm_source)),
+    )
+
+
 def _parse_lr_ace_adaptive(
     solver_raw: dict[str, Any],
     *,
@@ -695,6 +740,7 @@ def _parse_measurement(problem_raw: dict[str, Any]) -> MeasurementSpec:
         return MeasurementSpec()
     return MeasurementSpec(
         strategy=str(measurement_raw.get("strategy", "default")),
+        planner=str(measurement_raw.get("planner", measurement_raw.get("strategy", "default"))),
         runtime_precision_target=(
             float(measurement_raw["runtime_precision_target"])
             if measurement_raw.get("runtime_precision_target") is not None
@@ -702,6 +748,28 @@ def _parse_measurement(problem_raw: dict[str, Any]) -> MeasurementSpec:
         ),
         execution_mode=str(measurement_raw.get("execution_mode", "estimator")),
         grouping_policy=str(measurement_raw.get("grouping_policy", "default")),
+        total_shots=(
+            int(((measurement_raw.get("budget") or {}).get("total_shots")))
+            if isinstance(measurement_raw.get("budget"), dict)
+            and (measurement_raw.get("budget") or {}).get("total_shots") is not None
+            else (
+                int(measurement_raw["total_shots"])
+                if measurement_raw.get("total_shots") is not None
+                else None
+            )
+        ),
+        max_circuits=(
+            int(((measurement_raw.get("budget") or {}).get("max_circuits")))
+            if isinstance(measurement_raw.get("budget"), dict)
+            and (measurement_raw.get("budget") or {}).get("max_circuits") is not None
+            else (
+                int(measurement_raw["max_circuits"])
+                if measurement_raw.get("max_circuits") is not None
+                else None
+            )
+        ),
+        strategies=[str(item) for item in measurement_raw.get("strategies", [])],
+        objective=str(measurement_raw.get("objective", "minimize_energy_variance")),
     )
 
 
@@ -718,8 +786,12 @@ def _parse_embedding(problem_raw: dict[str, Any]) -> EmbeddingSpec:
             raise ValueError("Each fragment entry must be a mapping.")
         fragments.append(
             FragmentSpec(
-                name=str(item["name"]),
-                atom_indices=[int(value) for value in item.get("atom_indices", [])],
+                name=str(item.get("name", f"fragment_{len(fragments)}")),
+                atom_indices=[
+                    int(value)
+                    for value in item.get("atom_indices", item.get("atoms", []))
+                ],
+                solver=(str(item["solver"]) if item.get("solver") is not None else None),
             )
         )
     execution_raw = embedding_raw.get("execution", {})
@@ -1045,8 +1117,8 @@ def _parse_pbc(problem_raw: dict[str, Any]) -> PBCSpec:
     if driver != "pyscf_pbc":
         raise ValueError("problem.pbc.driver must be pyscf_pbc.")
     mode = str(raw.get("mode", "gamma_supercell")).strip().lower()
-    if mode != "gamma_supercell":
-        raise ValueError("problem.pbc.mode must be gamma_supercell in v1.")
+    if mode not in {"gamma_supercell", "kq_pbc"}:
+        raise ValueError("problem.pbc.mode must be gamma_supercell or kq_pbc.")
     kpoint_mesh_raw = raw.get("kpoint_mesh", [1, 1, 1])
     if not isinstance(kpoint_mesh_raw, list | tuple) or len(kpoint_mesh_raw) != 3:
         raise ValueError("problem.pbc.kpoint_mesh must contain exactly three positive integers.")
@@ -1091,6 +1163,9 @@ def _parse_pbc(problem_raw: dict[str, Any]) -> PBCSpec:
         precision=precision,
         mesh=mesh,  # type: ignore[arg-type]
         neutralization=neutralization,
+        kpoints=[str(item) for item in raw.get("kpoints", ["gamma"])],
+        twist_average=bool(raw.get("twist_average", False)),
+        active_space_per_k=dict(raw.get("active_space_per_k", {})),
     )
 
 
@@ -1529,6 +1604,74 @@ def _parse_tc_qsci(raw: dict[str, Any], *, base_dir: Path) -> TCQSCISpec:
     )
 
 
+def _parse_qsci(raw: dict[str, Any]) -> QSCISpec:
+    qsci_raw = raw.get("qsci")
+    if not isinstance(qsci_raw, dict):
+        return QSCISpec()
+    repair_raw = qsci_raw.get("determinant_repair", {})
+    if repair_raw is None:
+        repair_raw = {}
+    if not isinstance(repair_raw, dict):
+        raise ValueError("qsci.determinant_repair must be a mapping.")
+    diagonalizer_raw = qsci_raw.get("classical_diagonalizer", {})
+    if diagonalizer_raw is None:
+        diagonalizer_raw = {}
+    if not isinstance(diagonalizer_raw, dict):
+        raise ValueError("qsci.classical_diagonalizer must be a mapping.")
+    residual_raw = qsci_raw.get("residual_expansion", {})
+    if residual_raw is None:
+        residual_raw = {}
+    if not isinstance(residual_raw, dict):
+        raise ValueError("qsci.residual_expansion must be a mapping.")
+    return QSCISpec(
+        enabled=bool(qsci_raw.get("enabled", False)),
+        sampler=str(qsci_raw.get("sampler", "vqe_state")),
+        determinant_repair=QSCIDeterminantRepairSpec(
+            enforce_particle_number=bool(repair_raw.get("enforce_particle_number", True)),
+            enforce_spin_sector=bool(repair_raw.get("enforce_spin_sector", True)),
+            hamming_expansion=int(repair_raw.get("hamming_expansion", 0)),
+        ),
+        classical_diagonalizer=QSCIClassicalDiagonalizerSpec(
+            method=str(diagonalizer_raw.get("method", "davidson")),
+            max_subspace_size=int(diagonalizer_raw.get("max_subspace_size", 50000)),
+        ),
+        residual_expansion=QSCIResidualExpansionSpec(
+            enabled=bool(residual_raw.get("enabled", False)),
+            max_iterations=int(residual_raw.get("max_iterations", 0)),
+            batch_size=int(residual_raw.get("batch_size", 8)),
+            max_additional_determinants=int(
+                residual_raw.get("max_additional_determinants", 0)
+            ),
+            target_residual_norm=float(residual_raw.get("target_residual_norm", 1.0e-6)),
+            scorer=str(residual_raw.get("scorer", "external_residual_coupling")),
+        ),
+        max_determinants=int(qsci_raw.get("max_determinants", 64)),
+        min_probability=float(qsci_raw.get("min_probability", 0.0)),
+        shots=int(qsci_raw.get("shots", 1024)),
+        excited_roots=int(qsci_raw.get("excited_roots", 0)),
+    )
+
+
+def _parse_fault_tolerant(raw: dict[str, Any]) -> FaultTolerantSpec:
+    ft_raw = raw.get("fault_tolerant")
+    if not isinstance(ft_raw, dict):
+        return FaultTolerantSpec()
+    surface_raw = ft_raw.get("surface_code", {})
+    if surface_raw is None:
+        surface_raw = {}
+    if not isinstance(surface_raw, dict):
+        raise ValueError("fault_tolerant.surface_code must be a mapping.")
+    defaults = FaultTolerantSpec()
+    return FaultTolerantSpec(
+        enabled=bool(ft_raw.get("enabled", False)),
+        method=str(ft_raw.get("method", defaults.method)),
+        encodings=[str(item) for item in ft_raw.get("encodings", defaults.encodings)],
+        precision_hartree=float(ft_raw.get("precision_hartree", defaults.precision_hartree)),
+        physical_error_rate=float(surface_raw.get("physical_error_rate", defaults.physical_error_rate)),
+        cycle_time_ns=float(surface_raw.get("cycle_time_ns", defaults.cycle_time_ns)),
+    )
+
+
 def _parse_noise_spec(backend_raw: dict[str, Any]) -> NoiseModelSpec:
     noise_raw = backend_raw.get("noise")
     if not isinstance(noise_raw, dict):
@@ -1784,6 +1927,8 @@ def load_run_spec(path: Path) -> RunSpec:
             experimental=bool(solver_raw.get("experimental", False)),
             lr_ace=lr_ace,
             lr_ace_adaptive=lr_ace_adaptive,
+            e_adapt=_parse_e_adapt(solver_raw),
+            orbital_optimization=_parse_orbital_optimization(solver_raw),
         ),
         benchmark=BenchmarkSpec(
             enabled=bool(benchmark_raw.get("enabled", True)),
@@ -1795,18 +1940,35 @@ def load_run_spec(path: Path) -> RunSpec:
             symmetry_check=SymmetryCheckSpec(
                 enabled=bool(symmetry_raw.get("enabled", False)),
                 strategy=str(symmetry_raw.get("strategy", "placeholder")),
+                particle_number=bool(symmetry_raw.get("particle_number", False)),
+                spin_parity=bool(symmetry_raw.get("spin_parity", False)),
+                z2_sector=bool(symmetry_raw.get("z2_sector", False)),
             ),
             readout=ReadoutMitigationSpec(
                 enabled=bool(readout_raw.get("enabled", False)),
                 method=str(readout_raw.get("method", "none")),
+                calibration_shots=int(readout_raw.get("calibration_shots", 0)),
             ),
             zne=ZNESpec(
                 enabled=bool(zne_raw.get("enabled", False)),
                 method=str(zne_raw.get("method", "placeholder")),
+                folding=str(zne_raw.get("folding", "global")),
+                scale_factors=[float(value) for value in zne_raw.get("scale_factors", [1.0, 1.5, 2.0, 3.0])],
+                extrapolator=str(zne_raw.get("extrapolator", "linear")),
             ),
             pec=PECSpec(
                 enabled=bool(pec_raw.get("enabled", False)),
                 method=str(pec_raw.get("method", "placeholder")),
+                calibration_model=(
+                    str(pec_raw["calibration_model"])
+                    if pec_raw.get("calibration_model") is not None
+                    else None
+                ),
+                max_overhead=(
+                    float(pec_raw["max_overhead"])
+                    if pec_raw.get("max_overhead") is not None
+                    else None
+                ),
             ),
             experimental=bool(mitigation_raw.get("experimental", False)),
         ),
@@ -1833,6 +1995,8 @@ def load_run_spec(path: Path) -> RunSpec:
             response_properties=_parse_response_properties(tasks_raw),
         ),
         tc_qsci=_parse_tc_qsci(raw, base_dir=resolved_path.parent),
+        qsci=_parse_qsci(raw),
+        fault_tolerant=_parse_fault_tolerant(raw),
         hardware_optimization=_parse_hardware_optimization(raw),
         run=RunConfig(
             seed=int(run_raw.get("seed", 7)),

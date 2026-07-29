@@ -1,0 +1,760 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 4.429694833163467e-09,
+      "available": true,
+      "estimated_measurement_cost": 20000.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 0.08008766700004344,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.01,
+      "reference_target": "variational_result"
+    },
+    "cast_hamiltonian": null,
+    "cavity_qed_model": null,
+    "chemical_accuracy": {
+      "absolute_error_hartree": 4.429694833163467e-09,
+      "absolute_error_kcal_mol": 2.7796754747389245e-06,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.1373060313237042,
+      "continuum_chemistry_accuracy": {},
+      "finite_model_exactness": {},
+      "hardware_accuracy": {},
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.137306035753399,
+      "relative_error": 3.894901366833116e-09,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "determinant_selection": null,
+    "e_adapt_result": null,
+    "environment_embedding": null,
+    "error_budget": null,
+    "evidence_summary": {
+      "chemical_accuracy_status": "met",
+      "comparison_evidence": {
+        "absolute_error": 4.429694833163467e-09,
+        "baseline_strength": "strong",
+        "comparison_target": "variational_result",
+        "compressed_vs_uncompressed": null,
+        "relative_error": 2.3850505504727444e-09,
+        "statistical_error": null
+      },
+      "decision_worthiness": {
+        "blocking_issues": [
+          "OO-QCASSCF v1 records a PySCF CASSCF orbital-relaxation reference diagnostic around the delegated VQE path.",
+          "The delegated VQE solver energy remains the primary solver energy in v1."
+        ],
+        "compression_context": {
+          "method": null,
+          "verification_status": null
+        },
+        "recommended_action": "collect_stronger_baseline",
+        "reduction_context": {
+          "selection_mode": "none",
+          "transformers_applied": []
+        },
+        "why": [
+          "trust_tier=exploratory",
+          "chemical_accuracy_status=met",
+          "runtime_evidence_status=none",
+          "runtime_accuracy_status=unavailable"
+        ]
+      },
+      "energy_evidence": {
+        "constant_energy_correction": 0.0,
+        "electronic_energy": -1.857275025772684,
+        "perturbative_correction": null,
+        "solver_energy": -1.857275025772684,
+        "total_energy": -1.1373060313237042
+      },
+      "execution_evidence": {
+        "field_model_kind": null,
+        "measured_shot_usage": null,
+        "measurement_group_count": 2,
+        "measurement_strategy": "default",
+        "runtime_backend": null,
+        "runtime_job_id": null,
+        "shots": null,
+        "wall_time_seconds": 0.13965274999645771
+      },
+      "primary_baseline": {
+        "baseline_kind": "exact",
+        "baseline_scope": "single_run",
+        "baseline_source": "exact_diagonalization",
+        "baseline_strength": "strong"
+      },
+      "primary_error_metric": {
+        "comparison_target": "variational_result",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 0.001,
+        "units": "Hartree",
+        "value": 4.429694833163467e-09
+      },
+      "primary_scientific_claim": "H2-oo-qcasscf stays within chemical accuracy against variational_result for the defended local execution path.",
+      "recommended_action": "collect_stronger_baseline",
+      "result_identity": {
+        "artifact_kind": "run",
+        "artifact_name": "h2_oo_qcasscf",
+        "backend_kind": "statevector",
+        "basis": "sto3g",
+        "field_model_kind": null,
+        "mapping_kind": "jordan_wigner",
+        "molecule_name": "H2-oo-qcasscf"
+      },
+      "runtime_derived_accuracy": {
+        "absolute_error_hartree": null,
+        "assessment_target": null,
+        "meets_chemical_accuracy": null,
+        "status": "unavailable",
+        "threshold_hartree": null
+      },
+      "runtime_evidence_status": "none",
+      "scientific_accuracy": {
+        "absolute_error_hartree": 4.429694833163467e-09,
+        "assessment_target": "local_execution",
+        "continuum_chemistry_accuracy": {},
+        "finite_model_exactness": {},
+        "hardware_accuracy": {},
+        "meets_chemical_accuracy": true,
+        "status": "met",
+        "threshold_hartree": 0.0016
+      },
+      "trust_judgment": {
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "lr_ace_trust_label": null,
+        "lr_ace_validation_gate": null,
+        "module_origin": "exploratory",
+        "scientific_risk_notes": [
+          "OO-QCASSCF v1 records a PySCF CASSCF orbital-relaxation reference diagnostic around the delegated VQE path.",
+          "The delegated VQE solver energy remains the primary solver energy in v1."
+        ],
+        "verification_notes": [
+          "validation_scope=oo_qcasscf_pyscf_reference_diagnostic_v1"
+        ],
+        "verification_status": "exploratory"
+      },
+      "trust_tier": "exploratory"
+    },
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "ft_qpe_resource_estimate": null,
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "input_provenance": [
+      {
+        "atom_count": 2,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "f17f21bd4c0255c706d3cf8377ac9a5f1dcfa6c8cd1dc5a67bdb5d0cf7596534",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "periodic": {
+          "enabled": false
+        },
+        "periodic_fingerprint": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+        "unit": "angstrom"
+      }
+    ],
+    "kq_pbc_result": null,
+    "low_rank_resource_estimate": null,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "jordan_wigner",
+      "num_qubits": 1,
+      "qubit_term_count": 3,
+      "raw_num_qubits": 4,
+      "raw_qubit_term_count": 15,
+      "symmetry_reduction_notes": [
+        "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+        "Exact-spectrum validation passed with delta=1.33227e-15 Hartree."
+      ],
+      "symmetry_reduction_status": "applied_z2",
+      "symmetry_reduction_validation": {
+        "absolute_delta": 1.3322676295501878e-15,
+        "available": true,
+        "max_qubits": 12,
+        "method": "exact_ground_state_delta",
+        "raw_ground_energy": -1.8572750302023802,
+        "tapered_ground_energy": -1.8572750302023788
+      },
+      "symmetry_tapered_qubits": 3,
+      "z2_symmetry_count": 3,
+      "z2_tapering_values": [
+        -1,
+        1,
+        -1
+      ]
+    },
+    "measurement": {
+      "basis_reuse_across_properties": false,
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {},
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "planner": "default",
+      "predicted_variance": null,
+      "realized_variance": null,
+      "runtime_precision_target": 0.01,
+      "shadow_bases": [],
+      "shot_allocation": [],
+      "strategy": "default",
+      "term_count": 3,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "method_evidence": {
+      "available": true,
+      "methods": {
+        "orbital_optimization": {
+          "available": true,
+          "trust_tier": "exploratory"
+        }
+      },
+      "notes": [
+        "Method evidence is reported alongside the primary solver result.",
+        "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+      ],
+      "promotion_gate_audit": {
+        "accuracy_claim_allowed_methods": [],
+        "hardware_claim_allowed_methods": [],
+        "method_records": {
+          "orbital_optimization": {
+            "accuracy_claim_allowed": false,
+            "claim_status": "reference_diagnostic_only",
+            "energy_replacement_allowed": false,
+            "evidence_role": "casscf_reference_diagnostic",
+            "hardware_claim_allowed": false,
+            "method": "orbital_optimization",
+            "optimized_orbitals_applied_to_primary_solver": false,
+            "planning_metric_allowed": false,
+            "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+            "primary_solver_selected": false,
+            "promotion_blocker_count": 4,
+            "promotion_blockers": [
+              "optimized_orbitals_not_applied_to_primary_solver",
+              "primary_hamiltonian_not_rebuilt_from_optimized_orbitals",
+              "casscf_reference_energy_scope_differs_from_solver_energy",
+              "oo_qcasscf_solver_replacement_benchmark_gate_missing"
+            ],
+            "promotion_readiness_status": "blocked_reference_diagnostic_only",
+            "promotion_required_for_validated_claim": true,
+            "readiness_level": "reference_diagnostic_not_solver_replacement",
+            "required_promotion_evidence_count": 5,
+            "resource_model_claim_allowed": false,
+            "solver_replacement_allowed": false
+          }
+        },
+        "notes": [
+          "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+          "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+        ],
+        "overall_claim_status": "promotion_required",
+        "planning_metric_methods": [],
+        "primary_energy_policy": "raw_solver_energy_remains_primary",
+        "primary_solver_kind": "oo_qcasscf",
+        "promotion_required_for_validated_claims": true,
+        "resource_model_only_methods": [],
+        "schema": "qcchem.method_promotion_gate_audit.v1",
+        "sidecar_energy_replacement_allowed_methods": [],
+        "unsupported_for_claim_methods": []
+      },
+      "schema": "qcchem.method_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_oo_qcasscf/method_evidence.json",
+      "sidecar_sha256": "389d3891a0029aba3936b91ccee8c3eb666c541b43b0bd41fc6f96f260299fbe",
+      "trust_tier": "exploratory"
+    },
+    "orbital_optimization": {
+      "active_space_changed": false,
+      "active_space_resolve": {
+        "abs_casscf_primary_total_gap_hartree": 4.4296952772526765e-09,
+        "casscf_minus_primary_total_energy_hartree": -4.4296952772526765e-09,
+        "casscf_reference_electronic_energy_hartree": -1.8572750302023793,
+        "casscf_reference_energy_hartree": -1.1373060357533995,
+        "casscf_reference_lower_than_primary_total": true,
+        "casscf_reference_total_energy_hartree": -1.1373060357533995,
+        "delegated_solver_energy_hartree": -1.857275025772684,
+        "delegated_solver_hamiltonian_energy_hartree": -1.857275025772684,
+        "delegated_solver_total_energy_estimate_hartree": -1.1373060313237042,
+        "electronic_constant_correction_hartree": 0.0,
+        "energy_replaces_primary": false,
+        "energy_scope_audit": {
+          "casscf_reference_energy_scope": "molecular_total_energy",
+          "energy_replaces_primary": false,
+          "energy_scope_consistent_for_total_gap": true,
+          "primary_solver_energy_scope": "solver_hamiltonian_energy",
+          "primary_total_energy_estimate_formula": "delegated_solver_hamiltonian_energy_hartree + electronic_constant_correction_hartree + nuclear_repulsion_energy_hartree",
+          "reason": "PySCF CASSCF e_tot is a molecular total energy; QCchem solver_energy is a solver Hamiltonian energy, so v1 records an explicit total-energy estimate before comparison.",
+          "solver_replacement_allowed": false
+        },
+        "nuclear_repulsion_energy_hartree": 0.7199689944489797,
+        "optimized_orbitals_applied_to_primary_solver": false,
+        "orbital_transfer_audit": {
+          "active_space_metadata_available": false,
+          "delegated_solver_kind": "vqe",
+          "energy_replaces_primary": false,
+          "missing_transfer_components": [
+            "optimized-orbital integral transformation",
+            "QCchem Hamiltonian rebuild from optimized orbitals",
+            "primary solver re-run on optimized-orbital Hamiltonian"
+          ],
+          "optimized_orbitals_applied_to_primary_solver": false,
+          "optimized_orbitals_available": true,
+          "orbital_rotation_norm": 0.0,
+          "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+          "primary_solver_rerun_on_optimized_orbitals": false,
+          "rdm_source": "exact",
+          "rotation_blocks_requested": {
+            "active_active": false,
+            "active_virtual": true,
+            "inactive_active": true
+          },
+          "schema": "qcchem.oo_qcasscf_orbital_transfer_audit.v1",
+          "status": "reference_orbitals_not_transferred_to_primary_solver"
+        },
+        "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+        "promotion_readiness_audit": {
+          "accuracy_claim_allowed": false,
+          "energy_replacement_allowed": false,
+          "energy_scope_consistent_for_total_gap": true,
+          "optimized_orbitals_applied_to_primary_solver": false,
+          "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+          "promotion_blocker_count": 4,
+          "promotion_blockers": [
+            "optimized_orbitals_not_applied_to_primary_solver",
+            "primary_hamiltonian_not_rebuilt_from_optimized_orbitals",
+            "casscf_reference_energy_scope_differs_from_solver_energy",
+            "oo_qcasscf_solver_replacement_benchmark_gate_missing"
+          ],
+          "readiness_level": "reference_diagnostic_not_solver_replacement",
+          "required_promotion_evidence": [
+            "optimized-orbital one- and two-electron integral transformation",
+            "QCchem Hamiltonian rebuild from optimized orbitals",
+            "primary solver re-run on optimized-orbital Hamiltonian",
+            "energy-scope matched benchmark against exact/reference data",
+            "separate promotion gate allowing solver-energy replacement"
+          ],
+          "required_promotion_evidence_count": 5,
+          "schema": "qcchem.oo_qcasscf_promotion_readiness.v1",
+          "solver_replacement_allowed": false,
+          "status": "blocked_reference_diagnostic_only"
+        },
+        "qcchem_primary_solver_kind": "vqe",
+        "solver_replacement_allowed": false,
+        "status": "not_applied_to_primary_solver"
+      },
+      "available": true,
+      "energy_lowering_hartree": 0.02030703899939601,
+      "energy_replaces_primary": false,
+      "energy_scope_audit": {
+        "casscf_reference_energy_scope": "molecular_total_energy",
+        "energy_replaces_primary": false,
+        "energy_scope_consistent_for_total_gap": true,
+        "primary_solver_energy_scope": "solver_hamiltonian_energy",
+        "primary_total_energy_estimate_formula": "delegated_solver_hamiltonian_energy_hartree + electronic_constant_correction_hartree + nuclear_repulsion_energy_hartree",
+        "reason": "PySCF CASSCF e_tot is a molecular total energy; QCchem solver_energy is a solver Hamiltonian energy, so v1 records an explicit total-energy estimate before comparison.",
+        "solver_replacement_allowed": false
+      },
+      "macro_iterations": [
+        {
+          "backend": "pyscf.mcscf.CASSCF",
+          "casscf_electronic_energy_hartree": -1.8572750302023793,
+          "casscf_reference_energy_hartree": -1.1373060357533995,
+          "casscf_total_energy_hartree": -1.1373060357533995,
+          "converged": true,
+          "energy_lowering_hartree": 0.02030703899939601,
+          "macro_iteration": 1,
+          "mean_field_electronic_energy_hartree": -1.8369679912029833,
+          "mean_field_energy_hartree": -1.1169989967540035,
+          "mean_field_to_casscf_total_delta_hartree": -0.02030703899939601,
+          "mean_field_total_energy_hartree": -1.1169989967540035,
+          "orbital_rotation_norm": 0.0,
+          "status": "computed"
+        }
+      ],
+      "notes": [
+        "OO-QCASSCF evidence is a v1 PySCF CASSCF reference diagnostic and remains exploratory.",
+        "The delegated QCchem solver energy remains primary unless an OO-QCASSCF solver is explicitly validated for replacement."
+      ],
+      "orbital_rotation_norm": 0.0,
+      "orbital_transfer_audit": {
+        "active_space_metadata_available": false,
+        "delegated_solver_kind": "vqe",
+        "energy_replaces_primary": false,
+        "missing_transfer_components": [
+          "optimized-orbital integral transformation",
+          "QCchem Hamiltonian rebuild from optimized orbitals",
+          "primary solver re-run on optimized-orbital Hamiltonian"
+        ],
+        "optimized_orbitals_applied_to_primary_solver": false,
+        "optimized_orbitals_available": true,
+        "orbital_rotation_norm": 0.0,
+        "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+        "primary_solver_rerun_on_optimized_orbitals": false,
+        "rdm_source": "exact",
+        "rotation_blocks_requested": {
+          "active_active": false,
+          "active_virtual": true,
+          "inactive_active": true
+        },
+        "schema": "qcchem.oo_qcasscf_orbital_transfer_audit.v1",
+        "status": "reference_orbitals_not_transferred_to_primary_solver"
+      },
+      "promotion_readiness_audit": {
+        "accuracy_claim_allowed": false,
+        "energy_replacement_allowed": false,
+        "energy_scope_consistent_for_total_gap": true,
+        "optimized_orbitals_applied_to_primary_solver": false,
+        "primary_hamiltonian_rebuilt_from_optimized_orbitals": false,
+        "promotion_blocker_count": 4,
+        "promotion_blockers": [
+          "optimized_orbitals_not_applied_to_primary_solver",
+          "primary_hamiltonian_not_rebuilt_from_optimized_orbitals",
+          "casscf_reference_energy_scope_differs_from_solver_energy",
+          "oo_qcasscf_solver_replacement_benchmark_gate_missing"
+        ],
+        "readiness_level": "reference_diagnostic_not_solver_replacement",
+        "required_promotion_evidence": [
+          "optimized-orbital one- and two-electron integral transformation",
+          "QCchem Hamiltonian rebuild from optimized orbitals",
+          "primary solver re-run on optimized-orbital Hamiltonian",
+          "energy-scope matched benchmark against exact/reference data",
+          "separate promotion gate allowing solver-energy replacement"
+        ],
+        "required_promotion_evidence_count": 5,
+        "schema": "qcchem.oo_qcasscf_promotion_readiness.v1",
+        "solver_replacement_allowed": false,
+        "status": "blocked_reference_diagnostic_only"
+      },
+      "rdm_source": "exact",
+      "reference_diagnostics": {
+        "active_space_changed": false,
+        "active_space_resolve_status": "not_applied_to_primary_solver",
+        "backend": "pyscf.mcscf.CASSCF",
+        "casscf_electronic_energy_hartree": -1.8572750302023793,
+        "casscf_reference_energy_hartree": -1.1373060357533995,
+        "casscf_total_energy_hartree": -1.1373060357533995,
+        "converged": true,
+        "energy_lowering_hartree": 0.02030703899939601,
+        "energy_lowering_status": "lowered",
+        "energy_replaces_primary": false,
+        "energy_scope": "molecular_total_energy",
+        "gradient_tolerance": 0.0001,
+        "macro_iteration_limit": 3,
+        "mean_field_electronic_energy_hartree": -1.8369679912029833,
+        "mean_field_energy_hartree": -1.1169989967540035,
+        "mean_field_to_casscf_electronic_delta_hartree": -0.02030703899939601,
+        "mean_field_to_casscf_total_delta_hartree": -0.02030703899939601,
+        "mean_field_total_energy_hartree": -1.1169989967540035,
+        "ncas": 2,
+        "nelecas": [
+          1,
+          1
+        ],
+        "nuclear_repulsion_energy_hartree": 0.7199689944489797,
+        "orbital_rotation_norm": 0.0,
+        "rdm_source": "exact",
+        "status": "computed"
+      },
+      "trust_gate": "exploratory"
+    },
+    "pbc": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": null,
+    "perturbative_correction_result": null,
+    "post_correlation": null,
+    "qcchem_run_id": "h2_oo_qcasscf",
+    "qft_dynamics": null,
+    "qft_model": null,
+    "qpe_resource_estimate": null,
+    "qsci_plus_result": null,
+    "quantum_evidence": {
+      "available": true,
+      "error_budget": {
+        "ansatz_error": {
+          "absolute_error_hartree": 4.429694833163467e-09,
+          "available": true,
+          "baseline": "exact_baseline"
+        },
+        "compression_error": {
+          "available": false,
+          "compressed_vs_uncompressed": null,
+          "reconstruction_error": null
+        },
+        "existing_error_budget": {},
+        "field_model": {
+          "cavity_error_budget": null,
+          "finite_cutoff_boundary": false,
+          "qft_error_budget": null
+        },
+        "hardware_noise": {
+          "available": false,
+          "mitigation_metadata": null,
+          "verification_status": null
+        },
+        "qmmm_embedding": {
+          "available": false,
+          "boundary": null,
+          "cache_validation": null,
+          "mm_environment_quantized": null,
+          "one_body_environment": null
+        },
+        "shot_noise": {
+          "available": false,
+          "benchmark_statistical_error": null,
+          "runtime_reported_std": null,
+          "sampled_standard_error": null
+        }
+      },
+      "hamiltonian": {
+        "coefficient_l1_norm": 2.0178991909872144,
+        "energy_contribution_sum": -1.857275025772684,
+        "expectations_available": true,
+        "measurement_group_count": 2,
+        "pauli_term_count": 3,
+        "pauli_terms_available": true,
+        "pbc_qmmm": null,
+        "periodic_boundary": null
+      },
+      "lattice_qed_observables": {},
+      "measurement": {
+        "counts_shots_per_group": 4096,
+        "estimated_measurement_cost": 20000.0,
+        "estimated_measurement_cost_is_hardware_cost": null,
+        "estimated_measurement_cost_scope": "pauli_grouping",
+        "groups_sha256": "709c84fbcf66765924c44c58f1738014433d1afca44aa6ec2f81c6293e737634",
+        "measurement_group_count_scope": "pauli_grouping",
+        "notes": [],
+        "plan": {
+          "basis_reuse_across_properties": false,
+          "cost_reduction_ratio": 1.0,
+          "estimated_shot_cost": 20000.0,
+          "execution_mode": "estimator",
+          "group_count": 2,
+          "grouping_policy": "default",
+          "low_rank_aware": false,
+          "measurement_cost_model": {},
+          "notes": [
+            "Measurement groups estimated with strategy 'default'.",
+            "Per-group shot estimate derived from precision target 0.01.",
+            "Measurement planning reflects the uncompressed execution path."
+          ],
+          "planner": "default",
+          "predicted_variance": null,
+          "realized_variance": null,
+          "runtime_precision_target": 0.01,
+          "shadow_bases": [],
+          "shot_allocation": [],
+          "strategy": "default",
+          "term_count": 3,
+          "uncompressed_estimated_shot_cost": 20000.0,
+          "uncompressed_group_count": 2
+        },
+        "qubit_wise_group_count": 2,
+        "sparse_estimated_group_count": null,
+        "sparse_exploratory_estimated_measurement_cost": null
+      },
+      "notes": [],
+      "resources": {
+        "circuit_depth": 1,
+        "circuit_size": 1,
+        "num_qubits": 1,
+        "operation_counts": {
+          "u": 1
+        },
+        "qubit_term_count": 3,
+        "raw_num_qubits": 4,
+        "raw_qubit_term_count": 15,
+        "two_qubit_gate_count": 0
+      },
+      "sampling": {
+        "available": true,
+        "counts_sha256": "c9ff4ee6112c0f95c9245ae4dddd739c87c2de283c5e69a5e4cc9e38f2ccce42",
+        "group_count": 2,
+        "shots_per_group": 4096,
+        "source": "statevector_sampler_from_final_state"
+      },
+      "schema": "qcchem.quantum_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_oo_qcasscf/quantum_evidence.json",
+      "sidecar_sha256": "7aa5898a004ce0b8baa4af3a8deea57ce8a63ab64e68020b59709fb4213066ba",
+      "sparse_exact_validation": {},
+      "state": {
+        "available": true,
+        "dominant_configurations": [
+          {
+            "bitstring": "0",
+            "probability": 0.9875712796717182
+          },
+          {
+            "bitstring": "1",
+            "probability": 0.012428720328281703
+          }
+        ],
+        "ground_state_overlap": 0.9999999972863312,
+        "hamiltonian_expectation": -1.857275025772684,
+        "hamiltonian_variance": 7.2308736775994475e-09,
+        "variance_method": "sparse_matrix_norm"
+      },
+      "symmetry_checks": {
+        "particle_number": {
+          "deviation": null,
+          "expectation_value": null,
+          "notes": [
+            "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+          ],
+          "status": "declared_from_problem_summary",
+          "target_num_particles": [
+            1,
+            1
+          ]
+        },
+        "qft_constraints": null,
+        "spin": {
+          "notes": [
+            "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+          ],
+          "status": "not_available"
+        },
+        "z2": {
+          "notes": [
+            "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+            "Exact-spectrum validation passed with delta=1.33227e-15 Hartree."
+          ],
+          "status": "applied_z2",
+          "validation": {
+            "absolute_delta": 1.3322676295501878e-15,
+            "available": true,
+            "max_qubits": 12,
+            "method": "exact_ground_state_delta",
+            "raw_ground_energy": -1.8572750302023802,
+            "tapered_ground_energy": -1.8572750302023788
+          },
+          "z2_symmetry_count": 3,
+          "z2_tapering_values": [
+            -1,
+            1,
+            -1
+          ]
+        }
+      }
+    },
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7199689944489797
+      },
+      "nuclear_repulsion_energy": 0.7199689944489797,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "pbc_qmmm": null,
+      "periodic_boundary": null,
+      "point_group_metadata": {
+        "active_irreps": [],
+        "enabled": true,
+        "group": "Dooh",
+        "irrep_ids": [
+          0,
+          5
+        ],
+        "irrep_names": [
+          "A1g",
+          "A1u"
+        ],
+        "notes": [],
+        "orbital_energies": [
+          -0.5806289181997333,
+          0.6763362534452201
+        ],
+        "orbital_irreps": [
+          "A1g",
+          "A1u"
+        ],
+        "orbital_occupations": [
+          2.0,
+          0.0
+        ],
+        "reduction_mode": "audit",
+        "remove_irreps": [],
+        "requested_mode": "auto",
+        "requested_subgroup": "auto",
+        "status": "available",
+        "topgroup": "Dooh"
+      },
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7199689944489797,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "symmetry_sector": null,
+    "tc_qsci_result": null,
+    "verification_status": "exploratory"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-oo-qcasscf"
+  },
+  "properties": {
+    "boundary_embedding_constant_energy": 0.0,
+    "electronic_energy": -1.857275025772684,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "return_energy": -1.1373060313237042
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "HEAD",
+    "git_commit": "47612e92da7a8141c907ae3f4caee23a6463c39c",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "b52c5028846d24121da7607b7314df6e20a13b165f3c2dd4748088ac79b6ab6a"
+  },
+  "return_result": -1.1373060313237042,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

@@ -1,0 +1,399 @@
+{
+  "error_budget": {
+    "ansatz_error": {
+      "absolute_error_hartree": 0.0,
+      "available": false,
+      "baseline": "exact_baseline"
+    },
+    "compression_error": {
+      "available": false,
+      "compressed_vs_uncompressed": null,
+      "reconstruction_error": null
+    },
+    "existing_error_budget": {},
+    "field_model": {
+      "cavity_error_budget": null,
+      "finite_cutoff_boundary": false,
+      "qft_error_budget": null
+    },
+    "hardware_noise": {
+      "available": false,
+      "mitigation_metadata": null,
+      "verification_status": null
+    },
+    "qmmm_embedding": {
+      "available": false,
+      "boundary": null,
+      "cache_validation": null,
+      "mm_environment_quantized": null,
+      "one_body_environment": null
+    },
+    "shot_noise": {
+      "available": false,
+      "benchmark_statistical_error": null,
+      "runtime_reported_std": null,
+      "sampled_standard_error": null
+    }
+  },
+  "field_and_embedding": {
+    "cavity_qed_model": null,
+    "cavity_qed_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    },
+    "environment_embedding": null,
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": {
+      "cell_unit": "angstrom",
+      "cell_vectors": [
+        [
+          8.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          8.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          8.0
+        ]
+      ],
+      "coordinate_mode": "cartesian",
+      "density_fitting": "fftdf",
+      "driver": "pyscf_pbc",
+      "enabled": true,
+      "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+      "kpoint_mesh": [
+        2,
+        1,
+        1
+      ],
+      "mode": "kq_pbc",
+      "pbc": [
+        true,
+        true,
+        true
+      ],
+      "precision": 1e-08,
+      "provenance": {
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "requested_audit_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+        "source": "config"
+      },
+      "risk_notes": [
+        "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+        "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+      ],
+      "volume": 512.0,
+      "wrap_policy": "preserve"
+    },
+    "qft_dynamics": null,
+    "qft_dynamics_reference": {
+      "available": false,
+      "sidecar": null
+    },
+    "qft_model": {},
+    "qft_model_reference": {
+      "available": false,
+      "model": null,
+      "total_qubits": null
+    }
+  },
+  "hamiltonian": {
+    "coefficient_l1_norm": 1.4578858641138446,
+    "energy_contribution_sum": -1.298088849113703,
+    "expectations_available": true,
+    "measurement_group_count": 2,
+    "pauli_term_count": 3,
+    "pauli_terms": [
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.48229920980582053,
+        "energy_contribution": -0.4822992098058204,
+        "expectation_value": 0.9999999999999998,
+        "index": 0,
+        "measurement_group_id": 0,
+        "pauli": "I"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": -0.795712208980154,
+        "energy_contribution": -0.7761289050658311,
+        "expectation_value": 0.9753889613690578,
+        "index": 1,
+        "measurement_group_id": 0,
+        "pauli": "Z"
+      },
+      {
+        "coefficient_imag": 0.0,
+        "coefficient_real": 0.17987444532786995,
+        "energy_contribution": -0.039660734242051354,
+        "expectation_value": -0.220491210798504,
+        "index": 2,
+        "measurement_group_id": 1,
+        "pauli": "X"
+      }
+    ],
+    "pauli_terms_available": true,
+    "pbc_qmmm": null,
+    "periodic_boundary": {
+      "cell_unit": "angstrom",
+      "cell_vectors": [
+        [
+          8.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          8.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          8.0
+        ]
+      ],
+      "coordinate_mode": "cartesian",
+      "density_fitting": "fftdf",
+      "driver": "pyscf_pbc",
+      "enabled": true,
+      "fingerprint": "cbfc758b1efc9de0cf9651fba1f6252333f89e48ec1097a0a24f073489dd89f8",
+      "kpoint_mesh": [
+        2,
+        1,
+        1
+      ],
+      "mode": "kq_pbc",
+      "pbc": [
+        true,
+        true,
+        true
+      ],
+      "precision": 1e-08,
+      "provenance": {
+        "execution_kpoint_mesh": [
+          1,
+          1,
+          1
+        ],
+        "requested_audit_kpoint_mesh": [
+          2,
+          1,
+          1
+        ],
+        "semantics": "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1.",
+        "source": "config"
+      },
+      "risk_notes": [
+        "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian.",
+        "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies."
+      ],
+      "volume": 512.0,
+      "wrap_policy": "preserve"
+    }
+  },
+  "lattice_qed_observables": {},
+  "measurement": {
+    "counts_shots_per_group": 4096,
+    "estimated_measurement_cost": 20000.0,
+    "estimated_measurement_cost_is_hardware_cost": null,
+    "estimated_measurement_cost_scope": "pauli_grouping",
+    "groups": [
+      {
+        "basis": "Z",
+        "basis_conflicts": [],
+        "group_id": 0,
+        "pauli_labels": [
+          "Z",
+          "I"
+        ],
+        "term_count": 2
+      },
+      {
+        "basis": "X",
+        "basis_conflicts": [],
+        "group_id": 1,
+        "pauli_labels": [
+          "X"
+        ],
+        "term_count": 1
+      }
+    ],
+    "groups_sha256": "709c84fbcf66765924c44c58f1738014433d1afca44aa6ec2f81c6293e737634",
+    "measurement_group_count_scope": "pauli_grouping",
+    "notes": [],
+    "plan": {
+      "basis_reuse_across_properties": false,
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {},
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "planner": "default",
+      "predicted_variance": null,
+      "realized_variance": null,
+      "runtime_precision_target": 0.01,
+      "shadow_bases": [],
+      "shot_allocation": [],
+      "strategy": "default",
+      "term_count": 3,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "qubit_wise_group_count": 2,
+    "sparse_estimated_group_count": null,
+    "sparse_exploratory_estimated_measurement_cost": null
+  },
+  "notes": [],
+  "optimization": {
+    "converged": true,
+    "evaluation_count": 1,
+    "trajectory": []
+  },
+  "resources": {
+    "circuit_depth": null,
+    "num_qubits": 1,
+    "operation_counts": {},
+    "qubit_term_count": 3,
+    "raw_num_qubits": 4,
+    "raw_qubit_term_count": 15,
+    "two_qubit_gate_count": null
+  },
+  "run_id": "pbc_h2_kq_pbc",
+  "sampling": {
+    "available": true,
+    "counts_sha256": "f60f84ec9ee0035845cc1247f185bf620d77bfa1585788d24f3d9c395a14bfda",
+    "group_count": 2,
+    "group_counts": [
+      {
+        "available": true,
+        "basis": "Z",
+        "counts": {
+          "0": 4048,
+          "1": 48
+        },
+        "group_id": 0,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "0",
+            4048
+          ],
+          [
+            "1",
+            48
+          ]
+        ]
+      },
+      {
+        "available": true,
+        "basis": "X",
+        "counts": {
+          "0": 1614,
+          "1": 2482
+        },
+        "group_id": 1,
+        "shots": 4096,
+        "top_counts": [
+          [
+            "1",
+            2482
+          ],
+          [
+            "0",
+            1614
+          ]
+        ]
+      }
+    ],
+    "shots_per_group": 4096,
+    "source": "statevector_sampler_from_final_state"
+  },
+  "schema": "qcchem.quantum_evidence.v1",
+  "sparse_exact_validation": {},
+  "state": {
+    "available": true,
+    "dominant_configurations": [
+      {
+        "bitstring": "0",
+        "probability": 0.9876944806845288
+      },
+      {
+        "bitstring": "1",
+        "probability": 0.012305519315471015
+      }
+    ],
+    "ground_state_overlap": 0.9999999999999996,
+    "hamiltonian_expectation": -1.2980888491137028,
+    "hamiltonian_variance": 6.661338147750939e-16,
+    "variance_method": "sparse_matrix_norm"
+  },
+  "symmetry_checks": {
+    "particle_number": {
+      "deviation": null,
+      "expectation_value": null,
+      "notes": [
+        "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+      ],
+      "status": "declared_from_problem_summary",
+      "target_num_particles": [
+        1,
+        1
+      ]
+    },
+    "qft_constraints": null,
+    "spin": {
+      "notes": [
+        "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+      ],
+      "status": "not_available"
+    },
+    "z2": {
+      "notes": [
+        "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+        "Exact-spectrum validation passed with delta=2.22045e-15 Hartree."
+      ],
+      "status": "applied_z2",
+      "validation": {
+        "absolute_delta": 2.220446049250313e-15,
+        "available": true,
+        "max_qubits": 12,
+        "method": "exact_ground_state_delta",
+        "raw_ground_energy": -1.2980888491137055,
+        "tapered_ground_energy": -1.2980888491137033
+      },
+      "z2_symmetry_count": 3,
+      "z2_tapering_values": [
+        -1,
+        1,
+        -1
+      ]
+    }
+  }
+}

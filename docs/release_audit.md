@@ -576,6 +576,18 @@ The Trust-First profile verifies:
   release readiness, release handoff, release evidence handoff, single-run
   release history handoff, and release sidecar freshness outputs for failed-run
   handoff.
+- Method Evidence artifacts carrying `method_evidence.json` must include a
+  conservative `promotion_gate_audit`: sidecar energy replacement, accuracy
+  claims, and hardware claims stay disallowed unless a separate promotion gate
+  supplies stronger evidence.
+- Method Evidence campaign artifacts carrying `method_evidence_summary.json`
+  or embedded `method_evidence_campaign` summaries must include a complete
+  `contract_matrix` covering all 10 method surfaces before the campaign can be
+  treated as release-readable coverage evidence.
+- The default manifest treats `method_evidence_suite_v1` as a curated release
+  artifact and uses the suite's `preview_local` regeneration recipe for
+  reproducibility checks, so release audit can gate the 10-method campaign
+  without letting a benchmark rerun overwrite curated evidence.
 - Required curated artifacts exist.
 - Configured artifacts parse as JSON objects, with unreadable payloads reported
   as failed checks instead of aborting the audit.
@@ -693,8 +705,12 @@ warning channel only for release-gating warning policy decisions.
 - Do not add real runtime submission to release audit.
 - Do not run QFT hardware micro real suites from release audit.
 - Do not let release audit regenerate curated artifacts.
-- Do not promote QFT, LR-ACE, ACE-QVM, or TC-QSCI from exploratory to validated
-  through a documentation-only change.
+- Do not promote QFT, LR-ACE, ACE-QVM, TC-QSCI, or Method Evidence from
+  exploratory to validated through a documentation-only change.
+- Do not summarize Method Evidence sidecars as superiority evidence without
+  first checking `promotion_gate_audit`, checking the campaign `contract_matrix`
+  when a benchmark summary is present, and separating planning/resource-model
+  estimates from validated accuracy or hardware claims.
 - Do not treat an Evidence Capsule or Claim Compiler pass as a replacement for
   a validated baseline, chemical accuracy status, runtime evidence status, or
   release audit.

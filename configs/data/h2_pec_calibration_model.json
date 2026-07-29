@@ -1,0 +1,29 @@
+{
+  "schema": "qcchem.pec_calibration_model.v1",
+  "model_id": "h2-local-pec-smoke-v1",
+  "executable": true,
+  "calibration_scope": "local_toy_overhead_only",
+  "calibration_shots": 256,
+  "calibrated_operations": [
+    {
+      "operation": "x",
+      "qubits": [0],
+      "quasi_probabilities": [
+        {"operation": "x", "coefficient": 1.02},
+        {"operation": "identity", "coefficient": -0.02}
+      ]
+    },
+    {
+      "operation": "cx",
+      "qubits": [0, 1],
+      "quasi_probabilities": [
+        {"operation": "cx", "coefficient": 1.08},
+        {"operation": "identity", "coefficient": -0.08}
+      ]
+    }
+  ],
+  "notes": [
+    "Toy local PEC calibration model used to prove executable calibration plumbing.",
+    "This model records overhead provenance only and must not replace primary energy."
+  ]
+}

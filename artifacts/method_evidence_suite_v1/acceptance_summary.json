@@ -1,0 +1,29 @@
+{
+  "acceptance_scope": "alpha_release_boundary",
+  "accepted": true,
+  "artifact_name": "method_evidence_suite_v1",
+  "artifact_path": "artifacts/method_evidence_suite_v1/benchmark_result.json",
+  "artifact_sha256": "33da58460da2df9e3f970ba64326be00ba5563d034d84fc96228692ddc24c0fd",
+  "blocking_failures": [],
+  "case_count": 12,
+  "policy": {
+    "fail_on_runtime_accuracy_promotion": true,
+    "require_evidence_summary": true,
+    "require_runtime_sidecar_for_hardware_verified": true,
+    "strict_exit_code": true
+  },
+  "recommended_action": "accept_release_artifact_with_declared_boundary",
+  "release_audit_check_id": "curated_artifact:method_evidence_suite_v1:acceptance_summary",
+  "release_boundaries": [
+    "Accepted as release-readable evidence with the declared trust tier.",
+    "This sidecar does not promote the artifact beyond its evidence_summary boundary."
+  ],
+  "required_files": [
+    "result.json"
+  ],
+  "runtime_evidence_status": "none",
+  "schema_version": "qcchem.release_artifact_acceptance.v0.1-alpha",
+  "suite_name": "method_evidence_suite_v1",
+  "trust_tier": "exploratory",
+  "warnings": []
+}

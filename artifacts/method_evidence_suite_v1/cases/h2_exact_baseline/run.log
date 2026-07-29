@@ -1,0 +1,13 @@
+2026-07-08 12:20:43,192 INFO Loading config from /Users/a0000/.codex/worktrees/881e/QCchem/configs/h2_exact.yaml
+2026-07-08 12:20:43,193 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=f17f21bd4c02
+2026-07-08 12:20:43,199 INFO Building electronic structure problem
+2026-07-08 12:20:43,216 INFO Applying mapping: jordan_wigner
+2026-07-08 12:20:43,241 INFO Prepared measurement plan: groups=2, cost=20000
+2026-07-08 12:20:43,241 INFO Skipping backend construction for solver: exact
+2026-07-08 12:20:43,241 INFO Running solver: exact
+2026-07-08 12:20:43,241 INFO Computing exact spectrum for 1 states
+2026-07-08 12:20:43,241 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_exact_baseline/exact_result.json
+2026-07-08 12:20:43,241 INFO Computed empirical calibration: wall_time=0.000s, measured_cost=None
+2026-07-08 12:20:43,250 INFO Writing JSON result to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_exact_baseline/result.json
+2026-07-08 12:20:43,251 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_exact_baseline/report.md
+2026-07-08 12:20:43,252 INFO Run completed

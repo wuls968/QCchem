@@ -1,0 +1,29 @@
+benchmark_suite:
+  name: method_promotion_probe_v1
+  description: >
+    Cross-geometry promotion-prep probe for Method Evidence v1. This suite
+    compares exact and QSCI++ selected-subspace evidence on stretched H2 and
+    H4 chains without promoting exploratory claims.
+  registry_name: method_promotion_probe_v1
+  tags: [benchmark, method_evidence, promotion_probe, trust_first]
+  cases:
+    - name: h2_stretched_exact_baseline
+      kind: run
+      config: configs/exploratory/h2_stretched_exact.yaml
+      expected_status: validated
+      tags: [baseline, h2, stretched, fast]
+    - name: h2_stretched_qsci_plus
+      kind: run
+      config: configs/exploratory/h2_stretched_qsci_plus.yaml
+      expected_status: exploratory
+      tags: [qsci_plus, h2, stretched, fast]
+    - name: h4_stretched_exact_baseline
+      kind: run
+      config: configs/exploratory/h4_stretched_exact.yaml
+      expected_status: validated
+      tags: [baseline, h4_chain, stretched, fast]
+    - name: h4_stretched_qsci_plus
+      kind: run
+      config: configs/exploratory/h4_stretched_qsci_plus.yaml
+      expected_status: exploratory
+      tags: [qsci_plus, h4_chain, stretched, fast]

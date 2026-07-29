@@ -1,0 +1,69 @@
+molecule:
+  name: H2-kq-pbc
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+  unit: angstrom
+  periodic:
+    enabled: true
+    cell:
+      vectors:
+        - [8.0, 0.0, 0.0]
+        - [0.0, 8.0, 0.0]
+        - [0.0, 0.0, 8.0]
+      unit: angstrom
+      source: config
+    pbc: [true, true, true]
+    coordinate_mode: cartesian
+    wrap_policy: preserve
+    source: config
+
+problem:
+  active_space: null
+  pbc:
+    enabled: true
+    driver: pyscf_pbc
+    mode: kq_pbc
+    kpoint_mesh: [2, 1, 1]
+    kpoints: [gamma, x_half]
+    twist_average: true
+    active_space_per_k:
+      num_electrons: 2
+      num_spatial_orbitals: 2
+    density_fitting: fftdf
+    precision: 1.0e-8
+    neutralization: reject
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+policy:
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [kq_pbc]
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-8
+  relative_error_threshold: 1.0e-8
+
+run:
+  seed: 41
+  output_dir: artifacts/pbc_h2_kq_pbc
+  overwrite: true
+  exports:
+    qcschema_json: true

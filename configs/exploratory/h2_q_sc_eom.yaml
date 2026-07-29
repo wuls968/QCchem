@@ -1,0 +1,54 @@
+molecule:
+  name: H2-q-sc-eom
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+tasks:
+  excited_state:
+    enabled: true
+    method: q_sc_eom
+    num_states: 3
+    state_indices: [1, 2]
+  properties:
+    - property_name: transition_dipole
+      enabled: true
+      method: exact_transition_expectation
+      state_indices: [0, 1]
+
+policy:
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [q_sc_eom]
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-8
+  relative_error_threshold: 1.0e-8
+
+run:
+  seed: 31
+  output_dir: artifacts/h2_q_sc_eom
+  overwrite: true
+  exports:
+    qcschema_json: true

@@ -1,0 +1,17 @@
+2026-07-08 12:20:43,385 INFO Loading config from /Users/a0000/.codex/worktrees/881e/QCchem/configs/exploratory/h2_qsci_plus.yaml
+2026-07-08 12:20:43,385 INFO Resolved molecular input: kind=inline_geometry, format=inline, atoms=2, sha256=f17f21bd4c02
+2026-07-08 12:20:43,390 INFO Building electronic structure problem
+2026-07-08 12:20:43,402 INFO Applying mapping: jordan_wigner
+2026-07-08 12:20:43,409 INFO Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings.
+2026-07-08 12:20:43,409 INFO Prepared measurement plan: groups=5, cost=50000
+2026-07-08 12:20:43,409 INFO Skipping backend construction for solver: exact
+2026-07-08 12:20:43,409 INFO Running solver: exact
+2026-07-08 12:20:43,410 INFO Computing exact spectrum for 1 states
+2026-07-08 12:20:43,410 INFO Writing exact baseline artifact to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_qsci_plus/exact_result.json
+2026-07-08 12:20:43,410 INFO Computed empirical calibration: wall_time=0.000s, measured_cost=None
+2026-07-08 12:20:43,410 INFO Computed perturbative correction: qsci_nevpt2
+2026-07-08 12:20:43,411 INFO Computed QSCI++ selected-subspace workflow: determinants=4
+2026-07-08 12:20:43,414 INFO Wrote integrated method evidence sidecar
+2026-07-08 12:20:43,421 INFO Writing JSON result to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_qsci_plus/result.json
+2026-07-08 12:20:43,423 INFO Writing Markdown report to /Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_qsci_plus/report.md
+2026-07-08 12:20:43,424 INFO Run completed

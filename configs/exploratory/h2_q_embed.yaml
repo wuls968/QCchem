@@ -1,0 +1,58 @@
+molecule:
+  name: H2-q-embed
+  geometry:
+    - symbol: H
+      coords: [0.0, 0.0, 0.0]
+    - symbol: H
+      coords: [0.0, 0.0, 0.735]
+  charge: 0
+  multiplicity: 1
+  basis: sto3g
+
+problem:
+  active_space: null
+  embedding:
+    enabled: true
+    method: q_dmet
+    bath_threshold: 0.05
+    solver_plugin: qcchem_fragment_exact
+    fragments:
+      - name: left_h
+        atoms: [0]
+        solver: exact
+      - name: right_h
+        atoms: [1]
+        solver: exact
+    execution:
+      enabled: true
+      plugin: pyscf_rhf_fragment
+      validate_against_full_system: true
+
+mapping:
+  kind: jordan_wigner
+
+backend:
+  kind: statevector
+
+solver:
+  kind: exact
+
+policy:
+  allow_exploratory: true
+
+exploratory:
+  enabled: true
+  modules: [q_dmet]
+
+benchmark:
+  enabled: true
+  exact_baseline_qubit_limit: 12
+  absolute_error_threshold: 1.0e-8
+  relative_error_threshold: 1.0e-8
+
+run:
+  seed: 37
+  output_dir: artifacts/h2_q_embed
+  overwrite: true
+  exports:
+    qcschema_json: true

@@ -1,0 +1,761 @@
+{
+  "driver": "energy",
+  "extras": {
+    "calibration": {
+      "achieved_error": 0.0,
+      "available": true,
+      "estimated_measurement_cost": 20000.0,
+      "estimated_vs_measured_cost": null,
+      "measured_shot_usage": null,
+      "measured_wall_time_seconds": 9.879099889076315e-05,
+      "notes": [
+        "Measured wall time is taken from the executed solver path, not full workflow overhead.",
+        "Measured shot usage is derived from backend shots, repeat count, and measurement group count."
+      ],
+      "precision_target": 0.01,
+      "reference_target": "exact_baseline"
+    },
+    "cast_hamiltonian": null,
+    "cavity_qed_model": null,
+    "chemical_accuracy": {
+      "absolute_error_hartree": 0.0,
+      "absolute_error_kcal_mol": 0.0,
+      "assessment_target": "local_execution",
+      "available": true,
+      "computed_energy": -1.137306035753399,
+      "continuum_chemistry_accuracy": {},
+      "finite_model_exactness": {},
+      "hardware_accuracy": {},
+      "meets_chemical_accuracy": true,
+      "notes": [
+        "Meets chemical accuracy threshold."
+      ],
+      "reference_energy": -1.137306035753399,
+      "relative_error": 0.0,
+      "statistical_error": null,
+      "status": "validated",
+      "threshold_hartree": 0.0016,
+      "threshold_kcal_mol": 1.0040151583999999
+    },
+    "compression_result": null,
+    "determinant_selection": null,
+    "e_adapt_result": null,
+    "environment_embedding": null,
+    "error_budget": null,
+    "evidence_summary": {
+      "chemical_accuracy_status": "met",
+      "comparison_evidence": {
+        "absolute_error": 0.0,
+        "baseline_strength": "strong",
+        "comparison_target": "exact_baseline",
+        "compressed_vs_uncompressed": null,
+        "relative_error": 0.0,
+        "statistical_error": null
+      },
+      "decision_worthiness": {
+        "blocking_issues": [],
+        "compression_context": {
+          "method": null,
+          "verification_status": null
+        },
+        "recommended_action": "promote_validated_result",
+        "reduction_context": {
+          "selection_mode": "none",
+          "transformers_applied": []
+        },
+        "why": [
+          "trust_tier=validated",
+          "chemical_accuracy_status=met",
+          "runtime_evidence_status=none",
+          "runtime_accuracy_status=unavailable"
+        ]
+      },
+      "energy_evidence": {
+        "constant_energy_correction": 0.0,
+        "electronic_energy": -1.8572750302023788,
+        "perturbative_correction": null,
+        "solver_energy": -1.8572750302023788,
+        "total_energy": -1.137306035753399
+      },
+      "execution_evidence": {
+        "field_model_kind": null,
+        "measured_shot_usage": null,
+        "measurement_group_count": 2,
+        "measurement_strategy": "default",
+        "runtime_backend": null,
+        "runtime_job_id": null,
+        "shots": null,
+        "wall_time_seconds": 0.05694129200128373
+      },
+      "primary_baseline": {
+        "baseline_kind": "exact",
+        "baseline_scope": "single_run",
+        "baseline_source": "exact_diagonalization",
+        "baseline_strength": "strong"
+      },
+      "primary_error_metric": {
+        "comparison_target": "exact_baseline",
+        "metric_kind": "absolute_error_hartree",
+        "threshold": 1e-08,
+        "units": "Hartree",
+        "value": 0.0
+      },
+      "primary_scientific_claim": "H2-ft-qpe-planner stays within chemical accuracy against exact_baseline for the defended local execution path.",
+      "recommended_action": "promote_validated_result",
+      "result_identity": {
+        "artifact_kind": "run",
+        "artifact_name": "h2_ft_qpe_planner",
+        "backend_kind": "statevector",
+        "basis": "sto3g",
+        "field_model_kind": null,
+        "mapping_kind": "jordan_wigner",
+        "molecule_name": "H2-ft-qpe-planner"
+      },
+      "runtime_derived_accuracy": {
+        "absolute_error_hartree": null,
+        "assessment_target": null,
+        "meets_chemical_accuracy": null,
+        "status": "unavailable",
+        "threshold_hartree": null
+      },
+      "runtime_evidence_status": "none",
+      "scientific_accuracy": {
+        "absolute_error_hartree": 0.0,
+        "assessment_target": "local_execution",
+        "continuum_chemistry_accuracy": {},
+        "finite_model_exactness": {},
+        "hardware_accuracy": {},
+        "meets_chemical_accuracy": true,
+        "status": "met",
+        "threshold_hartree": 0.0016
+      },
+      "trust_judgment": {
+        "hardware_evidence_tier": null,
+        "hardware_verified": false,
+        "lr_ace_trust_label": null,
+        "lr_ace_validation_gate": null,
+        "module_origin": "core",
+        "scientific_risk_notes": [],
+        "verification_notes": [],
+        "verification_status": "validated"
+      },
+      "trust_tier": "validated"
+    },
+    "external_point_charges": null,
+    "field_evidence": null,
+    "field_model": null,
+    "ft_qpe_resource_estimate": {
+      "available": true,
+      "dominant_cost_terms": {
+        "coefficient_l1_norm": 2.0178991909872144,
+        "pauli_term_count": 3,
+        "phase_estimation_steps": {
+          "double_factorization": 2018,
+          "symmetry_compressed_double_factorization": 1514,
+          "tensor_hypercontraction": 1312
+        },
+        "precision_hartree": 0.001,
+        "qubit_count": 1,
+        "surface_code_overhead_factor": 1000
+      },
+      "encodings_compared": [
+        "double_factorization",
+        "symmetry_compressed_double_factorization",
+        "tensor_hypercontraction"
+      ],
+      "lambda_norms": {
+        "double_factorization": 2.0178991909872144,
+        "symmetry_compressed_double_factorization": 1.5134243932404108,
+        "tensor_hypercontraction": 1.3116344741416894
+      },
+      "logical_qubits": {
+        "double_factorization": 8,
+        "symmetry_compressed_double_factorization": 8,
+        "tensor_hypercontraction": 8
+      },
+      "notes": [
+        "FT-QPE planner is a coarse resource estimator, not a compiled fault-tolerant circuit.",
+        "Encoding reductions are model assumptions until backed by executable factorization and logical-resource gates."
+      ],
+      "physical_qubits": {
+        "double_factorization": 8000,
+        "symmetry_compressed_double_factorization": 8000,
+        "tensor_hypercontraction": 8000
+      },
+      "promotion_readiness_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "best_to_reference_toffoli_ratio": 0.6500000000000001,
+        "compiled_fault_tolerant_circuit_available": false,
+        "encoding_comparison_count": 3,
+        "executable_factorization_available": false,
+        "lambda_reduction_vs_reference": 0.35,
+        "logical_error_budget_available": false,
+        "promotion_blocker_count": 5,
+        "promotion_blockers": [
+          "encoding_scale_assumptions_not_derived_from_integral_factorization",
+          "no_compiled_fault_tolerant_circuit",
+          "surface_code_distance_not_estimated",
+          "logical_error_budget_not_allocated",
+          "hardware_architecture_cycle_model_not_calibrated"
+        ],
+        "readiness_level": "resource_model_only_not_compiled",
+        "reference_encoding": "double_factorization",
+        "required_promotion_evidence": [
+          "executable_integral_factorization_for_each_encoding",
+          "compiled_fault_tolerant_phase_estimation_circuit",
+          "surface_code_distance_and_physical_qubit_layout",
+          "logical_error_budget_allocation",
+          "hardware_architecture_specific_cycle_model"
+        ],
+        "required_promotion_evidence_count": 5,
+        "resource_model_claim_allowed": true,
+        "schema": "qcchem.ft_qpe_promotion_readiness.v1",
+        "status": "blocked_missing_compiled_fault_tolerant_evidence",
+        "surface_code_distance_available": false,
+        "toffoli_reduction_vs_reference": 0.34999999999999987,
+        "validated_resource_advantage_claim_allowed": false
+      },
+      "recommended_encoding": "tensor_hypercontraction",
+      "resource_formula_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "encoding_comparison_count": 3,
+        "encoding_formula_components": {
+          "double_factorization": {
+            "encoding_scale_assumption": 1.0,
+            "lambda_norm": 2.0178991909872144,
+            "logical_qubits": 8,
+            "phase_estimation_steps": 2018,
+            "physical_qubits": 8000,
+            "runtime_seconds": 0.0020178991909872144,
+            "toffoli_count": 2017.8991909872143
+          },
+          "symmetry_compressed_double_factorization": {
+            "encoding_scale_assumption": 0.75,
+            "lambda_norm": 1.5134243932404108,
+            "logical_qubits": 8,
+            "phase_estimation_steps": 1514,
+            "physical_qubits": 8000,
+            "runtime_seconds": 0.001513424393240411,
+            "toffoli_count": 1513.4243932404108
+          },
+          "tensor_hypercontraction": {
+            "encoding_scale_assumption": 0.65,
+            "lambda_norm": 1.3116344741416894,
+            "logical_qubits": 8,
+            "phase_estimation_steps": 1312,
+            "physical_qubits": 8000,
+            "runtime_seconds": 0.0013116344741416896,
+            "toffoli_count": 1311.6344741416895
+          }
+        },
+        "encoding_scale_assumptions": {
+          "double_factorization": 1.0,
+          "first_quantization_active_basis": 0.85,
+          "symmetry_compressed_double_factorization": 0.75,
+          "tensor_hypercontraction": 0.65
+        },
+        "formulae": {
+          "lambda_norm": "coefficient_l1_norm * encoding_scale_assumption",
+          "logical_qubits": "num_qubits + 4 + pauli_term_count",
+          "phase_estimation_steps": "ceil(lambda_norm / precision_hartree)",
+          "physical_qubits": "logical_qubits * surface_code_overhead_factor",
+          "runtime_seconds": "toffoli_count * cycle_time_ns * 1e-9",
+          "surface_code_overhead_factor": "round(1 / physical_error_rate)",
+          "toffoli_count": "lambda_norm / precision_hartree * max(num_qubits, 1)"
+        },
+        "input_terms": {
+          "coefficient_l1_norm": 2.0178991909872144,
+          "cycle_time_ns": 1000.0,
+          "num_qubits": 1,
+          "pauli_term_count": 3,
+          "physical_error_rate": 0.001,
+          "precision_hartree": 0.001,
+          "surface_code_overhead_factor": 1000
+        },
+        "reference_encoding": "double_factorization",
+        "schema": "qcchem.ft_qpe_resource_formula_audit.v1",
+        "scope": "coarse_pauli_l1_phase_estimation_scaling"
+      },
+      "resource_model_audit": {
+        "best_encoding": "tensor_hypercontraction",
+        "best_to_reference_toffoli_ratio": 0.6500000000000001,
+        "compiled_fault_tolerant_circuit_available": false,
+        "cycle_time_ns": 1000.0,
+        "encoding_comparison_count": 3,
+        "encoding_scale_assumptions": {
+          "double_factorization": 1.0,
+          "first_quantization_active_basis": 0.85,
+          "symmetry_compressed_double_factorization": 0.75,
+          "tensor_hypercontraction": 0.65
+        },
+        "lambda_reduction_vs_reference": 0.35,
+        "logical_error_budget_available": false,
+        "model_scope": "coarse_pauli_l1_phase_estimation_scaling",
+        "phase_estimation_steps": {
+          "double_factorization": 2018,
+          "symmetry_compressed_double_factorization": 1514,
+          "tensor_hypercontraction": 1312
+        },
+        "physical_error_rate": 0.001,
+        "promotion_blocker_count": 5,
+        "promotion_blockers": [
+          "encoding_scale_assumptions_not_derived_from_integral_factorization",
+          "no_compiled_fault_tolerant_circuit",
+          "surface_code_distance_not_estimated",
+          "logical_error_budget_not_allocated",
+          "hardware_architecture_cycle_model_not_calibrated"
+        ],
+        "promotion_readiness_status": "blocked_missing_compiled_fault_tolerant_evidence",
+        "readiness_level": "resource_model_only_not_compiled",
+        "recommended_encoding": "tensor_hypercontraction",
+        "reference_encoding": "double_factorization",
+        "required_promotion_evidence": [
+          "executable_integral_factorization_for_each_encoding",
+          "compiled_fault_tolerant_phase_estimation_circuit",
+          "surface_code_distance_and_physical_qubit_layout",
+          "logical_error_budget_allocation",
+          "hardware_architecture_specific_cycle_model"
+        ],
+        "required_promotion_evidence_count": 5,
+        "resource_claim_status": "resource_model_only",
+        "surface_code_distance_available": false,
+        "surface_code_overhead_factor": 1000,
+        "surface_code_overhead_model": "logical_qubits * round(1 / physical_error_rate)",
+        "toffoli_reduction_vs_reference": 0.34999999999999987,
+        "validated_resource_advantage_claim_allowed": false
+      },
+      "runtime_estimates": {
+        "double_factorization": 0.0020178991909872144,
+        "symmetry_compressed_double_factorization": 0.001513424393240411,
+        "tensor_hypercontraction": 0.0013116344741416896
+      },
+      "toffoli_counts": {
+        "double_factorization": 2017.8991909872143,
+        "symmetry_compressed_double_factorization": 1513.4243932404108,
+        "tensor_hypercontraction": 1311.6344741416895
+      }
+    },
+    "hardware_evidence_tier": null,
+    "hardware_verified": false,
+    "input_provenance": [
+      {
+        "atom_count": 2,
+        "format": "inline",
+        "kind": "inline_geometry",
+        "normalized_geometry_sha256": "f17f21bd4c0255c706d3cf8377ac9a5f1dcfa6c8cd1dc5a67bdb5d0cf7596534",
+        "parser": "qcchem.io.config:_parse_atoms",
+        "periodic": {
+          "enabled": false
+        },
+        "periodic_fingerprint": "5acf3ff77b4420677b5923071f303facaba7a9273a346284a667a275df325146",
+        "unit": "angstrom"
+      }
+    ],
+    "kq_pbc_result": null,
+    "low_rank_resource_estimate": null,
+    "mapping": {
+      "fermionic_term_count": 36,
+      "kind": "jordan_wigner",
+      "num_qubits": 1,
+      "qubit_term_count": 3,
+      "raw_num_qubits": 4,
+      "raw_qubit_term_count": 15,
+      "symmetry_reduction_notes": [
+        "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+        "Exact-spectrum validation passed with delta=2.22045e-15 Hartree."
+      ],
+      "symmetry_reduction_status": "applied_z2",
+      "symmetry_reduction_validation": {
+        "absolute_delta": 2.220446049250313e-15,
+        "available": true,
+        "max_qubits": 12,
+        "method": "exact_ground_state_delta",
+        "raw_ground_energy": -1.857275030202381,
+        "tapered_ground_energy": -1.8572750302023788
+      },
+      "symmetry_tapered_qubits": 3,
+      "z2_symmetry_count": 3,
+      "z2_tapering_values": [
+        -1,
+        1,
+        -1
+      ]
+    },
+    "measurement": {
+      "basis_reuse_across_properties": false,
+      "cost_reduction_ratio": 1.0,
+      "estimated_shot_cost": 20000.0,
+      "execution_mode": "estimator",
+      "group_count": 2,
+      "grouping_policy": "default",
+      "low_rank_aware": false,
+      "measurement_cost_model": {},
+      "notes": [
+        "Measurement groups estimated with strategy 'default'.",
+        "Per-group shot estimate derived from precision target 0.01.",
+        "Measurement planning reflects the uncompressed execution path."
+      ],
+      "planner": "default",
+      "predicted_variance": null,
+      "realized_variance": null,
+      "runtime_precision_target": 0.01,
+      "shadow_bases": [],
+      "shot_allocation": [],
+      "strategy": "default",
+      "term_count": 3,
+      "uncompressed_estimated_shot_cost": 20000.0,
+      "uncompressed_group_count": 2
+    },
+    "method_evidence": {
+      "available": true,
+      "methods": {
+        "ft_qpe_resource_estimate": {
+          "available": true,
+          "trust_tier": "exploratory"
+        }
+      },
+      "notes": [
+        "Method evidence is reported alongside the primary solver result.",
+        "Exploratory method sections do not promote chemical-accuracy claims by themselves."
+      ],
+      "promotion_gate_audit": {
+        "accuracy_claim_allowed_methods": [],
+        "hardware_claim_allowed_methods": [],
+        "method_records": {
+          "ft_qpe_resource_estimate": {
+            "accuracy_claim_allowed": false,
+            "best_encoding": "tensor_hypercontraction",
+            "claim_status": "resource_model_only",
+            "encoding_comparison_count": 3,
+            "energy_replacement_allowed": false,
+            "evidence_role": "fault_tolerant_resource_model",
+            "hardware_claim_allowed": false,
+            "logical_error_budget_available": false,
+            "method": "ft_qpe_resource_estimate",
+            "planning_metric_allowed": true,
+            "primary_solver_selected": false,
+            "promotion_blocker_count": 5,
+            "promotion_blockers": [
+              "encoding_scale_assumptions_not_derived_from_integral_factorization",
+              "no_compiled_fault_tolerant_circuit",
+              "surface_code_distance_not_estimated",
+              "logical_error_budget_not_allocated",
+              "hardware_architecture_cycle_model_not_calibrated"
+            ],
+            "promotion_readiness_status": "blocked_missing_compiled_fault_tolerant_evidence",
+            "promotion_required_for_validated_claim": true,
+            "readiness_level": "resource_model_only_not_compiled",
+            "reference_encoding": "double_factorization",
+            "required_promotion_evidence": [
+              "executable_integral_factorization_for_each_encoding",
+              "compiled_fault_tolerant_phase_estimation_circuit",
+              "surface_code_distance_and_physical_qubit_layout",
+              "logical_error_budget_allocation",
+              "hardware_architecture_specific_cycle_model"
+            ],
+            "required_promotion_evidence_count": 5,
+            "resource_formula_scope": "coarse_pauli_l1_phase_estimation_scaling",
+            "resource_model_claim_allowed": true,
+            "validated_resource_advantage_claim_allowed": false
+          }
+        },
+        "notes": [
+          "Sidecar method evidence cannot promote validated accuracy, hardware, or energy-replacement claims by itself.",
+          "Planning/resource-model findings may be compared as local estimates but are not hardware-calibrated superiority claims."
+        ],
+        "overall_claim_status": "promotion_required",
+        "planning_metric_methods": [
+          "ft_qpe_resource_estimate"
+        ],
+        "primary_energy_policy": "raw_solver_energy_remains_primary",
+        "primary_solver_kind": "exact",
+        "promotion_required_for_validated_claims": true,
+        "resource_model_only_methods": [
+          "ft_qpe_resource_estimate"
+        ],
+        "schema": "qcchem.method_promotion_gate_audit.v1",
+        "sidecar_energy_replacement_allowed_methods": [],
+        "unsupported_for_claim_methods": []
+      },
+      "schema": "qcchem.method_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_ft_qpe_planner/method_evidence.json",
+      "sidecar_sha256": "cd957ac07d423ae0aa4648dce2e29aa87b0725a98e342119477d7b9a5ccf7973",
+      "trust_tier": "exploratory"
+    },
+    "orbital_optimization": null,
+    "pbc": null,
+    "pbc_qmmm": null,
+    "periodic_boundary": null,
+    "perturbative_correction_result": null,
+    "post_correlation": null,
+    "qcchem_run_id": "h2_ft_qpe_planner",
+    "qft_dynamics": null,
+    "qft_model": null,
+    "qpe_resource_estimate": null,
+    "qsci_plus_result": null,
+    "quantum_evidence": {
+      "available": true,
+      "error_budget": {
+        "ansatz_error": {
+          "absolute_error_hartree": 0.0,
+          "available": false,
+          "baseline": "exact_baseline"
+        },
+        "compression_error": {
+          "available": false,
+          "compressed_vs_uncompressed": null,
+          "reconstruction_error": null
+        },
+        "existing_error_budget": {},
+        "field_model": {
+          "cavity_error_budget": null,
+          "finite_cutoff_boundary": false,
+          "qft_error_budget": null
+        },
+        "hardware_noise": {
+          "available": false,
+          "mitigation_metadata": null,
+          "verification_status": null
+        },
+        "qmmm_embedding": {
+          "available": false,
+          "boundary": null,
+          "cache_validation": null,
+          "mm_environment_quantized": null,
+          "one_body_environment": null
+        },
+        "shot_noise": {
+          "available": false,
+          "benchmark_statistical_error": null,
+          "runtime_reported_std": null,
+          "sampled_standard_error": null
+        }
+      },
+      "hamiltonian": {
+        "coefficient_l1_norm": 2.0178991909872144,
+        "energy_contribution_sum": -1.8572750302023784,
+        "expectations_available": true,
+        "measurement_group_count": 2,
+        "pauli_term_count": 3,
+        "pauli_terms_available": true,
+        "pbc_qmmm": null,
+        "periodic_boundary": null
+      },
+      "lattice_qed_observables": {},
+      "measurement": {
+        "counts_shots_per_group": 4096,
+        "estimated_measurement_cost": 20000.0,
+        "estimated_measurement_cost_is_hardware_cost": null,
+        "estimated_measurement_cost_scope": "pauli_grouping",
+        "groups_sha256": "709c84fbcf66765924c44c58f1738014433d1afca44aa6ec2f81c6293e737634",
+        "measurement_group_count_scope": "pauli_grouping",
+        "notes": [],
+        "plan": {
+          "basis_reuse_across_properties": false,
+          "cost_reduction_ratio": 1.0,
+          "estimated_shot_cost": 20000.0,
+          "execution_mode": "estimator",
+          "group_count": 2,
+          "grouping_policy": "default",
+          "low_rank_aware": false,
+          "measurement_cost_model": {},
+          "notes": [
+            "Measurement groups estimated with strategy 'default'.",
+            "Per-group shot estimate derived from precision target 0.01.",
+            "Measurement planning reflects the uncompressed execution path."
+          ],
+          "planner": "default",
+          "predicted_variance": null,
+          "realized_variance": null,
+          "runtime_precision_target": 0.01,
+          "shadow_bases": [],
+          "shot_allocation": [],
+          "strategy": "default",
+          "term_count": 3,
+          "uncompressed_estimated_shot_cost": 20000.0,
+          "uncompressed_group_count": 2
+        },
+        "qubit_wise_group_count": 2,
+        "sparse_estimated_group_count": null,
+        "sparse_exploratory_estimated_measurement_cost": null
+      },
+      "notes": [],
+      "resources": {
+        "circuit_depth": null,
+        "num_qubits": 1,
+        "operation_counts": {},
+        "qubit_term_count": 3,
+        "raw_num_qubits": 4,
+        "raw_qubit_term_count": 15,
+        "two_qubit_gate_count": null
+      },
+      "sampling": {
+        "available": true,
+        "counts_sha256": "649137009f1fd99a17c86096b555e3a29f10ec71c9dc37467f3bc758582e4892",
+        "group_count": 2,
+        "shots_per_group": 4096,
+        "source": "statevector_sampler_from_final_state"
+      },
+      "schema": "qcchem.quantum_evidence.v1",
+      "sidecar_path": "/Users/a0000/.codex/worktrees/881e/QCchem/artifacts/method_evidence_suite_v1/cases/h2_ft_qpe_planner/quantum_evidence.json",
+      "sidecar_sha256": "77cd0c8545472ee0be140802a96abf442e4b7433f44a112d5c99b944c45c5c2d",
+      "sparse_exact_validation": {},
+      "state": {
+        "available": true,
+        "dominant_configurations": [
+          {
+            "bitstring": "0",
+            "probability": 0.9875597343674857
+          },
+          {
+            "bitstring": "1",
+            "probability": 0.01244026563251424
+          }
+        ],
+        "ground_state_overlap": 0.9999999999999998,
+        "hamiltonian_expectation": -1.8572750302023784,
+        "hamiltonian_variance": 4.440892098500626e-16,
+        "variance_method": "sparse_matrix_norm"
+      },
+      "symmetry_checks": {
+        "particle_number": {
+          "deviation": null,
+          "expectation_value": null,
+          "notes": [
+            "Particle-number operator expectation is not reconstructed for all mapper/tapering combinations in v1."
+          ],
+          "status": "declared_from_problem_summary",
+          "target_num_particles": [
+            1,
+            1
+          ]
+        },
+        "qft_constraints": null,
+        "spin": {
+          "notes": [
+            "Spin-conservation expectation requires a mapped spin operator and is not computed in v1."
+          ],
+          "status": "not_available"
+        },
+        "z2": {
+          "notes": [
+            "Applied Z2 tapering in sector [-1, 1, -1]; removed 3 qubits.",
+            "Exact-spectrum validation passed with delta=2.22045e-15 Hartree."
+          ],
+          "status": "applied_z2",
+          "validation": {
+            "absolute_delta": 2.220446049250313e-15,
+            "available": true,
+            "max_qubits": 12,
+            "method": "exact_ground_state_delta",
+            "raw_ground_energy": -1.857275030202381,
+            "tapered_ground_energy": -1.8572750302023788
+          },
+          "z2_symmetry_count": 3,
+          "z2_tapering_values": [
+            -1,
+            1,
+            -1
+          ]
+        }
+      }
+    },
+    "reduction_audit": {
+      "active_space_metadata": null,
+      "boundary_embedding_constant_energy": 0.0,
+      "constant_energy_correction": 0.0,
+      "energy_formula": "total_energy = solver_energy + constant_energy_correction + nuclear_repulsion_energy + external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; electronic_energy = solver_energy + constant_energy_correction",
+      "external_point_charge_nuclear_interaction_energy": 0.0,
+      "frozen_core_orbitals": [],
+      "hamiltonian_constants": {
+        "nuclear_repulsion_energy": 0.7199689944489797
+      },
+      "nuclear_repulsion_energy": 0.7199689944489797,
+      "original_num_particles": [
+        1,
+        1
+      ],
+      "original_num_spatial_orbitals": 2,
+      "pbc_qmmm": null,
+      "periodic_boundary": null,
+      "point_group_metadata": {
+        "active_irreps": [],
+        "enabled": true,
+        "group": "Dooh",
+        "irrep_ids": [
+          0,
+          5
+        ],
+        "irrep_names": [
+          "A1g",
+          "A1u"
+        ],
+        "notes": [],
+        "orbital_energies": [
+          -0.5806289181997333,
+          0.6763362534452201
+        ],
+        "orbital_irreps": [
+          "A1g",
+          "A1u"
+        ],
+        "orbital_occupations": [
+          2.0,
+          0.0
+        ],
+        "reduction_mode": "audit",
+        "remove_irreps": [],
+        "requested_mode": "auto",
+        "requested_subgroup": "auto",
+        "status": "available",
+        "topgroup": "Dooh"
+      },
+      "reduced_num_particles": [
+        1,
+        1
+      ],
+      "reduced_num_spatial_orbitals": 2,
+      "removed_orbitals": [],
+      "selected_active_orbitals": [],
+      "selected_active_orbitals_original": [],
+      "selection_mode": "none",
+      "selection_reason": "No active-space reduction requested.",
+      "total_constant_correction": 0.7199689944489797,
+      "transformers_applied": []
+    },
+    "runtime_chemical_accuracy": null,
+    "runtime_options": null,
+    "runtime_submission": null,
+    "symmetry_sector": null,
+    "tc_qsci_result": null,
+    "verification_status": "validated"
+  },
+  "model": {
+    "basis": "sto3g",
+    "method": "qcchem"
+  },
+  "molecule": {
+    "charge": 0,
+    "multiplicity": 1,
+    "name": "H2-ft-qpe-planner"
+  },
+  "properties": {
+    "boundary_embedding_constant_energy": 0.0,
+    "electronic_energy": -1.8572750302023788,
+    "external_point_charge_nuclear_interaction_energy": 0.0,
+    "nuclear_repulsion_energy": 0.7199689944489797,
+    "return_energy": -1.137306035753399
+  },
+  "provenance": {
+    "creator": "QCchem",
+    "git_branch": "HEAD",
+    "git_commit": "47612e92da7a8141c907ae3f4caee23a6463c39c",
+    "routine": "qcchem.workflow.runner.run_spec",
+    "version": "qcchem.result.v0.8-alpha",
+    "workspace_fingerprint": "d425aedd6e440310317eeb851e3658e3ced5a12051f5bf4773f8bc0f425daf1e"
+  },
+  "return_result": -1.137306035753399,
+  "schema_name": "qcschema_output",
+  "schema_version": 1,
+  "success": true
+}

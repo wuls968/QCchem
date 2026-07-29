@@ -100,6 +100,39 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         else payload.get("runtime_submission")
     )
     runtime_submission = runtime_submission if isinstance(runtime_submission, dict) else {}
+    method_evidence_path = artifact_root / "method_evidence.json"
+    embedded_method_evidence = (
+        payload.get("method_evidence") if isinstance(payload.get("method_evidence"), dict) else {}
+    )
+    method_evidence = (
+        _safe_read_json(method_evidence_path) if method_evidence_path.exists() else embedded_method_evidence
+    )
+    method_evidence_methods = (
+        sorted((method_evidence.get("methods") or {}).keys())
+        if isinstance(method_evidence.get("methods"), dict)
+        else []
+    )
+    method_evidence_promotion_audit = (
+        method_evidence.get("promotion_gate_audit")
+        if isinstance(method_evidence.get("promotion_gate_audit"), dict)
+        else {}
+    )
+    method_evidence_summary_path = artifact_root / "method_evidence_summary.json"
+    dashboard_summary = payload.get("dashboard_summary") if isinstance(payload.get("dashboard_summary"), dict) else {}
+    calibration_summary = payload.get("calibration_summary") if isinstance(payload.get("calibration_summary"), dict) else {}
+    embedded_method_evidence_summary = (
+        dashboard_summary.get("method_evidence_campaign")
+        if isinstance(dashboard_summary.get("method_evidence_campaign"), dict)
+        else calibration_summary.get("method_evidence_campaign")
+        if isinstance(calibration_summary.get("method_evidence_campaign"), dict)
+        else {}
+    )
+    method_evidence_summary = (
+        _safe_read_json(method_evidence_summary_path)
+        if method_evidence_summary_path.exists()
+        else embedded_method_evidence_summary
+    )
+    method_evidence_summary = method_evidence_summary if isinstance(method_evidence_summary, dict) else {}
     kind = _artifact_kind(result_path)
     name = (
         payload.get("run_id")
@@ -304,6 +337,118 @@ def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -
         "has_resolved_config": (artifact_root / "resolved_config.yaml").exists(),
         "has_runtime_submission": (artifact_root / "runtime_submission.json").exists(),
         "has_quantum_evidence": (artifact_root / "quantum_evidence.json").exists(),
+        "has_method_evidence": method_evidence_path.exists()
+        or isinstance(payload.get("method_evidence"), dict),
+        "method_evidence_methods": method_evidence_methods,
+        "method_evidence_trust_tier": method_evidence.get("trust_tier")
+        if isinstance(method_evidence, dict)
+        else None,
+        "has_method_evidence_promotion_gate_audit": bool(method_evidence_promotion_audit),
+        "method_evidence_promotion_gate_status": (
+            method_evidence_promotion_audit.get("overall_claim_status")
+            if method_evidence_promotion_audit
+            else None
+        ),
+        "method_evidence_sidecar_energy_replacement_allowed_methods": (
+            method_evidence_promotion_audit.get("sidecar_energy_replacement_allowed_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "method_evidence_accuracy_claim_allowed_methods": (
+            method_evidence_promotion_audit.get("accuracy_claim_allowed_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "method_evidence_hardware_claim_allowed_methods": (
+            method_evidence_promotion_audit.get("hardware_claim_allowed_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "method_evidence_planning_metric_methods": (
+            method_evidence_promotion_audit.get("planning_metric_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "method_evidence_resource_model_only_methods": (
+            method_evidence_promotion_audit.get("resource_model_only_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "method_evidence_unsupported_for_claim_methods": (
+            method_evidence_promotion_audit.get("unsupported_for_claim_methods")
+            if method_evidence_promotion_audit
+            else []
+        ),
+        "has_method_evidence_summary": method_evidence_summary_path.exists()
+        or bool(embedded_method_evidence_summary),
+        "method_evidence_summary_path": (
+            str(method_evidence_summary_path) if method_evidence_summary_path.exists() else None
+        ),
+        "method_evidence_summary_schema": method_evidence_summary.get("schema_version"),
+        "method_evidence_method_case_count": method_evidence_summary.get("method_case_count"),
+        "method_evidence_accuracy_advantage_pairs": (
+            method_evidence_summary.get("accuracy_advantage_pairs")
+            if isinstance(method_evidence_summary.get("accuracy_advantage_pairs"), list)
+            else []
+        ),
+        "method_evidence_exact_match_pairs": (
+            method_evidence_summary.get("exact_match_pairs")
+            if isinstance(method_evidence_summary.get("exact_match_pairs"), list)
+            else []
+        ),
+        "method_evidence_planning_metric_cost_advantage_pairs": (
+            method_evidence_summary.get("planning_metric_cost_advantage_pairs")
+            if isinstance(method_evidence_summary.get("planning_metric_cost_advantage_pairs"), list)
+            else []
+        ),
+        "method_evidence_ft_qpe_resource_case_count": len(
+            method_evidence_summary.get("ft_qpe_resource_findings") or {}
+        )
+        if isinstance(method_evidence_summary.get("ft_qpe_resource_findings"), dict)
+        else 0,
+        "method_evidence_contract_matrix_status": (
+            (method_evidence_summary.get("contract_matrix") or {}).get("status")
+            if isinstance(method_evidence_summary.get("contract_matrix"), dict)
+            else None
+        ),
+        "method_evidence_contract_covered_method_count": (
+            (method_evidence_summary.get("contract_matrix") or {}).get("covered_method_count")
+            if isinstance(method_evidence_summary.get("contract_matrix"), dict)
+            else None
+        ),
+        "method_evidence_contract_expected_method_count": (
+            (method_evidence_summary.get("contract_matrix") or {}).get("expected_method_count")
+            if isinstance(method_evidence_summary.get("contract_matrix"), dict)
+            else None
+        ),
+        "method_evidence_contract_missing_methods": (
+            (method_evidence_summary.get("contract_matrix") or {}).get("missing_methods")
+            if isinstance(method_evidence_summary.get("contract_matrix"), dict)
+            else []
+        ),
+        "method_evidence_promotion_gate_summary": method_evidence_summary.get(
+            "promotion_gate_summary"
+        ),
+        "method_evidence_superiority_audit_status": (
+            (method_evidence_summary.get("method_superiority_audit") or {}).get("status")
+            if isinstance(method_evidence_summary.get("method_superiority_audit"), dict)
+            else None
+        ),
+        "method_evidence_superiority_claim_allowed_methods": (
+            (method_evidence_summary.get("method_superiority_audit") or {}).get(
+                "claim_allowed_methods"
+            )
+            if isinstance(method_evidence_summary.get("method_superiority_audit"), dict)
+            else []
+        ),
+        "method_evidence_superiority_method_count": (
+            (method_evidence_summary.get("method_superiority_audit") or {}).get(
+                "method_count"
+            )
+            if isinstance(method_evidence_summary.get("method_superiority_audit"), dict)
+            else None
+        ),
+        "method_evidence_promotion_boundary": method_evidence_summary.get("promotion_boundary"),
         "has_pbc_metadata": isinstance(payload.get("periodic_boundary"), dict)
         or isinstance(payload.get("pbc"), dict),
         "has_pbc_qmmm_metadata": isinstance(payload.get("pbc_qmmm"), dict),
