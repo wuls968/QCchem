@@ -9,7 +9,6 @@ import yaml
 
 from qcchem.backends.policy import apply_policy_defaults
 from qcchem.core import (
-    ACEQVMBackendSpec,
     ActiveSpaceSpec,
     ArtifactExportSpec,
     AutoActiveSpaceSpec,
@@ -1580,64 +1579,6 @@ def _parse_runtime_options(backend_raw: dict[str, Any]) -> RuntimeOptionsSpec:
     )
 
 
-def _parse_ace_qvm_backend(backend_raw: dict[str, Any]) -> ACEQVMBackendSpec:
-    ace_raw = backend_raw.get("ace_qvm")
-    if ace_raw is None:
-        ace_raw = {}
-    if not isinstance(ace_raw, dict):
-        raise ValueError("backend.ace_qvm must be a mapping.")
-    defaults = ACEQVMBackendSpec()
-    cross_block_policy = _choice(
-        ace_raw.get("cross_block_policy", defaults.cross_block_policy),
-        field_name="backend.ace_qvm.cross_block_policy",
-        allowed={"auto", "bond", "cut", "fail"},
-    )
-    routing = _choice(
-        ace_raw.get("routing", defaults.routing),
-        field_name="backend.ace_qvm.routing",
-        allowed={"swap_network"},
-    )
-    observable_mode = _choice(
-        ace_raw.get("observable_mode", defaults.observable_mode),
-        field_name="backend.ace_qvm.observable_mode",
-        allowed={"pauli_expectation"},
-    )
-    memory_budget_gib = float(ace_raw.get("memory_budget_gib", defaults.memory_budget_gib))
-    block_qubits = int(ace_raw.get("block_qubits", defaults.block_qubits))
-    max_bond_dim = int(ace_raw.get("max_bond_dim", defaults.max_bond_dim))
-    truncation_eps = float(ace_raw.get("truncation_eps", defaults.truncation_eps))
-    max_branch_rank = int(ace_raw.get("max_branch_rank", defaults.max_branch_rank))
-    debug_dense_state_qubit_limit = int(
-        ace_raw.get(
-            "debug_dense_state_qubit_limit",
-            defaults.debug_dense_state_qubit_limit,
-        )
-    )
-    if memory_budget_gib <= 0:
-        raise ValueError("backend.ace_qvm.memory_budget_gib must be positive.")
-    if block_qubits <= 0:
-        raise ValueError("backend.ace_qvm.block_qubits must be positive.")
-    if max_bond_dim <= 0:
-        raise ValueError("backend.ace_qvm.max_bond_dim must be positive.")
-    if truncation_eps < 0:
-        raise ValueError("backend.ace_qvm.truncation_eps must be non-negative.")
-    if max_branch_rank <= 0:
-        raise ValueError("backend.ace_qvm.max_branch_rank must be positive.")
-    if debug_dense_state_qubit_limit < 0:
-        raise ValueError("backend.ace_qvm.debug_dense_state_qubit_limit must be non-negative.")
-    return ACEQVMBackendSpec(
-        memory_budget_gib=memory_budget_gib,
-        block_qubits=block_qubits,
-        max_bond_dim=max_bond_dim,
-        truncation_eps=truncation_eps,
-        max_branch_rank=max_branch_rank,
-        cross_block_policy=cross_block_policy,
-        routing=routing,
-        observable_mode=observable_mode,
-        debug_dense_state_qubit_limit=debug_dense_state_qubit_limit,
-    )
-
-
 def _parse_artifact_exports(run_raw: dict[str, Any]) -> ArtifactExportSpec:
     exports_raw = run_raw.get("exports")
     if not isinstance(exports_raw, dict):
@@ -1763,7 +1704,6 @@ def load_run_spec(path: Path) -> RunSpec:
             abelian_grouping=bool(backend_raw.get("abelian_grouping", True)),
             noise=_parse_noise_spec(backend_raw),
             runtime=_parse_runtime_options(backend_raw),
-            ace_qvm=_parse_ace_qvm_backend(backend_raw),
         ),
         solver=SolverSpec(
             kind=solver_kind,

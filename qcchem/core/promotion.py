@@ -29,12 +29,3 @@ TC_QSCI_REQUIRED_STUDIES = [
     "ablation against non-TC selection",
     "exact baseline where feasible",
 ]
-
-ACE_QVM_REQUIRED_STUDIES = [
-    "exact baseline",
-    "dense-statevector agreement for small systems",
-    "capacity benchmark",
-    "entanglement stress test",
-    "truncation error audit",
-    "failure cases",
-]

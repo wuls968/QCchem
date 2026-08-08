@@ -80,10 +80,6 @@ Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
 indexed artifacts when they exist. The built-in sample models remain only as
 empty-workspace fallbacks.
 
-Runtime Monitoring shows the ACE-QVM compression ledger when the selected run
-uses `backend.kind: ace_qvm`: capacity status, observed bond/branch rank,
-ledger memory, truncation weights, and the exploratory non-hardware boundary.
-
 The Research OS surfaces are read-mostly and keep mutation scoped to AI
 Workspace state records:
 

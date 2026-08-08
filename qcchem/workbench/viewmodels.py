@@ -7,82 +7,6 @@ def _safe_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _first_nonempty_dict(*values: Any) -> dict[str, Any]:
-    for value in values:
-        candidate = _safe_dict(value)
-        if candidate:
-            return candidate
-    return {}
-
-
-def _normalized_ace_qvm_model(payload: dict[str, Any]) -> dict[str, Any]:
-    backend = _safe_dict(payload.get("backend"))
-    backend_metadata = _safe_dict(backend.get("metadata"))
-    backend_ace = _safe_dict(backend_metadata.get("ace_qvm"))
-    quantum_evidence = _safe_dict(payload.get("quantum_evidence"))
-    resource_ace = _safe_dict(_safe_dict(quantum_evidence.get("resources")).get("ace_qvm"))
-    sidecar_ace = _safe_dict(quantum_evidence.get("ace_qvm"))
-    error_ace = _safe_dict(_safe_dict(quantum_evidence.get("error_budget")).get("ace_qvm"))
-    source = _first_nonempty_dict(backend_ace, sidecar_ace, resource_ace)
-    if not source and not error_ace:
-        return {"available": False}
-
-    settings = _first_nonempty_dict(source.get("settings"), resource_ace.get("settings"), sidecar_ace.get("settings"))
-    partition = _first_nonempty_dict(
-        source.get("partition"),
-        resource_ace.get("partition"),
-        sidecar_ace.get("partition"),
-    )
-    ledger = _first_nonempty_dict(source.get("ledger"), resource_ace.get("ledger"), sidecar_ace.get("ledger"))
-    memory_report = _first_nonempty_dict(
-        source.get("memory_report"),
-        resource_ace.get("memory_report"),
-        error_ace.get("memory_report"),
-    )
-    blocks = partition.get("blocks") if isinstance(partition.get("blocks"), list) else []
-    return {
-        "available": True,
-        "algorithm_name": source.get("algorithm_name", "ACE-QVM"),
-        "capability_tier": source.get("capability_tier", "exploratory"),
-        "boundary": source.get(
-            "boundary",
-            "Compressed-entanglement local simulator evidence only.",
-        ),
-        "hardware_verified": bool(source.get("hardware_verified", False)),
-        "settings": settings,
-        "partition": partition,
-        "ledger": ledger,
-        "memory_report": memory_report,
-        "block_count": len(blocks),
-        "capacity_status": ledger.get("capacity_status") or error_ace.get("capacity_status"),
-        "max_observed_bond_dim": ledger.get("max_observed_bond_dim"),
-        "max_observed_branch_rank": ledger.get("max_observed_branch_rank"),
-        "max_observed_memory_bytes": (
-            memory_report.get("max_observed_memory_bytes") or ledger.get("max_observed_memory_bytes")
-        ),
-        "memory_budget_bytes": memory_report.get("memory_budget_bytes"),
-        "budget_usage_fraction": (
-            memory_report.get("budget_usage_fraction")
-            if "budget_usage_fraction" in memory_report
-            else error_ace.get("budget_usage_fraction")
-        ),
-        "within_memory_budget": (
-            memory_report.get("within_memory_budget")
-            if "within_memory_budget" in memory_report
-            else error_ace.get("within_memory_budget")
-        ),
-        "total_discarded_svd_weight": ledger.get("total_discarded_svd_weight")
-        if ledger
-        else error_ace.get("total_discarded_svd_weight"),
-        "total_pruned_branch_weight": ledger.get("total_pruned_branch_weight")
-        if ledger
-        else error_ace.get("total_pruned_branch_weight"),
-        "full_state_reconstruction": bool(source.get("full_state_reconstruction", False)),
-        "validated_observables_only": bool(source.get("validated_observables_only", True)),
-        "error_budget": error_ace,
-    }
-
-
 def _normalized_pbc_model(value: Any) -> dict[str, Any]:
     pbc = _safe_dict(value)
     if not pbc:
@@ -195,8 +119,6 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     variational = _safe_dict(payload.get("variational_result"))
     ansatz = _safe_dict(variational.get("ansatz"))
     lr_ace = _safe_dict(ansatz.get("lr_ace"))
-    backend = _safe_dict(payload.get("backend"))
-    ace_qvm = _normalized_ace_qvm_model(payload)
 
     view_model = {
         "hero": {
@@ -241,15 +163,6 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "returned_job_metadata": runtime.get("returned_job_metadata"),
             "verification_status": runtime.get("verification_status"),
         },
-        "backend": {
-            "kind": backend.get("kind"),
-            "shots": backend.get("shots"),
-            "precision": backend.get("precision"),
-            "seed": backend.get("seed"),
-            "repetitions": backend.get("repetitions"),
-            "metadata": backend.get("metadata", {}),
-            "provenance": backend.get("provenance", {}),
-        },
         "reduction": reduction,
         "compression": compression,
         "pbc": {
@@ -272,7 +185,6 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "notes": pbc_qmmm.get("notes", []),
         },
         "lr_ace": lr_ace,
-        "ace_qvm": ace_qvm,
         "evidence_summary": evidence_summary,
         "field_evidence": {
             "available": field_evidence.get("available"),

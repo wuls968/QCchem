@@ -86,9 +86,6 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
     energy = payload.get("energy") or {}
     benchmark = payload.get("benchmark") or {}
     backend = payload.get("backend") or {}
-    backend_metadata = backend.get("metadata") if isinstance(backend.get("metadata"), dict) else {}
-    ace_qvm = backend_metadata.get("ace_qvm") if isinstance(backend_metadata.get("ace_qvm"), dict) else {}
-    ace_ledger = ace_qvm.get("ledger") if isinstance(ace_qvm.get("ledger"), dict) else {}
     mapping = payload.get("mapping") or {}
     runtime_submission = payload.get("runtime_submission") or {}
     measurement = payload.get("measurement") or {}
@@ -159,13 +156,7 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             f"{problem.get('molecule_name', 'System')} lattice-QED result is finite-cutoff sparse/exact evidence "
             f"for the configured Hamiltonian; continuum chemistry accuracy is not claimed."
         )
-    elif ace_qvm:
-        primary_claim = (
-            f"{problem.get('molecule_name', 'System')} ACE-QVM result is compressed-entanglement "
-            f"observable simulation evidence compared against {comparison_target}; full-state reconstruction "
-            "and general volume-law scalability are not claimed."
-        )
-    if chem_status == "met" and not field_model.get("model_kind") and not ace_qvm:
+    if chem_status == "met" and not field_model.get("model_kind"):
         primary_claim = (
             f"{problem.get('molecule_name', 'System')} stays within chemical accuracy against {comparison_target} "
             f"for the defended local execution path."
@@ -225,9 +216,6 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "runtime_backend": runtime_submission.get("backend_name"),
             "runtime_job_id": runtime_submission.get("job_id"),
             "field_model_kind": field_model.get("model_kind"),
-            "ace_qvm_capacity_status": ace_ledger.get("capacity_status") if ace_ledger else None,
-            "ace_qvm_max_observed_bond_dim": ace_ledger.get("max_observed_bond_dim") if ace_ledger else None,
-            "ace_qvm_max_observed_branch_rank": ace_ledger.get("max_observed_branch_rank") if ace_ledger else None,
         },
         trust_judgment={
             "verification_status": verification_status,
@@ -238,7 +226,6 @@ def build_run_evidence_summary(payload: dict[str, Any]) -> EvidenceSummary:
             "scientific_risk_notes": payload.get("scientific_risk_notes", []),
             "lr_ace_trust_label": lr_ace_gate.get("trust_label"),
             "lr_ace_validation_gate": lr_ace_gate or None,
-            "ace_qvm": ace_qvm or None,
         },
         scientific_accuracy={
             "status": chem_status,

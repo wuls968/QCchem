@@ -94,7 +94,6 @@ Open `docs/user_manual.md` for the full task-oriented guide.
 | LR-ACE flagship | Gated method evidence | Low-rank-factor-informed local runs and curated flagship benchmark artifacts | LR-ACE flagship is not a blanket publication-grade claim; each artifact must pass its trust-first gate. |
 | Runtime and hardware probes | Hardware-verified plumbing when collected | Submission, sidecar persistence, result collection, budget-ledger review | `hardware_verified` means runtime provenance exists, not chemistry validation. |
 | QFT / finite-cutoff lattice-QED | Exploratory finite-model evidence | Sparse projected exact checks, Gauss-law audits, dynamics/resource studies | Finite-model exactness is not continuum chemistry accuracy. |
-| ACE-QVM | Exploratory compressed simulator evidence | Low-entanglement observable simulation through `backend.kind: ace_qvm` | Reports compression ledgers; does not claim full-state reconstruction or hardware execution. |
 | TC-QSCI | Exploratory research evidence | Determinant selection and CAST-guided sampling studies | It remains outside the validated release surface. |
 | AI Workspace and Research OS | Local analysis surfaces | Evidence-aware tickets, objective planning, claim review, promotion review | They do not submit hardware jobs or promote exploratory artifacts automatically. |
 
@@ -120,7 +119,6 @@ placeholder boundary map.
 | Review exploratory promotion | `qcchem promote exploratory --artifact <result.json> --target <label>` |
 | Run artifact-only campaigns | `qcchem campaign run -c <campaign.yaml>` |
 | Run exploratory workflows | `qcchem exploratory run -c <config.yaml>` |
-| Run an ACE-QVM capacity probe | `qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark` |
 | Collect a Runtime result | `qcchem runtime collect <artifact_dir>` |
 | Run release audit | `qcchem release audit -c configs/release/trust_first_audit.yaml` |
 | Summarize release status | `qcchem release status --audit-dir artifacts/release_audit --strict` |
@@ -338,12 +336,10 @@ Workbench `/workflow-studio` page reads the same protocol. `workflow run` and
 ```bash
 qcchem exploratory run -c configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
-qcchem exploratory run -c configs/exploratory/h2_ace_qvm_lr_ace.yaml
-qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark --sizes 128,512,2048
 qcchem exploratory run -c configs/exploratory/h2_tc_qsci.yaml
 ```
 
-For curated QFT, LR-ACE, ACE-QVM, and TC-QSCI release demonstrations, use
+For curated QFT, LR-ACE, and TC-QSCI release demonstrations, use
 `docs/release_showcase.md` and keep the exploratory boundary visible.
 
 ## Documentation Map

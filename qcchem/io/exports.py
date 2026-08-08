@@ -81,8 +81,6 @@ def build_qcschema_payload(result: Any) -> dict[str, Any]:
             "verification_status": verification_status,
             "hardware_verified": data.get("hardware_verified", False),
             "hardware_evidence_tier": data.get("hardware_evidence_tier"),
-            "backend": data.get("backend"),
-            "backend_capability": data.get("backend_capability"),
             "mapping": data.get("mapping"),
             "reduction_audit": data.get("reduction_audit"),
             "measurement": data.get("measurement"),

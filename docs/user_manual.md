@@ -47,7 +47,6 @@ rewritten casually.
 | Plan a research objective | `qcchem objective plan -c configs/objectives/h2_local_validation.yaml -o artifacts/objectives/h2_local_validation_plan` |
 | Check claim language | `qcchem claim check --claim-file examples/claims/hardware_overclaim.txt --target artifacts/hardware_calibration_suite_v1 -o artifacts/claim_reviews/hardware_overclaim` |
 | Review exploratory promotion | `qcchem promote exploratory --artifact artifacts/h2_lr_ace/result.json --target validated_algorithm_candidate -o artifacts/promotion/h2_lr_ace` |
-| Probe ACE-QVM capacity | `qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark --sizes 128,512,2048` |
 | Collect a Runtime result | `qcchem runtime collect artifacts/h2_runtime_hardware_probe_puccd_layout` |
 | Serve the Workbench | `qcchem workbench serve` |
 | Smoke-test Workbench routes | `qcchem workbench smoke --docs docs/workbench.md -o artifacts/workbench_smoke.json` |
@@ -300,7 +299,7 @@ qcchem claim check \
 ```
 
 Use the Promotion Gate before using candidate or validated language for QFT,
-LR-ACE, ACE-QVM, TC-QSCI, or any other exploratory boundary artifact:
+LR-ACE, TC-QSCI, or any other exploratory boundary artifact:
 
 ```bash
 qcchem promote exploratory \
@@ -370,24 +369,6 @@ LR-ACE legacy exploratory probe:
 ```bash
 qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
 ```
-
-ACE-QVM compressed-entanglement backend probe:
-
-```bash
-qcchem exploratory run -c configs/exploratory/h2_ace_qvm_lr_ace.yaml
-```
-
-ACE-QVM local capacity probe:
-
-```bash
-qcchem exploratory capacity-benchmark \
-  -o artifacts/ace_qvm_capacity_benchmark \
-  --sizes 128,512,2048
-```
-
-The capacity probe writes `benchmark.json` and `benchmark.md`. It reports
-low-entanglement observable capacity, dense-statevector estimates, RSS, tensor
-memory, bond dimension, branch rank, and the exploratory boundary.
 
 TC-QSCI:
 

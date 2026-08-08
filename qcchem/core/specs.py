@@ -517,21 +517,6 @@ class RuntimeOptionsSpec:
 
 
 @dataclass(slots=True)
-class ACEQVMBackendSpec:
-    """Adaptive compressed-entanglement quantum virtual machine settings."""
-
-    memory_budget_gib: float = 4.0
-    block_qubits: int = 8
-    max_bond_dim: int = 64
-    truncation_eps: float = 1.0e-8
-    max_branch_rank: int = 16
-    cross_block_policy: str = "auto"
-    routing: str = "swap_network"
-    observable_mode: str = "pauli_expectation"
-    debug_dense_state_qubit_limit: int = 10
-
-
-@dataclass(slots=True)
 class BackendSpec:
     """Execution backend configuration."""
 
@@ -543,7 +528,6 @@ class BackendSpec:
     abelian_grouping: bool = True
     noise: NoiseModelSpec = field(default_factory=NoiseModelSpec)
     runtime: RuntimeOptionsSpec = field(default_factory=RuntimeOptionsSpec)
-    ace_qvm: ACEQVMBackendSpec = field(default_factory=ACEQVMBackendSpec)
 
 
 @dataclass(slots=True)

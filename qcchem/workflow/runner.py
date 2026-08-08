@@ -792,7 +792,6 @@ def _ensure_exploratory_allowed(spec, *, exploratory_command: bool) -> None:
         or spec.mitigation.experimental
         or spec.exploratory.enabled
         or bool(spec.exploratory.modules)
-        or spec.backend.kind.strip().lower() == "ace_qvm"
         or spec.problem.qft.enabled
         or spec.problem.cavity_qed.enabled
         or spec.tc_qsci.enabled
@@ -1577,8 +1576,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_status = "exploratory"
     if spec.solver.experimental and verification_status == "validated":
         verification_status = "exploratory"
-    if spec.backend.kind.strip().lower() == "ace_qvm" and verification_status == "validated":
-        verification_status = "exploratory"
     if qft_context is not None:
         verification_status = "exploratory"
     if cavity_context is not None:
@@ -1687,16 +1684,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             ]
         )
         scientific_risk_notes.extend(cavity_context.summary.notes)
-    if spec.backend.kind.strip().lower() == "ace_qvm":
-        module_origin = "exploratory"
-        capability_tier = "exploratory"
-        scientific_risk_notes.extend(
-            [
-                "ACE-QVM is an exploratory compressed-entanglement local simulator backend.",
-                "ACE-QVM results are observable-level compressed simulation evidence, not full-state reconstruction by default.",
-                "ACE-QVM local simulation does not set hardware_verified and does not prove general volume-law circuit scalability.",
-            ]
-        )
     if tc_qsci_payload is not None:
         module_origin = "exploratory"
         capability_tier = "exploratory"
@@ -1728,8 +1715,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         verification_notes.append("validation_scope=lattice_qed_real_time_dynamics")
     if cavity_context is not None:
         verification_notes.append("validation_scope=pauli_fierz_cavity_qed_finite_photon_cutoff")
-    if spec.backend.kind.strip().lower() == "ace_qvm":
-        verification_notes.append("validation_scope=ace_qvm_compressed_observable_simulator")
     hardware_verified = bool(
         runtime_submission is not None and runtime_submission.submitted and runtime_submission.succeeded
     )

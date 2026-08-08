@@ -1,6 +1,5 @@
 """Backend adapters for QCchem solvers."""
 
-from .ace_qvm import ACEQVMBackend
 from .base import BackendAdapter, BackendEstimate
 from .capabilities import describe_backend_capabilities
 from .cudaq_adapter import CudaQBackend
@@ -25,19 +24,16 @@ def build_backend(spec):
         return ShotEstimatorBackend(spec)
     if normalized in {"cudaq_statevector", "cudaq_sample"}:
         return CudaQBackend(spec)
-    if normalized == "ace_qvm":
-        return ACEQVMBackend(spec)
     raise ValueError(
         f"Unsupported backend kind '{spec.kind}'. "
         "Supported backends are 'statevector', 'shot_estimator', "
-        "'cudaq_statevector', 'cudaq_sample', and 'ace_qvm'."
+        "'cudaq_statevector', and 'cudaq_sample'."
     )
 
 
 __all__ = [
     "BackendAdapter",
     "BackendEstimate",
-    "ACEQVMBackend",
     "CudaQBackend",
     "LayoutPlan",
     "ShotEstimatorBackend",

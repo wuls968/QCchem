@@ -22,14 +22,14 @@ def test_release_audit_datetime_utc_usage_is_python310_compatible() -> None:
 def _write_release_fixture(root: Path) -> None:
     (root / "pyproject.toml").write_text('[project]\nversion = "0.1.0a1"\n', encoding="utf-8")
     (root / "README.md").write_text(
-        "QFT LR-ACE ACE-QVM TC-QSCI finite-cutoff exploratory boundary release audit",
+        "QFT LR-ACE TC-QSCI finite-cutoff exploratory boundary release audit",
         encoding="utf-8",
     )
     docs = root / "docs"
     docs.mkdir()
     for name in ("verified_scope.md", "release_showcase.md"):
         (docs / name).write_text(
-            "QFT LR-ACE ACE-QVM TC-QSCI finite-cutoff exploratory boundary release audit",
+            "QFT LR-ACE TC-QSCI finite-cutoff exploratory boundary release audit",
             encoding="utf-8",
         )
     configs = root / "configs" / "exploratory"
@@ -41,12 +41,6 @@ def _write_release_fixture(root: Path) -> None:
     (configs / "h2_lr_ace.yaml").write_text("solver:\n  kind: lr_ace\n", encoding="utf-8")
     (configs / "h2_tc_qsci.yaml").write_text(
         "exploratory:\n  modules: [tc_qsci]\ntc_qsci:\n  enabled: true\n",
-        encoding="utf-8",
-    )
-    (configs / "h2_ace_qvm_lr_ace.yaml").write_text(
-        "exploratory:\n  modules: [ace_qvm, lr_ace]\n"
-        "solver:\n  kind: lr_ace\n"
-        "backend:\n  kind: ace_qvm\n  ace_qvm: {}\n",
         encoding="utf-8",
     )
     tests = root / "tests" / "unit"
@@ -240,16 +234,6 @@ def _write_artifact(path: Path, *, algorithm: str = "core", trust_tier: str = "e
         payload["tc_qsci_result"] = {"algorithm_name": "TC-kicked QSCI"}
     elif algorithm == "lr_ace":
         payload["variational_result"] = {"ansatz": {"lr_ace": {"algorithm_name": "LR-ACE"}}}
-    elif algorithm == "ace_qvm":
-        payload["backend"] = {
-            "kind": "ace_qvm",
-            "metadata": {
-                "ace_qvm": {
-                    "algorithm_name": "ACE-QVM",
-                    "ledger": {"capacity_status": "within_budget"},
-                }
-            },
-        }
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
@@ -315,12 +299,6 @@ def _write_config(
 ) -> Path:
     required_value = str(artifact_required).lower()
     exploratory_artifact = f"\n      artifact: {artifact.relative_to(root)}" if include_exploratory_artifact else ""
-    config_name = {
-        "qft": "h2_4site_lattice_qed_sparse_exact.yaml",
-        "lr_ace": "h2_lr_ace.yaml",
-        "tc_qsci": "h2_tc_qsci.yaml",
-        "ace_qvm": "h2_ace_qvm_lr_ace.yaml",
-    }.get(algorithm, "h2_4site_lattice_qed_sparse_exact.yaml")
     config = root / "release_audit.yaml"
     config.write_text(
         f"""
@@ -335,16 +313,16 @@ release_audit:
   exploratory_assets:
     - name: {algorithm}_asset
       kind: {algorithm}
-      config: configs/exploratory/{config_name}
+      config: configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml
 {exploratory_artifact}
       required: {required_value}
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
   acceptance_commands:
     - python -m pytest tests/unit/test_release_audit_v23.py -q
 """,
@@ -1612,11 +1590,11 @@ release_audit:
       required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
   acceptance_commands:
     - qcchem benchmark run -c configs/exploratory/h2_4site_lattice_qed_sparse_exact.yaml -o artifacts/qft
 """,
@@ -2679,7 +2657,7 @@ def test_release_audit_fails_hardware_verified_run_without_top_level_runtime_evi
     assert boundary_check["details"]["failure"] == "hardware_verified_trust_without_top_level_runtime_marker"
 
 
-@pytest.mark.parametrize("algorithm", ["qft", "lr_ace", "tc_qsci", "ace_qvm"])
+@pytest.mark.parametrize("algorithm", ["qft", "lr_ace", "tc_qsci"])
 def test_release_audit_rejects_exploratory_assets_marked_validated(tmp_path: Path, algorithm: str) -> None:
     _write_release_fixture(tmp_path)
     artifact = tmp_path / "artifacts" / algorithm / "result.json"

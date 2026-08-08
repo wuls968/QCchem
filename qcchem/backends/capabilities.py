@@ -72,22 +72,6 @@ def describe_backend_capabilities(spec: BackendSpec) -> BackendCapabilitySummary
             supports_confidence_metrics=True,
         )
 
-    if kind == "ace_qvm":
-        return BackendCapabilitySummary(
-            backend_kind=spec.kind,
-            statevector=False,
-            shot_based=False,
-            exact_baseline=False,
-            runtime_ready=False,
-            session_ready=False,
-            batch_ready=False,
-            mitigation_ready=False,
-            noise_model_ready=False,
-            supports_grouping=False,
-            supports_repetitions=False,
-            supports_confidence_metrics=False,
-        )
-
     if "runtime" in kind:
         return BackendCapabilitySummary(
             backend_kind=spec.kind,

@@ -1879,17 +1879,6 @@ def _has_lr_ace_section(payload: dict[str, Any]) -> bool:
     return "lr_ace" in json.dumps(payload.get("metadata", {})).lower()
 
 
-def _has_ace_qvm_section(payload: dict[str, Any]) -> bool:
-    backend = payload.get("backend") or {}
-    backend_metadata = backend.get("metadata") if isinstance(backend, dict) else {}
-    quantum_evidence = payload.get("quantum_evidence") or {}
-    if isinstance(backend_metadata, dict) and isinstance(backend_metadata.get("ace_qvm"), dict):
-        return True
-    if isinstance(quantum_evidence, dict) and isinstance(quantum_evidence.get("ace_qvm"), dict):
-        return True
-    return "ace_qvm" in json.dumps(payload.get("metadata", {})).lower()
-
-
 def _has_required_exploratory_section(kind: str, payload: dict[str, Any]) -> bool:
     if kind == "qft":
         return isinstance(payload.get("qft_model"), dict)
@@ -1897,8 +1886,6 @@ def _has_required_exploratory_section(kind: str, payload: dict[str, Any]) -> boo
         return isinstance(payload.get("tc_qsci_result"), dict)
     if kind == "lr_ace":
         return _has_lr_ace_section(payload)
-    if kind == "ace_qvm":
-        return _has_ace_qvm_section(payload)
     return False
 
 
@@ -1922,14 +1909,10 @@ def _classify_exploratory_config(path: Path) -> tuple[str, str | None]:
         return "unknown", None
     solver = raw.get("solver") or {}
     problem = raw.get("problem") or {}
-    backend = raw.get("backend") or {}
     exploratory = raw.get("exploratory") or {}
     modules = exploratory.get("modules") or []
     qft = (problem.get("qft") or {}) if isinstance(problem, dict) else {}
     solver_kind = str(solver.get("kind", "")).strip() if isinstance(solver, dict) else ""
-    backend_kind = str(backend.get("kind", "")).strip() if isinstance(backend, dict) else ""
-    if backend_kind == "ace_qvm" or "ace_qvm" in modules:
-        return "ace_qvm", None
     if isinstance(qft, dict) and qft.get("enabled"):
         return "qft", None
     if solver_kind.startswith("lattice_qed") or solver_kind == "qft_dynamics_audit":
