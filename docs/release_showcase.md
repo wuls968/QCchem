@@ -54,10 +54,8 @@ routes and writes ignored local diagnostic JSON for CI triage.
 
 Do not use the showcase to upgrade a claim. If a page shows `hardware_verified`,
 QFT finite-cutoff evidence, LR-ACE flagship evidence, ACE-QVM compressed
-QFT finite-cutoff evidence, LR-ACE flagship evidence, ACE-QVM compressed
-simulator evidence, TC-QSCI exploratory evidence, or Method Evidence, explain
-the same boundary used in README and the user manual before showing raw energy
-values.
+simulator evidence, or TC-QSCI exploratory evidence, explain the same boundary
+used in README and the user manual before showing raw energy values.
 
 ## Showcase Order
 
@@ -267,38 +265,6 @@ qcchem exploratory run -c configs/exploratory/lih_active_tc_qsci.yaml
 
 Boundary: TC-kicked sampling and determinant subspace diagonalization remain
 isolated exploratory evidence.
-
-Method Evidence / 10-method v1:
-
-```bash
-qcchem exploratory run -c configs/exploratory/h2_method_evidence_smoke.yaml
-qcchem exploratory run -c configs/exploratory/h2_qsci_plus.yaml
-qcchem exploratory run -c configs/exploratory/h2_ft_qpe_planner.yaml
-```
-
-Boundary: Method Evidence reports E-ADAPT, OO-QCASSCF, QSCI++, QSCI
-post-correlation, q-sc-EOM, Q-Embed/q-DMET, kQ-PBC, Trust-QEM, Shadow-LR, and
-FT-QPE Planner outputs beside the raw solver energy. These sections are
-artifact-producing exploratory evidence. They do not replace the primary energy,
-validate non-Gamma materials accuracy, or promote a run into the validated
-surface without a separate benchmark gate. OO-QCASSCF records PySCF CASSCF
-reference diagnostics, but its reference energy does not replace the delegated
-QCchem solver energy, and comparisons use an explicit total-energy scope audit
-instead of directly comparing PySCF `e_tot` to raw QCchem `solver_energy`.
-QSCI post-correlation records
-coefficient provenance and eligibility only; it does not emit proxy corrected
-energies when no executable QSCI-derived TCC/NEVPT2 backend is available.
-Q-Embed/q-DMET records fragment-reference diagnostics and bath recommendations,
-but does not execute self-consistent q-DMET or replace primary energies.
-Trust-QEM records mitigation provenance and claim gates, but mitigated entries
-do not replace the primary raw solver energy; PEC stays unclaimable unless a
-reviewed executable `qcchem.pec_calibration_model.v1` JSON model is provided.
-FT-QPE Planner reductions are resource-model findings only; compiled
-fault-tolerant circuits, surface-code distance estimates, and logical error
-budgets are still promotion blockers.
-Use `promotion_gate_audit` in `method_evidence.json` before describing a method
-as superior: v1 sidecar evidence keeps accuracy, energy-replacement, hardware,
-planning-cost, and resource-model claims separated.
 
 ## Curated Artifacts
 

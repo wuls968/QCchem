@@ -7,13 +7,6 @@
 - `field_model_qft_dynamics_resource_v1.yaml`: QFT dynamics/resource suite，覆盖 Trotter step、2D Wilson smoke、incremental dynamics 和 runtime preview resource gates
 - `field_model_qft_hardware_micro_v1.yaml`: QFT Runtime micro preview suite，默认 `submit_real_job: false`
 - `field_model_qft_hardware_micro_real_v1.yaml`: QFT Runtime real micro template，只有明确 runtime-budget confirmation 后才能提交真实后端
-- `method_evidence_suite_v1.yaml`: 10-method Method Evidence v1 fast gate，检查
-  result/sidecar/report/QCSchema/Workbench/release-audit surfaces 与 trust
-  boundary metrics；Trust-QEM 同时覆盖缺失 PEC calibration model 和本地可执行
-  PEC calibration model smoke
-- `method_promotion_probe_v1.yaml`: promotion-prep probe，比较 stretched H2/H4
-  exact 与 QSCI++ selected-subspace evidence；用于发现跨几何 selected-subspace
-  缺口，不提升 validated claim
 - `mini_suite.yaml`: 轻量回归 suite，用于测试与快速检查
 
 QFT suites are exploratory. Sparse exact cases validate the configured

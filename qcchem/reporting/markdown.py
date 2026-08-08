@@ -741,167 +741,6 @@ def _field_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
     ]
 
 
-def _method_evidence_lines(data: dict[str, Any], units: str) -> list[str]:
-    evidence = data.get("method_evidence") or {}
-    if not evidence:
-        return []
-    e_adapt = data.get("e_adapt_result") or {}
-    orbital = data.get("orbital_optimization") or {}
-    qsci = data.get("qsci_plus_result") or {}
-    post = data.get("post_correlation") or {}
-    kq_pbc = data.get("kq_pbc_result") or {}
-    ft_qpe = data.get("ft_qpe_resource_estimate") or {}
-    evidence_methods = evidence.get("methods") if isinstance(evidence.get("methods"), dict) else {}
-    trust_qem = data.get("mitigation") or {}
-    promotion_gate_audit = evidence.get("promotion_gate_audit") or {}
-    lines = [
-        "## Method Evidence",
-        "",
-        "> Exploratory method outputs are reported alongside the raw solver energy; they do not replace the primary energy or promote validation status by themselves.",
-        "",
-        f"- available: `{evidence.get('available')}`",
-        f"- schema: `{evidence.get('schema')}`",
-        f"- sidecar_path: `{evidence.get('sidecar_path')}`",
-        f"- sidecar_sha256: `{evidence.get('sidecar_sha256')}`",
-        f"- methods: `{evidence.get('methods', {})}`",
-        f"- promotion_gate_audit: `{promotion_gate_audit}`",
-        f"- trust_tier: `{evidence.get('trust_tier')}`",
-        f"- notes: `{evidence.get('notes', [])}`",
-        "",
-    ]
-    if e_adapt:
-        lines.extend(
-            [
-                "## E-ADAPT",
-                "",
-                f"- selected_operators: `{e_adapt.get('selected_operators', [])}`",
-                f"- rejected_operators: `{e_adapt.get('rejected_operators', [])}`",
-                f"- gradient_history: `{e_adapt.get('gradient_history', [])}`",
-                f"- depth_growth: `{e_adapt.get('depth_growth', [])}`",
-                f"- adaptive_optimization: `{e_adapt.get('adaptive_optimization', {})}`",
-                f"- symmetry_audit: `{e_adapt.get('symmetry_audit', {})}`",
-                f"- ansatz_trust_gate: `{e_adapt.get('ansatz_trust_gate')}`",
-                f"- notes: `{e_adapt.get('notes', [])}`",
-                "",
-            ]
-        )
-    if orbital:
-        lines.extend(
-            [
-                "## OO-QCASSCF",
-                "",
-                f"- macro_iterations: `{orbital.get('macro_iterations', [])}`",
-                f"- orbital_rotation_norm: `{orbital.get('orbital_rotation_norm')}`",
-                f"- rdm_source: `{orbital.get('rdm_source')}`",
-                f"- energy_lowering_hartree: {_fmt_energy(orbital.get('energy_lowering_hartree'), units)}",
-                f"- active_space_changed: `{orbital.get('active_space_changed')}`",
-                f"- reference_diagnostics: `{orbital.get('reference_diagnostics', {})}`",
-                f"- active_space_resolve: `{orbital.get('active_space_resolve', {})}`",
-                f"- orbital_transfer_audit: `{orbital.get('orbital_transfer_audit', {})}`",
-                f"- energy_scope_audit: `{orbital.get('energy_scope_audit', {})}`",
-                f"- promotion_readiness_audit: `{orbital.get('promotion_readiness_audit', {})}`",
-                f"- energy_replaces_primary: `{orbital.get('energy_replaces_primary')}`",
-                f"- trust_gate: `{orbital.get('trust_gate')}`",
-                f"- notes: `{orbital.get('notes', [])}`",
-                "",
-            ]
-        )
-    if qsci:
-        lines.extend(
-            [
-                "## QSCI++",
-                "",
-                f"- sampler: `{qsci.get('sampler')}`",
-                f"- raw_bitstrings: `{qsci.get('raw_bitstrings', {})}`",
-                f"- repaired_determinants: `{qsci.get('repaired_determinants', [])}`",
-                f"- selected_subspace_size: `{qsci.get('selected_subspace_size')}`",
-                f"- ci_energy: {_fmt_energy(qsci.get('ci_energy'), units)}",
-                f"- variance_estimate: `{qsci.get('variance_estimate')}`",
-                f"- excited_state_energies: `{qsci.get('excited_state_energies', [])}`",
-                f"- selection_bias_audit: `{qsci.get('selection_bias_audit', {})}`",
-                f"- subspace_audit: `{qsci.get('subspace_audit', {})}`",
-                f"- variational_upper_bound: `{qsci.get('variational_upper_bound')}`",
-                f"- notes: `{qsci.get('notes', [])}`",
-                "",
-            ]
-        )
-    if post:
-        lines.extend(
-            [
-                "## QSCI Post-Correlation",
-                "",
-                f"- method: `{post.get('method')}`",
-                f"- source_wavefunction: `{post.get('source_wavefunction')}`",
-                f"- active_ci_coefficients_digest: `{post.get('active_ci_coefficients_digest')}`",
-                f"- correction_eligibility_audit: `{post.get('correction_eligibility_audit', {})}`",
-                f"- amplitude_mapping_audit: `{post.get('amplitude_mapping_audit', {})}`",
-                f"- tailored_amplitudes: `{post.get('tailored_amplitudes', {})}`",
-                f"- external_correlation_energy: {_fmt_energy(post.get('external_correlation_energy'), units)}",
-                f"- total_corrected_energy: {_fmt_energy(post.get('total_corrected_energy'), units)}",
-                f"- double_counting_audit: `{post.get('double_counting_audit', {})}`",
-                f"- classical_solver: `{post.get('classical_solver')}`",
-                f"- trust_gate: `{post.get('trust_gate')}`",
-                f"- notes: `{post.get('notes', [])}`",
-                "",
-            ]
-        )
-    if "trust_qem" in evidence_methods and trust_qem:
-        lines.extend(
-            [
-                "## Trust-QEM",
-                "",
-                f"- requested_methods: `{trust_qem.get('requested_methods', [])}`",
-                f"- applied_methods: `{trust_qem.get('applied_methods', [])}`",
-                f"- claim_allowed_methods: `{trust_qem.get('claim_allowed_methods', [])}`",
-                f"- claim_disallowed_methods: `{trust_qem.get('claim_disallowed_methods', [])}`",
-                f"- claim_status: `{trust_qem.get('claim_status')}`",
-                f"- trust_gate: `{trust_qem.get('trust_gate')}`",
-                f"- energy_replaces_primary: `{trust_qem.get('energy_replaces_primary')}`",
-                f"- symmetry_check: `{trust_qem.get('symmetry_check', {})}`",
-                f"- readout_mitigation: `{trust_qem.get('readout_mitigation', {})}`",
-                f"- zne: `{trust_qem.get('zne', {})}`",
-                f"- pec: `{trust_qem.get('pec', {})}`",
-                "",
-            ]
-        )
-    if kq_pbc:
-        lines.extend(
-            [
-                "## kQ-PBC",
-                "",
-                f"- kpoints: `{kq_pbc.get('kpoints', [])}`",
-                f"- twist_energies: `{kq_pbc.get('twist_energies', [])}`",
-                f"- finite_size_correction: `{kq_pbc.get('finite_size_correction', {})}`",
-                f"- band_window_metadata: `{kq_pbc.get('band_window_metadata', {})}`",
-                f"- non_gamma_mapping_audit: `{kq_pbc.get('non_gamma_mapping_audit', {})}`",
-                f"- pbc_trust_tier: `{kq_pbc.get('pbc_trust_tier')}`",
-                f"- notes: `{kq_pbc.get('notes', [])}`",
-                "",
-            ]
-        )
-    if ft_qpe:
-        lines.extend(
-            [
-                "## FT-QPE Planner",
-                "",
-                f"- encodings_compared: `{ft_qpe.get('encodings_compared', [])}`",
-                f"- lambda_norms: `{ft_qpe.get('lambda_norms', {})}`",
-                f"- toffoli_counts: `{ft_qpe.get('toffoli_counts', {})}`",
-                f"- logical_qubits: `{ft_qpe.get('logical_qubits', {})}`",
-                f"- physical_qubits: `{ft_qpe.get('physical_qubits', {})}`",
-                f"- runtime_estimates: `{ft_qpe.get('runtime_estimates', {})}`",
-                f"- dominant_cost_terms: `{ft_qpe.get('dominant_cost_terms', {})}`",
-                f"- recommended_encoding: `{ft_qpe.get('recommended_encoding')}`",
-                f"- resource_formula_audit: `{ft_qpe.get('resource_formula_audit', {})}`",
-                f"- resource_model_audit: `{ft_qpe.get('resource_model_audit', {})}`",
-                f"- promotion_readiness_audit: `{ft_qpe.get('promotion_readiness_audit', {})}`",
-                f"- notes: `{ft_qpe.get('notes', [])}`",
-                "",
-            ]
-        )
-    return lines
-
-
 def _claim_lines(data: dict[str, Any]) -> list[str]:
     evidence = data.get("evidence_summary") or {}
     return [
@@ -998,7 +837,6 @@ def render_markdown_report(result: Any) -> str:
     measurement = data.get("measurement")
     quantum_evidence = data.get("quantum_evidence")
     field_evidence = data.get("field_evidence")
-    method_evidence = data.get("method_evidence")
     runtime_options = data.get("runtime_options")
     chemical_accuracy = data.get("chemical_accuracy")
     runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")
@@ -1100,7 +938,6 @@ def render_markdown_report(result: Any) -> str:
         "",
         *_quantum_evidence_lines(data, units),
         *_field_evidence_lines(data, units),
-        *_method_evidence_lines(data, units),
         "## Problem Summary",
         "",
         f"- Basis: `{problem['basis']}`",
@@ -1370,11 +1207,6 @@ def render_markdown_report(result: Any) -> str:
                 f"- uncompressed_group_count: `{measurement.get('uncompressed_group_count')}`",
                 f"- uncompressed_estimated_shot_cost: `{measurement.get('uncompressed_estimated_shot_cost')}`",
                 f"- cost_reduction_ratio: `{measurement.get('cost_reduction_ratio')}`",
-                f"- planner: `{measurement.get('planner')}`",
-                f"- shadow_bases: `{measurement.get('shadow_bases', [])}`",
-                f"- shot_allocation: `{measurement.get('shot_allocation', [])}`",
-                f"- predicted_variance: `{measurement.get('predicted_variance')}`",
-                f"- measurement_cost_model: `{measurement.get('measurement_cost_model', {})}`",
                 f"- notes: `{measurement.get('notes', [])}`",
                 "",
             ]
@@ -1404,12 +1236,6 @@ def render_markdown_report(result: Any) -> str:
         )
 
     if embedding is not None:
-        embedding_environment = embedding.get("environment_metadata", {})
-        embedding_boundary = (
-            embedding_environment.get("embedding_boundary_audit", {})
-            if isinstance(embedding_environment, dict)
-            else {}
-        )
         lines.extend(
             [
                 "## Embedding Audit",
@@ -1419,10 +1245,6 @@ def render_markdown_report(result: Any) -> str:
                 f"- solver_plugin: `{embedding.get('solver_plugin')}`",
                 f"- bath_threshold: `{embedding.get('bath_threshold')}`",
                 f"- verification_status: `{embedding.get('verification_status')}`",
-                f"- embedding_execution_status: `{embedding_environment.get('embedding_execution_status') if isinstance(embedding_environment, dict) else None}`",
-                f"- self_consistency_loop_executed: `{embedding_boundary.get('self_consistency_loop_executed') if isinstance(embedding_boundary, dict) else None}`",
-                f"- density_matching_performed: `{embedding_boundary.get('density_matching_performed') if isinstance(embedding_boundary, dict) else None}`",
-                f"- fragment_energy_sum_replaces_primary: `{embedding_boundary.get('fragment_energy_sum_replaces_primary') if isinstance(embedding_boundary, dict) else None}`",
                 f"- environment_metadata: `{embedding.get('environment_metadata', {})}`",
                 f"- notes: `{embedding.get('notes', [])}`",
                 "",
@@ -1448,7 +1270,6 @@ def render_markdown_report(result: Any) -> str:
                 f"- total_energy: {_fmt_energy(tc_qsci.get('total_energy'), units)}",
                 f"- subspace_dimension: `{tc_qsci.get('subspace_dimension')}`",
                 f"- selected_probability_mass: `{tc_qsci.get('selected_probability_mass')}`",
-                f"- subspace_audit: `{tc_qsci.get('subspace_audit', {})}`",
                 f"- initial_state: `{tc_qsci.get('initial_state')}`",
                 f"- kick: `{tc_qsci.get('kick')}`",
                 f"- notes: `{tc_qsci.get('notes', [])}`",
@@ -1551,8 +1372,7 @@ def render_markdown_report(result: Any) -> str:
             lines.append(
                 f"- state_index=`{state['state_index']}` "
                 f"excitation_energy={_fmt_energy(state.get('excitation_energy'), units)} "
-                f"verification_status=`{state.get('verification_status')}` "
-                f"solver_metadata=`{state.get('solver_metadata', {})}`"
+                f"verification_status=`{state.get('verification_status')}`"
             )
         lines.append("")
 
@@ -1581,11 +1401,7 @@ def render_markdown_report(result: Any) -> str:
             f"- readout_mitigation: `{mitigation.get('readout_mitigation')}`",
             f"- zne: `{mitigation.get('zne')}`",
             f"- pec: `{mitigation.get('pec')}`",
-            f"- requested_methods: `{mitigation.get('requested_methods', [])}`",
             f"- applied_methods: `{mitigation.get('applied_methods', [])}`",
-            f"- claim_allowed_methods: `{mitigation.get('claim_allowed_methods', [])}`",
-            f"- claim_status: `{mitigation.get('claim_status')}`",
-            f"- energy_replaces_primary: `{mitigation.get('energy_replaces_primary')}`",
             "",
             *_input_provenance_lines(data),
             "## Provenance",

@@ -180,8 +180,8 @@ QCchem v1 supports Gamma-only/supercell periodic electronic structure through
 `qcchem.pbc.pyscf_adapter` and fixed-charge PBC-QM/MM electrostatics through
 `qcchem.pbc.ewald`. The validated slice checks plain PBC, PBC-QM/MM Ewald,
 non-Gamma k-point rejection, VQE/twolocal, active-space, compression, LR-ACE,
-TC-QSCI routing, Method Evidence sidecar propagation, reports,
-QCSchema/HDF5 exports, artifact indexing, and workbench models.
+TC-QSCI routing, reports, QCSchema/HDF5 exports, artifact indexing, and
+workbench models.
 
 Boundary: non-Gamma k-point mapped quantum algorithms, forces, stress, cell
 optimization, PME dynamics, polarization, MM relaxation, and covalent PBC-QM/MM
@@ -234,86 +234,11 @@ TC-kicked QSCI assets include:
 - CAST-QC sampling provenance,
 - low-rank resource summaries,
 - QPE resource summaries, and
-- selected-subspace Ritz-vector variance/residual audit and error budget fields.
+- error budget fields.
 
 Boundary: CAST Hamiltonians guide sampling only. The selected subspace is
 diagonalized with the physical Hamiltonian, and the entire workflow remains
 exploratory.
-
-### Method Evidence / 10-Method v1
-
-Method Evidence assets include:
-
-- E-ADAPT qubit-pool operator filtering and ansatz-growth diagnostics,
-- OO-QCASSCF orbital-relaxation summaries,
-- QSCI++ determinant repair, selected-subspace diagonalization, variance audit,
-  and QSCI post-correlation interfaces,
-- q-sc-EOM excited-state conditioning and root-tracking audits,
-- Q-Embed/q-DMET fragment, bath, and density-mismatch metadata,
-- kQ-PBC twist/k-point exploratory audit fields,
-- Trust-QEM readout/ZNE/symmetry/PEC trust gates,
-- Shadow-LR measurement scheduling and shot-allocation summaries, and
-- FT-QPE Planner resource estimates.
-
-Boundary: Method Evidence is artifact-producing but exploratory. E-ADAPT v1
-uses ansatz excitation operators when available and records adaptive growth, but
-it only replaces delegated VQE energy after a robust minimum-improvement gate.
-The primary energy remains the configured raw solver energy unless the
-exploratory method is explicitly selected as the solver. Mitigated, QSCI,
-post-correlation, kQ-PBC, and FT-QPE outputs are reported alongside the primary
-result through
-`method_evidence.json`; they do not promote chemical accuracy or validated
-status without a separate benchmark gate. OO-QCASSCF records PySCF CASSCF
-orbital-relaxation reference diagnostics beside the delegated QCchem solver; the
-CASSCF reference energy does not replace the primary solver energy without a
-separate validation gate. OO-QCASSCF evidence also records an energy-scope audit:
-PySCF CASSCF references are molecular total energies, while QCchem
-`solver_energy` is a solver Hamiltonian energy, so total-energy estimates and
-explicit CASSCF-minus-primary gaps must be used for any comparison. Its
-`orbital_transfer_audit` and `promotion_readiness_audit` must show optimized
-orbitals were applied to a rebuilt primary Hamiltonian before any solver
-replacement claim is allowed. QSCI
-post-correlation records
-coefficient provenance, correction eligibility, and for `qsci_tcc` an audit-only
-selected-CI-to-single/double-amplitude mapping; it does not emit a numeric
-dynamic-correlation correction until an executable QSCI-derived TCC/NEVPT2
-backend and double-counting model exist. QSCI++ variance evidence is computed from embedded
-selected-CI Ritz-vector residuals in the physical Hamiltonian, not from a proxy
-energy-difference square. q-sc-EOM records exact-root residual and degeneracy
-audits as conditioning evidence, not as a validated general EOM solver.
-Q-Embed/q-DMET records bath recommendations and
-optional PySCF RHF/UHF fragment-reference diagnostics only; it does not execute
-q-DMET self-consistency, density matching, or correlation-potential
-optimization. Fragment density-population mismatch values are one-shot
-reference diagnostics, not optimized DMET density matching. Fragment energy
-sums are diagnostics and do not replace the primary full-system energy. kQ-PBC does not validate non-Gamma
-materials accuracy: it executes a Gamma reference Hamiltonian, records requested
-k/twist audit metadata, and leaves non-Gamma/twist energy fields unevaluated
-instead of emitting proxy energies. Its mesh-mismatch and promotion-blocker
-fields must remain visible for non-Gamma/twist requests. Trust-QEM does not claim calibrated PEC
-unless the calibration model is executable and reviewed; readout, ZNE, symmetry,
-and PEC entries expose `requested_methods`, `claim_allowed_methods`,
-`claim_status`, and `energy_replaces_primary=false` so mitigation provenance
-cannot silently replace the raw solver energy.
-Shadow-LR cost reductions are measurement-planning estimates based on allocated
-shadow shots and are not hardware-calibrated runtime wins.
-FT-QPE Planner resource reductions are coarse resource-model findings only:
-`compiled_fault_tolerant_circuit_available=false`,
-`surface_code_distance_available=false`,
-`logical_error_budget_available=false`,
-`readiness_level=resource_model_only_not_compiled`, and
-`resource_claim_status` must remain visible whenever Toffoli or physical-qubit
-reductions are reported. `resource_formula_audit` and
-`promotion_readiness_audit` are the machine-readable contracts that explain the
-assumptions and missing promotion evidence.
-Method Evidence artifacts also expose `promotion_gate_audit`, which must keep
-`sidecar_energy_replacement_allowed_methods`, `accuracy_claim_allowed_methods`,
-and `hardware_claim_allowed_methods` empty until a separate promotion gate proves
-otherwise. Planning/resource-only entries such as Shadow-LR and FT-QPE remain
-separate from validated chemistry improvement claims.
-Method Evidence campaign summaries additionally expose a `contract_matrix`; the
-release audit requires complete coverage of all 10 method surfaces before using
-that campaign as release-readable integration evidence.
 
 ## Unstable Surface
 
@@ -351,23 +276,15 @@ artifacts. It performs no runtime submission. The default manifest verifies:
 - `pyproject.toml` release version,
 - required Evidence Summary fields in curated artifacts,
 - conservative runtime/hardware boundary language,
-- QFT, LR-ACE, ACE-QVM, TC-QSCI, and Method Evidence exploratory boundary
-  classification, and
+- QFT, LR-ACE, ACE-QVM, and TC-QSCI exploratory boundary classification, and
 - required release terms in README, verified scope, release showcase, release
   audit docs, and Research OS docs.
-- Method Evidence artifacts carrying sidecar evidence must expose conservative
-  `promotion_gate_audit` fields so release audit can block sidecar energy,
-  accuracy, or hardware claim promotion.
-- Method Evidence campaign summaries must expose a complete `contract_matrix`
-  for all 10 method surfaces before release audit treats them as coverage
-  evidence.
 
 README, user manual, release showcase, and release audit docs may explain the
 same workflows at different depth, but they must preserve the same conservative
 claim rules: `hardware_verified` is runtime provenance, QFT sparse exactness is
 finite-cutoff model evidence, LR-ACE flagship is gate-dependent method evidence,
-TC-QSCI remains exploratory, and Method Evidence sidecars do not replace the
-primary solver energy.
+and TC-QSCI remains exploratory.
 
 The Research OS checks are deliberately local: evidence capsule, claim compiler,
 promotion gate, and research objective artifacts may be reviewed by the audit,

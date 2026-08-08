@@ -211,20 +211,6 @@ def _pbc_periodic_summary(spec: RunSpec) -> PeriodicBoundarySummary | None:
         "molecule_periodic": to_primitive(periodic),
         "problem_pbc": to_primitive(spec.problem.pbc),
     }
-    kq_pbc_mode = spec.problem.pbc.mode.strip().lower() == "kq_pbc"
-    semantics = (
-        "Gamma reference Hamiltonian plus exploratory k/twist audit metadata for kQ-PBC v1."
-        if kq_pbc_mode
-        else "Gamma-only periodic/supercell electronic structure in v1."
-    )
-    risk_notes = [
-        (
-            "kQ-PBC v1 records non-Gamma/twist audit metadata but executes a Gamma reference Hamiltonian."
-            if kq_pbc_mode
-            else "PBC v1 supports Gamma-only/supercell periodic Hamiltonians; non-Gamma k-point meshes are rejected."
-        ),
-        "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies.",
-    ]
     return PeriodicBoundarySummary(
         enabled=True,
         cell_vectors=[[float(value) for value in row] for row in periodic.cell.vectors],
@@ -241,11 +227,12 @@ def _pbc_periodic_summary(spec: RunSpec) -> PeriodicBoundarySummary | None:
         fingerprint=workspace_fingerprint([str(to_primitive(pbc_payload))]),
         provenance={
             "source": periodic.source or periodic.cell.source,
-            "semantics": semantics,
-            "execution_kpoint_mesh": [1, 1, 1] if kq_pbc_mode else [int(value) for value in spec.problem.pbc.kpoint_mesh],
-            "requested_audit_kpoint_mesh": [int(value) for value in spec.problem.pbc.kpoint_mesh],
+            "semantics": "Gamma-only periodic/supercell electronic structure in v1.",
         },
-        risk_notes=risk_notes,
+        risk_notes=[
+            "PBC v1 supports Gamma-only/supercell periodic Hamiltonians; non-Gamma k-point meshes are rejected.",
+            "Finite-size, k-point convergence, and pseudopotential validation require explicit follow-up studies.",
+        ],
     )
 
 
@@ -386,11 +373,8 @@ def build_pbc_electronic_structure_context(spec: RunSpec) -> ElectronicStructure
     periodic = spec.molecule.periodic
     if periodic.cell is None:
         raise ValueError("problem.pbc.enabled=true requires molecule.periodic.cell.vectors.")
-    kq_pbc_mode = spec.problem.pbc.mode.strip().lower() == "kq_pbc"
-    requested_kpoint_mesh = tuple(int(value) for value in spec.problem.pbc.kpoint_mesh)
-    if requested_kpoint_mesh != (1, 1, 1) and not kq_pbc_mode:
+    if tuple(int(value) for value in spec.problem.pbc.kpoint_mesh) != (1, 1, 1):
         raise ValueError("PBC v1 supports only Gamma-only kpoint_mesh=[1, 1, 1].")
-    execution_kpoint_mesh = (1, 1, 1) if kq_pbc_mode else requested_kpoint_mesh
 
     method = "rhf" if spec.molecule.spin == 0 else "uhf"
     gamma = run_gamma_cell_problem(
@@ -402,7 +386,7 @@ def build_pbc_electronic_structure_context(spec: RunSpec) -> ElectronicStructure
             charge=spec.molecule.charge,
             spin=spec.molecule.spin,
             precision=spec.problem.pbc.precision,
-            kpoint_mesh=execution_kpoint_mesh,
+            kpoint_mesh=spec.problem.pbc.kpoint_mesh,
             method=method,
             density_fit=True,
             density_fitting=spec.problem.pbc.density_fitting,

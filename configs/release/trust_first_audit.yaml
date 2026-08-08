@@ -30,10 +30,6 @@ release_audit:
       path: artifacts/lr_ace_flagship_suite_v1/benchmark_result.json
       required: true
       acceptance_required: true
-    - name: method_evidence_suite_v1
-      path: artifacts/method_evidence_suite_v1/benchmark_result.json
-      required: true
-      acceptance_required: true
   exploratory_assets:
     - name: qft_sparse_projected_engine
       kind: qft
@@ -61,22 +57,18 @@ release_audit:
       kind: tc_qsci
       config: configs/exploratory/h2_tc_qsci.yaml
       required: true
-    - name: method_evidence_smoke
-      kind: method_evidence
-      config: configs/exploratory/h2_method_evidence_smoke.yaml
-      required: true
   required_docs:
     - path: README.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, Method Evidence, QSCI++, FT-QPE Planner, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/verified_scope.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, Method Evidence, kQ-PBC, Trust-QEM, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_showcase.md
-      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, Method Evidence, QSCI++, FT-QPE Planner, finite-cutoff, exploratory boundary, release audit]
+      terms: [QFT, LR-ACE, LR-ACE flagship, ACE-QVM, TC-QSCI, finite-cutoff, exploratory boundary, release audit]
       required: true
     - path: docs/release_audit.md
-      terms: [release audit, release_readiness.json, release_readiness.md, no runtime submission, promotion_gate_audit, contract_matrix]
+      terms: [release audit, release_readiness.json, release_readiness.md, no runtime submission]
       required: true
     - path: docs/research_objectives.md
       terms: [research objective, best evidence, trust tier, baseline strength, recommended next action]
@@ -106,4 +98,3 @@ release_audit:
     - python -m pytest tests/integration/test_lr_ace_workflow_v19.py tests/integration/test_tc_qsci_workflow.py tests/integration/test_h2_workflow.py -q
     - python -m pytest -m slow tests/integration/test_lr_ace_workflow_v19.py -q
     - qcchem benchmark run -c benchmarks/lr_ace_flagship_suite_v1.yaml -o artifacts/lr_ace_flagship_suite_v1/preview_local --overwrite
-    - qcchem benchmark run -c benchmarks/method_evidence_suite_v1.yaml --include-tag fast -o artifacts/method_evidence_suite_v1/preview_local --overwrite

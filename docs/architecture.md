@@ -226,7 +226,7 @@ QCchem 当前阶段的主抓手是 `Evidence Core`。这意味着：
 : 记录 active-space energy、perturbative correction、corrected total energy 与 plugin provenance。
 
 `EmbeddingResultSummary`
-: 记录 fragments、bath/environment metadata、solver plugin interface 与 verification boundary。Q-Embed/q-DMET v1 的 fragment RHF/UHF execution 是 reference diagnostic，不代表 self-consistent DMET convergence。
+: 记录 fragments、bath/environment metadata、solver plugin interface 与 verification boundary。
 
 `NoiseModelSummary`
 : 记录 local noisy execution 的 profile、参数、basis gates 与 provenance。
@@ -512,8 +512,7 @@ artifact 会记录：
 当前状态：
 
 - schema / artifact / report: formal
-- fragment solver workflow: exploratory plugin interface / PySCF RHF/UHF fragment-reference diagnostic
-- q-DMET self-consistency, density matching, and correlation-potential optimization: not yet
+- fragment solver workflow: exploratory plugin interface
 - validated DMET platform: not yet
 
 ## Provenance / Export 层

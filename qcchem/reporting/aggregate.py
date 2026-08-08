@@ -135,7 +135,6 @@ def render_benchmark_report(result: Any) -> str:
     best_case_error = None if best_case is None else _benchmark_case_error(best_case)
     best_case_distance = _distance_to_chemical_accuracy(best_case_error)
     field_model_summary = (data.get("dashboard_summary") or {}).get("field_model_campaign") or {}
-    method_evidence_summary = (data.get("dashboard_summary") or {}).get("method_evidence_campaign") or {}
     field_cases_by_model = _field_model_cases(data["cases"])
     lines = [
         f"# Benchmark Suite Report: {data['suite_name']}",
@@ -183,30 +182,7 @@ def render_benchmark_report(result: Any) -> str:
         f"- recommended_trotter_step: `{field_model_summary.get('recommended_trotter_step')}`",
         f"- hardware_gate_note: `{field_model_summary.get('hardware_gate_note')}`",
         "",
-        "## Method Evidence Campaign",
-        "",
-        f"- schema_version: `{method_evidence_summary.get('schema_version')}`",
-        f"- method_case_count: `{method_evidence_summary.get('method_case_count', 0)}`",
-        f"- method_counts: `{method_evidence_summary.get('method_counts', {})}`",
-        f"- contract_matrix_status: `{(method_evidence_summary.get('contract_matrix') or {}).get('status')}`",
-        f"- contract_matrix_covered_methods: `{(method_evidence_summary.get('contract_matrix') or {}).get('covered_method_count')}` / `{(method_evidence_summary.get('contract_matrix') or {}).get('expected_method_count')}`",
-        f"- contract_matrix_missing_methods: `{(method_evidence_summary.get('contract_matrix') or {}).get('missing_methods', [])}`",
-        f"- accuracy_advantage_pairs: `{method_evidence_summary.get('accuracy_advantage_pairs', [])}`",
-        f"- exact_match_pairs: `{method_evidence_summary.get('exact_match_pairs', [])}`",
-        f"- estimated_cost_advantage_pairs: `{method_evidence_summary.get('estimated_cost_advantage_pairs', [])}`",
-        f"- planning_metric_cost_advantage_pairs: `{method_evidence_summary.get('planning_metric_cost_advantage_pairs', [])}`",
-        f"- ft_qpe_resource_cases: `{sorted((method_evidence_summary.get('ft_qpe_resource_findings') or {}).keys())}`",
-        f"- promotion_gate_summary: `{method_evidence_summary.get('promotion_gate_summary', {})}`",
-        f"- method_superiority_audit: `{method_evidence_summary.get('method_superiority_audit', {})}`",
-        f"- promotion_boundary: `{method_evidence_summary.get('promotion_boundary')}`",
-        "",
     ]
-    headline_findings = method_evidence_summary.get("headline_findings") or []
-    if headline_findings:
-        lines.extend(["### Method Evidence Findings", ""])
-        for finding in headline_findings:
-            lines.append(f"- {finding}")
-        lines.append("")
     for model_kind, model_cases in sorted(field_cases_by_model.items()):
         lines.extend([f"## Field Model: {model_kind}", ""])
         for item in model_cases:

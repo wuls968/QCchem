@@ -17,24 +17,6 @@ EXPLORATORY_SOLVERS: dict[str, dict[str, Any]] = {
             "Adaptive excitation-pool behavior is not part of the validated QCchem path.",
         ],
     },
-    "e_adapt_vqe": {
-        "loader": "qcchem.exploratory.solvers.adapt_vqe:build_solver",
-        "class_name": "ExploratoryADAPTVQESolver",
-        "module_origin": "exploratory",
-        "capability_tier": "exploratory",
-        "scientific_risk_notes": [
-            "Evidence-gated ADAPT-VQE remains exploratory until benchmark gates promote it.",
-        ],
-    },
-    "oo_qcasscf": {
-        "loader": "qcchem.exploratory.solvers.oo_qcasscf:build_solver",
-        "class_name": "OOQCASSCFSolver",
-        "module_origin": "exploratory",
-        "capability_tier": "exploratory",
-        "scientific_risk_notes": [
-            "Orbital optimization diagnostics are exploratory and do not replace validated CASSCF benchmarks.",
-        ],
-    },
     "vqd": {
         "loader": "qcchem.exploratory.solvers.vqd:build_solver",
         "class_name": "ExploratoryVQDSolver",
@@ -121,7 +103,6 @@ def build_exploratory_solver(
     problem_summary=None,
     mapper=None,
     qft_context=None,
-    run_spec=None,
 ):
     """Build the requested exploratory solver skeleton."""
     normalized = kind.strip().lower()
@@ -143,6 +124,4 @@ def build_exploratory_solver(
     )
     if accepts_kwargs or "qft_context" in parameters:
         kwargs["qft_context"] = qft_context
-    if accepts_kwargs or "run_spec" in parameters:
-        kwargs["run_spec"] = run_spec
     return builder(**kwargs)

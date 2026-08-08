@@ -190,7 +190,6 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     compression = payload.get("compression_result") or {}
     evidence_summary = payload.get("evidence_summary") or {}
     field_evidence = payload.get("field_evidence") or {}
-    method_evidence = payload.get("method_evidence") or {}
     pbc = _normalized_pbc_model(payload.get("periodic_boundary") or payload.get("pbc"))
     pbc_qmmm = _normalized_pbc_qmmm_model(payload.get("pbc_qmmm"))
     variational = _safe_dict(payload.get("variational_result"))
@@ -287,21 +286,6 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "constraints": field_evidence.get("constraints", {}),
             "resources": field_evidence.get("resources", {}),
             "error_budget": field_evidence.get("error_budget", {}),
-        },
-        "method_evidence": {
-            "available": method_evidence.get("available"),
-            "schema": method_evidence.get("schema"),
-            "sidecar_path": method_evidence.get("sidecar_path"),
-            "sidecar_sha256": method_evidence.get("sidecar_sha256"),
-            "methods": method_evidence.get("methods", {}),
-            "promotion_gate_audit": method_evidence.get("promotion_gate_audit", {}),
-            "trust_tier": method_evidence.get("trust_tier"),
-            "e_adapt_result": payload.get("e_adapt_result"),
-            "orbital_optimization": payload.get("orbital_optimization"),
-            "qsci_plus_result": payload.get("qsci_plus_result"),
-            "post_correlation": payload.get("post_correlation"),
-            "kq_pbc_result": payload.get("kq_pbc_result"),
-            "ft_qpe_resource_estimate": payload.get("ft_qpe_resource_estimate"),
         },
         "confidence": {
             "verification_status": payload.get("verification_status"),

@@ -96,7 +96,6 @@ Open `docs/user_manual.md` for the full task-oriented guide.
 | QFT / finite-cutoff lattice-QED | Exploratory finite-model evidence | Sparse projected exact checks, Gauss-law audits, dynamics/resource studies | Finite-model exactness is not continuum chemistry accuracy. |
 | ACE-QVM | Exploratory compressed simulator evidence | Low-entanglement observable simulation through `backend.kind: ace_qvm` | Reports compression ledgers; does not claim full-state reconstruction or hardware execution. |
 | TC-QSCI | Exploratory research evidence | Determinant selection and CAST-guided sampling studies | It remains outside the validated release surface. |
-| Method Evidence / QSCI++ / FT-QPE Planner | Exploratory method evidence | E-ADAPT, OO-QCASSCF, QSCI++, q-sc-EOM, Q-Embed/q-DMET, kQ-PBC, Trust-QEM, Shadow-LR, and FT-QPE planning smoke runs | `method_evidence.json` reports sidecar evidence beside the raw solver energy; it does not replace primary energy or promote validation status. |
 | AI Workspace and Research OS | Local analysis surfaces | Evidence-aware tickets, objective planning, claim review, promotion review | They do not submit hardware jobs or promote exploratory artifacts automatically. |
 
 See `docs/verified_scope.md` for the full validated, exploratory, unstable, and
@@ -217,9 +216,6 @@ A normal run writes a directory under `artifacts/` with:
 - `exact_result.json`: exact baseline when available.
 - `quantum_evidence.json`: Pauli, trajectory, constraint, resource, and error
   evidence when materialized.
-- `method_evidence.json`: optional sidecar for exploratory method families such
-  as E-ADAPT, OO-QCASSCF, QSCI++, QSCI post-correlation, q-sc-EOM,
-  Q-Embed/q-DMET, kQ-PBC, Trust-QEM, Shadow-LR, and FT-QPE Planner.
 
 Output paths must be dedicated artifact directories. QCchem refuses root/home
 paths, the repository root, the top-level `artifacts/` directory, and
@@ -260,39 +256,6 @@ Keep these statements precise in README text, reports, papers, and AI prompts:
   local exact-baseline and validation gates pass.
 - TC-QSCI remains exploratory; CAST Hamiltonians guide sampling, while the
   selected subspace is diagonalized with the physical Hamiltonian.
-- Method Evidence sections report mitigated/QSCI/post-correlation/resource
-  estimates next to the configured solver result. They must not silently replace
-  `solver_energy` or `total_energy`.
-- OO-QCASSCF v1 records a PySCF CASSCF orbital-relaxation reference diagnostic
-  beside the delegated QCchem solver. Its CASSCF reference energy and orbital
-  metadata do not replace the primary solver energy unless a later validation
-  gate explicitly promotes that path. The sidecar records a total-energy scope
-  audit before comparing PySCF `CASSCF.e_tot` with QCchem primary energies, plus
-  `orbital_transfer_audit` and `promotion_readiness_audit` fields showing that
-  optimized orbitals were not transferred into a rebuilt primary Hamiltonian.
-- QSCI post-correlation v1 records selected-CI coefficient provenance and
-  correction eligibility only. For `qsci_tcc`, it may also record an audit-only
-  selected-CI-to-single/double-amplitude mapping. It leaves
-  external-correlation and corrected-total energies empty unless an executable
-  QSCI-derived TCC/NEVPT2 backend and double-counting model are present.
-- Q-Embed/q-DMET v1 records bath recommendations and optional PySCF RHF/UHF
-  fragment-reference diagnostics. It does not run q-DMET self-consistency,
-  density matching, or correlation-potential optimization, and fragment-energy
-  sums do not replace the primary full-system energy.
-- kQ-PBC v1 executes a Gamma reference Hamiltonian and records requested
-  k/twist audit metadata. It leaves non-Gamma/twist energy and finite-size
-  correction fields unevaluated instead of emitting proxy energies. Coverage
-  fractions and promotion-readiness fields quantify the gap between requested
-  non-Gamma/twist scope and the executed Gamma-only reference.
-- FT-QPE Planner v1 reports coarse resource-model estimates only. Toffoli and
-  physical-qubit reductions remain `resource_model_only`; the sidecar records
-  `resource_formula_audit`, `promotion_readiness_audit`,
-  `readiness_level=resource_model_only_not_compiled`, and
-  `required_promotion_evidence` until compiled fault-tolerant circuits,
-  surface-code distance estimates, and logical error budgets are available.
-- `method_evidence.json` includes `promotion_gate_audit` so reports and scripts
-  can separate accuracy, energy-replacement, hardware, planning-cost, and
-  resource-model claims before describing any method as superior.
 - A release audit pass is a local readiness check. It performs no runtime
   submission and does not upgrade exploratory evidence to validated evidence.
 
@@ -378,11 +341,9 @@ qcchem exploratory run -c configs/exploratory/h2_lr_ace.yaml
 qcchem exploratory run -c configs/exploratory/h2_ace_qvm_lr_ace.yaml
 qcchem exploratory capacity-benchmark -o artifacts/ace_qvm_capacity_benchmark --sizes 128,512,2048
 qcchem exploratory run -c configs/exploratory/h2_tc_qsci.yaml
-qcchem exploratory run -c configs/exploratory/h2_method_evidence_smoke.yaml
 ```
 
-For curated QFT, LR-ACE, ACE-QVM, TC-QSCI, and Method Evidence release
-demonstrations, use
+For curated QFT, LR-ACE, ACE-QVM, and TC-QSCI release demonstrations, use
 `docs/release_showcase.md` and keep the exploratory boundary visible.
 
 ## Documentation Map

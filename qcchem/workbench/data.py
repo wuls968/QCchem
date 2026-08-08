@@ -64,13 +64,6 @@ def _normalize_qcschema_payload(qcschema: dict[str, Any]) -> dict[str, Any]:
         "perturbative_correction_result": extras.get("perturbative_correction_result"),
         "evidence_summary": extras.get("evidence_summary"),
         "quantum_evidence": extras.get("quantum_evidence"),
-        "method_evidence": extras.get("method_evidence"),
-        "e_adapt_result": extras.get("e_adapt_result"),
-        "orbital_optimization": extras.get("orbital_optimization"),
-        "qsci_plus_result": extras.get("qsci_plus_result"),
-        "post_correlation": extras.get("post_correlation"),
-        "kq_pbc_result": extras.get("kq_pbc_result"),
-        "ft_qpe_resource_estimate": extras.get("ft_qpe_resource_estimate"),
         "field_evidence": extras.get("field_evidence"),
         "field_model": extras.get("field_model"),
         "qft_model": extras.get("qft_model"),
@@ -95,7 +88,6 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
         "field_resources": root / "field_resources.json",
         "field_error_budget": root / "field_error_budget.json",
     }
-    method_evidence_path = root / "method_evidence.json"
     result = _load_json(result_path)
     qcschema = _load_json(qcschema_path)
     preferred_source = "result" if result is not None else "qcschema" if qcschema is not None else None
@@ -130,11 +122,6 @@ def load_artifact_bundle(root: Path) -> dict[str, Any]:
                     "present": path.exists(),
                 }
                 for name, path in field_sidecars.items()
-            },
-            "method_evidence": {
-                "source": "method_evidence.json",
-                "path": str(method_evidence_path),
-                "present": method_evidence_path.exists(),
             },
             "pbc": {
                 "source": "result.json/qcschema extras",

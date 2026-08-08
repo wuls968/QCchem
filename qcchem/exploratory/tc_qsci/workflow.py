@@ -12,6 +12,7 @@ from qcchem.exploratory.tc_qsci.cast import build_cast_hamiltonian
 from qcchem.exploratory.tc_qsci.determinants import (
     InitialState,
     build_initial_state,
+    build_selected_subspace_matrix,
     determinant_sector,
     filter_determinants_by_sector,
     hartree_fock_determinant,
@@ -21,7 +22,6 @@ from qcchem.exploratory.tc_qsci.resources import (
     estimate_qpe_resources,
     lcu_lambda,
 )
-from qcchem.exploratory.qsci.workflow import diagonalize_selected_subspace
 
 
 def _truncate_operator(operator, max_terms: int | None):
@@ -259,16 +259,9 @@ def run_tc_qsci(
         num_particles=num_particles,
         initial_determinants=initial.determinants,
     )
-    diagonalization = diagonalize_selected_subspace(
-        physical_operator,
-        selected,
-        num_spatial_orbitals=num_spatial_orbitals,
-        num_particles=num_particles,
-        exact_solver_energy=exact_solver_energy,
-    )
-    eigenvectors = diagonalization["eigenvectors"]
-    subspace_audit = diagonalization["subspace_audit"]
-    selected_solver_energy = float(diagonalization["ground_energy"])
+    subspace_matrix = build_selected_subspace_matrix(physical_operator, selected)
+    eigenvalues, eigenvectors = np.linalg.eigh(subspace_matrix)
+    selected_solver_energy = float(np.real(eigenvalues[0]))
     leading_vector = np.asarray(eigenvectors[:, 0], dtype=complex)
     amplitudes = [
         {
@@ -308,16 +301,6 @@ def run_tc_qsci(
     error_budget = {
         "available": True,
         "selected_vs_exact_solver_error": solver_error,
-        "subspace_audit": subspace_audit,
-        "selected_subspace_variance": subspace_audit.get("ground_state_variance"),
-        "selected_subspace_residual_norm": subspace_audit.get("ground_state_residual_norm"),
-        "selected_subspace_external_coupling_residual_norm": subspace_audit.get(
-            "ground_state_external_coupling_residual_norm"
-        ),
-        "variational_upper_bound_margin_hartree": subspace_audit.get(
-            "variational_upper_bound_margin_hartree"
-        ),
-        "variational_upper_bound_passed": subspace_audit.get("variational_upper_bound_passed"),
         "sampling_missing_probability": float(max(0.0, 1.0 - selected_probability_mass)),
         "cast_anti_hermitian_norm": cast_payload.get("anti_hermitian_norm"),
         "discarded_pauli_l1_norm": low_rank_estimate.get("discarded_l1_norm"),
@@ -337,7 +320,6 @@ def run_tc_qsci(
         "energy_units": "Hartree",
         "subspace_dimension": int(len(selected)),
         "selected_probability_mass": selected_probability_mass,
-        "subspace_audit": subspace_audit,
         "initial_state": _initial_payload(initial, num_spatial_orbitals=num_spatial_orbitals),
         "kick": {
             "time": float(tc_spec.kick.time),

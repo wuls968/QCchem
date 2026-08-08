@@ -3096,12 +3096,4 @@ def test_default_release_audit_manifest_loads() -> None:
     assert spec.warning_policy is not None
     assert spec.warning_policy.max_count == 0
     assert spec.warning_policy.allowed_ids == []
-    assert {asset.kind for asset in spec.exploratory_assets} >= {
-        "qft",
-        "lr_ace",
-        "ace_qvm",
-        "tc_qsci",
-        "method_evidence",
-    }
-    curated_paths = {artifact.name: artifact.path.as_posix() for artifact in spec.curated_artifacts}
-    assert curated_paths["method_evidence_suite_v1"] == "artifacts/method_evidence_suite_v1/benchmark_result.json"
+    assert {asset.kind for asset in spec.exploratory_assets} >= {"qft", "lr_ace", "ace_qvm", "tc_qsci"}

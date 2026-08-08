@@ -54,9 +54,6 @@ RELEASE_AUDIT_SCHEMA_FEATURES = [
     "release_acceptance_sidecar_status",
     "release_acceptance_repair_plan",
     "audit_provenance",
-    "method_evidence_fields",
-    "method_evidence_promotion_gate",
-    "method_evidence_contract_matrix",
 ]
 RELEASE_ARTIFACT_ACCEPTANCE_SCHEMA_VERSION = "qcchem.release_artifact_acceptance.v0.1-alpha"
 LEGACY_BENCHMARK_ACCEPTANCE_SCHEMA_VERSION = "qcchem.benchmark_acceptance.v0.1-alpha"
@@ -97,18 +94,6 @@ CI_ACCEPTANCE_STATUS_COMMAND_LINES = (
     "--repair-plan \\",
     "-o /tmp/qcchem-release-acceptance-status.json",
 )
-METHOD_EVIDENCE_EXPECTED_METHOD_KEYS = {
-    "e_adapt_result",
-    "orbital_optimization",
-    "qsci_plus_result",
-    "post_correlation",
-    "q_sc_eom",
-    "q_embed",
-    "kq_pbc_result",
-    "trust_qem",
-    "shadow_lr",
-    "ft_qpe_resource_estimate",
-}
 CI_RELEASE_DIAGNOSTIC_UPLOAD_STEP_NAME = "Upload release diagnostics"
 CI_RELEASE_EVIDENCE_HANDOFF_STEP_NAME = "Write release evidence handoff"
 CI_RELEASE_HISTORY_HANDOFF_STEP_NAME = "Write release history handoff"
@@ -1519,222 +1504,6 @@ def _runtime_evidence_boundary_failure(payload: dict[str, Any]) -> str | None:
     return None
 
 
-def _method_evidence_promotion_gate_failures(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return release-facing failures for Method Evidence promotion-gate metadata."""
-    method_evidence = payload.get("method_evidence") if isinstance(payload.get("method_evidence"), dict) else {}
-    if not method_evidence:
-        return []
-    methods = method_evidence.get("methods") if isinstance(method_evidence.get("methods"), dict) else {}
-    promotion_gate = method_evidence.get("promotion_gate_audit")
-    if not isinstance(promotion_gate, dict):
-        return [
-            {
-                "field": "method_evidence.promotion_gate_audit",
-                "expected": "mapping",
-                "actual": type(promotion_gate).__name__,
-            }
-        ]
-
-    failures: list[dict[str, Any]] = []
-    for field in (
-        "sidecar_energy_replacement_allowed_methods",
-        "accuracy_claim_allowed_methods",
-        "hardware_claim_allowed_methods",
-    ):
-        value = promotion_gate.get(field)
-        if value not in ([], None):
-            failures.append({"field": field, "expected": [], "actual": value})
-
-    if promotion_gate.get("overall_claim_status") != "promotion_required":
-        failures.append(
-            {
-                "field": "overall_claim_status",
-                "expected": "promotion_required",
-                "actual": promotion_gate.get("overall_claim_status"),
-            }
-        )
-    if promotion_gate.get("primary_energy_policy") != "raw_solver_energy_remains_primary":
-        failures.append(
-            {
-                "field": "primary_energy_policy",
-                "expected": "raw_solver_energy_remains_primary",
-                "actual": promotion_gate.get("primary_energy_policy"),
-            }
-        )
-
-    records = promotion_gate.get("method_records")
-    if not isinstance(records, dict):
-        failures.append(
-            {
-                "field": "method_records",
-                "expected": "mapping covering method_evidence.methods",
-                "actual": type(records).__name__,
-            }
-        )
-        return failures
-
-    missing_records = sorted(set(methods) - set(records))
-    if missing_records:
-        failures.append(
-            {
-                "field": "method_records",
-                "expected": sorted(methods),
-                "actual_missing": missing_records,
-            }
-        )
-    for method_name, record in records.items():
-        if not isinstance(record, dict):
-            failures.append(
-                {
-                    "field": f"method_records.{method_name}",
-                    "expected": "mapping",
-                    "actual": type(record).__name__,
-                }
-            )
-            continue
-        for field in (
-            "energy_replacement_allowed",
-            "accuracy_claim_allowed",
-            "hardware_claim_allowed",
-        ):
-            if record.get(field) is True:
-                failures.append(
-                    {
-                        "field": f"method_records.{method_name}.{field}",
-                        "expected": False,
-                        "actual": True,
-                    }
-                )
-    return failures
-
-
-def _method_evidence_campaign_summary(
-    payload: dict[str, Any],
-    *,
-    artifact_path: Path | None = None,
-) -> dict[str, Any]:
-    dashboard = payload.get("dashboard_summary") if isinstance(payload.get("dashboard_summary"), dict) else {}
-    calibration = payload.get("calibration_summary") if isinstance(payload.get("calibration_summary"), dict) else {}
-    summary = dashboard.get("method_evidence_campaign")
-    if not isinstance(summary, dict):
-        summary = calibration.get("method_evidence_campaign")
-    if isinstance(summary, dict):
-        return summary
-    if artifact_path is not None:
-        sidecar = artifact_path.parent / "method_evidence_summary.json"
-        if sidecar.exists():
-            sidecar_payload, _error = _read_optional_json_object(sidecar)
-            if isinstance(sidecar_payload, dict):
-                return sidecar_payload
-    return {}
-
-
-def _method_evidence_contract_matrix_failures(summary: dict[str, Any]) -> list[dict[str, Any]]:
-    if not summary:
-        return []
-    matrix = summary.get("contract_matrix")
-    if not isinstance(matrix, dict):
-        return [
-            {
-                "field": "method_evidence_campaign.contract_matrix",
-                "expected": "mapping",
-                "actual": type(matrix).__name__,
-            }
-        ]
-
-    failures: list[dict[str, Any]] = []
-    if matrix.get("status") != "complete":
-        failures.append(
-            {
-                "field": "contract_matrix.status",
-                "expected": "complete",
-                "actual": matrix.get("status"),
-            }
-        )
-    expected_count = len(METHOD_EVIDENCE_EXPECTED_METHOD_KEYS)
-    if matrix.get("expected_method_count") != expected_count:
-        failures.append(
-            {
-                "field": "contract_matrix.expected_method_count",
-                "expected": expected_count,
-                "actual": matrix.get("expected_method_count"),
-            }
-        )
-    if matrix.get("covered_method_count") != expected_count:
-        failures.append(
-            {
-                "field": "contract_matrix.covered_method_count",
-                "expected": expected_count,
-                "actual": matrix.get("covered_method_count"),
-            }
-        )
-    if matrix.get("missing_methods") not in ([], None):
-        failures.append(
-            {
-                "field": "contract_matrix.missing_methods",
-                "expected": [],
-                "actual": matrix.get("missing_methods"),
-            }
-        )
-
-    methods = matrix.get("methods")
-    if not isinstance(methods, dict):
-        failures.append(
-            {
-                "field": "contract_matrix.methods",
-                "expected": sorted(METHOD_EVIDENCE_EXPECTED_METHOD_KEYS),
-                "actual": type(methods).__name__,
-            }
-        )
-        return failures
-    missing_method_keys = sorted(METHOD_EVIDENCE_EXPECTED_METHOD_KEYS - set(methods))
-    extra_method_keys = sorted(set(methods) - METHOD_EVIDENCE_EXPECTED_METHOD_KEYS)
-    if missing_method_keys:
-        failures.append(
-            {
-                "field": "contract_matrix.methods",
-                "expected": sorted(METHOD_EVIDENCE_EXPECTED_METHOD_KEYS),
-                "actual_missing": missing_method_keys,
-            }
-        )
-    if extra_method_keys:
-        failures.append(
-            {
-                "field": "contract_matrix.methods",
-                "expected_extra": [],
-                "actual_extra": extra_method_keys,
-            }
-        )
-    for method_key in sorted(METHOD_EVIDENCE_EXPECTED_METHOD_KEYS.intersection(methods)):
-        entry = methods.get(method_key)
-        if not isinstance(entry, dict):
-            failures.append(
-                {
-                    "field": f"contract_matrix.methods.{method_key}",
-                    "expected": "mapping",
-                    "actual": type(entry).__name__,
-                }
-            )
-            continue
-        if entry.get("contract_passed") is not True:
-            failures.append(
-                {
-                    "field": f"contract_matrix.methods.{method_key}.contract_passed",
-                    "expected": True,
-                    "actual": entry.get("contract_passed"),
-                }
-            )
-        if not isinstance(entry.get("cases"), list) or not entry.get("cases"):
-            failures.append(
-                {
-                    "field": f"contract_matrix.methods.{method_key}.cases",
-                    "expected": "non-empty list",
-                    "actual": entry.get("cases"),
-                }
-            )
-    return failures
-
-
 def _artifact_path_for_report(path: Path, *, repo_root: Path) -> str:
     try:
         return str(path.resolve().relative_to(repo_root.resolve()))
@@ -2045,7 +1814,6 @@ def _artifact_matrix_entry(
     acceptance: dict[str, Any] | None = None,
     acceptance_source: str | None = None,
     acceptance_contract_failures: list[dict[str, Any]] | None = None,
-    method_evidence_campaign_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     evidence = payload.get("evidence_summary") or {}
     raw_acceptance_payload = acceptance if acceptance is not None else payload.get("acceptance_summary")
@@ -2056,23 +1824,6 @@ def _artifact_matrix_entry(
     runtime_status = _runtime_evidence_status(payload)
     hardware_cases = _hardware_verified_cases(payload)
     review_warnings = _evidence_review_warnings(evidence) if isinstance(evidence, dict) else []
-    method_evidence = payload.get("method_evidence") if isinstance(payload.get("method_evidence"), dict) else {}
-    method_evidence_methods = (
-        sorted((method_evidence.get("methods") or {}).keys())
-        if isinstance(method_evidence.get("methods"), dict)
-        else []
-    )
-    method_promotion_gate = (
-        method_evidence.get("promotion_gate_audit")
-        if isinstance(method_evidence.get("promotion_gate_audit"), dict)
-        else {}
-    )
-    campaign_summary = method_evidence_campaign_summary or _method_evidence_campaign_summary(payload)
-    contract_matrix = (
-        campaign_summary.get("contract_matrix")
-        if isinstance(campaign_summary.get("contract_matrix"), dict)
-        else {}
-    )
     return {
         "name": name,
         "kind": kind,
@@ -2091,34 +1842,6 @@ def _artifact_matrix_entry(
         "hardware_verified_case_count": len(hardware_cases),
         "runtime_submission_status": (payload.get("runtime_submission") or {}).get("status")
         or (payload.get("runtime_submission") or {}).get("failure_category"),
-        "has_method_evidence": bool(method_evidence),
-        "method_evidence_methods": method_evidence_methods,
-        "method_evidence_trust_tier": method_evidence.get("trust_tier"),
-        "has_method_evidence_promotion_gate_audit": bool(method_promotion_gate),
-        "method_evidence_promotion_gate_status": method_promotion_gate.get("overall_claim_status"),
-        "method_evidence_sidecar_energy_replacement_allowed_methods": (
-            method_promotion_gate.get("sidecar_energy_replacement_allowed_methods") or []
-        ),
-        "method_evidence_accuracy_claim_allowed_methods": (
-            method_promotion_gate.get("accuracy_claim_allowed_methods") or []
-        ),
-        "method_evidence_hardware_claim_allowed_methods": (
-            method_promotion_gate.get("hardware_claim_allowed_methods") or []
-        ),
-        "method_evidence_planning_metric_methods": (
-            method_promotion_gate.get("planning_metric_methods") or []
-        ),
-        "method_evidence_resource_model_only_methods": (
-            method_promotion_gate.get("resource_model_only_methods") or []
-        ),
-        "method_evidence_unsupported_for_claim_methods": (
-            method_promotion_gate.get("unsupported_for_claim_methods") or []
-        ),
-        "has_method_evidence_campaign_summary": bool(campaign_summary),
-        "method_evidence_contract_matrix_status": contract_matrix.get("status"),
-        "method_evidence_contract_covered_method_count": contract_matrix.get("covered_method_count"),
-        "method_evidence_contract_expected_method_count": contract_matrix.get("expected_method_count"),
-        "method_evidence_contract_missing_methods": contract_matrix.get("missing_methods") or [],
         "acceptance_summary_source": acceptance_source,
         "acceptance_schema_version": acceptance_payload.get("schema_version"),
         "acceptance_artifact_path": acceptance_payload.get("artifact_path"),
@@ -2176,8 +1899,6 @@ def _has_required_exploratory_section(kind: str, payload: dict[str, Any]) -> boo
         return _has_lr_ace_section(payload)
     if kind == "ace_qvm":
         return _has_ace_qvm_section(payload)
-    if kind == "method_evidence":
-        return isinstance(payload.get("method_evidence"), dict)
     return False
 
 
@@ -2204,22 +1925,10 @@ def _classify_exploratory_config(path: Path) -> tuple[str, str | None]:
     backend = raw.get("backend") or {}
     exploratory = raw.get("exploratory") or {}
     modules = exploratory.get("modules") or []
-    module_names = {str(item).strip().lower() for item in modules} if isinstance(modules, list) else set()
-    method_modules = {
-        "e_adapt_vqe",
-        "oo_qcasscf",
-        "qsci_plus",
-        "q_sc_eom",
-        "q_dmet",
-        "kq_pbc",
-        "trust_qem",
-        "shadow_lr",
-        "ft_qpe_planner",
-    }
     qft = (problem.get("qft") or {}) if isinstance(problem, dict) else {}
-    solver_kind = str(solver.get("kind", "")).strip().lower() if isinstance(solver, dict) else ""
-    backend_kind = str(backend.get("kind", "")).strip().lower() if isinstance(backend, dict) else ""
-    if backend_kind == "ace_qvm" or "ace_qvm" in module_names:
+    solver_kind = str(solver.get("kind", "")).strip() if isinstance(solver, dict) else ""
+    backend_kind = str(backend.get("kind", "")).strip() if isinstance(backend, dict) else ""
+    if backend_kind == "ace_qvm" or "ace_qvm" in modules:
         return "ace_qvm", None
     if isinstance(qft, dict) and qft.get("enabled"):
         return "qft", None
@@ -2227,17 +1936,11 @@ def _classify_exploratory_config(path: Path) -> tuple[str, str | None]:
         return "qft", None
     if solver_kind == "lr_ace":
         return "lr_ace", None
-    if "tc_qsci" in module_names:
+    if "tc_qsci" in modules:
         return "tc_qsci", None
     tc_qsci = raw.get("tc_qsci") or {}
     if isinstance(tc_qsci, dict) and tc_qsci.get("enabled"):
         return "tc_qsci", None
-    if solver_kind in {"e_adapt_vqe", "oo_qcasscf"} or module_names.intersection(method_modules):
-        return "method_evidence", None
-    if isinstance(raw.get("qsci"), dict) and raw["qsci"].get("enabled"):
-        return "method_evidence", None
-    if isinstance(raw.get("fault_tolerant"), dict) and raw["fault_tolerant"].get("enabled"):
-        return "method_evidence", None
     return "unknown", None
 
 
@@ -2339,56 +2042,6 @@ def _audit_artifact(
             "hardware_verified_case_count": len(_hardware_verified_cases(evidence_payload)),
         },
     )
-    method_gate_failures = _method_evidence_promotion_gate_failures(evidence_payload)
-    has_method_evidence = isinstance(evidence_payload.get("method_evidence"), dict)
-    if has_method_evidence:
-        _check(
-            checks,
-            check_id=f"{id_prefix}:{name}:method_evidence_promotion_gate",
-            label=f"{name} method evidence promotion gate is conservative",
-            passed=not method_gate_failures,
-            required=required,
-            summary=(
-                "Method Evidence promotion gate blocks sidecar energy, accuracy, and hardware claim promotion."
-                if not method_gate_failures
-                else "Method Evidence promotion gate is missing or allows unsupported claim promotion."
-            ),
-            details={
-                "failures": method_gate_failures,
-                "method_evidence_methods": sorted(
-                    (evidence_payload.get("method_evidence", {}).get("methods") or {}).keys()
-                )
-                if isinstance(evidence_payload.get("method_evidence", {}).get("methods"), dict)
-                else [],
-            },
-        )
-    method_evidence_campaign_summary = _method_evidence_campaign_summary(evidence_payload, artifact_path=path)
-    method_contract_failures = _method_evidence_contract_matrix_failures(method_evidence_campaign_summary)
-    if method_evidence_campaign_summary:
-        contract_matrix = (
-            method_evidence_campaign_summary.get("contract_matrix")
-            if isinstance(method_evidence_campaign_summary.get("contract_matrix"), dict)
-            else {}
-        )
-        _check(
-            checks,
-            check_id=f"{id_prefix}:{name}:method_evidence_contract_matrix",
-            label=f"{name} method evidence contract matrix is complete",
-            passed=not method_contract_failures,
-            required=required,
-            summary=(
-                "Method Evidence contract matrix covers all 10 method surfaces."
-                if not method_contract_failures
-                else "Method Evidence contract matrix is incomplete."
-            ),
-            details={
-                "failures": method_contract_failures,
-                "status": contract_matrix.get("status"),
-                "covered_method_count": contract_matrix.get("covered_method_count"),
-                "expected_method_count": contract_matrix.get("expected_method_count"),
-                "missing_methods": contract_matrix.get("missing_methods") or [],
-            },
-        )
     acceptance_check_id = f"{id_prefix}:{name}:acceptance_summary"
     sidecar_acceptance_path = path.parent / "acceptance_summary.json"
     acceptance_read_error: str | None = None
@@ -2496,7 +2149,6 @@ def _audit_artifact(
             acceptance=acceptance if isinstance(acceptance, dict) else None,
             acceptance_source=acceptance_source,
             acceptance_contract_failures=contract_failures if isinstance(acceptance, dict) else None,
-            method_evidence_campaign_summary=method_evidence_campaign_summary,
         )
     )
     return evidence_payload
@@ -3126,22 +2778,6 @@ def _render_release_audit_markdown(summary: dict[str, Any]) -> str:
                 f"- runtime_evidence_status: `{entry.get('runtime_evidence_status')}`",
                 f"- hardware_verified_case_count: `{entry.get('hardware_verified_case_count', 0)}`",
                 f"- runtime_submission_status: `{entry.get('runtime_submission_status')}`",
-                f"- has_method_evidence: `{entry.get('has_method_evidence')}`",
-                f"- method_evidence_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_methods') or [], sort_keys=True))}",
-                f"- method_evidence_trust_tier: `{entry.get('method_evidence_trust_tier')}`",
-                f"- has_method_evidence_promotion_gate_audit: `{entry.get('has_method_evidence_promotion_gate_audit')}`",
-                f"- method_evidence_promotion_gate_status: `{entry.get('method_evidence_promotion_gate_status')}`",
-                f"- method_evidence_sidecar_energy_replacement_allowed_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_sidecar_energy_replacement_allowed_methods') or [], sort_keys=True))}",
-                f"- method_evidence_accuracy_claim_allowed_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_accuracy_claim_allowed_methods') or [], sort_keys=True))}",
-                f"- method_evidence_hardware_claim_allowed_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_hardware_claim_allowed_methods') or [], sort_keys=True))}",
-                f"- method_evidence_planning_metric_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_planning_metric_methods') or [], sort_keys=True))}",
-                f"- method_evidence_resource_model_only_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_resource_model_only_methods') or [], sort_keys=True))}",
-                f"- method_evidence_unsupported_for_claim_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_unsupported_for_claim_methods') or [], sort_keys=True))}",
-                f"- has_method_evidence_campaign_summary: `{entry.get('has_method_evidence_campaign_summary')}`",
-                f"- method_evidence_contract_matrix_status: `{entry.get('method_evidence_contract_matrix_status')}`",
-                f"- method_evidence_contract_covered_method_count: `{entry.get('method_evidence_contract_covered_method_count')}`",
-                f"- method_evidence_contract_expected_method_count: `{entry.get('method_evidence_contract_expected_method_count')}`",
-                f"- method_evidence_contract_missing_methods: {_markdown_code_span(json.dumps(entry.get('method_evidence_contract_missing_methods') or [], sort_keys=True))}",
                 f"- acceptance_summary_source: `{entry.get('acceptance_summary_source')}`",
                 f"- acceptance_schema_version: `{entry.get('acceptance_schema_version')}`",
                 f"- acceptance_artifact_path: `{entry.get('acceptance_artifact_path')}`",

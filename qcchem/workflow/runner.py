@@ -77,7 +77,6 @@ from qcchem.qft.sparse_evidence import (
     unavailable_lattice_qed_observables,
 )
 from qcchem.reporting import write_calibration_report, write_markdown_report, write_result_json
-from qcchem.exploratory.qsci import run_qsci_plus
 from qcchem.exploratory.solvers.registry import build_exploratory_solver
 from qcchem.exploratory.tc_qsci import run_tc_qsci
 from qcchem.solvers import SolverOutcome, build_solver
@@ -94,7 +93,6 @@ from qcchem.workflow.calibration import build_calibration_summary
 from qcchem.workflow.common import guard_output_path_symlinks, guard_output_target
 from qcchem.workflow.hardware_diagnostics import build_hardware_error_diagnostic
 from qcchem.workflow.field_evidence import build_and_write_field_evidence
-from qcchem.workflow.method_evidence import build_and_write_method_evidence
 from qcchem.workflow.quantum_evidence import build_and_write_quantum_evidence
 from qcchem.core.evidence import build_run_evidence_summary
 from qcchem.validation.lr_ace import classify_lr_ace_validation_gate
@@ -158,7 +156,6 @@ def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool,
         calibration_report_markdown=resolved_root / "calibration_report.md",
         runtime_submission_json=resolved_root / "runtime_submission.json",
         quantum_evidence_json=resolved_root / "quantum_evidence.json",
-        method_evidence_json=resolved_root / "method_evidence.json",
         field_evidence=FieldArtifactPaths(
             registry_json=resolved_root / "field_model_registry.json",
             hamiltonian_json=resolved_root / "field_hamiltonian.json",
@@ -481,12 +478,6 @@ def _electronic_mapping_symmetry_policy(spec) -> tuple[MappingSymmetryReductionS
         notes.append(reason)
     elif getattr(spec.tc_qsci, "enabled", False) and z2 != "disabled":
         reason = "Z2 tapering skipped for TC-QSCI because determinant sampling v1 assumes untapered spin-orbital bitstrings."
-        if base.strict:
-            raise ValueError(reason)
-        z2 = "disabled"
-        notes.append(reason)
-    elif getattr(spec.qsci, "enabled", False) and z2 != "disabled":
-        reason = "Z2 tapering skipped for QSCI++ because determinant sampling v1 assumes untapered spin-orbital bitstrings."
         if base.strict:
             raise ValueError(reason)
         z2 = "disabled"
@@ -992,15 +983,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     backend = None
     backend_required = solver_kind in {"vqe", "lr_ace"} or (
         spec.solver.experimental
-        and solver_kind in {
-            "adapt_vqe",
-            "e_adapt_vqe",
-            "oo_qcasscf",
-            "vqd",
-            "folded_spectrum",
-            "lr_ace",
-            "lattice_qed_givqe",
-        }
+        and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum", "lr_ace", "lattice_qed_givqe"}
     )
     if backend_required:
         _record(logger, events, f"Preparing backend: {spec.backend.kind}")
@@ -1041,7 +1024,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 problem_summary=chemistry.summary,
                 mapper=mapping.mapper,
                 qft_context=qft_context,
-                run_spec=spec,
             )
         else:
             field_solver_context = {}
@@ -1226,7 +1208,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 problem_summary=chemistry.summary,
                 mapper=uncompressed_mapping.mapper,
                 qft_context=qft_context,
-                run_spec=spec,
             )
         else:
             reference_field_solver_context = {}
@@ -1498,7 +1479,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         spec,
         spectrum,
         total_constant_correction=chemistry.total_constant_correction,
-        operator=mapping.qubit_hamiltonian,
     )
     property_result = build_property_result(spec, chemistry, mapping, spectrum)
     geometry_optimization_result = build_geometry_optimization_result(spec)
@@ -1532,20 +1512,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             else None
         )
         _record(logger, events, f"Computed TC-kicked QSCI exploratory workflow: determinants={selected_count}")
-
-    qsci_plus_payload = run_qsci_plus(
-        spec=spec,
-        chemistry=chemistry,
-        physical_mapping=uncompressed_mapping,
-        exact_solver_energy=exact_energy,
-    )
-    if qsci_plus_payload is not None:
-        _record(
-            logger,
-            events,
-            "Computed QSCI++ selected-subspace workflow: "
-            f"determinants={qsci_plus_payload.get('selected_subspace_size')}",
-        )
 
     reduction_plan = build_reduction_plan(spec, chemistry.reduction_audit)
     chemical_accuracy = check_chemical_accuracy(
@@ -1620,10 +1586,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     if getattr(chemistry.summary, "periodic_boundary", None) is not None:
         verification_status = "exploratory"
     if tc_qsci_payload is not None and verification_status == "validated":
-        verification_status = "exploratory"
-    if qsci_plus_payload is not None and verification_status == "validated":
-        verification_status = "exploratory"
-    if spec.problem.pbc.mode.strip().lower() == "kq_pbc" and verification_status == "validated":
         verification_status = "exploratory"
     if variational_result is not None and solver_kind == "lr_ace":
         lr_ace_payload = variational_result.ansatz.get("lr_ace")
@@ -1828,29 +1790,6 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             tc_qsci_payload.get("error_budget") if tc_qsci_payload is not None else None
         ),
     )
-    (
-        method_evidence,
-        e_adapt_result,
-        orbital_optimization,
-        qsci_plus_result,
-        post_correlation,
-        kq_pbc_result,
-        ft_qpe_resource_estimate,
-    ) = build_and_write_method_evidence(
-        sidecar_path=artifacts.method_evidence_json,
-        spec=spec,
-        solver_outcome=solver_outcome,
-        physical_mapping=uncompressed_mapping,
-        solver_energy=solver_energy,
-        mitigation=mitigation,
-        measurement=measurement,
-        qsci_payload=qsci_plus_payload,
-        excited_state_result=excited_state_result,
-        property_result=property_result,
-        embedding_result=embedding_result,
-    )
-    if method_evidence is not None:
-        _record(logger, events, "Wrote integrated method evidence sidecar")
     result = RunResult(
         schema_version=SCHEMA_VERSION,
         run_id=run_id,
@@ -1917,14 +1856,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         environment_embedding=chemistry.environment_embedding,
         hardware_error_diagnostic=None,
         quantum_evidence=quantum_evidence,
-        method_evidence=method_evidence,
         field_evidence=field_evidence,
-        e_adapt_result=e_adapt_result,
-        orbital_optimization=orbital_optimization,
-        qsci_plus_result=qsci_plus_result,
-        post_correlation=post_correlation,
-        kq_pbc_result=kq_pbc_result,
-        ft_qpe_resource_estimate=ft_qpe_resource_estimate,
         tc_qsci_result=(
             tc_qsci_payload.get("tc_qsci_result") if tc_qsci_payload is not None else None
         ),

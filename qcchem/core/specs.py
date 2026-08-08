@@ -115,14 +115,9 @@ class MeasurementSpec:
     """Measurement-planning configuration, including low-rank-aware execution hints."""
 
     strategy: str = "default"
-    planner: str = "default"
     runtime_precision_target: float | None = None
     execution_mode: str = "estimator"
     grouping_policy: str = "default"
-    total_shots: int | None = None
-    max_circuits: int | None = None
-    strategies: list[str] = field(default_factory=list)
-    objective: str = "minimize_energy_variance"
 
 
 @dataclass(slots=True)
@@ -131,7 +126,6 @@ class FragmentSpec:
 
     name: str
     atom_indices: list[int] = field(default_factory=list)
-    solver: str | None = None
 
 
 @dataclass(slots=True)
@@ -275,9 +269,6 @@ class PBCSpec:
     precision: float = 1.0e-8
     mesh: tuple[int, int, int] | None = None
     neutralization: str = "reject"
-    kpoints: list[str] = field(default_factory=lambda: ["gamma"])
-    twist_average: bool = False
-    active_space_per_k: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -606,32 +597,6 @@ class LRACESpec:
 
 
 @dataclass(slots=True)
-class EADAPTSpec:
-    """Evidence-gated ADAPT-VQE operator-pool policy."""
-
-    pool: str = "symmetry_low_rank_qubit_pool"
-    gradient_threshold: float = 1.0e-3
-    max_operators: int = 40
-    use_z2_tapering: bool = True
-    use_point_group_filter: bool = True
-    use_low_rank_priority: bool = True
-    reject_if_two_qubit_increment_gt: int = 20
-    finite_difference_step: float = 1.0e-2
-
-
-@dataclass(slots=True)
-class OrbitalOptimizationSpec:
-    """Orbital-optimization macro-iteration settings for OO-QCASSCF."""
-
-    active_active: bool = False
-    inactive_active: bool = True
-    active_virtual: bool = True
-    max_macro_iterations: int = 12
-    gradient_tolerance: float = 1.0e-4
-    rdm_source: str = "exact"
-
-
-@dataclass(slots=True)
 class InitialPointCandidate:
     """Runtime-only warm-start candidate supplied by aggregate workflows."""
 
@@ -660,8 +625,6 @@ class SolverSpec:
     experimental: bool = False
     lr_ace: LRACESpec = field(default_factory=LRACESpec)
     lr_ace_adaptive: LRACEAdaptiveSpec = field(default_factory=LRACEAdaptiveSpec)
-    e_adapt: EADAPTSpec = field(default_factory=EADAPTSpec)
-    orbital_optimization: OrbitalOptimizationSpec = field(default_factory=OrbitalOptimizationSpec)
 
 
 @dataclass(slots=True)
@@ -680,9 +643,6 @@ class SymmetryCheckSpec:
 
     enabled: bool = False
     strategy: str = "placeholder"
-    particle_number: bool = False
-    spin_parity: bool = False
-    z2_sector: bool = False
 
 
 @dataclass(slots=True)
@@ -691,7 +651,6 @@ class ReadoutMitigationSpec:
 
     enabled: bool = False
     method: str = "none"
-    calibration_shots: int = 0
 
 
 @dataclass(slots=True)
@@ -700,9 +659,6 @@ class ZNESpec:
 
     enabled: bool = False
     method: str = "placeholder"
-    folding: str = "global"
-    scale_factors: list[float] = field(default_factory=lambda: [1.0, 1.5, 2.0, 3.0])
-    extrapolator: str = "linear"
 
 
 @dataclass(slots=True)
@@ -711,8 +667,6 @@ class PECSpec:
 
     enabled: bool = False
     method: str = "placeholder"
-    calibration_model: str | None = None
-    max_overhead: float | None = None
 
 
 @dataclass(slots=True)
@@ -876,69 +830,6 @@ class TCQSCISpec:
 
 
 @dataclass(slots=True)
-class QSCIDeterminantRepairSpec:
-    """Determinant repair and expansion settings for QSCI++."""
-
-    enforce_particle_number: bool = True
-    enforce_spin_sector: bool = True
-    hamming_expansion: int = 0
-
-
-@dataclass(slots=True)
-class QSCIClassicalDiagonalizerSpec:
-    """Classical selected-subspace diagonalizer settings for QSCI++."""
-
-    method: str = "davidson"
-    max_subspace_size: int = 50000
-
-
-@dataclass(slots=True)
-class QSCIResidualExpansionSpec:
-    """Residual-driven selected-subspace expansion settings for QSCI++."""
-
-    enabled: bool = False
-    max_iterations: int = 0
-    batch_size: int = 8
-    max_additional_determinants: int = 0
-    target_residual_norm: float = 1.0e-6
-    scorer: str = "external_residual_coupling"
-
-
-@dataclass(slots=True)
-class QSCISpec:
-    """Generic quantum-selected CI workflow configuration."""
-
-    enabled: bool = False
-    sampler: str = "vqe_state"
-    determinant_repair: QSCIDeterminantRepairSpec = field(default_factory=QSCIDeterminantRepairSpec)
-    classical_diagonalizer: QSCIClassicalDiagonalizerSpec = field(default_factory=QSCIClassicalDiagonalizerSpec)
-    residual_expansion: QSCIResidualExpansionSpec = field(default_factory=QSCIResidualExpansionSpec)
-    max_determinants: int = 64
-    min_probability: float = 0.0
-    shots: int = 1024
-    excited_roots: int = 0
-
-
-@dataclass(slots=True)
-class FaultTolerantSpec:
-    """Fault-tolerant QPE resource-planning configuration."""
-
-    enabled: bool = False
-    method: str = "ft_qpe_planner"
-    encodings: list[str] = field(
-        default_factory=lambda: [
-            "double_factorization",
-            "symmetry_compressed_double_factorization",
-            "tensor_hypercontraction",
-            "first_quantization_active_basis",
-        ]
-    )
-    precision_hartree: float = 0.0016
-    physical_error_rate: float = 1.0e-3
-    cycle_time_ns: float = 1000.0
-
-
-@dataclass(slots=True)
 class HardwareOptimizationSpec:
     """Budget-guarded hardware precision optimization settings."""
 
@@ -993,8 +884,6 @@ class RunSpec:
     exploratory: ExploratorySpec = field(default_factory=ExploratorySpec)
     tasks: TaskSpec = field(default_factory=TaskSpec)
     tc_qsci: TCQSCISpec = field(default_factory=TCQSCISpec)
-    qsci: QSCISpec = field(default_factory=QSCISpec)
-    fault_tolerant: FaultTolerantSpec = field(default_factory=FaultTolerantSpec)
     hardware_optimization: HardwareOptimizationSpec = field(default_factory=HardwareOptimizationSpec)
     run: RunConfig = field(default_factory=RunConfig)
 
