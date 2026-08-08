@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from time import time
 from typing import Any
 
 _GENERATED_ARTIFACT_DIR_NAMES = {"preview_local"}
@@ -88,15 +87,10 @@ def _empty_artifact_index(
     }
 
 
-def build_artifact_index_entry(
-    result_path: Path,
-    *,
-    root: Path | None = None,
-    payload: dict[str, Any] | None = None,
-) -> dict[str, object]:
+def build_artifact_index_entry(result_path: Path, *, root: Path | None = None) -> dict[str, object]:
     """Return a normalized artifact-index row for one result-like artifact file."""
     artifact_root = result_path.parent
-    payload = payload if isinstance(payload, dict) else _safe_read_json(result_path)
+    payload = _safe_read_json(result_path)
     evidence = payload.get("evidence_summary") if isinstance(payload.get("evidence_summary"), dict) else {}
     capsule_path = artifact_root / "evidence_capsule.json"
     capsule = _safe_read_json(capsule_path) if capsule_path.exists() else {}
@@ -165,12 +159,7 @@ def build_artifact_index_entry(
         acceptance_summary_source = "embedded" if embedded_acceptance_summary else None
         acceptance_summary_readable = bool(embedded_acceptance_summary)
     workflow_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
-    if result_path.exists():
-        mtime = result_path.stat().st_mtime
-    elif payload:
-        mtime = time()
-    else:
-        mtime = None
+    mtime = result_path.stat().st_mtime if result_path.exists() else None
     release_verification_summary = (
         payload.get("summary")
         if kind == "release_artifact_verification" and isinstance(payload.get("summary"), dict)

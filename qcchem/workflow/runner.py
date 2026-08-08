@@ -117,7 +117,9 @@ class _GitProvenanceSnapshot:
     branch: str | None
     describe: str | None
     remote_origin: str | None
-    dependency_versions: dict[str, str]
+    workspace_dirty: bool | None
+    workspace_status: str
+    status_summary: dict[str, int]
 
 
 def _project_root() -> Path:
@@ -211,7 +213,7 @@ def _git_commit(root: Path) -> str | None:
 
 
 def _git_describe(root: Path) -> str | None:
-    return _git_stdout(root, ["describe", "--always", "--tags"]) or None
+    return _git_stdout(root, ["describe", "--always", "--dirty", "--tags"]) or None
 
 
 def _git_branch(root: Path) -> str | None:
@@ -251,33 +253,20 @@ def _git_status_summary(root: Path) -> dict[str, int]:
     return _git_status_summary_from_porcelain(_workspace_status_porcelain(root))
 
 
-def _tracked_workspace_dirty_from_porcelain(porcelain_status: str) -> bool:
-    """Return whether Git describe should carry its tracked-file dirty suffix."""
-    return any(not line.startswith("??") for line in porcelain_status.splitlines())
-
-
-def _workspace_status_details(root: Path) -> tuple[bool | None, str, dict[str, int], bool]:
-    """Read dynamic repository status once for one workflow invocation."""
-    raw_status = _git_stdout(root, ["status", "--porcelain"], strip=False)
-    if raw_status is None:
-        return None, "", {"staged": 0, "unstaged": 0, "untracked": 0}, False
-    return (
-        bool(raw_status.strip()),
-        raw_status,
-        _git_status_summary_from_porcelain(raw_status),
-        _tracked_workspace_dirty_from_porcelain(raw_status),
-    )
-
-
 @lru_cache(maxsize=8)
 def _git_provenance_snapshot(root: Path) -> _GitProvenanceSnapshot:
     resolved_root = root.resolve()
+    raw_workspace_status = _git_stdout(resolved_root, ["status", "--porcelain"], strip=False)
+    workspace_status = raw_workspace_status or ""
+    workspace_dirty: bool | None = None if raw_workspace_status is None else bool(workspace_status.strip())
     return _GitProvenanceSnapshot(
         commit=_git_commit(resolved_root),
         branch=_git_branch(resolved_root),
         describe=_git_describe(resolved_root),
         remote_origin=_git_remote_origin(resolved_root),
-        dependency_versions=_dependency_versions(),
+        workspace_dirty=workspace_dirty,
+        workspace_status=workspace_status,
+        status_summary=_git_status_summary_from_porcelain(workspace_status),
     )
 
 
@@ -839,13 +828,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     events: list[str] = []
     repo_root = _project_root()
     git_provenance = _git_provenance_snapshot(repo_root)
-    workspace_dirty, workspace_status, git_status_summary, tracked_workspace_dirty = (
-        _workspace_status_details(repo_root)
-    )
-    git_describe = git_provenance.describe
-    if git_describe and tracked_workspace_dirty:
-        git_describe = f"{git_describe}-dirty"
-    dependency_versions = dict(git_provenance.dependency_versions)
+    dependency_versions = _dependency_versions()
     input_sources = _input_sources_from_spec(spec)
     _record(logger, events, f"Loading config from {source_config}")
     for source in input_sources:
@@ -1977,21 +1960,21 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
             git_commit=git_provenance.commit,
             git_commit_short=((git_provenance.commit or "")[:12] or None),
             git_branch=git_provenance.branch,
-            git_describe=git_describe,
+            git_describe=git_provenance.describe,
             git_remote_origin=git_provenance.remote_origin,
             repo_root=str(repo_root),
-            workspace_dirty=workspace_dirty,
+            workspace_dirty=git_provenance.workspace_dirty,
             workspace_fingerprint=workspace_fingerprint(
                 [
                     str(source_config),
                     yaml.safe_dump(to_primitive(spec), sort_keys=True),
                     json.dumps(input_sources, sort_keys=True),
                     json.dumps(dependency_versions, sort_keys=True),
-                    workspace_status,
+                    git_provenance.workspace_status,
                 ]
             ),
             input_sources=input_sources,
-            git_status_summary=git_status_summary,
+            git_status_summary=git_provenance.status_summary,
             dependency_versions=dependency_versions,
         ),
         log_summary=LogSummary(events=list(events)),
@@ -2007,16 +1990,20 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
     result.hardware_error_diagnostic = build_hardware_error_diagnostic(to_primitive(result))
 
     _record(logger, events, f"Writing JSON result to {artifacts.result_json}")
+    result.log_summary.events = list(events)
+    write_result_json(result, artifacts.result_json)
+
     _record(logger, events, f"Writing Markdown report to {artifacts.report_markdown}")
+    result.log_summary.events = list(events)
+    write_markdown_report(result, artifacts.report_markdown)
+
     _record(logger, events, "Run completed")
     result.log_summary.events = list(events)
     result.provenance.wall_time_seconds = float(perf_counter() - started_at)
     result.evidence_summary = build_run_evidence_summary(to_primitive(result))
     result.hardware_error_diagnostic = build_hardware_error_diagnostic(to_primitive(result))
-    result.artifact_index_entry = build_artifact_index_entry(
-        artifacts.result_json,
-        payload=to_primitive(result),
-    )
+    write_result_json(result, artifacts.result_json)
+    result.artifact_index_entry = build_artifact_index_entry(artifacts.result_json)
     write_result_json(result, artifacts.result_json)
     write_markdown_report(result, artifacts.report_markdown)
     _write_optional_artifacts(

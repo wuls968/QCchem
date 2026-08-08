@@ -28,12 +28,9 @@ def test_git_stdout_uses_dash_c_without_cwd(monkeypatch, tmp_path: Path) -> None
     assert kwargs["timeout"] == runner.GIT_COMMAND_TIMEOUT_SECONDS
 
 
-def test_git_provenance_snapshot_caches_static_metadata_but_not_workspace_status(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_git_provenance_snapshot_reuses_one_status_call(monkeypatch, tmp_path: Path) -> None:
     runner._git_provenance_snapshot.cache_clear()
     calls: list[tuple[str, ...]] = []
-    status_payloads = [" M README.md\nA  staged.py\n?? scratch.txt\n", "?? scratch.txt\n"]
 
     def fake_git_stdout(root: Path, args: list[str], *, strip: bool = True):
         calls.append(tuple(args))
@@ -41,12 +38,12 @@ def test_git_provenance_snapshot_caches_static_metadata_but_not_workspace_status
             return "1234567890abcdef"
         if args == ["rev-parse", "--abbrev-ref", "HEAD"]:
             return "codex/test"
-        if args == ["describe", "--always", "--tags"]:
-            return "1234567"
+        if args == ["describe", "--always", "--dirty", "--tags"]:
+            return "1234567-dirty"
         if args == ["remote", "get-url", "origin"]:
             return "https://example.test/qcchem.git"
         if args == ["status", "--porcelain"]:
-            return status_payloads.pop(0)
+            return " M README.md\nA  staged.py\n?? scratch.txt\n"
         raise AssertionError(f"unexpected git args: {args}")
 
     monkeypatch.setattr(runner, "_git_stdout", fake_git_stdout)
@@ -55,24 +52,13 @@ def test_git_provenance_snapshot_caches_static_metadata_but_not_workspace_status
     second = runner._git_provenance_snapshot(tmp_path)
 
     assert first is second
-    assert calls.count(("status", "--porcelain")) == 0
-    assert len(calls) == 4
+    assert calls.count(("status", "--porcelain")) == 1
+    assert len(calls) == 5
     assert first.commit == "1234567890abcdef"
     assert first.branch == "codex/test"
-    assert first.describe == "1234567"
+    assert first.describe == "1234567-dirty"
     assert first.remote_origin == "https://example.test/qcchem.git"
-
-    first_dirty, first_status, first_summary, first_tracked_dirty = runner._workspace_status_details(tmp_path)
-    second_dirty, second_status, second_summary, second_tracked_dirty = runner._workspace_status_details(tmp_path)
-
-    assert calls.count(("status", "--porcelain")) == 2
-    assert first_dirty is True
-    assert first_status == " M README.md\nA  staged.py\n?? scratch.txt\n"
-    assert first_summary == {"staged": 1, "unstaged": 1, "untracked": 1}
-    assert first_tracked_dirty is True
-    assert second_dirty is True
-    assert second_status == "?? scratch.txt\n"
-    assert second_summary == {"staged": 0, "unstaged": 0, "untracked": 1}
-    assert second_tracked_dirty is False
+    assert first.workspace_dirty is True
+    assert first.status_summary == {"staged": 1, "unstaged": 1, "untracked": 1}
 
     runner._git_provenance_snapshot.cache_clear()
