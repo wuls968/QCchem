@@ -197,3 +197,22 @@ def test_collect_runtime_artifact_records_polled_status_for_queued_job(
     assert updated_sidecar["succeeded"] is False
     assert updated_sidecar["result_provenance"]["last_polled_status"] == "QUEUED"
     assert not (artifact_root / "result.json").exists()
+
+
+@pytest.mark.integration
+def test_runtime_collection_retains_external_energy_constants(tmp_path, monkeypatch):
+    result = run_from_config(REPO_ROOT / "configs" / "h2_external_point_charges.yaml", output_dir=tmp_path / "external")
+    payload = to_primitive(result)
+    assert abs(payload["energy"]["external_point_charge_nuclear_interaction_energy"]) > 0.01
+    payload["runtime_submission"] = {
+        "submitted": True, "succeeded": False, "attempted": True,
+        "job_id": "job-collect", "service": "ibm_quantum_platform", "mode": "backend",
+        "backend_name": "test-backend", "returned_job_metadata": {},
+    }
+    write_result_json(payload, result.artifacts.result_json)
+    write_result_json(payload["runtime_submission"], result.artifacts.runtime_submission_json)
+    _install_fake_runtime_module(monkeypatch, status="DONE", evs=[payload["exact_baseline"]["solver_hamiltonian_energy"]])
+    collect_runtime_artifact(result.artifacts.root)
+    collected = json.loads(result.artifacts.result_json.read_text())
+    assert collected["runtime_chemical_accuracy"]["absolute_error_hartree"] < 1e-10
+    assert collected["runtime_chemical_accuracy"]["meets_chemical_accuracy"] is True

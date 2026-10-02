@@ -4,18 +4,23 @@ from __future__ import annotations
 
 from qcchem.solvers.base import BaseSolver, SolverOutcome
 from qcchem.solvers.spectrum import compute_exact_spectrum
+from qcchem.solvers.sector import molecular_sector
 
 
 class ExactDiagonalizationSolver(BaseSolver):
     """Compute the exact ground-state energy by diagonalization."""
 
+    def __init__(self, problem_summary=None, mapper=None):
+        self.sector = molecular_sector(problem_summary, mapper)
+
     def solve(self, operator) -> SolverOutcome:
-        spectrum = compute_exact_spectrum(operator, num_states=1)
+        spectrum = compute_exact_spectrum(operator, num_states=1, sector=self.sector)
         energy = float(spectrum.eigenvalues[0])
         return SolverOutcome(
             total_energy=energy,
             converged=True,
             iterations=1,
             evaluations=1,
-            metadata={"kind": "exact", "ansatz_num_parameters": 0, "optimizer_message": "exact diagonalization"},
+            metadata={"kind": "exact", "ansatz_num_parameters": 0,
+                      "optimizer_message": "exact diagonalization", "exact_sector": spectrum.sector},
         )

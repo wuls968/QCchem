@@ -19,6 +19,10 @@ class StatevectorBackend(BackendAdapter):
     def __init__(self, spec: BackendSpec) -> None:
         self.spec = spec
 
+    def restore_evaluation_count(self, count: int) -> None:
+        if type(count) is not int or count < 0:
+            raise ValueError("Evaluation count must be a non-negative integer.")
+
     def evaluate(
         self,
         circuit: QuantumCircuit,

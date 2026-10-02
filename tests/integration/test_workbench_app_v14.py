@@ -662,14 +662,15 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
                 const record = {{ targetId: target.id, addedAtoms: [], renderCount: 0 }};
                 createdViewers.push(record);
                 return {{
-                  addModel() {{
+                  addModel(coordinates) {{
+                    if (typeof coordinates === "string") record.addedAtoms.push(Number(coordinates.split("\\n")[0]));
                     return {{
                       addAtoms(atoms) {{
                         record.addedAtoms.push(atoms.length);
                       }},
                     }};
                   }},
-                  setStyle() {{}},
+                  setStyle(_selection, style) {{ record.style = style; }},
                   addLabel() {{}},
                   zoomTo() {{}},
                   render() {{
@@ -746,6 +747,7 @@ def test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh(tmp_path: Path
     assert payload["viewersCreated"] >= 2
     assert payload["lastViewer"]["targetId"] == "refresh__canvas"
     assert payload["lastViewer"]["addedAtoms"] == [2]
+    assert payload["lastViewer"]["style"]["sphere"]["scale"] > 0
     assert payload["failedText"] == "3Dmol viewer unavailable"
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
 from importlib import metadata
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Any
 
 from qcchem.core import WorkflowPluginDescription, WorkflowSpec, WorkflowStepResult
 from qcchem.io.serialization import to_primitive
+from qcchem.workflow.common import contained_output_path
 
 ENTRY_POINT_GROUP = "qcchem.workflow_steps"
 
@@ -34,7 +36,9 @@ class WorkflowExecutionContext:
 
     def output_path(self, name: str) -> Path:
         """Return a path inside this step's output directory."""
-        return self.step_output_dir / name
+        if not self.step_output_dir.resolve().is_relative_to(self.output_root.resolve()):
+            raise ValueError("Workflow step output directory escapes its output root.")
+        return contained_output_path(self.step_output_dir, name)
 
     def read_json(self, value: str | Path) -> dict[str, Any]:
         """Read a JSON object from a workflow-relative path."""
@@ -43,9 +47,20 @@ class WorkflowExecutionContext:
             raise ValueError(f"Expected JSON object at {value}.")
         return payload
 
+    def check_control(self) -> None:
+        """Poll cooperative cancellation/deadline while doing long-running work."""
+        callback = self.metadata.get("control_check")
+        if callable(callback):
+            callback()
+        deadline = self.metadata.get("deadline_monotonic")
+        if deadline is not None and time.monotonic() >= deadline:
+            raise TimeoutError("Workflow exceeded max_wall_time_seconds; cooperative deadline reached.")
+
 
 class WorkflowStepPlugin:
     """Base class for built-in and installed custom workflow steps."""
+
+    mutates_inputs = False
 
     def describe(self) -> WorkflowPluginDescription:
         """Return plugin metadata for validation, Workbench, and docs."""
@@ -58,6 +73,10 @@ class WorkflowStepPlugin:
     def run(self, inputs: dict[str, Any], context: WorkflowExecutionContext) -> dict[str, Any]:
         """Execute the step and return JSON-safe outputs."""
         raise NotImplementedError
+
+    def input_paths(self, inputs: dict[str, Any], context: WorkflowExecutionContext) -> list[str | Path]:
+        """Declare additional files needed to validate reused outputs on resume."""
+        return []
 
     def plan_next(
         self,
@@ -88,6 +107,45 @@ def _description(
     )
 
 
+def _config_input_paths(path: Path, visited: set[Path] | None = None) -> list[Path]:
+    """Follow known config/file references using the existing YAML path grammar."""
+    import yaml
+
+    from qcchem.io.config import resolve_project_path, resolve_user_path
+    from qcchem.workflow.common import guard_output_path_symlinks
+
+    visited = visited if visited is not None else set()
+    guard_output_path_symlinks(path, workflow_name="Workflow config input")
+    path = path.resolve()
+    if path in visited:
+        return []
+    visited.add(path)
+    paths = [path]
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in {"config", "base_config", "source_file", "structure_file", "npz_path", "claim_file"} and isinstance(item, str):
+                    referenced = resolve_project_path(path, item) if key in {"config", "base_config"} else resolve_user_path(path.parent, item)
+                    raw_path = Path(item).expanduser()
+                    if not raw_path.is_absolute():
+                        local = path.parent / raw_path
+                        raw_path = local if key not in {"config", "base_config"} and local.exists() else resolve_project_path(path, ".") / raw_path
+                    guard_output_path_symlinks(raw_path, workflow_name="Workflow config input")
+                    paths.append(referenced)
+                    if referenced.suffix.lower() in {".yaml", ".yml"} and referenced.is_file():
+                        paths.extend(_config_input_paths(referenced, visited))
+                else:
+                    visit(item)
+        elif isinstance(value, list):
+            for item in value:
+                visit(item)
+
+    visit(raw)
+    return paths
+
+
 class BuiltinWorkflowStep(WorkflowStepPlugin):
     """Small helper for declarative built-in workflow steps."""
 
@@ -114,6 +172,29 @@ class BuiltinWorkflowStep(WorkflowStepPlugin):
             raise ValueError(f"{self.kind} requires inputs: {', '.join(missing)}")
         return []
 
+    def input_paths(self, inputs: dict[str, Any], context: WorkflowExecutionContext) -> list[str | Path]:
+        if inputs.get("config"):
+            return _config_input_paths(context.resolve_path(str(inputs["config"])))
+        return []
+
+
+def _computation_resume_source(inputs: dict[str, Any], context: WorkflowExecutionContext, marker: str) -> Path | None:
+    """Default artifact directories can safely resume into a fresh retry directory."""
+    previous = context.metadata.get("computation_resume_dir")
+    if previous and not inputs.get("output_dir"):
+        source = Path(previous) / "artifact"
+        if (source / marker).is_file():
+            if marker == "run_checkpoint.json":
+                from qcchem.io.config import load_run_spec
+
+                spec = load_run_spec(context.resolve_path(str(inputs["config"])))
+                if (spec.solver.kind.strip().lower() != "vqe" or spec.backend.runtime.enabled
+                        or spec.backend.kind.strip().lower() not in {"statevector", "shot_estimator", "aer_shot_estimator"}
+                        or (spec.backend.kind.strip().lower() != "statevector" and spec.backend.seed is None)):
+                    return None
+            return source
+    return None
+
 
 class RunConfigStep(BuiltinWorkflowStep):
     kind = "run_config"
@@ -129,6 +210,8 @@ class RunConfigStep(BuiltinWorkflowStep):
             context.resolve_path(str(inputs["config"])),
             output_dir=context.resolve_path(str(output_dir)) if output_dir else context.output_path("artifact"),
             confirm_runtime_budget=inputs.get("confirm_runtime_budget"),
+            control_check=context.check_control,
+            resume_from=_computation_resume_source(inputs, context, "run_checkpoint.json"),
         )
         return {
             "artifact_root": str(result.artifacts.root),
@@ -198,6 +281,8 @@ class ScanStep(BuiltinWorkflowStep):
         result = run_scan_from_config(
             context.resolve_path(str(inputs["config"])),
             output_dir=context.resolve_path(str(inputs["output_dir"])) if inputs.get("output_dir") else context.output_path("artifact"),
+            control_check=context.check_control,
+            resume_from=_computation_resume_source(inputs, context, "scan_checkpoint.json"),
         )
         return {
             "artifact_root": str(result.artifacts.root),
@@ -327,6 +412,7 @@ class RuntimeCollectStep(BuiltinWorkflowStep):
     output_keys = ("artifact_root", "job_id", "status")
     capabilities = ("runtime_collect",)
     risk_notes = ("Collects an existing runtime job only; it does not submit a new job.",)
+    mutates_inputs = True
 
     def run(self, inputs: dict[str, Any], context: WorkflowExecutionContext) -> dict[str, Any]:
         from qcchem.workflow.runtime_collect import collect_runtime_artifact

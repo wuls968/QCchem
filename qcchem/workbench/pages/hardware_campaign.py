@@ -460,4 +460,8 @@ def build_hardware_campaign_page(model: dict[str, Any]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_hardware_campaign_page(load_featured_hardware_campaign_model() or sample_hardware_campaign_model())
+    model = load_featured_hardware_campaign_model()
+    page = build_hardware_campaign_page(model or sample_hardware_campaign_model())
+    if model is None:
+        page.children.insert(0, html.P("Demo data: bundled hardware example; no hardware artifact is selected.", className="qcchem-card-note"))
+    return page

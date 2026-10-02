@@ -9,6 +9,10 @@ from dash import dcc, html
 
 from qcchem.io.workflow_config import workflow_template
 from qcchem.workflow.custom_workflow import workflow_plugins_summary
+from qcchem.workflow.workflow_control import workflow_status
+from qcchem.workbench.aggregates import catalog_paths
+from qcchem.workbench.data import resolve_workbench_artifact_root
+from qcchem.workbench.components.workflow_controls import workflow_controls_layout
 from qcchem.workbench.components.cards import metric_card, status_card
 
 DEFAULT_WORKFLOW_STUDIO_EXPORT = "artifacts/workflows/studio/workflow.yaml"
@@ -53,17 +57,49 @@ def _step_status_counts(steps: list[Any]) -> dict[str, int]:
     return counts
 
 
-def _workflow_results(root: Path) -> list[dict[str, Any]]:
+def _workflow_results(root: Path, *, artifact_root: Path | None = None) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
-    workflows_root = root / "artifacts" / "workflows"
+    workflows_root = (artifact_root or root / "artifacts").resolve()
     if not workflows_root.exists():
         return results
-    for path in sorted(workflows_root.glob("**/workflow_result.json")):
+    paths = {path if path.name == "workflow_result.json" else path.with_name("workflow_result.json")
+             for path in catalog_paths(workflows_root, {"workflow_result.json", "workflow_checkpoint.json"})}
+    for path in sorted(paths):
+        if "execution_history" in path.relative_to(workflows_root).parts[1:-1]:
+            continue
         payload = _safe_read_json(path)
+        sidecar_root = path.parent
+        control: dict[str, Any] = {}
+        recovery_error = ""
+        if (sidecar_root / "workflow_checkpoint.json").is_file():
+            try:
+                control = workflow_status(sidecar_root)
+            except (OSError, ValueError) as exc:
+                recovery_error = str(exc)
+        prior_summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
+        session = prior_summary.get("session_id")
+        if control and (session != control["session_id"] or payload.get("status") != control["status"]):
+            steps = control["steps"]
+            counts = _step_status_counts(steps)
+            payload = {
+                "workflow_name": control["workflow_name"], "status": control["status"],
+                "artifact_root": str(sidecar_root), "steps": steps,
+                "summary": {"total_steps": len(steps), "completed_steps": counts.get("completed", 0),
+                            "failed_steps": counts.get("failed", 0), "generated_steps": 0},
+                "acceptance_summary": {
+                    "accepted": False,
+                    "recommended_action": "wait_for_workflow" if control["worker_active"] else "review_partial_outputs_and_resume",
+                },
+            }
+        if recovery_error and not payload:
+            payload = {"workflow_name": sidecar_root.name, "status": "unavailable", "artifact_root": str(sidecar_root)}
         if not payload:
             continue
-        sidecar_root = path.parent
         graph = _safe_read_json(sidecar_root / "workflow_graph.json")
+        if control and control["status"] in {"preparing", "running", "cancel_requested", "interrupted"}:
+            graph = {"nodes": control["steps"], "edges": [
+                {"source": need, "target": step["step_id"]} for step in control["steps"] for need in step["needs"]
+            ]}
         graph_nodes = graph.get("nodes") if isinstance(graph.get("nodes"), list) else []
         graph_edges = graph.get("edges") if isinstance(graph.get("edges"), list) else []
         acceptance = payload.get("acceptance_summary") if isinstance(payload.get("acceptance_summary"), dict) else {}
@@ -88,8 +124,14 @@ def _workflow_results(root: Path) -> list[dict[str, Any]]:
                 "has_workflow_graph": (sidecar_root / "workflow_graph.json").exists(),
                 "has_workflow_provenance": (sidecar_root / "provenance.jsonl").exists(),
                 "has_workflow_registry": (sidecar_root / "registry.json").exists(),
+                "has_workflow_checkpoint": (sidecar_root / "workflow_checkpoint.json").exists(),
+                "worker_active": control.get("worker_active"),
+                "current_step": (control.get("current_step") or {}).get("step_id"),
+                "cancel_requested": control.get("cancel_requested", False),
+                "recovery_error": recovery_error,
                 "workflow_report_markdown": outputs.get("workflow_report_markdown") or str(sidecar_root / "workflow_report.md"),
-                "mtime": path.stat().st_mtime if path.exists() else 0,
+                "mtime": (sidecar_root / "workflow_checkpoint.json").stat().st_mtime
+                if control else path.stat().st_mtime if path.exists() else 0,
             }
         )
     results.sort(key=lambda item: float(item.get("mtime") or 0))
@@ -129,6 +171,8 @@ def _result_card(result: dict[str, Any]) -> html.Div:
         if not present
     ]
     sidecar_label = "complete" if not missing_sidecars else "missing " + ", ".join(missing_sidecars)
+    if result.get("worker_active"):
+        sidecar_label = "in progress"
     return html.Div(
         className="qcchem-workflow-studio__run",
         children=[
@@ -156,8 +200,15 @@ def _result_card(result: dict[str, Any]) -> html.Div:
                     html.Span(f"step statuses: {step_status_counts or {}}"),
                     html.Span(f"recommended action: {result.get('recommended_action') or 'n/a'}"),
                     html.Span(f"sidecars: {sidecar_label}"),
+                    html.Span(f"worker: {'active' if result.get('worker_active') else 'stopped'}")
+                    if result.get("has_workflow_checkpoint") else None,
+                    html.Span(f"current step: {result.get('current_step')}") if result.get("current_step") else None,
                 ],
             ),
+            html.P("Cancellation requested; waiting for a safe execution boundary.", className="qcchem-card-note")
+            if result.get("status") == "cancel_requested" else None,
+            html.P(f"Recovery unavailable: {result.get('recovery_error')}", className="qcchem-workflow-studio__run-blocker")
+            if result.get("recovery_error") else None,
             (
                 html.P(
                     str(result.get("first_blocking_failure")),
@@ -170,6 +221,13 @@ def _result_card(result: dict[str, Any]) -> html.Div:
             html.P(str(result.get("workflow_report_markdown")), className="qcchem-card-note qcchem-card-note--compact"),
         ],
     )
+
+
+def workflow_run_cards(root: Path, *, artifact_root: Path | None = None) -> list[Any]:
+    """Refresh only read-only execution status and persisted run cards."""
+    return [_result_card(item) for item in _workflow_results(root, artifact_root=artifact_root)] or [
+        html.Div("No workflow checkpoints or results found yet.", className="qcchem-ai-workspace-page__empty-state")
+    ]
 
 
 def _template_yaml() -> str:
@@ -207,7 +265,7 @@ def graph_nodes_from_steps(steps: list[Any]) -> list[html.Div]:
 def layout() -> html.Div:
     root = Path.cwd()
     plugins = workflow_plugins_summary()["plugins"]
-    results = _workflow_results(root)
+    results = _workflow_results(root, artifact_root=resolve_workbench_artifact_root())
     builtins = [plugin for plugin in plugins if plugin.get("package") == "qcchem"]
     installed = [plugin for plugin in plugins if plugin.get("package") != "qcchem"]
 
@@ -234,6 +292,7 @@ def layout() -> html.Div:
                     ),
                 ],
             ),
+            workflow_controls_layout(),
             html.Div(
                 className="qcchem-workflow-studio__split",
                 children=[
@@ -294,16 +353,21 @@ def layout() -> html.Div:
                             ),
                             html.Div(id="qcchem-workflow-studio-validation", className="qcchem-workflow-studio__validation"),
                             html.Div(
+                                id="qcchem-workflow-studio-runs",
                                 className="qcchem-workflow-studio__run-list",
                                 children=[_result_card(item) for item in results]
-                                or [html.Div("No workflow_result.json artifacts found yet.", className="qcchem-ai-workspace-page__empty-state")],
+                                or [html.Div("No workflow checkpoints or results found yet.", className="qcchem-ai-workspace-page__empty-state")],
                             ),
+                            dcc.Interval(id="qcchem-workflow-studio-status-poll", interval=2000, n_intervals=0),
                             html.Div(
                                 className="qcchem-workflow-studio__commands",
                                 children=[
                                     html.P("CLI", className="qcchem-ai-workspace-page__ticket-meta"),
                                     html.Code("qcchem workflow validate -c examples/workflows/h2_trust_first_workflow.yaml"),
                                     html.Code("qcchem workflow run -c examples/workflows/h2_trust_first_workflow.yaml"),
+                                    html.Code("qcchem workflow status artifacts/workflows/h2_trust_first_workflow"),
+                                    html.Code("qcchem workflow cancel artifacts/workflows/h2_trust_first_workflow"),
+                                    html.Code("qcchem workflow resume -c examples/workflows/h2_trust_first_workflow.yaml --retry-step STEP_ID"),
                                 ],
                             ),
                         ],

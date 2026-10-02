@@ -86,13 +86,11 @@ from qcchem.core import (
 from qcchem.io.structure import (
     build_inline_geometry_provenance,
     load_structure_file,
-    normalized_geometry_sha256,
 )
 from qcchem.pbc.geometry import (
     frac_to_cart,
     normalize_cell_unit,
     normalized_periodic_payload,
-    periodic_fingerprint,
     validate_cell,
     validate_pbc_flags,
     wrap_positions,
@@ -1621,6 +1619,9 @@ def load_run_spec(path: Path) -> RunSpec:
     raw = yaml.safe_load(resolved_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Run configuration must deserialize to a mapping.")
+    from qcchem.io.validation import validate_run_mapping, validate_run_spec
+
+    validate_run_mapping(raw)
 
     molecule_raw = _require_mapping(raw, "molecule")
 
@@ -1672,7 +1673,7 @@ def load_run_spec(path: Path) -> RunSpec:
         ),
     )
 
-    return RunSpec(
+    return validate_run_spec(RunSpec(
         molecule=_parse_molecule(molecule_raw, base_dir=resolved_path.parent),
         problem=ProblemSpec(
             active_space=_parse_active_space(problem_raw),
@@ -1780,4 +1781,4 @@ def load_run_spec(path: Path) -> RunSpec:
             overwrite=bool(run_raw.get("overwrite", False)),
             exports=_parse_artifact_exports(run_raw),
         ),
-    )
+    ))

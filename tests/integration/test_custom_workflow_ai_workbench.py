@@ -222,3 +222,65 @@ def test_workflow_studio_loads_acceptance_graph_and_provenance(tmp_path: Path) -
     assert "2 events" in text
     assert "second: required_step_failed - boom" in text
     assert "sidecars: complete" in text
+
+
+def test_workflow_studio_polls_unfinished_checkpoints_and_detects_stopped_owner(tmp_path, monkeypatch):
+    from qcchem.io.workflow_config import load_workflow_spec_from_text
+    from qcchem.workbench.app import create_app
+    from qcchem.workbench.pages.workflow_studio import _workflow_results
+    from qcchem.workflow.workflow_control import WorkflowControl, WorkflowLock
+    from qcchem.workflow.workflow_plugins import builtin_workflow_plugins
+
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "artifacts" / "workflows" / "active"
+    spec = load_workflow_spec_from_text(f'''workflow:
+  name: active
+  output_root: {root}
+  steps:
+    - id: working
+      kind: report
+''', source_path=tmp_path / "workflow.yaml")
+    with WorkflowLock(root) as lock:
+        root.mkdir(parents=True)
+        control = WorkflowControl.create(root, spec, builtin_workflow_plugins())
+        lock.activate(control.state)
+        control.begin_step("working")
+        results = _workflow_results(tmp_path)
+        assert len(results) == 1
+        assert results[0]["status"] == "running"
+        assert results[0]["worker_active"] is True
+        assert results[0]["accepted"] is False
+        assert results[0]["current_step"] == "working"
+        app = create_app()
+        response = app.server.test_client().post("/_dash-update-component", json={
+            "output": "qcchem-workflow-studio-runs.children",
+            "outputs": {"id": "qcchem-workflow-studio-runs", "property": "children"},
+            "inputs": [{"id": "qcchem-workflow-studio-status-poll", "property": "n_intervals", "value": 1}],
+            "changedPropIds": ["qcchem-workflow-studio-status-poll.n_intervals"], "state": [],
+        })
+        assert response.status_code == 200
+        assert "worker: active" in response.get_data(as_text=True)
+    results = _workflow_results(tmp_path)
+    assert results[0]["status"] == "interrupted"
+    assert results[0]["worker_active"] is False
+    assert results[0]["accepted"] is False
+
+
+def test_workflow_studio_excludes_recovery_history_and_reports_corrupt_checkpoint(tmp_path):
+    from qcchem.workbench.pages.workflow_studio import _workflow_results
+
+    root = tmp_path / "artifacts" / "workflows" / "history"
+    root.mkdir(parents=True)
+    payload = {"workflow_name": "history", "status": "completed", "summary": {}, "steps": []}
+    (root / "workflow_result.json").write_text(json.dumps(payload), encoding="utf-8")
+    history = root / "execution_history" / "session"
+    history.mkdir(parents=True)
+    (history / "workflow_result.json").write_text(json.dumps(payload), encoding="utf-8")
+    assert len(_workflow_results(tmp_path)) == 1
+    corrupt = tmp_path / "artifacts" / "workflows" / "corrupt"
+    corrupt.mkdir()
+    (corrupt / "workflow_checkpoint.json").write_text("{", encoding="utf-8")
+    rows = _workflow_results(tmp_path)
+    row = next(item for item in rows if item["workflow_name"] == "corrupt")
+    assert row["status"] == "unavailable"
+    assert "Cannot read workflow checkpoint" in row["recovery_error"]

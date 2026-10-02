@@ -13,7 +13,7 @@ from functools import lru_cache
 from pathlib import Path
 from time import perf_counter
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pyscf
@@ -81,6 +81,10 @@ from qcchem.exploratory.solvers.registry import build_exploratory_solver
 from qcchem.exploratory.tc_qsci import run_tc_qsci
 from qcchem.solvers import SolverOutcome, build_solver
 from qcchem.solvers.spectrum import ExactSpectrum, compute_exact_spectrum
+from qcchem.solvers.sector import molecular_sector
+from qcchem.io.validation import validate_run_spec
+from qcchem.core.energy import total_energy_from_solver
+from qcchem.workflow.common import preserve_output_bundle
 from qcchem.workflow.tasks import (
     build_excited_state_result,
     build_geometry_optimization_result,
@@ -138,7 +142,7 @@ def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool,
                 "Choose a new output directory."
             )
         if overwrite:
-            shutil.rmtree(resolved_root)
+            preserve_output_bundle(resolved_root)
         elif any(resolved_root.iterdir()):
             raise FileExistsError(
                 f"Artifact directory '{resolved_root}' already exists and is not empty. "
@@ -173,7 +177,9 @@ def _prepare_artifact_paths(root: Path, overwrite: bool, *, qcschema_json: bool,
 def _build_logger(log_path: Path) -> logging.Logger:
     logger = logging.getLogger(f"qcchem.{log_path.parent.name}")
     logger.setLevel(logging.INFO)
-    logger.handlers.clear()
+    for old_handler in logger.handlers[:]:
+        old_handler.close()
+        logger.removeHandler(old_handler)
     logger.propagate = False
     handler = logging.FileHandler(log_path, encoding="utf-8")
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
@@ -338,13 +344,12 @@ def _build_runtime_chemical_accuracy(
     statistical_error = None
     if isinstance(stds, list) and stds:
         statistical_error = float(stds[0])
-    runtime_total_energy = (
-        float(evs[0])
-        + constant_energy_correction
-        + nuclear_repulsion_energy
-        + external_point_charge_nuclear_interaction_energy
-        + boundary_embedding_constant_energy
-    )
+    runtime_total_energy = total_energy_from_solver(float(evs[0]), {
+        "constant_energy_correction": constant_energy_correction,
+        "nuclear_repulsion_energy": nuclear_repulsion_energy,
+        "external_point_charge_nuclear_interaction_energy": external_point_charge_nuclear_interaction_energy,
+        "boundary_embedding_constant_energy": boundary_embedding_constant_energy,
+    })
     return check_chemical_accuracy(
         runtime_total_energy,
         exact_total_energy,
@@ -720,14 +725,14 @@ def _build_sampled_result(
 
     estimates = backend.sample_repeated(ansatz, operator, np.asarray(solver_outcome.optimal_parameters, dtype=float))
     raw_values = np.asarray([item.value for item in estimates], dtype=float)
-    raw_stds = np.asarray([item.reported_std for item in estimates], dtype=float)
+    raw_stds = [item.reported_std for item in estimates]
     mean = float(raw_values.mean())
-    empirical_std = float(raw_values.std(ddof=1)) if len(raw_values) > 1 else 0.0
+    empirical_std = float(raw_values.std(ddof=1)) if len(raw_values) > 1 else None
     if len(raw_values) > 1:
         standard_error = float(empirical_std / np.sqrt(len(raw_values)))
     else:
-        standard_error = float(raw_stds[0]) if len(raw_stds) else 0.0
-    ci_half_width = 1.96 * standard_error
+        standard_error = raw_stds[0] if raw_stds else None
+    ci_half_width = 1.96 * standard_error if standard_error is not None else None
 
     return SampledResultSummary(
         available=True,
@@ -737,7 +742,7 @@ def _build_sampled_result(
         seed=getattr(backend, "spec", None).seed if hasattr(backend, "spec") else None,
         repeat_seeds=[item.seed for item in estimates],
         repeat_solver_energies=[float(value) for value in raw_values],
-        repeat_reported_stds=[float(value) for value in raw_stds],
+        repeat_reported_stds=[float(value) if value is not None else None for value in raw_stds],
         repeat_metadata=[dict(item.metadata) for item in estimates],
         sampled_solver_energy_mean=mean,
         sampled_solver_energy_std=empirical_std,
@@ -750,8 +755,8 @@ def _build_sampled_result(
             + boundary_embedding_constant_energy
         ),
         standard_error=standard_error,
-        confidence_interval_low=float(mean - ci_half_width),
-        confidence_interval_high=float(mean + ci_half_width),
+        confidence_interval_low=float(mean - ci_half_width) if ci_half_width is not None else None,
+        confidence_interval_high=float(mean + ci_half_width) if ci_half_width is not None else None,
     )
 
 
@@ -770,7 +775,7 @@ def _classify_verification_status(
     return "exploratory"
 
 
-def _compute_exact_spectrum_if_needed(spec, mapping, logger, events) -> ExactSpectrum | None:
+def _compute_exact_spectrum_if_needed(spec, mapping, logger, events, problem_summary=None) -> ExactSpectrum | None:
     need_exact = spec.benchmark.enabled or spec.tasks.excited_state.enabled or bool(spec.tasks.properties)
     if not need_exact:
         return None
@@ -783,7 +788,10 @@ def _compute_exact_spectrum_if_needed(spec, mapping, logger, events) -> ExactSpe
         )
         return None
     _record(logger, events, f"Computing exact spectrum for {required_states} states")
-    return compute_exact_spectrum(mapping.qubit_hamiltonian, num_states=required_states)
+    return compute_exact_spectrum(
+        mapping.qubit_hamiltonian, num_states=required_states,
+        sector=molecular_sector(problem_summary, mapping.mapper),
+    )
 
 
 def _ensure_exploratory_allowed(spec, *, exploratory_command: bool) -> None:
@@ -802,7 +810,171 @@ def _ensure_exploratory_allowed(spec, *, exploratory_command: bool) -> None:
         )
 
 
-def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> RunResult:
+def run_spec(
+    spec, *, source_config: str, output_dir: Path | None = None,
+    control_check: Callable[[], None] | None = None, resume_from: Path | None = None,
+) -> RunResult:
+    """Run with a cooperating process lock and optional local VQE recovery."""
+    from copy import deepcopy
+
+    from qcchem.io.checkpoint import read_checkpoint, write_checkpoint
+    from qcchem.workflow.computation_control import (
+        check_control, computation_identity, computation_locks, run_input_paths,
+        validate_recovery_identity,
+    )
+    from qcchem.workflow.workflow_control import file_manifest, verify_manifest
+
+    spec = deepcopy(spec)
+    if output_dir is not None:
+        spec.run.output_dir = Path(output_dir)
+    validate_run_spec(spec)
+    target = spec.run.output_dir.expanduser()
+    if not target.is_absolute():
+        target = _project_root() / target
+    guard_output_path_symlinks(target, workflow_name="Run")
+    target = target.resolve()
+    source = Path(resume_from).expanduser() if resume_from is not None else None
+    if source is not None:
+        guard_output_path_symlinks(source, workflow_name="Run recovery")
+        source = source.resolve()
+        if (spec.solver.kind.strip().lower() != "vqe" or spec.backend.runtime.enabled
+                or spec.backend.kind.strip().lower() not in {"statevector", "shot_estimator", "aer_shot_estimator"}):
+            raise ValueError("Run recovery supports local VQE statevector/shot_estimator with runtime disabled.")
+        if spec.backend.kind.strip().lower() != "statevector" and spec.backend.seed is None:
+            raise ValueError("Shot checkpoint recovery requires backend.seed.")
+    with computation_locks(target, source):
+        check_control(control_check)
+        identity = computation_identity(spec, run_input_paths(spec, source_config))
+        source_manifest = None
+        resume_checkpoint = None
+        if source is not None:
+            state = read_checkpoint(source / "run_checkpoint.json", schema="qcchem.run_checkpoint.v1")
+            validate_recovery_identity(state, identity)
+            if target.exists() and (not target.is_dir() or any(target.iterdir())):
+                raise FileExistsError("Checkpoint recovery requires an empty new output directory.")
+            resume_checkpoint = source / "vqe_checkpoint.json"
+            if not resume_checkpoint.is_file():
+                resume_checkpoint = None  # Interrupted before the first VQE evaluation.
+            source_manifest = file_manifest([source])
+        result = _run_spec_with_output_safety(
+            spec, source_config=source_config, control_check=control_check,
+            resume_checkpoint=resume_checkpoint, checkpoint_identity=identity,
+        )
+        check_control(control_check)
+        verify_manifest(identity["inputs"], label="computation inputs")
+        if source_manifest is not None:
+            verify_manifest(source_manifest, label="recovery source bundle")
+        checkpoint_path = result.artifacts.root / "run_checkpoint.json"
+        state = read_checkpoint(checkpoint_path, schema="qcchem.run_checkpoint.v1")
+        state.update(status="completed", result_json=str(result.artifacts.result_json))
+        write_checkpoint(checkpoint_path, state)
+        return result
+
+
+def _mark_run_stopped(root: Path, exc: BaseException) -> None:
+    from qcchem.io.checkpoint import read_checkpoint, write_checkpoint
+
+    path = root / "run_checkpoint.json"
+    if not path.is_file():
+        return
+    try:
+        state = read_checkpoint(path, schema="qcchem.run_checkpoint.v1")
+        state["status"] = "interrupted" if isinstance(exc, (KeyboardInterrupt, TimeoutError)) or type(exc).__name__ == "WorkflowCancelledError" else "failed"
+        write_checkpoint(path, state)
+    except (OSError, ValueError, TypeError) as failure:
+        if hasattr(exc, "add_note"):
+            exc.add_note(f"Could not publish the final run checkpoint: {failure}")
+
+
+def _run_spec_with_output_safety(
+    spec, *, source_config: str, output_dir: Path | None = None,
+    control_check=None, resume_checkpoint: Path | None = None, checkpoint_identity=None,
+) -> RunResult:
+    """Validate first and stage overwrite runs without touching existing results."""
+    from copy import deepcopy
+    from dataclasses import fields, is_dataclass, replace
+    from tempfile import mkdtemp
+
+    spec = deepcopy(spec)
+    if output_dir is not None:
+        spec.run.output_dir = Path(output_dir)
+    validate_run_spec(spec)
+    target = spec.run.output_dir.expanduser()
+    if not target.is_absolute():
+        target = _project_root() / target
+    guard_output_path_symlinks(target, workflow_name="Run")
+    target = target.resolve()
+    guard_output_target(target, workflow_name="Run")
+    if not target.exists() or not target.is_dir() or not any(target.iterdir()):
+        try:
+            return _run_spec(spec, source_config=source_config, control_check=control_check,
+                             resume_checkpoint=resume_checkpoint, checkpoint_identity=checkpoint_identity)
+        except BaseException as exc:
+            _mark_run_stopped(target, exc)
+            raise
+        finally:
+            logger = logging.getLogger(f"qcchem.{target.name}")
+            for handler in logger.handlers[:]:
+                handler.close()
+                logger.removeHandler(handler)
+    if not spec.run.overwrite:
+        raise FileExistsError(f"Artifact directory '{target}' already exists and is not empty.")
+    stage = Path(mkdtemp(prefix=f".{target.name}.pending-", dir=target.parent))
+    spec.run.output_dir = stage
+    try:
+        result = _run_spec(spec, source_config=source_config, control_check=control_check,
+                           resume_checkpoint=resume_checkpoint, checkpoint_identity=checkpoint_identity)
+    except BaseException as exc:
+        _mark_run_stopped(stage, exc)
+        if hasattr(exc, "add_note"):
+            exc.add_note(f"Previous output preserved at {target}; failed run artifacts: {stage}")
+        raise
+    finally:
+        logger = logging.getLogger(f"qcchem.{stage.name}")
+        for handler in logger.handlers[:]:
+            handler.close()
+            logger.removeHandler(handler)
+
+    def relocate(value):
+        if isinstance(value, Path):
+            return target / value.relative_to(stage) if value.is_relative_to(stage) else value
+        if isinstance(value, str):
+            return value.replace(str(stage), str(target)).replace(stage.name, target.name)
+        if is_dataclass(value):
+            return replace(value, **{item.name: relocate(getattr(value, item.name)) for item in fields(value)})
+        if isinstance(value, dict):
+            return {key: relocate(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return type(value)(relocate(item) for item in value)
+        return value
+
+    result = relocate(result)
+    result.run_id = target.name
+    for path in stage.rglob("*"):
+        if path.is_file() and path.suffix in {".json", ".yaml", ".yml", ".md", ".jsonl", ".csv", ".log"}:
+            original = path.read_text(encoding="utf-8")
+            rewritten = original.replace(str(stage), str(target)).replace(stage.name, target.name)
+            if rewritten != original:
+                path.write_text(rewritten, encoding="utf-8")
+    write_result_json(result, stage / "result.json")
+    write_markdown_report(result, stage / "report.md")
+    if result.artifacts.qcschema_json is not None:
+        write_qcschema_json(result, stage / "qcschema.json")
+    if result.artifacts.hdf5_file is not None:
+        write_hdf5_result(result, stage / "result.h5")
+    backup = preserve_output_bundle(target)
+    try:
+        stage.rename(target)
+    except Exception:
+        backup.rename(target)
+        raise
+    return result
+
+
+def _run_spec(
+    spec, *, source_config: str, output_dir: Path | None = None,
+    control_check=None, resume_checkpoint: Path | None = None, checkpoint_identity=None,
+) -> RunResult:
     """Run a QCchem calculation from an already-parsed RunSpec."""
     started_at = perf_counter()
     if output_dir is not None:
@@ -814,6 +986,14 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         qcschema_json=spec.run.exports.qcschema_json,
         hdf5=spec.run.exports.hdf5,
     )
+    from qcchem.io.checkpoint import write_checkpoint
+    from qcchem.workflow.computation_control import check_control
+
+    write_checkpoint(artifacts.root / "run_checkpoint.json", {
+        "schema_version": "qcchem.run_checkpoint.v1", "identity": checkpoint_identity,
+        "status": "running", "resume_checkpoint": str(resume_checkpoint) if resume_checkpoint else None,
+    })
+    check_control(control_check)
     logger = _build_logger(artifacts.log_file)
     events: list[str] = []
     repo_root = _project_root()
@@ -980,6 +1160,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         _record(logger, events, f"Prepared runtime policy snapshot for service={runtime_options.service}")
 
     backend = None
+    check_control(control_check)
     backend_required = solver_kind in {"vqe", "lr_ace"} or (
         spec.solver.experimental
         and solver_kind in {"adapt_vqe", "vqd", "folded_spectrum", "lr_ace", "lattice_qed_givqe"}
@@ -1039,14 +1220,23 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
                 problem_summary=chemistry.summary,
                 mapper=mapping.mapper,
                 field_model_context=field_solver_context,
+                control_check=control_check,
+                checkpoint_path=artifacts.root / "vqe_checkpoint.json" if solver_kind == "vqe" else None,
+                resume_checkpoint=resume_checkpoint,
             )
         solver_outcome, compressed_solve_wall_time = _solve_with_timing(solver, mapping.qubit_hamiltonian)
+        recovered_operator = solver_outcome.metadata.get("checkpoint_operator")
+        if recovered_operator is not None:
+            mapping = replace(mapping, qubit_hamiltonian=recovered_operator)
+            mapping = _append_mapping_note(mapping, "Checkpoint recovery uses the original Hamiltonian coefficients after a <=1e-12 Hartree L1 reconstruction-roundoff check.")
+
+    check_control(control_check)
 
     if solver_kind == "lattice_qed_sparse_exact":
         spectrum = None
         _record(logger, events, "Using sparse lattice-QED exact solver as the finite-cutoff exact baseline")
     else:
-        spectrum = _compute_exact_spectrum_if_needed(spec, mapping, logger, events)
+        spectrum = _compute_exact_spectrum_if_needed(spec, mapping, logger, events, chemistry.summary)
     exact_energy = float(spectrum.eigenvalues[0]) if spectrum is not None else None
     if exact_energy is None and spec.benchmark.enabled and solver_kind in {"exact", "reference", "lattice_qed_sparse_exact"}:
         exact_energy = float(solver_outcome.total_energy)
@@ -1057,6 +1247,7 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         electronic_energy=(float(exact_energy + chemistry.electronic_constant_correction) if exact_energy is not None else None),
         total_energy=(float(exact_energy + chemistry.total_constant_correction) if exact_energy is not None else None),
         energy_units=ENERGY_UNITS,
+        sector=spectrum.sector if spectrum is not None else solver_outcome.metadata.get("exact_sector", {}),
     )
     _record(logger, events, f"Writing exact baseline artifact to {artifacts.exact_result_json}")
     _write_exact_artifact(artifacts, exact_baseline)
@@ -1246,7 +1437,10 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         ):
             adaptive_uncompressed_check_triggered = True
             adaptive_uncompressed_exact_solver_energy = float(
-                compute_exact_spectrum(uncompressed_mapping.qubit_hamiltonian, num_states=1).eigenvalues[0]
+                compute_exact_spectrum(
+                    uncompressed_mapping.qubit_hamiltonian, num_states=1,
+                    sector=molecular_sector(chemistry.summary, uncompressed_mapping.mapper),
+                ).eigenvalues[0]
             )
             adaptive_uncompressed_solver_error = float(
                 abs(uncompressed_solver_energy - adaptive_uncompressed_exact_solver_energy)
@@ -1513,8 +1707,11 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         _record(logger, events, f"Computed TC-kicked QSCI exploratory workflow: determinants={selected_count}")
 
     reduction_plan = build_reduction_plan(spec, chemistry.reduction_audit)
+    accuracy_energy = total_energy
+    if sampled_result is not None and sampled_result.sampled_total_energy_mean is not None:
+        accuracy_energy = sampled_result.sampled_total_energy_mean
     chemical_accuracy = check_chemical_accuracy(
-        total_energy,
+        accuracy_energy,
         exact_baseline.total_energy if exact_baseline.available else None,
         assessment_target="local_execution",
         statistical_error=benchmark.statistical_error,
@@ -1933,6 +2130,11 @@ def run_spec(spec, *, source_config: str, output_dir: Path | None = None) -> Run
         write_qcschema_json(result, artifacts.qcschema_json)
     if artifacts.hdf5_file is not None:
         write_hdf5_result(result, artifacts.hdf5_file)
+    check_control(control_check)
+    if checkpoint_identity is not None:
+        from qcchem.workflow.workflow_control import verify_manifest
+
+        verify_manifest(checkpoint_identity["inputs"], label="computation inputs")
     return result
 
 
@@ -1942,10 +2144,13 @@ def run_from_config(
     *,
     exploratory_command: bool = False,
     confirm_runtime_budget: str | None = None,
+    control_check: Callable[[], None] | None = None,
+    resume_from: Path | None = None,
 ) -> RunResult:
     """Run a QCchem calculation from a YAML configuration."""
     spec = load_run_spec(config_path)
     if confirm_runtime_budget:
         spec.backend.runtime.options["runtime_budget_confirmation"] = confirm_runtime_budget
     _ensure_exploratory_allowed(spec, exploratory_command=exploratory_command)
-    return run_spec(spec, source_config=str(config_path), output_dir=output_dir)
+    return run_spec(spec, source_config=str(config_path), output_dir=output_dir,
+                    control_check=control_check, resume_from=resume_from)

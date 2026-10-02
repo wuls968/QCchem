@@ -14,6 +14,12 @@ def build_molecule_viewer(
     caption: str | None = None,
     height: str = "320px",
 ) -> html.Section:
+    if molecule.get("available") is False or not any(molecule.get(key) for key in ("atoms", "coordinates", "models")):
+        return html.Section(
+            id=viewer_id, className="qcchem-card qcchem-molecule-unavailable",
+            children=[html.H3(title or "Molecule Viewer"),
+                      html.P(molecule.get("unavailable_reason") or "Geometry is unavailable in this artifact.")],
+        )
     payload = json.dumps(molecule, separators=(",", ":"))
     resolved_title = title or str(molecule.get("title") or "Molecule Viewer")
     resolved_caption = caption or str(
@@ -37,6 +43,7 @@ def build_molecule_viewer(
                         "background": "radial-gradient(circle at top, rgba(32, 51, 74, 0.18), rgba(32, 51, 74, 0.82))",
                         "boxShadow": "inset 0 0 0 1px rgba(255, 255, 255, 0.08)",
                         "overflow": "hidden",
+                        "position": "relative",
                     },
                 },
             ),

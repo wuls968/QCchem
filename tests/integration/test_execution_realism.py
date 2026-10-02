@@ -21,6 +21,8 @@ def test_h2_shot_backend_records_sampling_statistics(tmp_path: Path) -> None:
     assert result.sampled_result.confidence_interval_low is not None
     assert result.sampled_result.confidence_interval_high is not None
     assert result.benchmark.comparison_target == "sampled_result"
+    assert result.chemical_accuracy.computed_energy == pytest.approx(result.sampled_result.sampled_total_energy_mean)
+    assert result.chemical_accuracy.absolute_error_hartree == pytest.approx(result.benchmark.absolute_error)
     assert result.mitigation.symmetry_check["requested"] is True
     assert result.artifacts.exact_result_json.exists()
     assert result.quantum_evidence is not None

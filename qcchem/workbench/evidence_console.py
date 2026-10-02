@@ -72,8 +72,9 @@ def build_evidence_console_model(
         1.6e-3,
     )
     simulator_error = _safe_float(benchmark.get("absolute_error") or confidence.get("absolute_error"), 0.0)
-    hardware_error = _safe_float(runtime_accuracy.get("absolute_error_hartree"), simulator_error)
-    chemical_gap = max(hardware_error - threshold, 0.0)
+    hardware_value = runtime_accuracy.get("absolute_error_hartree")
+    hardware_error = _safe_float(hardware_value) if hardware_value is not None else None
+    chemical_gap = max(hardware_error - threshold, 0.0) if hardware_error is not None else None
     returned_metadata = _safe_dict(runtime.get("returned_job_metadata"))
     returned_metadata_inner = _safe_dict(returned_metadata.get("metadata"))
     options_snapshot = _safe_dict(runtime.get("options_snapshot"))
@@ -110,7 +111,7 @@ def build_evidence_console_model(
         },
         "runtime_boundary": {
             "submission_health": _submission_health(runtime),
-            "hardware_gap_hartree": abs(hardware_error - simulator_error),
+            "hardware_gap_hartree": abs(hardware_error - simulator_error) if hardware_error is not None else None,
             "budget_note": f"{shots if shots is not None else 'n/a'} shots / {usage_seconds if usage_seconds is not None else 'n/a'} usage seconds",
             "precision_target": options_snapshot.get("precision_target"),
             "recommended_action": action,

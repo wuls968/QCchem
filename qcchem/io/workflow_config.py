@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import math
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,12 @@ from qcchem.core import (
 from qcchem.io.config import resolve_user_path
 
 REFERENCE_PATTERN = re.compile(r"\$\{([^}]+)\}")
+STEP_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}\Z")
+
+
+def validate_step_id(step_id: str) -> None:
+    if not isinstance(step_id, str) or not STEP_ID_PATTERN.fullmatch(step_id):
+        raise ValueError("Workflow step id must be 1-128 letters, digits, underscores or hyphens, starting with a letter or digit.")
 
 
 def _require_mapping(data: dict[str, Any], key: str) -> dict[str, Any]:
@@ -58,6 +65,7 @@ def _parse_step(raw: Any) -> WorkflowStepSpec:
     kind = str(raw.get("kind", "")).strip()
     if not step_id:
         raise ValueError("workflow.steps[].id is required.")
+    validate_step_id(step_id)
     if not kind:
         raise ValueError(f"workflow.steps[{step_id}].kind is required.")
     needs_raw = raw.get("needs", [])
@@ -194,9 +202,14 @@ def validate_workflow_spec(spec: WorkflowSpec) -> WorkflowSpec:
         raise ValueError("workflow.limits.max_steps must be >= 1.")
     if spec.limits.max_iterations < 1:
         raise ValueError("workflow.limits.max_iterations must be >= 1.")
-    if spec.limits.max_wall_time_seconds is not None and spec.limits.max_wall_time_seconds <= 0:
+    if spec.limits.max_wall_time_seconds is not None and (
+        not math.isfinite(spec.limits.max_wall_time_seconds) or spec.limits.max_wall_time_seconds <= 0
+    ):
         raise ValueError("workflow.limits.max_wall_time_seconds must be positive when provided.")
     for step in spec.steps:
+        validate_step_id(step.id)
+        if step.retry.max_retries < 0:
+            raise ValueError("Workflow retry.max_retries must be non-negative.")
         _add_implicit_needs(step)
     _validate_reference_shapes(spec)
     _validate_acyclic_steps(spec)

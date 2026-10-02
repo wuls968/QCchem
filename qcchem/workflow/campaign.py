@@ -13,7 +13,7 @@ from qcchem.io.campaign_config import load_campaign_spec
 from qcchem.io.config import load_run_spec
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_result_json
-from qcchem.workflow.acceptance import accept_benchmark_result, build_benchmark_acceptance_summary
+from qcchem.workflow.acceptance import accept_benchmark_result
 from qcchem.workflow.benchmark import run_benchmark_suite_from_config
 from qcchem.workflow.common import prepare_clean_output_root
 from qcchem.workflow.registry import make_registry_entry, write_registry

@@ -60,6 +60,8 @@ def test_h2_mklq_cpu_sample_writes_sampling_artifacts_without_hardware_verificat
     assert result.sampled_result is not None
     assert result.sampled_result.shots == 4096
     assert result.sampled_result.backend_kind == "cudaq_sample"
+    assert result.chemical_accuracy.computed_energy == pytest.approx(result.sampled_result.sampled_total_energy_mean)
+    assert result.chemical_accuracy.absolute_error_hartree == pytest.approx(result.benchmark.absolute_error)
     assert result.hardware_verified is False
     assert result.backend.metadata["cudaq_target"] == "mklq-cpu"
     assert result.backend.metadata["hardware_verified"] is False

@@ -4,8 +4,13 @@
   const BRIDGE_FLAG = "qcchemBridgeHydrated";
   const PAYLOAD_HASH_KEY = "qcchemPayloadHash";
   const MOL_SCRIPT_ID = "qcchem-3dmol-script";
-  const MOL_SCRIPT_SRC = "https://3Dmol.org/build/3Dmol-min.js";
+  const bridgeScript = document.currentScript;
+  const MOL_SCRIPT_SRC = bridgeScript && bridgeScript.src
+    ? new URL("3Dmol-2.5.5.min.js", bridgeScript.src).href
+    : "/assets/3Dmol-2.5.5.min.js";
   let scriptPromise = null;
+  const viewers = new Map();
+  let scheduled = false;
 
   function payloadToXYZ(payload) {
     if (!payload.atoms || !Array.isArray(payload.atoms)) {
@@ -19,6 +24,9 @@
   }
 
   function ensureScript() {
+    if (window.$3Dmol && typeof window.$3Dmol.createViewer === "function") {
+      return Promise.resolve();
+    }
     const existing = document.getElementById(MOL_SCRIPT_ID);
     if (existing && (existing.dataset.qcchem3dmolReady === "true" || (window.$3Dmol && typeof window.$3Dmol.createViewer === "function"))) {
       existing.dataset.qcchem3dmolReady = "true";
@@ -85,18 +93,18 @@
     }
 
     renderNode.replaceChildren();
+    const previous = viewers.get(mountNode);
+    if (previous) {
+      previous.observer.disconnect();
+      if (typeof previous.viewer.clear === "function") previous.viewer.clear();
+    }
     const viewer = bridgeApi.createViewer(renderNode, { backgroundColor: "rgba(15, 28, 43, 0.94)" });
     if (payload.coordinates) {
       viewer.addModel(payload.coordinates, payload.format || "xyz");
     } else if (payload.atoms) {
-      const atomModel = viewer.addModel();
-      if (atomModel && typeof atomModel.addAtoms === "function") {
-        atomModel.addAtoms(payload.atoms);
-      } else {
-        const xyz = payloadToXYZ(payload);
-        if (xyz) {
-          viewer.addModel(xyz, payload.format || "xyz");
-        }
+      const xyz = payloadToXYZ(payload);
+      if (xyz) {
+        viewer.addModel(xyz, payload.format || "xyz");
       }
     } else if (payload.models) {
       payload.models.forEach((model) => viewer.addModel(model.coordinates, model.format || payload.format || "xyz"));
@@ -104,7 +112,7 @@
     if (payload.style) {
       viewer.setStyle({}, payload.style);
     } else {
-      viewer.setStyle({}, { stick: {} });
+      viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } });
     }
     (payload.labels || []).forEach((label) => {
       viewer.addLabel(label.text, {
@@ -114,7 +122,31 @@
       });
     });
     viewer.zoomTo();
+    const atoms = typeof viewer.selectedAtoms === "function" ? viewer.selectedAtoms({}) : (payload.atoms || []);
+    if (typeof viewer.selectedAtoms === "function" && !atoms.length) {
+      throw new Error("The molecule contains no readable atoms.");
+    }
+    mountNode.dataset.qcchemRenderedAtomCount = String(atoms.length);
+    if (atoms.length > 1) {
+      const spans = ["x", "y", "z"].map((axis) => {
+        const positions = atoms.map((atom) => atom[axis]);
+        return Math.max(...positions) - Math.min(...positions);
+      });
+      // Linear molecules on the view axis otherwise hide behind their front atom.
+      if (spans[0] + spans[1] < 1e-7 && spans[2] > 1e-7 && typeof viewer.rotate === "function") {
+        viewer.rotate(90, "y");
+      }
+      if (Math.max(...spans) < 3 && typeof viewer.zoom === "function") viewer.zoom(2);
+    }
     viewer.render();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (mountNode.isConnected) {
+        viewer.resize();
+        viewer.render();
+      }
+    }) : { observe() {}, disconnect() {} };
+    observer.observe(renderNode);
+    viewers.set(mountNode, { viewer, observer });
     mountNode.dataset.qcchemPayloadHash = moleculeJson;
     mountNode.dataset[BRIDGE_FLAG] = "true";
   }
@@ -146,7 +178,15 @@
   function hydrateAll() {
     ensureScript()
       .then(() => {
-        document.querySelectorAll(VIEWER_SELECTOR).forEach(hydrateViewer);
+        document.querySelectorAll(VIEWER_SELECTOR).forEach((mountNode) => {
+          try {
+            hydrateViewer(mountNode);
+          } catch (error) {
+            mountNode.dataset[BRIDGE_FLAG] = "error";
+            renderUnavailableState(mountNode.querySelector(CANVAS_SELECTOR) || mountNode);
+            console.error("QCchem molecular rendering failed", error);
+          }
+        });
       })
       .catch(() => {
         document.querySelectorAll(VIEWER_SELECTOR).forEach((mountNode) => {
@@ -172,4 +212,26 @@
 
   document.addEventListener("DOMContentLoaded", hydrateAll);
   document.addEventListener("dashrendered", hydrateAll);
+  if (typeof MutationObserver === "function") {
+    const mounts = new MutationObserver((records) => {
+    const relevant = records.some((record) =>
+      record.type === "attributes" || Array.from(record.addedNodes).some((node) =>
+        node.nodeType === 1 && (node.matches(VIEWER_SELECTOR) || node.querySelector(VIEWER_SELECTOR)))
+    );
+    viewers.forEach((entry, node) => {
+      if (!node.isConnected) {
+        entry.observer.disconnect();
+        if (typeof entry.viewer.clear === "function") entry.viewer.clear();
+        viewers.delete(node);
+      }
+    });
+    if (relevant && !scheduled) {
+      scheduled = true;
+      requestAnimationFrame(() => { scheduled = false; hydrateAll(); });
+    }
+  });
+  mounts.observe(document.documentElement, {
+    childList: true, subtree: true, attributes: true, attributeFilter: ["data-molecule-json"],
+  });
+  }
 })();

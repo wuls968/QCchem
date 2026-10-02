@@ -169,7 +169,6 @@ def _hopping_sector(
     cols: list[int] = []
     data: list[complex] = []
     spin_components = int(spec.matter.spin_components)
-    link_count = len(grid.links)
     for col, matter_index in enumerate(basis.matter_indices.tolist()):
         digits = basis.gauge_digits[col]
         for link in grid.links:

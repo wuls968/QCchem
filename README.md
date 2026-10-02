@@ -19,6 +19,10 @@ the next careful action should be.
 
 Use Python 3.10 or newer in an isolated environment:
 
+Chemistry execution supports Linux and macOS. On Windows, run these commands
+inside WSL: [PySCF does not support native Windows](https://pyscf.org/user/install.html).
+Native Windows CI checks the process-control layer only.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate

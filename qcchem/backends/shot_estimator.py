@@ -80,6 +80,13 @@ class ShotEstimatorBackend(BackendAdapter):
     def precision(self) -> float:
         return 1.0 / math.sqrt(float(self.spec.shots))
 
+    def restore_evaluation_count(self, count: int) -> None:
+        if type(count) is not int or count < 0:
+            raise ValueError("Evaluation count must be a non-negative integer.")
+        if self.spec.seed is None:
+            raise ValueError("Shot checkpoint recovery requires backend.seed.")
+        self._evaluation_counter = count
+
     def _single_estimate(
         self,
         circuit: QuantumCircuit,

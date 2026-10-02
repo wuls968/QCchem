@@ -124,16 +124,16 @@ SAMPLE_RUN_PAYLOAD: dict[str, Any] = {
 def build_sample_view_model() -> dict[str, Any]:
     view = build_run_view_model(SAMPLE_RUN_PAYLOAD)
     view["molecule_viewer"] = SAMPLE_MOLECULE_PAYLOAD
+    view["is_demo"] = True
     return view
 
 
 def _overview_figure(view: dict[str, Any]) -> go.Figure:
     total_energy = float(view["hero"].get("total_energy") or 0.0)
-    absolute_error = float(view["hero"].get("absolute_error") or 0.0)
-    runtime_absolute_error = float(
-        (view.get("confidence", {}).get("runtime_chemical_accuracy") or {}).get("absolute_error_hartree", absolute_error)
-        or absolute_error
-    )
+    error_value = view["hero"].get("absolute_error")
+    absolute_error = float(error_value) if error_value is not None else None
+    runtime_value = (view.get("confidence", {}).get("runtime_chemical_accuracy") or {}).get("absolute_error_hartree")
+    runtime_absolute_error = float(runtime_value) if runtime_value is not None else None
     threshold = float(
         (
             view.get("confidence", {}).get("chemical_accuracy") or {}
@@ -151,7 +151,7 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
         subplot_titles=("Reported total energy", "Absolute-error evidence"),
     )
     figure.add_bar(
-        x=["Compressed VQE"],
+        x=["Reported calculation"],
         y=[total_energy],
         marker={
             "color": [THEME["accent"]["copper"]],
@@ -170,7 +170,8 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
             "color": [THEME["accent"]["deep_blue"], THEME["accent"]["sage"]],
             "line": {"color": THEME["surface"]["paper"], "width": 1.4},
         },
-        text=[f"{absolute_error:.4f}", f"{runtime_absolute_error:.4f}"],
+        text=[f"{absolute_error:.4f}" if absolute_error is not None else "Unavailable",
+              f"{runtime_absolute_error:.4f}" if runtime_absolute_error is not None else "Unavailable"],
         textposition="outside",
         hovertemplate="%{x}: %{y:.4f} Ha<extra></extra>",
         row=2,
@@ -213,7 +214,7 @@ def _overview_figure(view: dict[str, Any]) -> go.Figure:
         bordercolor=THEME["surface"]["line"],
         borderwidth=1,
         font={"size": 11, "color": THEME["text"]["secondary"]},
-        text=f"Runtime gap to target: {max(runtime_absolute_error - threshold, 0.0):.4f} Ha",
+        text=f"Runtime gap to target: {max(runtime_absolute_error - threshold, 0.0):.4f} Ha" if runtime_absolute_error is not None else "Runtime evidence unavailable",
     )
     return figure
 
@@ -396,9 +397,11 @@ def _ai_delivery_review_card_text(
     return f"{review_event_count} {event_label}", detail
 
 
-def build_overview_page(model: dict[str, Any]) -> html.Div:
-    view = model
-    molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
+def build_overview_page(model: dict[str, Any] | None) -> html.Div:
+    view = model if model is not None else build_run_view_model({
+        "problem": {"molecule_name": "No calculation"}, "energy": {},
+    })
+    molecule_model = view.get("molecule_viewer") or {"available": False, "atoms": []}
     active_space_metadata = view.get("structure", {}).get("active_space_metadata") or {}
     compression = view.get("compression") or {}
     mapping = view.get("mapping") or {}
@@ -438,12 +441,12 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     chemical_observed_error = float(chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
     runtime_status_raw = (
         view.get("runtime", {}).get("verification_status")
-        or confidence.get("verification_status")
-        or view.get("runtime", {}).get("result_provenance", {}).get("attempt_stage")
-        or "unknown"
+        or (view.get("runtime", {}).get("result_provenance") or {}).get("attempt_stage")
+        or "not attempted"
     )
     runtime_status_label = str(runtime_status_raw).replace("_", " ").title()
-    runtime_gap = float(runtime_chemical_accuracy.get("absolute_error_hartree") or view["hero"]["absolute_error"] or 0.0)
+    runtime_value = runtime_chemical_accuracy.get("absolute_error_hartree")
+    runtime_gap = float(runtime_value) if runtime_value is not None else None
     release_verification_status = str(release_verification.get("status") or "No verification report")
     release_history_handoff_count = release_verification_summary.get("release_history_handoff_count")
     release_history_handoff_count_text = ""
@@ -640,6 +643,30 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
     release_handoff_path = release_evidence_handoff.get("source_path")
     if release_handoff_path:
         release_handoff_detail = f"{release_handoff_detail} | {release_handoff_path}"
+    if model is None:
+        return html.Div(className="qcchem-page qcchem-page--overview", children=[
+            html.Section(className="qcchem-card", children=[
+                html.H1("Campaign Overview", className="qcchem-card-title"),
+                html.P("No calculation artifacts available. Run a calculation to populate the scientific views."),
+            ]),
+            html.Div(className="qcchem-overview__summary-grid", children=[
+                status_card("Research Objective", str(objective.get("objective_name") or "No objective yet"),
+                            str(objective.get("recommended_action") or "Create an objective plan."),
+                            tone=_status_tone(objective.get("status"))),
+                status_card("Release verification", release_verification_status, release_verification_detail,
+                            tone=_status_tone(release_verification.get("status"))),
+                status_card("Release history", release_history_status, release_history_detail,
+                            tone=_status_tone(release_history_summary.get("status"))),
+                status_card("Release history handoff", release_history_handoff_status, release_history_handoff_detail,
+                            tone=_status_tone(release_history_handoff.get("status"))),
+                status_card("Release matrix baseline", str(release_matrix_status), release_matrix_detail,
+                            tone=_status_tone(release_matrix_status)),
+                status_card("Release evidence handoff", release_handoff_status, release_handoff_detail,
+                            tone=_status_tone(release_evidence_handoff.get("status"))),
+                status_card("AI delivery review provenance", ai_delivery_value, ai_delivery_detail),
+            ]),
+            detail_card("Release history retained runs", release_history_run_rows, eyebrow="Release history"),
+        ])
     return html.Div(
         className="qcchem-page qcchem-page--overview",
         children=[
@@ -666,7 +693,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                             ),
                             metric_card(
                                 "Benchmark gap",
-                                f'{view["hero"]["absolute_error"]:.4f} Ha',
+                                f'{view["hero"]["absolute_error"]:.4f} Ha' if view["hero"].get("absolute_error") is not None else "Unavailable",
                                 f'Against {benchmark.get("comparison_target", "exact diagonalization")}',
                             ),
                             status_card(
@@ -706,7 +733,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                     ),
                     metric_card(
                         "Chemical accuracy gap",
-                        f'{float(evidence_console["trust_gap"]["chemical_accuracy_gap_hartree"]):.4f} Ha',
+                        f'{float(evidence_console["trust_gap"]["chemical_accuracy_gap_hartree"]):.4f} Ha'
+                        if evidence_console["trust_gap"]["chemical_accuracy_gap_hartree"] is not None else "Unavailable",
                         f'Threshold {float(evidence_console["trust_gap"]["threshold_hartree"]):.4f} Ha',
                     ),
                     status_card(
@@ -803,8 +831,8 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                     ),
                     metric_card(
                         "Trust gap to close",
-                        f"{max(runtime_gap - threshold, 0.0):.4f} Ha",
-                        "Runtime-derived path still above the declared chemical-accuracy line.",
+                        f"{max(runtime_gap - threshold, 0.0):.4f} Ha" if runtime_gap is not None else "Unavailable",
+                        "Runtime-derived distance to the chemical-accuracy threshold." if runtime_gap is not None else "No retrieved runtime accuracy estimate.",
                     ),
                     metric_card(
                         "Pending analysis",
@@ -890,7 +918,7 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
                             ("Threshold", f"{threshold:.4f} Ha"),
                             ("Compressed vs uncompressed", str(benchmark.get("compressed_vs_uncompressed", "n/a"))),
                             ("Runtime backing", f'{view["runtime"]["backend_name"]} / {runtime_status_label}'),
-                            ("Runtime gap", f"{runtime_gap:.4f} Ha"),
+                            ("Runtime gap", f"{runtime_gap:.4f} Ha" if runtime_gap is not None else "Unavailable"),
                         ],
                         eyebrow="Operational Posture",
                     ),
@@ -918,4 +946,4 @@ def build_overview_page(model: dict[str, Any]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_overview_page(load_featured_run_view_model() or build_sample_view_model())
+    return build_overview_page(load_featured_run_view_model())

@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
-from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.theme import THEME
 
 
@@ -21,8 +21,8 @@ def _resource_figure(view: dict[str, object]) -> go.Figure:
         y=[
             logical_qubits,
             float(mapping.get("qubit_term_count", 0) or 0),
-            float(runtime.get("transpiled_depth", 0) or 0),
-            float(runtime.get("transpiled_two_qubit_gate_count", 0) or 0),
+            runtime.get("transpiled_depth"),
+            runtime.get("transpiled_two_qubit_gate_count"),
         ],
         marker={
             "color": [
@@ -36,8 +36,8 @@ def _resource_figure(view: dict[str, object]) -> go.Figure:
         text=[
             str(int(logical_qubits)),
             str(int(mapping.get("qubit_term_count", 0) or 0)),
-            str(int(runtime.get("transpiled_depth", 0) or 0)),
-            str(int(runtime.get("transpiled_two_qubit_gate_count", 0) or 0)),
+            str(runtime["transpiled_depth"]) if runtime.get("transpiled_depth") is not None else "Unavailable",
+            str(runtime["transpiled_two_qubit_gate_count"]) if runtime.get("transpiled_two_qubit_gate_count") is not None else "Unavailable",
         ],
         textposition="outside",
         hovertemplate="%{x}: %{y}<extra></extra>",
@@ -89,7 +89,7 @@ def build_mapping_resources_page(model: dict[str, object]) -> html.Div:
                         className="qcchem-page__summary-grid",
                         children=[
                             metric_card("Mapping", str(mapping.get("kind", "n/a")).replace("_", " ").title(), "Operator transform"),
-                            metric_card("Layout", str(runtime.get("transpilation", {}).get("layout", "sabre")), "Compilation strategy"),
+                            metric_card("Layout", str((runtime.get("transpilation") or {}).get("layout", "unavailable")), "Compilation strategy"),
                             metric_card("Backend", str(runtime.get("backend_name", "n/a")), f"depth {runtime.get('transpiled_depth', 'n/a')}"),
                             status_card(
                                 "Taper savings",
@@ -149,4 +149,7 @@ def build_mapping_resources_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_mapping_resources_page(build_sample_view_model())
+    model = load_featured_run_view_model()
+    return build_mapping_resources_page(model) if model else html.Div([
+        html.H1("Mapping, Resources, and Circuit"), html.P("No calculation artifacts available. Run a calculation to populate the Workbench."),
+    ])

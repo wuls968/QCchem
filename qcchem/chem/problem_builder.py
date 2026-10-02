@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Any
 
 import numpy as np
@@ -63,6 +63,12 @@ REDUCTION_ENERGY_FORMULA = (
     "+ external_point_charge_nuclear_interaction_energy + boundary_embedding_constant_energy; "
     "electronic_energy = solver_energy + constant_energy_correction"
 )
+
+
+def _spin_orbital_overlap(problem) -> list[list[float]] | None:
+    angular_momentum = problem.properties.angular_momentum
+    overlap = getattr(angular_momentum, "overlap", None)
+    return np.asarray(overlap, dtype=float).tolist() if overlap is not None else None
 
 
 @dataclass(slots=True)
@@ -529,6 +535,9 @@ def build_pbc_electronic_structure_context(spec: RunSpec) -> ElectronicStructure
             multiplicity=spec.molecule.multiplicity,
             num_particles=tuple(int(value) for value in problem.num_particles),
             num_spatial_orbitals=int(problem.num_spatial_orbitals),
+            geometry=[asdict(atom) for atom in spec.molecule.geometry],
+            geometry_unit=spec.molecule.unit,
+            spin_orbital_overlap=_spin_orbital_overlap(problem),
             active_space_metadata=active_space_summary,
             transformers_applied=transformers_applied,
             hamiltonian_constants=constants,
@@ -759,6 +768,9 @@ def build_electronic_structure_context(spec: RunSpec) -> ElectronicStructureCont
             multiplicity=spec.molecule.multiplicity,
             num_particles=tuple(int(value) for value in problem.num_particles),
             num_spatial_orbitals=int(problem.num_spatial_orbitals),
+            geometry=[asdict(atom) for atom in spec.molecule.geometry],
+            geometry_unit=spec.molecule.unit,
+            spin_orbital_overlap=_spin_orbital_overlap(problem),
             active_space_metadata=active_space_summary,
             transformers_applied=transformers_applied,
             hamiltonian_constants=constants,

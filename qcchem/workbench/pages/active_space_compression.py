@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
-from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.theme import THEME
 
 
@@ -98,7 +98,8 @@ def build_active_space_compression_page(model: dict[str, object]) -> html.Div:
                         "The chart should let you see both absolute scale and relative contraction so the reduced operator reads as an intentional bridge from chemistry to execution.",
                         className="qcchem-card-note",
                     ),
-                    dcc.Graph(figure=_compression_figure(compression), config={"displayModeBar": False}),
+                    dcc.Graph(figure=_compression_figure(compression), config={"displayModeBar": False})
+                    if compression else html.P("No compression data in this artifact."),
                 ],
             ),
             html.Div(
@@ -143,4 +144,7 @@ def build_active_space_compression_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_active_space_compression_page(build_sample_view_model())
+    model = load_featured_run_view_model()
+    return build_active_space_compression_page(model) if model else html.Div([
+        html.H1("Active Space and Compression"), html.P("No calculation artifacts available. Run a calculation to populate the Workbench."),
+    ])

@@ -45,13 +45,12 @@ The canonical landing route is `/overview`. The `/` route is kept as an alias fo
 
 ## Artifact Story
 
-The workbench is intentionally chemistry-result read-only. It does not create
-new chemistry results; it summarizes what already exists in `artifacts/` and
-helps you navigate toward the highest-signal evidence. The AI Workspace page is
-the narrow exception for local review state: ticket editor actions and delivery
-`Accept` / `Return` controls may update JSON records under
+The workbench summarizes persisted chemistry results and their evidence.
+The AI Workspace page may update local review state: ticket editor actions and
+delivery `Accept` / `Return` controls update JSON records under
 `artifacts/ai_workspace/` so reviewer provenance and return notes remain
-durable.
+durable. Workflow Studio also offers local cooperative cancellation and reviewed
+recovery of existing checkpoints; recovery can compute unfinished steps.
 
 At startup, the server summary reads the repo's artifact inventory and reports:
 
@@ -80,8 +79,19 @@ Overview, Result Confidence, Benchmarks, and Hardware Campaign prefer real
 indexed artifacts when they exist. The built-in sample models remain only as
 empty-workspace fallbacks.
 
-The Research OS surfaces are read-mostly and keep mutation scoped to AI
-Workspace state records:
+Scans and Studies have a **Data source** chooser over the configured artifact
+root. They refresh every five seconds and retain the selected source. Choose
+**Demo** explicitly to view a bundled example; an empty or unreadable workspace
+is shown as such. The source path accompanies each real aggregate. Missing or
+non-finite energies/errors remain unavailable, and scan charts identify the
+lowest **sampled** energy rather than asserting a converged minimum.
+
+Scans also display committed points from `scan_checkpoint.json` when no final
+scan result has been published. These are incomplete evidence, even when the
+individual points are validated. New scan outputs record parameter units for
+bond-distance scans; older outputs without units display **Not recorded**.
+
+The Research OS surfaces include:
 
 - `/overview` shows the latest Research Objective plan/status, open evidence
   gaps, Claim Compiler support level, and Promotion Gate status when the
@@ -94,7 +104,37 @@ Workspace state records:
 - `/workflow-studio` shows the YAML-first custom workflow surface: built-in and
   installed plugins, derived graph, validation/export controls, and recent
   `workflow_result.json` artifacts with acceptance, graph, provenance, registry,
-  and report status.
+  and report status, plus the workflow controls below.
+
+## Workflow controls
+
+Open `/workflow-studio` and select a checkpoint under the configured artifact
+root. Checkpoints do not need to live under `artifacts/workflows/`; execution
+history copies and escaping symlinks are excluded. Status refreshes every two
+seconds.
+
+- **Request cancellation** writes a request for the displayed execution session.
+  The worker stops at its next safe polling boundary and preserves partial
+  outputs. An in-progress backend call may finish first. Provider jobs continue.
+- For a stopped workflow, check the exact unfinished/failed step IDs you allow to
+  retry and click **Review resume**. Review the original YAML, output directory,
+  reusable completed steps, pending step kinds, and possible prior effects.
+- **Confirm resume** starts a background process with the Workbench's Python and
+  QCchem package. You can navigate while it runs. Watch status and the recovery
+  job receipt; the log path is displayed. Existing runtime budget confirmation
+  requirements remain in force.
+
+The review expires after ten minutes and can be used once. Changed checkpoint,
+configuration, known input files, implementation or reused output files block
+recovery. A stale cancellation request cannot cancel a later execution session.
+
+Control requests require a loopback client and Host and, when present, a matching
+Origin. Remote browsers retain read access but cannot dispatch these controls.
+These controls are intended for a local workstation.
+Requests, logs and receipts are saved in a sibling directory named
+`.ARTIFACT_ROOT_NAME.workbench-control/`, outside workflow evidence directories.
+Closing the Workbench does not force-stop its background workers. Preserve their
+logs and checkpoints when restarting the server. Use CLI status/cancel if needed.
 
 ## Showcase Path
 

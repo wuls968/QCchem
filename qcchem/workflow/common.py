@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import shutil
+from uuid import uuid4
 from copy import deepcopy
 from pathlib import Path
 
@@ -106,7 +106,7 @@ def prepare_clean_output_root(root: Path, *, workflow_name: str, overwrite: bool
                 "Choose a new output directory."
             )
         if overwrite:
-            shutil.rmtree(resolved_root)
+            preserve_output_bundle(resolved_root)
         elif any(resolved_root.iterdir()):
             raise FileExistsError(
                 f"{workflow_name} output directory '{resolved_root}' already exists and is not empty. "
@@ -114,3 +114,22 @@ def prepare_clean_output_root(root: Path, *, workflow_name: str, overwrite: bool
             )
     resolved_root.mkdir(parents=True, exist_ok=True)
     return resolved_root
+
+
+def preserve_output_bundle(root: Path) -> Path:
+    """Retain an existing bundle under a unique sibling name, never delete it."""
+    backup = root.with_name(f"{root.name}.backup-{uuid4().hex[:12]}")
+    root.rename(backup)
+    return backup
+
+
+def contained_output_path(root: Path, relative: str | Path) -> Path:
+    """Validate an output child, including existing symlink components."""
+    child = Path(relative)
+    if child.is_absolute() or not child.parts or any(part in {"..", "."} for part in child.parts):
+        raise ValueError(f"Output path must be a relative child without traversal: {relative!r}.")
+    candidate = root / child
+    guard_output_path_symlinks(candidate, workflow_name="Workflow step")
+    if not candidate.resolve().is_relative_to(root.resolve()):
+        raise ValueError(f"Output path escapes its directory: {relative!r}.")
+    return candidate

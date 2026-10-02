@@ -1,0 +1,73 @@
+name: Native scientific smoke
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scientific:
+    name: Scientific smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install existing project dependencies
+        run: python -m pip install -e ".[dev,ui]"
+      - name: Check environment and independent scientific contracts
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/native-smoke
+          python -m qcchem.cli.main doctor --json > artifacts/native-smoke/doctor.json
+          python -m pytest tests/integration/test_exact_physical_sector.py tests/unit/test_reliability_upgrade.py tests/unit/test_custom_workflow_engine.py tests/unit/test_sampled_uncertainty.py tests/unit/test_platform_control.py tests/integration/test_execution_realism.py -q --junitxml=artifacts/native-smoke/scientific.xml
+      - name: Check native process recovery and Workbench controls
+        run: |
+          set -euo pipefail
+          python -m pytest tests/integration/test_workflow_recovery_process.py tests/integration/test_inner_checkpoint_process.py tests/integration/test_workbench_workflow_controls.py -q --junitxml=artifacts/native-smoke/recovery.xml
+      - name: Check Workbench components and bridge lifecycle
+        run: |
+          set -euo pipefail
+          python -m pytest tests/integration/test_workbench_app_v14.py::test_scientific_page_modules_render_real_content tests/integration/test_workbench_app_v14.py::test_three_dmol_bridge_node_smoke_handles_invalid_and_refresh -q --junitxml=artifacts/native-smoke/workbench.xml
+      - name: Preserve native diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qcchem-native-smoke-${{ matrix.os }}
+          path: artifacts/native-smoke
+          if-no-files-found: warn
+
+  windows-control:
+    name: Native Windows control layer (chemistry requires WSL)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install control test dependencies without PySCF
+        run: python -m pip install "pytest>=8.0" "numpy>=1.24" "PyYAML>=6.0" "qiskit>=2.3.0" "qiskit-aer>=0.17.2"
+      - name: Check native lock ownership and crash release
+        run: python -m pytest tests/unit/test_platform_control.py -q --junitxml=artifacts/native-smoke/windows-control.xml
+      - name: Preserve Windows control diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qcchem-native-smoke-windows-control
+          path: artifacts/native-smoke
+          if-no-files-found: warn

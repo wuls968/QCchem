@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.evidence_console import build_evidence_console_model, format_action_label
-from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.theme import THEME
 from qcchem.workbench.viewmodels import build_runtime_comparison_model
 
@@ -110,9 +110,10 @@ def _comparison_figure(model: dict[str, object]) -> go.Figure:
     chemical_accuracy = confidence.get("chemical_accuracy") or {}
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
     simulator_error = float(benchmark.get("absolute_error") or confidence.get("absolute_error") or 0.0)
-    hardware_error = float(runtime_chemical_accuracy.get("absolute_error_hartree") or simulator_error)
+    hardware_value = runtime_chemical_accuracy.get("absolute_error_hartree")
+    hardware_error = float(hardware_value) if hardware_value is not None else None
     threshold = float(chemical_accuracy.get("threshold_hartree") or confidence.get("threshold") or benchmark.get("threshold") or 0.02)
-    distance_to_threshold = max(hardware_error - threshold, 0.0)
+    distance_to_threshold = max(hardware_error - threshold, 0.0) if hardware_error is not None else None
     figure = go.Figure()
     figure.add_bar(
         x=["Simulator", "Hardware"],
@@ -121,7 +122,7 @@ def _comparison_figure(model: dict[str, object]) -> go.Figure:
             "color": [THEME["accent"]["copper"], THEME["accent"]["sage"]],
             "line": {"color": THEME["surface"]["paper"], "width": 1.4},
         },
-        text=[f"{simulator_error:.4f}", f"{hardware_error:.4f}"],
+        text=[f"{simulator_error:.4f}", f"{hardware_error:.4f}" if hardware_error is not None else "Unavailable"],
         textposition="outside",
         hovertemplate="%{x}: %{y:.4f} Ha<extra></extra>",
     )
@@ -146,7 +147,7 @@ def _comparison_figure(model: dict[str, object]) -> go.Figure:
         bordercolor=THEME["surface"]["line"],
         borderwidth=1,
         font={"size": 11, "color": THEME["text"]["secondary"]},
-        text=f"Hardware distance to target: {distance_to_threshold:.4f} Ha",
+        text=f"Hardware distance to target: {distance_to_threshold:.4f} Ha" if distance_to_threshold is not None else "Hardware accuracy unavailable",
     )
     apply_chart_theme(
         figure,
@@ -161,8 +162,10 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
     runtime = model["runtime"]
     comparison = build_runtime_comparison_model(model)
     simulator_error = float(comparison["simulator_error_hartree"])
-    hardware_error = float(comparison["hardware_error_hartree"])
-    error_gap = float(comparison["error_gap_hartree"])
+    hardware_error = comparison["hardware_error_hartree"]
+    error_gap = comparison["error_gap_hartree"]
+    hardware_label = f"{hardware_error:.4f} Ha" if hardware_error is not None else "Unavailable"
+    gap_label = f"{error_gap:.4f} Ha" if error_gap is not None else "Unavailable"
     threshold = float(comparison["threshold_hartree"])
     verification_status = str(runtime.get("verification_status", "pending"))
     runtime_verdict = str(comparison["hardware_verdict"])
@@ -204,7 +207,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                             status_card(
                                 "Scientific verdict",
                                 runtime_verdict,
-                                f"Simulator {simulator_error:.4f} Ha | hardware {hardware_error:.4f} Ha | gap {error_gap:.4f} Ha",
+                                f"Simulator {simulator_error:.4f} Ha | hardware {hardware_label} | gap {gap_label}",
                                 tone=_tone(runtime_verdict),
                             ),
                         ],
@@ -232,12 +235,12 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                             status_card(
                                 "Hardware-derived accuracy",
                                 runtime_verdict,
-                                f"hardware {hardware_error:.4f} Ha vs threshold {threshold:.4f} Ha",
+                                f"hardware {hardware_label} vs threshold {threshold:.4f} Ha",
                                 tone=_tone(runtime_verdict),
                             ),
                             metric_card(
                                 "Simulator-vs-hardware gap",
-                                f"{error_gap:.4f} Ha",
+                                gap_label,
                                 f"simulator {simulator_error:.4f} Ha",
                             ),
                             metric_card(
@@ -270,7 +273,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                             metric_card("Simulator reference", str(comparison["simulator_reference"]), f"Simulator error {simulator_error:.4f} Ha"),
                             metric_card("Hardware backend", str(comparison["hardware_backend"]), str(comparison["shot_note"])),
                             metric_card("Hardware verdict", str(comparison["hardware_verdict"]), str(comparison["hardware_verdict_note"])),
-                            metric_card("Error gap", f"{error_gap:.4f} Ha", f"Threshold {threshold:.4f} Ha"),
+                            metric_card("Error gap", gap_label, f"Threshold {threshold:.4f} Ha"),
                         ],
                     ),
                     html.Div(
@@ -283,7 +286,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
                                     ("Simulator reference", str(comparison["simulator_reference"])),
                                     ("Hardware backend", str(comparison["hardware_backend_label"])),
                                     ("Hardware verdict", str(comparison["hardware_verdict"])),
-                                    ("Hardware error", f"{hardware_error:.4f} Ha"),
+                                    ("Hardware error", hardware_label),
                                     ("Simulator error", f"{simulator_error:.4f} Ha"),
                                     ("Queue stage", str(comparison["queue_stage"])),
                                 ],
@@ -339,4 +342,7 @@ def build_runtime_monitoring_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_runtime_monitoring_page(build_sample_view_model())
+    model = load_featured_run_view_model()
+    return build_runtime_monitoring_page(model) if model else html.Div([
+        html.H1("Runtime Monitoring"), html.P("No calculation artifacts available. Run a calculation to populate the Workbench."),
+    ])

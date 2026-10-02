@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+from types import SimpleNamespace
 
 from qiskit.quantum_info import SparsePauliOp
 
@@ -68,6 +69,9 @@ def _validate_tapered_spectrum(
     tapered_operator: SparsePauliOp,
     *,
     max_qubits: int,
+    problem=None,
+    raw_mapper=None,
+    tapered_mapper=None,
 ) -> dict[str, Any]:
     validation: dict[str, Any] = {
         "available": False,
@@ -78,9 +82,23 @@ def _validate_tapered_spectrum(
         validation["reason"] = "qubit_count_above_validation_limit"
         return validation
     from qcchem.solvers.spectrum import compute_exact_spectrum
+    from qcchem.solvers.sector import molecular_sector
 
-    raw_energy = compute_exact_spectrum(raw_operator, num_states=1).eigenvalues[0]
-    tapered_energy = compute_exact_spectrum(tapered_operator, num_states=1).eigenvalues[0]
+    summary = None
+    if problem is not None:
+        particles = problem.num_particles
+        summary = SimpleNamespace(
+            num_particles=particles, num_spatial_orbitals=problem.num_spatial_orbitals,
+            multiplicity=abs(particles[0] - particles[1]) + 1, basis="molecular",
+            spin_orbital_overlap=getattr(problem.properties.angular_momentum, "overlap", None),
+        )
+
+    raw_energy = compute_exact_spectrum(
+        raw_operator, num_states=1, sector=molecular_sector(summary, raw_mapper),
+    ).eigenvalues[0]
+    tapered_energy = compute_exact_spectrum(
+        tapered_operator, num_states=1, sector=molecular_sector(summary, tapered_mapper),
+    ).eigenvalues[0]
     delta = abs(float(raw_energy) - float(tapered_energy))
     validation.update(
         {
@@ -170,6 +188,7 @@ def apply_z2_tapering(
             raw_qubit_hamiltonian,
             tapered_operator,
             max_qubits=validation_qubit_limit,
+            problem=problem, raw_mapper=base_mapper, tapered_mapper=tapered_mapper,
         )
         if validation.get("available") and float(validation["absolute_delta"]) > validation_tolerance:
             return _raise_or_skip(

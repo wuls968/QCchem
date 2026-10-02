@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import yaml
 from pathlib import Path
 from typing import Any
 
@@ -172,17 +173,12 @@ def _preferred_entry(entries: list[dict[str, Any]], *, kinds: set[str]) -> dict[
     matching = [entry for entry in entries if str(entry.get("artifact_kind")) in kinds]
     if not matching:
         return None
-    preferred_names = [
-        "h2_runtime_hardware_probe_puccd_layout",
-        "h2",
-        "benchmark_suite_v1",
-        "hardware_calibration_suite_v1",
-    ]
-    for name in preferred_names:
-        for entry in matching:
-            if str(entry.get("artifact_root", "")).endswith(f"/{name}") or entry.get("artifact_name") == name:
-                return entry
-    return max(matching, key=lambda item: float(item.get("mtime") or 0.0))
+    return max(matching, key=lambda item: (
+        bool(item.get("evidence_summary_complete")),
+        bool(item.get("provenance_complete")),
+        float(item.get("mtime") or 0.0),
+        str(item.get("artifact_root") or ""),
+    ))
 
 
 def load_featured_run_view_model(artifact_root: Path | None = None) -> dict[str, Any] | None:
@@ -197,6 +193,14 @@ def load_featured_run_view_model(artifact_root: Path | None = None) -> dict[str,
     run = bundle.get("run")
     if not isinstance(run, dict):
         return None
+    config_path = Path(str(entry["artifact_root"])) / "resolved_config.yaml"
+    if config_path.is_file():
+        try:
+            resolved = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+            if isinstance(resolved, dict):
+                run = {**run, "resolved_config": resolved}
+        except (OSError, yaml.YAMLError):
+            pass  # The view exposes missing geometry instead of substituting a demo.
     view = build_run_view_model(run)
     view["artifact_index_entry"] = entry
     return view

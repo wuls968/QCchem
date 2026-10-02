@@ -254,3 +254,43 @@ def test_installed_workflow_plugins_load_entry_point(monkeypatch: pytest.MonkeyP
 
     assert "echo" in plugins
     assert plugins["echo"].describe().kind == "echo"
+
+
+@pytest.mark.parametrize("mode", ["single", "retry", "loop"])
+def test_deadline_never_accepts_overrun_even_for_optional_steps(tmp_path, monkeypatch, mode):
+    clock = {"now": 0.0, "calls": 0}
+    monkeypatch.setattr("qcchem.workflow.custom_workflow.time.monotonic", lambda: clock["now"])
+
+    class OverrunStep(EchoStep):
+        def run(self, inputs, context):
+            clock["calls"] += 1
+            clock["now"] += 2.0
+            if mode == "retry":
+                raise RuntimeError("transient failure after timeout")
+            return {"continue": mode == "loop"}
+
+    monkeypatch.setattr("qcchem.workflow.custom_workflow.workflow_plugin_registry", lambda: {"echo": OverrunStep()})
+    workflow = tmp_path / "deadline.yaml"
+    workflow.write_text('''workflow:
+  name: deadline
+  output_root: out
+  limits:
+    max_wall_time_seconds: 1
+  acceptance:
+    fail_on_required_failure: false
+  steps:
+    - id: overrun
+      kind: echo
+      required_for_success: false
+      retry: 3
+      loop:
+        while_output: continue
+    - id: must_not_start
+      kind: echo
+''')
+    result = run_custom_workflow(load_workflow_spec(workflow))
+    assert result.status == "failed"
+    assert result.acceptance_summary["accepted"] is False
+    assert clock["calls"] == 1
+    assert "max_wall_time_seconds" in result.acceptance_summary["blocking_failures"][-1]["error"]
+    assert (result.artifact_root / "step_outputs" / "overrun" / "step_result.json").is_file()

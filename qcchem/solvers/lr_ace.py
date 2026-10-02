@@ -27,6 +27,7 @@ from qcchem.backends import BackendAdapter
 from qcchem.core import ProblemSummary
 from qcchem.solvers.base import BaseSolver, SolverOutcome
 from qcchem.solvers.spectrum import compute_exact_spectrum
+from qcchem.solvers.sector import molecular_sector
 
 
 @dataclass(slots=True)
@@ -554,7 +555,9 @@ class LRACESolver(BaseSolver):
         max_adaptive_expansions = max(int(getattr(adaptive, "max_adaptive_expansions", 3)), 0)
         exact_energy = None
         if operator.num_qubits <= int(adaptive.uncompressed_check_qubit_limit):
-            exact_energy = float(compute_exact_spectrum(operator, num_states=1).eigenvalues[0])
+            exact_energy = float(compute_exact_spectrum(
+                operator, num_states=1, sector=molecular_sector(self.problem_summary, self.mapper),
+            ).eigenvalues[0])
 
         started = perf_counter()
         stages: list[dict[str, Any]] = []

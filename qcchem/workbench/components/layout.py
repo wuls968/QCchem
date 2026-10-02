@@ -150,13 +150,13 @@ def page_focus(pathname: str | None) -> dict[str, object]:
         },
         "/scans": {
             "route_label": "Scans",
-            "summary": "Read a scan like a chemistry path, not a CSV preview: the curve, the minimum, and the defended points should stand out.",
+            "summary": "Inspect sampled energies, point validation, and coverage before interpreting the scan path.",
             "rail_title": "Scans should feel directional",
-            "rail_note": "Good scan pages make a path legible: where the sweep moves, where the minimum lies, and how trustworthy the curve is.",
+            "rail_note": "Interpret the curve within its sampled range and verify point status and parameter units.",
             "callout_title": "A scan is a shape, not just rows",
             "callout_body": "Use this page to see the sweep as an energy landscape first, then consult the point table for precise labels.",
             "checklist": [
-                ("See", "Path shape and minimum"),
+                ("See", "Path and lowest sampled energy"),
                 ("Check", "Validated point count"),
                 ("Use", "Point table for exact labels"),
             ],

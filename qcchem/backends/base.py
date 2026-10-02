@@ -15,7 +15,7 @@ class BackendEstimate:
     """One expectation-value estimate returned by a backend."""
 
     value: float
-    reported_std: float
+    reported_std: float | None
     metadata: dict[str, object] = field(default_factory=dict)
     seed: int | None = None
     shots: int | None = None
@@ -25,6 +25,10 @@ class BackendAdapter(ABC):
     """Abstract execution backend used by QCchem solvers."""
 
     backend_kind: str = "unknown"
+
+    def restore_evaluation_count(self, count: int) -> None:
+        """Restore sampling progress; unsupported adapters must opt in explicitly."""
+        raise ValueError(f"Backend '{self.backend_kind}' does not support checkpoint recovery.")
 
     @abstractmethod
     def evaluate(

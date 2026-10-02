@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.components.molecule import build_molecule_viewer
-from qcchem.workbench.pages.overview import SAMPLE_MOLECULE_PAYLOAD, build_sample_view_model
+from qcchem.workbench.data import load_featured_run_view_model
 from qcchem.workbench.theme import THEME
 
 
@@ -54,6 +54,8 @@ def _orbital_selection_figure(metadata: dict[str, object], reduction: dict[str, 
         for position, original in enumerate(original_labels)
         if position in frozen_current_orbitals or original in frozen_original_orbitals
     }
+    if reduction.get("selection_mode") == "none":
+        active_positions = set(orbital_indices) - frozen_positions
     colors = [
         "#9a6b3f" if index in active_positions else "#46607a" if index in frozen_positions else "#93a18a"
         for index in orbital_indices
@@ -149,13 +151,17 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
     view = model
     metadata = view["structure"]["active_space_metadata"] or {}
     reduction = view.get("reduction") or {}
-    molecule_model = view.get("molecule_viewer") or SAMPLE_MOLECULE_PAYLOAD
+    molecule_model = view.get("molecule_viewer") or {"available": False, "atoms": []}
     original_labels = _resolve_orbital_labels(metadata, reduction, len(metadata.get("orbital_levels_ev", [])))
     active_count = len(_normalize_indices(reduction.get("selected_active_orbitals_original"))) or int(metadata.get("num_active_orbitals", 0) or 0)
     frozen_count = len(_normalize_indices(reduction.get("frozen_orbitals")))
+    selected_orbitals = reduction.get("selected_active_orbitals_original", [])
+    if reduction.get("selection_mode") == "none":
+        selected_orbitals = original_labels
     return html.Div(
         className="qcchem-page qcchem-page--structure",
         children=[
+            html.P(f"Run: {view.get('run_identity', view['hero']['molecule_name'])}", className="qcchem-card-note"),
             html.Section(
                 className="qcchem-card qcchem-structure__hero",
                 children=[
@@ -169,13 +175,13 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                         className="qcchem-page__summary-grid",
                         children=[
                             metric_card("Basis", view["hero"]["basis"], "Model basis for orbital interpretation"),
-                            metric_card("Active orbitals", str(metadata.get("num_active_orbitals", "4")), "Window carried into reduction"),
-                            metric_card("Selection mode", str(reduction.get("selection_mode", "auto")), metadata.get("orbital_window", "Valence-focused window")),
+                            metric_card("Active orbitals", str(metadata.get("num_active_orbitals") or "unavailable"), "Window carried into reduction"),
+                            metric_card("Selection mode", str(reduction.get("selection_mode", "unavailable")), metadata.get("orbital_window", "No orbital window label recorded")),
                             status_card(
                                 "Orbital partition",
                                 f"{active_count} active / {frozen_count} frozen",
                                 f"original labels: {original_labels}",
-                                tone="validated" if active_count else "informational",
+                                tone="informational",
                             ),
                         ],
                     ),
@@ -199,7 +205,8 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                                 "Read the ladder before reading operator compression. If the active orbitals and frozen orbitals do not look sensible here, later efficiency gains are not yet persuasive.",
                                 className="qcchem-card-note",
                             ),
-                            dcc.Graph(figure=_orbital_selection_figure(metadata, reduction), config={"displayModeBar": False}),
+                            dcc.Graph(figure=_orbital_selection_figure(metadata, reduction), config={"displayModeBar": False})
+                            if metadata.get("orbital_levels_ev") else html.P("Orbital energies are unavailable in this artifact."),
                         ],
                     ),
                 ],
@@ -210,11 +217,11 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
                     detail_card(
                         "Orbital curation",
                         [
-                            ("Selection mode", str(reduction.get("selection_mode", "Automatic reduction audit"))),
+                            ("Selection mode", str(reduction.get("selection_mode", "unavailable"))),
                             ("Frozen orbitals", str(reduction.get("frozen_orbitals", []))),
-                            ("Window label", metadata.get("orbital_window", "1 sigma to 3 sigma*")),
+                            ("Window label", metadata.get("orbital_window", "Not recorded")),
                             ("Orbital levels (eV)", str(metadata.get("orbital_levels_ev", []))),
-                            ("Selected active orbitals", str(reduction.get("selected_active_orbitals_original", []))),
+                            ("Selected active orbitals", str(selected_orbitals)),
                         ],
                     ),
                     detail_card(
@@ -240,4 +247,7 @@ def build_structure_orbitals_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_structure_orbitals_page(build_sample_view_model())
+    model = load_featured_run_view_model()
+    return build_structure_orbitals_page(model) if model else html.Div([
+        html.H1("Structure and Orbitals"), html.P("No calculation artifacts available. Run a calculation to populate the Workbench."),
+    ])

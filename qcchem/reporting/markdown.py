@@ -344,9 +344,9 @@ def _qft_model_lines(data: dict[str, Any]) -> list[str]:
             f"- physical_sector: `{qft.get('physical_sector', {})}`",
             f"- gauge_invariant_ansatz: `{qft.get('gauge_invariant_ansatz', {})}`",
             f"- constraint_expectations: `{qft.get('constraint_expectations', {})}`",
-            f"- finite_cutoff_qft_correctness: `audited against the persisted finite Hamiltonian`",
-            f"- gauge_constraint_consistency: `Gauss-law residuals and commutators are finite-cutoff checks`",
-            f"- continuum_chemistry_accuracy: `not asserted by this exploratory artifact`",
+            "- finite_cutoff_qft_correctness: `audited against the persisted finite Hamiltonian`",
+            "- gauge_constraint_consistency: `Gauss-law residuals and commutators are finite-cutoff checks`",
+            "- continuum_chemistry_accuracy: `not asserted by this exploratory artifact`",
             "",
         ]
     )
@@ -372,9 +372,9 @@ def _qft_model_lines(data: dict[str, Any]) -> list[str]:
                 f"- ground_state_gap: `{sparse_validation.get('ground_state_gap')}`",
                 f"- lowest_eigenvalues: `{sparse_validation.get('lowest_eigenvalues')}`",
                 f"- projected_matrix_sha256: `{sparse_validation.get('projected_matrix_sha256')}`",
-                f"- sparse_projection_correctness: `projected operators are finite-cutoff indexed submatrices when projection is active`",
-                f"- runtime_circuit_boundary: `Runtime previews still target the full qubit register unless separately transformed`",
-                f"- continuum_chemistry_accuracy: `not asserted by this exploratory engine audit`",
+                "- sparse_projection_correctness: `projected operators are finite-cutoff indexed submatrices when projection is active`",
+                "- runtime_circuit_boundary: `Runtime previews still target the full qubit register unless separately transformed`",
+                "- continuum_chemistry_accuracy: `not asserted by this exploratory engine audit`",
                 "",
             ]
         )
@@ -403,9 +403,9 @@ def _qft_dynamics_lines(data: dict[str, Any]) -> list[str]:
         f"- trotter_circuit_resources: `{trotter.get('circuit_resources', {})}`",
         f"- trotter_error_summary: `{dynamics.get('trotter_error_summary', {})}`",
         f"- runtime_batch: `{runtime_batch}`",
-        f"- finite_cutoff_dynamics: `exact/statevector curves are for the persisted finite Hamiltonian`",
-        f"- trotter_approximation: `reported against finite-cutoff exact dynamics when available`",
-        f"- continuum_chemistry_accuracy: `not asserted by this exploratory dynamics artifact`",
+        "- finite_cutoff_dynamics: `exact/statevector curves are for the persisted finite Hamiltonian`",
+        "- trotter_approximation: `reported against finite-cutoff exact dynamics when available`",
+        "- continuum_chemistry_accuracy: `not asserted by this exploratory dynamics artifact`",
         "",
     ]
 
@@ -805,8 +805,6 @@ def render_markdown_report(result: Any) -> str:
     error_budget = data.get("error_budget")
     noise_model = data.get("noise_model")
     measurement = data.get("measurement")
-    quantum_evidence = data.get("quantum_evidence")
-    field_evidence = data.get("field_evidence")
     runtime_options = data.get("runtime_options")
     chemical_accuracy = data.get("chemical_accuracy")
     runtime_chemical_accuracy = data.get("runtime_chemical_accuracy")

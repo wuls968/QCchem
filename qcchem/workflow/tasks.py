@@ -88,7 +88,7 @@ def build_excited_state_result(
             continue
         total_energy = spectrum.eigenvalues[state_index] + total_constant_correction
         verification = "validated" if task.method == "exact_spectrum" else "exploratory"
-        baseline = {"source": "exact_spectrum"}
+        baseline = {"source": "exact_spectrum", "sector": spectrum.sector}
         if task.method != "exact_spectrum":
             baseline["proxy_mode"] = "exact_spectrum_for_vqd_skeleton"
         states.append(
@@ -106,6 +106,10 @@ def build_excited_state_result(
 
     notes: list[str] = []
     verification_status = "validated"
+    unavailable_states = [index for index in task.state_indices if index >= len(spectrum.eigenvalues)]
+    if unavailable_states:
+        verification_status = "exploratory"
+        notes.append(f"Requested state indices {unavailable_states} exceed the available physical/mapped sector.")
     if task.method != "exact_spectrum":
         verification_status = "exploratory"
         notes.append(
@@ -135,6 +139,14 @@ def build_property_result(
     dipole_property = getattr(chemistry.problem.properties, "electronic_dipole_moment", None)
 
     for item in requested:
+        if spectrum is not None and any(index >= len(spectrum.eigenvalues) for index in item.state_indices):
+            properties.append(PropertyValueResult(
+                property_name=item.property_name, method=item.method, state_indices=item.state_indices,
+                implementation_status="unavailable",
+                provenance={"source": "exact_spectrum", "sector": spectrum.sector},
+                notes=["Requested state index is unavailable in the physical/mapped sector."],
+            ))
+            continue
         if item.property_name == "dipole_moment" and dipole_property is not None and spectrum is not None:
             state_index = item.state_indices[0] if item.state_indices else 0
             statevector = np.asarray(spectrum.eigenvectors[:, state_index], dtype=complex)

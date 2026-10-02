@@ -7,6 +7,7 @@ from plotly.subplots import make_subplots
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme, case_label
 from qcchem.workbench.theme import THEME
+from qcchem.workbench.aggregates import energy_label, finite_value
 
 
 def sample_study_model() -> dict[str, object]:
@@ -53,7 +54,7 @@ def _study_energy_figure(model: dict[str, object]) -> go.Figure:
     figure = make_subplots(specs=[[{"secondary_y": True}]])
     figure.add_bar(
         x=[run["name"] for run in run_records],
-        y=[run["total_energy"] for run in run_records],
+        y=[finite_value(run.get("total_energy")) for run in run_records],
         marker={
             "color": [
                 THEME["accent"]["deep_blue"] if status == "validated" else THEME["accent"]["copper"] if status == "exploratory" else THEME["status"]["unstable"]
@@ -61,7 +62,7 @@ def _study_energy_figure(model: dict[str, object]) -> go.Figure:
             ],
             "line": {"color": THEME["surface"]["paper"], "width": 1.4},
         },
-        text=[f'{float(run.get("total_energy") or 0.0):.4f}' for run in run_records],
+        text=[f'{finite_value(run.get("total_energy")):.4f}' if finite_value(run.get("total_energy")) is not None else "Unavailable" for run in run_records],
         textposition="outside",
         customdata=statuses,
         hovertemplate="%{x}<br>Total energy %{y:.6f} Ha<br>Status %{customdata}<extra></extra>",
@@ -70,7 +71,8 @@ def _study_energy_figure(model: dict[str, object]) -> go.Figure:
     )
     figure.add_scatter(
         x=[run["name"] for run in run_records],
-        y=[float(run.get("absolute_error") or 0.0) for run in run_records],
+        y=[finite_value(run.get("absolute_error")) for run in run_records],
+        connectgaps=False,
         mode="lines+markers",
         line={"color": THEME["accent"]["sage"], "width": 2.5},
         marker={"size": 8, "color": THEME["accent"]["sage"]},
@@ -97,7 +99,8 @@ def build_studies_page(model: dict[str, object]) -> html.Div:
     summary = model.get("summary") or {}
     evidence_summary = model.get("evidence_summary") or {}
     comparison_axes = summary.get("comparison_axes") or []
-    best_record = min(run_records, key=lambda run: float(run.get("total_energy") or 0.0)) if run_records else {}
+    measured = [run for run in run_records if finite_value(run.get("total_energy")) is not None]
+    best_record = min(measured, key=lambda run: run["total_energy"]) if measured else {}
     validated_runs = sum(1 for run in run_records if run.get("verification_status") == "validated")
     return html.Div(
         className="qcchem-page qcchem-page--studies",
@@ -108,7 +111,7 @@ def build_studies_page(model: dict[str, object]) -> html.Div:
                     html.P("Aggregate atlas", className="qcchem-card-eyebrow"),
                     html.H1("Studies", className="qcchem-card-title qcchem-page__hero-title"),
                     html.P(
-                        "A study page should read like a campaign review. It needs to preserve the comparison axes, show the best record clearly, and still make it obvious what kind of comparison the reader is actually making.",
+                        str(model.get("description") or "Compare recorded energies and errors alongside their backend, mapping, and execution policy."),
                         className="qcchem-card-note qcchem-page__hero-body",
                     ),
                     html.Div(
@@ -134,7 +137,7 @@ def build_studies_page(model: dict[str, object]) -> html.Div:
                     html.P("Campaign trace", className="qcchem-card-eyebrow"),
                     html.H2("Study energy stack", className="qcchem-card-title"),
                     html.P(
-                        "Use the chart to identify the best run quickly, but keep the axes in view so the result remains attached to the conditions that produced it.",
+                        "Missing energy or error values remain unavailable. Compare energies only for compatible systems and conventions.",
                         className="qcchem-card-note",
                     ),
                     dcc.Graph(figure=_study_energy_figure(model), config={"displayModeBar": False}),
@@ -156,14 +159,14 @@ def build_studies_page(model: dict[str, object]) -> html.Div:
                         [
                             ("Axes", ", ".join(str(axis) for axis in comparison_axes) or "n/a"),
                             ("Status counts", str(summary.get("status_counts", {}))),
-                            ("Best run", str(best_record.get("name", "n/a"))),
-                            ("Best total energy", f'{float(best_record.get("total_energy") or 0.0):.6f} Ha'),
-                            ("Best absolute error", f'{float(best_record.get("absolute_error") or 0.0):.6f} Ha'),
+                            ("Lowest energy record", str(best_record.get("name", "Unavailable"))),
+                            ("Lowest recorded energy", energy_label(best_record.get("total_energy"))),
+                            ("Its absolute error", energy_label(best_record.get("absolute_error"))),
                         ],
                     ),
                     callout_card(
                         "Interpretation rule",
-                        "Read a study in two passes: first identify the strongest record, then verify that the comparison axes explain why that record is strongest instead of treating the study like a flat list of runs.",
+                        "The lowest recorded energy is not automatically the most accurate result. Check the baseline, error, and comparison axes before selecting a workflow.",
                         accent="copper",
                         eyebrow="Review protocol",
                     ),
@@ -174,4 +177,6 @@ def build_studies_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_studies_page(sample_study_model())
+    from qcchem.workbench.pages.aggregate_browser import aggregate_layout
+
+    return aggregate_layout("study")

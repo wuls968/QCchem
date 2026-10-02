@@ -61,7 +61,8 @@ def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
     runtime_chemical_accuracy = confidence.get("runtime_chemical_accuracy") or {}
 
     simulator_error = float(benchmark.get("absolute_error") or confidence.get("absolute_error") or 0.0)
-    hardware_error = float(runtime_chemical_accuracy.get("absolute_error_hartree") or simulator_error)
+    hardware_value = runtime_chemical_accuracy.get("absolute_error_hartree")
+    hardware_error = float(hardware_value) if hardware_value is not None else None
     threshold = float(chemical_accuracy.get("threshold_hartree") or confidence.get("threshold") or benchmark.get("threshold") or 0.02)
     comparison_target = str(
         confidence.get("comparison_target")
@@ -96,7 +97,7 @@ def build_runtime_comparison_model(model: dict[str, Any]) -> dict[str, Any]:
         "hardware_backend": backend_name,
         "hardware_backend_label": backend_label,
         "hardware_error_hartree": hardware_error,
-        "error_gap_hartree": abs(hardware_error - simulator_error),
+        "error_gap_hartree": abs(hardware_error - simulator_error) if hardware_error is not None else None,
         "threshold_hartree": threshold,
         "hardware_verdict": hardware_verdict,
         "hardware_verdict_note": verdict_note,
@@ -119,6 +120,27 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
     variational = _safe_dict(payload.get("variational_result"))
     ansatz = _safe_dict(variational.get("ansatz"))
     lr_ace = _safe_dict(ansatz.get("lr_ace"))
+    molecule = _safe_dict(_safe_dict(payload.get("resolved_config")).get("molecule"))
+    geometry = problem.get("geometry") or molecule.get("geometry") or []
+    unit = str(problem.get("geometry_unit") or molecule.get("unit") or "angstrom").lower()
+    factor = 0.529177210903 if unit in {"bohr", "au"} else 1.0
+    atoms = [
+        {"elem": atom["symbol"], "x": float(atom["coords"][0]) * factor,
+         "y": float(atom["coords"][1]) * factor, "z": float(atom["coords"][2]) * factor}
+        for atom in geometry if isinstance(atom, dict) and "symbol" in atom and len(atom.get("coords", [])) == 3
+    ]
+    orbital_metadata = dict(problem.get("active_space_metadata") or {})
+    point_group = _safe_dict(problem.get("point_group_metadata"))
+    energies = point_group.get("orbital_energies") or []
+    if energies and "orbital_levels_ev" not in orbital_metadata:
+        orbital_metadata.update({
+            "orbital_levels_ev": [float(value) * 27.211386245981 for value in energies],
+            "orbital_indices_original": list(range(len(energies))),
+            "orbital_energy_source": "PySCF SCF orbital energies (Hartree converted to eV)",
+        })
+    orbital_metadata.setdefault("num_active_orbitals", problem.get("num_spatial_orbitals"))
+    particles = problem.get("num_particles") or []
+    orbital_metadata.setdefault("num_active_electrons", sum(particles) if particles else None)
 
     view_model = {
         "hero": {
@@ -130,8 +152,13 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "structure": {
             "molecule_name": problem["molecule_name"],
-            "active_space_metadata": problem.get("active_space_metadata"),
+            "active_space_metadata": orbital_metadata,
         },
+        "molecule_viewer": {"name": problem["molecule_name"], "atoms": atoms,
+                            "available": bool(atoms), "source": "calculation geometry",
+                            "unavailable_reason": "Geometry is missing from this artifact."},
+        "run_identity": payload.get("run_id") or problem["molecule_name"],
+        "is_demo": False,
         "mapping": payload.get("mapping") or {},
         "benchmark": {
             "absolute_error": benchmark.get("absolute_error"),
@@ -155,12 +182,12 @@ def build_run_view_model(payload: dict[str, Any]) -> dict[str, Any]:
             "service": runtime.get("service"),
             "transpiled_depth": runtime.get("transpiled_depth"),
             "transpiled_two_qubit_gate_count": runtime.get("transpiled_two_qubit_gate_count"),
-            "transpilation": runtime.get("transpilation"),
+            "transpilation": _safe_dict(runtime.get("transpilation")),
             "failure_category": runtime.get("failure_category"),
             "failure_message": runtime.get("failure_message"),
-            "options_snapshot": runtime.get("options_snapshot"),
-            "result_provenance": runtime.get("result_provenance"),
-            "returned_job_metadata": runtime.get("returned_job_metadata"),
+            "options_snapshot": _safe_dict(runtime.get("options_snapshot")),
+            "result_provenance": _safe_dict(runtime.get("result_provenance")),
+            "returned_job_metadata": _safe_dict(runtime.get("returned_job_metadata")),
             "verification_status": runtime.get("verification_status"),
         },
         "reduction": reduction,

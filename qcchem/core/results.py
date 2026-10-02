@@ -66,6 +66,7 @@ class ExactBaselineSummary:
     total_energy: float | None
     energy_units: str
     source: str = "exact_diagonalization"
+    sector: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -79,7 +80,7 @@ class SampledResultSummary:
     seed: int | None
     repeat_seeds: list[int | None] = field(default_factory=list)
     repeat_solver_energies: list[float] = field(default_factory=list)
-    repeat_reported_stds: list[float] = field(default_factory=list)
+    repeat_reported_stds: list[float | None] = field(default_factory=list)
     repeat_metadata: list[dict[str, object]] = field(default_factory=list)
     sampled_solver_energy_mean: float | None = None
     sampled_solver_energy_std: float | None = None
@@ -175,6 +176,9 @@ class ProblemSummary:
     multiplicity: int
     num_particles: tuple[int, int]
     num_spatial_orbitals: int
+    geometry: list[dict[str, Any]] = field(default_factory=list)
+    geometry_unit: str = "angstrom"
+    spin_orbital_overlap: list[list[float]] | None = None
     active_space_metadata: dict[str, object] | None = None
     transformers_applied: list[str] = field(default_factory=list)
     hamiltonian_constants: dict[str, float] = field(default_factory=dict)
@@ -1038,3 +1042,4 @@ class ScanResult:
     registry_entries: list[RegistryEntry] = field(default_factory=list)
     artifacts: ScanArtifactPaths | None = None
     evidence_summary: EvidenceSummary | None = None
+    parameter_unit: str | None = None

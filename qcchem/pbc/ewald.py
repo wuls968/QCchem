@@ -117,10 +117,10 @@ def _reciprocal_vectors(lattice: np.ndarray, cutoff: float) -> list[np.ndarray]:
     vectors: list[np.ndarray] = []
     for h in range(-limits[0], limits[0] + 1):
         for k in range(-limits[1], limits[1] + 1):
-            for l in range(-limits[2], limits[2] + 1):
-                if h == 0 and k == 0 and l == 0:
+            for ell in range(-limits[2], limits[2] + 1):
+                if h == 0 and k == 0 and ell == 0:
                     continue
-                vector = h * reciprocal[0] + k * reciprocal[1] + l * reciprocal[2]
+                vector = h * reciprocal[0] + k * reciprocal[1] + ell * reciprocal[2]
                 if np.linalg.norm(vector) <= cutoff + 1.0e-14:
                     vectors.append(vector)
     return vectors

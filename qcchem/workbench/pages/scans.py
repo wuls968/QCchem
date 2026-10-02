@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from qcchem.workbench.components.cards import callout_card, detail_card, metric_card, status_card
 from qcchem.workbench.components.charts import apply_chart_theme
 from qcchem.workbench.theme import THEME
+from qcchem.workbench.aggregates import energy_label, finite_value
 
 
 def sample_scan_model() -> dict[str, object]:
@@ -29,15 +30,18 @@ def sample_scan_model() -> dict[str, object]:
 
 def _scan_curve_figure(model: dict[str, object]) -> go.Figure:
     points = list(model.get("points") or [])
-    best_point = min(points, key=lambda point: float(point.get("total_energy") or 0.0)) if points else {}
+    measured = [point for point in points if finite_value(point.get("total_energy")) is not None
+                and finite_value(point.get("parameter_value")) is not None]
+    best_point = min(measured, key=lambda point: point["total_energy"]) if measured else {}
     figure = go.Figure()
     figure.add_scatter(
-        x=[point["parameter_value"] for point in points],
-        y=[point["total_energy"] for point in points],
+        x=[finite_value(point.get("parameter_value")) for point in points],
+        y=[finite_value(point.get("total_energy")) for point in points],
+        connectgaps=False,
         mode="lines+markers",
         line={"color": THEME["accent"]["deep_blue"], "width": 3},
         marker={"size": 10, "color": THEME["accent"]["deep_blue"], "line": {"color": THEME["surface"]["paper"], "width": 1.4}},
-        customdata=[point["point_label"] for point in points],
+        customdata=[point.get("point_label", "Unnamed point") for point in points],
         hovertemplate="%{customdata}<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
     )
     if best_point:
@@ -51,15 +55,15 @@ def _scan_curve_figure(model: dict[str, object]) -> go.Figure:
                 "line": {"color": THEME["accent"]["copper"], "width": 2.4},
                 "symbol": "diamond",
             },
-            text=["Minimum"],
+            text=["Lowest sampled energy"],
             textposition="top center",
-            hovertemplate="Minimum point<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
+            hovertemplate="Lowest sampled energy<br>%{x:.3f}<br>%{y:.6f} Ha<extra></extra>",
             showlegend=False,
         )
     apply_chart_theme(
         figure,
         title="Energy sweep across the current scan path",
-        xaxis_title=str(model.get("parameter_name", "parameter")),
+        xaxis_title=str(model.get("parameter_name", "parameter")) + (f" ({model['parameter_unit']})" if model.get("parameter_unit") else ""),
         yaxis_title="Total energy (Hartree)",
         height=430,
     )
@@ -70,7 +74,9 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
     points = list(model.get("points") or [])
     summary = model.get("summary") or {}
     evidence_summary = model.get("evidence_summary") or {}
-    best_point = min(points, key=lambda point: float(point.get("total_energy") or 0.0)) if points else {}
+    measured = [point for point in points if finite_value(point.get("total_energy")) is not None
+                and finite_value(point.get("parameter_value")) is not None]
+    best_point = min(measured, key=lambda point: point["total_energy"]) if measured else {}
     validated_points = sum(1 for point in points if point.get("verification_status") == "validated")
     return html.Div(
         className="qcchem-page qcchem-page--scans",
@@ -81,7 +87,7 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
                     html.P("Aggregate atlas", className="qcchem-card-eyebrow"),
                     html.H1("Scans", className="qcchem-card-title qcchem-page__hero-title"),
                     html.P(
-                        "A scan page should feel like an energy-path review, not a CSV preview. The curve, the minimum, and the validated sweep points need to stand out before anyone reads the point table.",
+                        "Review sampled energies, point validation, and scan coverage. The lowest sampled point does not establish a converged equilibrium geometry.",
                         className="qcchem-card-note qcchem-page__hero-body",
                     ),
                     html.Div(
@@ -107,7 +113,7 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
                     html.P("Energy path", className="qcchem-card-eyebrow"),
                     html.H2("Scan curve", className="qcchem-card-title"),
                     html.P(
-                        "Use the curve to read the sweep as a shape first: where the minimum lies, how steep the path is, and whether the sampled points form a believable chemistry story.",
+                        "Gaps indicate unavailable values. Only committed points appear for an incomplete scan.",
                         className="qcchem-card-note",
                     ),
                     dcc.Graph(figure=_scan_curve_figure(model), config={"displayModeBar": False}),
@@ -119,7 +125,7 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
                     detail_card(
                         "Scan points",
                         [
-                            (point["point_label"], f'{point["parameter_value"]} / {point["total_energy"]:.4f} Ha / {point["verification_status"]}')
+                            (point.get("point_label", "Unnamed point"), f'{point.get("parameter_value") if finite_value(point.get("parameter_value")) is not None else "Unavailable"} / {energy_label(point.get("total_energy"))} / {point.get("verification_status", "unknown")}')
                             for point in points
                         ],
                         eyebrow="Defended sweep",
@@ -130,14 +136,15 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
                             ("Parameter name", str(model.get("parameter_name", "n/a"))),
                             ("Total points", str(summary.get("total_runs", 0))),
                             ("Status counts", str(summary.get("status_counts", {}))),
-                            ("Leading point", str(best_point.get("point_label", "n/a"))),
-                            ("Leading energy", f'{float(best_point.get("total_energy") or 0.0):.6f} Ha'),
+                            ("Lowest sampled point", str(best_point.get("point_label", "Unavailable"))),
+                            ("Lowest sampled energy", energy_label(best_point.get("total_energy"))),
+                            ("Parameter unit", str(model.get("parameter_unit") or "Not recorded")),
                         ],
                         eyebrow="Research scope",
                     ),
                     callout_card(
                         "Interpretation rule",
-                        "Read scan pages in two passes: first inspect the shape and minimum of the energy path, then use the point table to verify which sampled points are validated and how the sweep was constructed.",
+                        "Inspect point status, parameter units, and sampling coverage before drawing conclusions from the curve. A sparse sweep alone does not prove convergence.",
                         accent="copper",
                         eyebrow="Review protocol",
                     ),
@@ -148,4 +155,6 @@ def build_scans_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_scans_page(sample_scan_model())
+    from qcchem.workbench.pages.aggregate_browser import aggregate_layout
+
+    return aggregate_layout("scan")

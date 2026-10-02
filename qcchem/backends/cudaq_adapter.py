@@ -245,7 +245,7 @@ def _observe_expectation(observe_result: Any) -> float:
     return float(expectation)
 
 
-def _observe_std(observe_result: Any, *, shots: int | None) -> float:
+def _observe_std(observe_result: Any, *, shots: int | None) -> float | None:
     for name in ("standard_deviation", "std", "variance"):
         value = getattr(observe_result, name, None)
         if callable(value):
@@ -253,11 +253,16 @@ def _observe_std(observe_result: Any, *, shots: int | None) -> float:
         if value is None:
             continue
         value = float(value)
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError("CUDA-Q returned a non-finite or negative uncertainty.")
         if name == "variance":
-            value = math.sqrt(max(value, 0.0))
+            value = math.sqrt(value)
         return value
     if shots is not None and shots > 0:
-        return 1.0 / math.sqrt(float(shots))
+        # ObserveResult commonly exposes counts rather than an uncertainty.
+        # A Hamiltonian's uncertainty depends on its coefficients, measurement
+        # allocation, and covariances; 1/sqrt(shots) is not an energy error bar.
+        return None
     return 0.0
 
 
@@ -365,6 +370,8 @@ class CudaQBackend(BackendAdapter):
                     clear_registries()
 
         module_file = getattr(cudaq, "__file__", None)
+        shots = int(self.spec.shots) if self.sample_based and self.spec.shots is not None else None
+        reported_std = _observe_std(observe_result, shots=shots)
         metadata: dict[str, object] = {
             "provider": "cudaq",
             "backend_kind": self.backend_kind,
@@ -376,6 +383,7 @@ class CudaQBackend(BackendAdapter):
             "cudaq_available_targets": available_targets,
             "num_available_gpus": gpu_count,
             "shots_count": self._shots_count,
+            "reported_uncertainty_available": reported_std is not None,
             "qpu_id": self.qpu_id,
             "term_count": len(operator),
             "translated_gate_counts": dict(bound_circuit.count_ops()),
@@ -398,10 +406,9 @@ class CudaQBackend(BackendAdapter):
         }
         self.metadata = metadata
         self.provenance = provenance
-        shots = int(self.spec.shots) if self.sample_based and self.spec.shots is not None else None
         return BackendEstimate(
             value=float(_observe_expectation(observe_result)),
-            reported_std=float(_observe_std(observe_result, shots=shots)),
+            reported_std=reported_std,
             metadata=metadata,
             seed=seed,
             shots=shots,

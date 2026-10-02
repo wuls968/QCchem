@@ -6,6 +6,10 @@ import dash
 from dash import ALL, Dash, Input, Output, State, ctx, dcc, html, no_update
 
 from qcchem.workbench.components.cards import callout_card
+from qcchem.workbench.components.workflow_controls import register_workflow_control_callbacks
+from qcchem.workbench.pages.aggregate_browser import register_aggregate_callbacks
+from qcchem.workbench.data import resolve_workbench_artifact_root
+from qcchem.workbench.workflow_controls import WorkbenchWorkflowController
 from qcchem.workbench.components.layout import build_shell, ordered_pages, page_focus
 from qcchem.workbench.pages._registry import build_validation_pages, ensure_pages_registered
 from qcchem.workbench.pages.ai_workspace import (
@@ -17,7 +21,7 @@ from qcchem.workbench.pages.ai_workspace import (
     delivery_filter_options,
     handle_delivery_review_action,
 )
-from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps
+from qcchem.workbench.pages.workflow_studio import DEFAULT_WORKFLOW_STUDIO_EXPORT, graph_nodes_from_steps, workflow_run_cards
 from qcchem.core.ai_workspace import (
     AI_WORKSPACE_TICKET_LANE_COMPLETED,
     AI_WORKSPACE_TICKET_LANE_INBOX,
@@ -64,6 +68,11 @@ def create_app() -> Dash:
     app.page_registry = dash.page_registry
     app.layout = build_shell
     app.validation_layout = build_validation_layout
+    artifact_root = resolve_workbench_artifact_root()
+    controller = WorkbenchWorkflowController(artifact_root, Path.cwd())
+    app.workflow_controller = controller
+    register_aggregate_callbacks(app, artifact_root)
+    register_workflow_control_callbacks(app, controller)
 
     nav_pages = ordered_pages()
     nav_outputs = [Output(f"qcchem-nav-link--{index}", "className") for index, _page in enumerate(nav_pages)]
@@ -79,6 +88,13 @@ def create_app() -> Dash:
         if not target.is_relative_to(base):
             raise ValueError("Workflow Studio export path must stay inside the current QCchem workspace.")
         return target
+
+    @app.callback(
+        Output("qcchem-workflow-studio-runs", "children"),
+        Input("qcchem-workflow-studio-status-poll", "n_intervals"),
+    )
+    def _update_workflow_runs(_intervals: int | None):
+        return workflow_run_cards(Path.cwd(), artifact_root=artifact_root)
 
     @app.callback(
         Output("qcchem-workflow-studio-graph", "children"),

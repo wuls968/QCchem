@@ -143,6 +143,18 @@ def run_custom_workflow_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.custom_workflow", "run_custom_workflow_from_config")(*args, **kwargs)
 
 
+def resume_custom_workflow_from_config(*args, **kwargs):
+    return _load_attr("qcchem.workflow.custom_workflow", "resume_custom_workflow_from_config")(*args, **kwargs)
+
+
+def workflow_status(*args, **kwargs):
+    return _load_attr("qcchem.workflow.workflow_control", "workflow_status")(*args, **kwargs)
+
+
+def request_workflow_cancel(*args, **kwargs):
+    return _load_attr("qcchem.workflow.workflow_control", "request_workflow_cancel")(*args, **kwargs)
+
+
 def validate_workflow_from_config(*args, **kwargs):
     return _load_attr("qcchem.workflow.custom_workflow", "validate_workflow_from_config")(*args, **kwargs)
 
@@ -245,10 +257,13 @@ def build_electronic_structure_context(*args, **kwargs):
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="qcchem", description="QCchem quantum chemistry workflow CLI.")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    doctor_parser = subparsers.add_parser("doctor", help="Inspect the local environment without installing tools or contacting providers.")
+    doctor_parser.add_argument("--json", action="store_true", help="Print machine-readable diagnostics.")
 
     run_parser = subparsers.add_parser("run", help="Run a QCchem calculation from YAML config.")
     run_parser.add_argument("-c", "--config", type=Path, required=True, help="Path to YAML config.")
     run_parser.add_argument("-o", "--output-dir", type=Path, help="Override artifact output directory.")
+    run_parser.add_argument("--resume-from", type=Path, help="Resume a local VQE checkpoint into an empty new output directory.")
     run_parser.add_argument(
         "--confirm-runtime-budget",
         help="Required before any config-requested real IBM Runtime submission can proceed.",
@@ -383,6 +398,7 @@ def _build_parser() -> argparse.ArgumentParser:
     scan_run = scan_subparsers.add_parser("run", help="Run a scan from YAML config.")
     scan_run.add_argument("-c", "--config", type=Path, required=True)
     scan_run.add_argument("-o", "--output-dir", type=Path)
+    scan_run.add_argument("--resume-from", type=Path, help="Reuse a scan checkpoint and completed point bundles in an empty new output directory.")
     scan_run.add_argument(
         "--overwrite",
         action="store_true",
@@ -742,8 +758,20 @@ def _build_parser() -> argparse.ArgumentParser:
     workflow_run.add_argument(
         "--overwrite",
         action="store_true",
-        help="Replace an existing non-empty workflow output directory.",
+        help="Preserve the previous workflow bundle in a backup and start a new run.",
     )
+    workflow_resume = workflow_subparsers.add_parser("resume", help="Resume a matching durable workflow checkpoint.")
+    workflow_resume.add_argument("-c", "--config", type=Path, required=True)
+    workflow_resume.add_argument("-o", "--output-dir", type=Path)
+    workflow_resume.add_argument(
+        "--retry-step", action="append", default=[], metavar="ID",
+        help="Explicitly allow rerunning one failed/cancelled/interrupted step; may be repeated.",
+    )
+    workflow_status_parser = workflow_subparsers.add_parser("status", help="Read checkpoint status and actual execution lock ownership.")
+    workflow_status_parser.add_argument("artifact_root", type=Path)
+    workflow_cancel = workflow_subparsers.add_parser("cancel", help="Request cooperative cancellation of the current execution session.")
+    workflow_cancel.add_argument("artifact_root", type=Path)
+    workflow_cancel.add_argument("--reason", default="Requested by user")
     workflow_report = workflow_subparsers.add_parser("report", help="Regenerate a workflow Markdown report.")
     workflow_report.add_argument("result_json", type=Path)
     workflow_report.add_argument("-o", "--output", type=Path)
@@ -3148,13 +3176,33 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
+    if args.command == "doctor":
+        from qcchem.diagnostics import environment_diagnostics
+
+        diagnostics = environment_diagnostics()
+        if args.json:
+            print(json.dumps(diagnostics, indent=2, sort_keys=True))
+        else:
+            print(f"QCchem environment: {diagnostics['status']}")
+            print(f"Python: {diagnostics['python']['executable']}")
+            print(f"Source: {diagnostics['qcchem']['source']} ({diagnostics['qcchem']['source_version']})")
+            for feature, available in diagnostics["optional_features"].items():
+                print(f"{feature}: {'available' if available else 'unavailable or incompatible'}")
+            for warning in diagnostics["warnings"]:
+                print(f"Warning: {warning}")
+        return 0 if diagnostics["status"] == "ready" else 2
+
     if args.command == "run":
         try:
             result = run_from_config(
                 args.config,
                 output_dir=args.output_dir,
                 confirm_runtime_budget=args.confirm_runtime_budget,
+                **({"resume_from": args.resume_from} if args.resume_from is not None else {}),
             )
+        except KeyboardInterrupt:
+            print("QCchem run interrupted; partial artifacts and checkpoints were retained.")
+            return 130
         except (FileExistsError, ValueError) as exc:
             print(f"QCchem run rejected: {exc}")
             return 2
@@ -3463,8 +3511,12 @@ def main(argv: list[str] | None = None) -> int:
                     args.config,
                     output_dir=args.output_dir,
                     overwrite=args.overwrite,
+                    **({"resume_from": args.resume_from} if args.resume_from is not None else {}),
                 )
-            except FileExistsError as exc:
+            except KeyboardInterrupt:
+                print("Scan interrupted; partial artifacts and checkpoints were retained.")
+                return 130
+            except (FileExistsError, ValueError) as exc:
                 print(f"Scan rejected: {exc}")
                 return 2
             print(f"Scan completed: {result.scan_name}")
@@ -3758,21 +3810,33 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
             print(json.dumps(to_primitive(summary), indent=2, sort_keys=True))
             return 0
-        if args.workflow_command == "run":
+        if args.workflow_command in {"run", "resume"}:
             try:
-                result = run_custom_workflow_from_config(
-                    args.config,
-                    output_dir=args.output_dir,
-                    overwrite=args.overwrite,
-                )
-            except (FileExistsError, ValueError) as exc:
-                print(f"Workflow run rejected: {exc}")
+                if args.workflow_command == "resume":
+                    result = resume_custom_workflow_from_config(
+                        args.config, output_dir=args.output_dir, retry_steps=args.retry_step,
+                    )
+                else:
+                    result = run_custom_workflow_from_config(
+                        args.config, output_dir=args.output_dir, overwrite=args.overwrite,
+                    )
+            except (OSError, ValueError) as exc:
+                print(f"Workflow {args.workflow_command} rejected: {exc}")
                 return 2
-            print(f"Workflow completed: {result.workflow_name}")
+            verb = "completed" if result.status == "completed" else "stopped"
+            print(f"Workflow {verb}: {result.workflow_name}")
             print(f"Status: {result.status}")
             print(f"Artifacts: {result.artifact_root}")
             print(f"Report: {result.outputs['workflow_report_markdown']}")
-            return 0 if result.status == "completed" else 2
+            return 0 if result.status == "completed" else 130 if result.status in {"cancelled", "interrupted"} else 2
+        if args.workflow_command in {"status", "cancel"}:
+            try:
+                summary = workflow_status(args.artifact_root) if args.workflow_command == "status" else request_workflow_cancel(args.artifact_root, reason=args.reason)
+            except (OSError, ValueError) as exc:
+                print(f"Workflow {args.workflow_command} rejected: {exc}")
+                return 2
+            print(json.dumps(to_primitive(summary), indent=2, sort_keys=True))
+            return 0
         if args.workflow_command == "report":
             outputs = report_custom_workflow_result(args.result_json, output_path=args.output)
             print(f"Workflow report written to {outputs['workflow_report_markdown']}")

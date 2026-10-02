@@ -3,7 +3,7 @@ from __future__ import annotations
 from dash import html
 
 from qcchem.workbench.components.cards import detail_card, metric_card, status_card
-from qcchem.workbench.pages.overview import build_sample_view_model
+from qcchem.workbench.data import load_featured_run_view_model
 
 
 def _safe_dict(value: object) -> dict[str, object]:
@@ -89,16 +89,7 @@ def build_lr_ace_method_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    model = build_sample_view_model()
-    model.setdefault(
-        "lr_ace",
-        {
-            "method_role": "flagship",
-            "profile": "compact",
-            "selected_factor_count": 1,
-            "validation_gate": {"trust_label": "local_exact_validated", "verification_status": "validated"},
-            "local_accuracy_gate": {"passed": True, "absolute_error_hartree": 4.8e-10, "threshold_hartree": 1.6e-3},
-            "adaptive": {"enabled": False, "expansions": []},
-        },
-    )
-    return build_lr_ace_method_page(model)
+    model = load_featured_run_view_model()
+    return build_lr_ace_method_page(model) if model else html.Div([
+        html.H1("LR-ACE Method"), html.P("No calculation artifacts available."),
+    ])

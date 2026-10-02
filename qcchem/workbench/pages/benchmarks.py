@@ -38,7 +38,6 @@ def sample_benchmark_suite_model() -> dict[str, object]:
 
 def _status_band_figure(model: dict[str, object]) -> go.Figure:
     summary = model.get("summary") or {}
-    evidence_summary = model.get("evidence_summary") or {}
     status_counts = summary.get("status_counts") or {}
     cases = list(model.get("cases") or [])
     status_order = list(status_counts.keys())
@@ -166,4 +165,8 @@ def build_benchmarks_page(model: dict[str, object]) -> html.Div:
 
 
 def layout() -> html.Div:
-    return build_benchmarks_page(load_featured_benchmark_model() or sample_benchmark_suite_model())
+    model = load_featured_benchmark_model()
+    page = build_benchmarks_page(model or sample_benchmark_suite_model())
+    if model is None:
+        page.children.insert(0, html.P("Demo data: bundled benchmark example; no benchmark artifact is selected.", className="qcchem-card-note"))
+    return page

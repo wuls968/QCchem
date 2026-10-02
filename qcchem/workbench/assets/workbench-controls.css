@@ -1,0 +1,74 @@
+.qcchem-aggregate__chooser,
+.qcchem-workflow-controls {
+  position: relative;
+  z-index: 5;
+}
+
+.qcchem-aggregate__chooser {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.qcchem-aggregate__chooser > label {
+  grid-column: 1 / -1;
+}
+
+.qcchem-aggregate__source,
+.qcchem-workflow-controls p {
+  overflow-wrap: anywhere;
+}
+
+.qcchem-workflow-controls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.qcchem-workflow-controls__retry label {
+  display: block;
+  padding: 4px 0;
+}
+
+.qcchem-workflow-controls__retry input {
+  margin-right: 8px;
+}
+
+.qcchem-workflow-controls__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qcchem-workflow-controls button,
+.qcchem-aggregate__chooser button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid rgba(15, 98, 254, 0.24);
+  border-radius: var(--qcchem-radius-sm);
+  background: white;
+  color: var(--qcchem-text-primary);
+  cursor: pointer;
+}
+
+.qcchem-workflow-controls button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.qcchem-workflow-controls button[hidden] {
+  display: none;
+}
+
+.qcchem-workflow-controls__review {
+  padding: 12px;
+  border-left: 3px solid var(--qcchem-accent-copper);
+}
+
+@media (max-width: 700px) {
+  .qcchem-aggregate__chooser {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

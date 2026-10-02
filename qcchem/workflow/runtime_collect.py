@@ -11,12 +11,14 @@ from typing import Any
 import numpy as np
 
 from qcchem.core.chemical_accuracy import check_chemical_accuracy
+from qcchem.core.energy import total_energy_from_solver
 from qcchem.io.config import load_run_spec
 from qcchem.io.exports import write_hdf5_result, write_qcschema_json
 from qcchem.io.serialization import to_primitive
 from qcchem.reporting import write_markdown_report, write_result_json
 from qcchem.core.evidence import build_run_evidence_summary
 from qcchem.workflow.runner import run_spec
+from qcchem.workflow.common import contained_output_path
 
 
 def _normalize_status(status: Any) -> str:
@@ -91,11 +93,7 @@ def _update_runtime_result_payload(
     evs = returned.get("evs") or []
     stds = returned.get("stds") or []
     if exact_total is not None and evs:
-        runtime_total = (
-            float(evs[0])
-            + float(energy.get("constant_energy_correction") or 0.0)
-            + float(energy.get("nuclear_repulsion_energy") or 0.0)
-        )
+        runtime_total = total_energy_from_solver(float(evs[0]), energy)
         payload["runtime_chemical_accuracy"] = to_primitive(
             check_chemical_accuracy(
                 runtime_total,
@@ -122,18 +120,20 @@ def _update_runtime_result_payload(
             payload["scientific_risk_notes"].append(note)
     payload["evidence_summary"] = to_primitive(build_run_evidence_summary(payload))
 
-    result_path = artifact_root / "result.json"
-    report_path = artifact_root / "report.md"
-    write_result_json(payload, result_path)
-    write_markdown_report(payload, report_path)
-
     artifacts = payload.get("artifacts") or {}
     qcschema_path = artifacts.get("qcschema_json")
     if qcschema_path:
-        write_qcschema_json(payload, Path(qcschema_path))
+        output = contained_output_path(artifact_root, "qcschema.json")
+        artifacts["qcschema_json"] = str(output)
+        write_qcschema_json(payload, output)
     hdf5_path = artifacts.get("hdf5_file")
     if hdf5_path:
-        write_hdf5_result(payload, Path(hdf5_path))
+        output = contained_output_path(artifact_root, "result.h5")
+        artifacts["hdf5_file"] = str(output)
+        write_hdf5_result(payload, output)
+    payload["artifacts"] = artifacts
+    write_result_json(payload, contained_output_path(artifact_root, "result.json"))
+    write_markdown_report(payload, contained_output_path(artifact_root, "report.md"))
 
 
 def collect_runtime_artifact(artifact_root: Path) -> dict[str, object]:
