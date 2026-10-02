@@ -1,4 +1,4 @@
-"""Native process locks without requiring PySCF, UI, or provider credentials."""
+"""Native process locks without the scientific or UI execution stack."""
 
 from __future__ import annotations
 
@@ -69,13 +69,14 @@ def test_native_lock_excludes_another_process_and_releases_after_crash(tmp_path,
             process.wait(timeout=5)
 
 
-def test_control_import_does_not_require_pyscf_or_dash():
+def test_control_import_does_not_require_scientific_or_ui_stack():
     code = """
 import builtins
 original = builtins.__import__
+blocked = {'pyscf', 'dash', 'qiskit', 'qiskit_aer', 'qiskit_nature', 'qiskit_algorithms'}
 def restricted(name, *args, **kwargs):
-    if name.split('.')[0] in {'pyscf', 'dash'}:
-        raise ImportError('Chemistry/UI execution deliberately unavailable.')
+    if name.split('.')[0] in blocked:
+        raise ImportError(f'Scientific/UI execution deliberately unavailable: {name}')
     return original(name, *args, **kwargs)
 builtins.__import__ = restricted
 from qcchem.workflow.workflow_control import WorkflowLock

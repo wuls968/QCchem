@@ -60,8 +60,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - name: Install control test dependencies without PySCF
-        run: python -m pip install "pytest>=8.0" "numpy>=1.24" "PyYAML>=6.0" "qiskit>=2.3.0" "qiskit-aer>=0.17.2"
+      - name: Install control test dependencies without the scientific stack
+        run: python -m pip install "pytest>=8.0" "numpy>=1.24" "PyYAML>=6.0"
       - name: Check native lock ownership and crash release
         run: python -m pytest tests/unit/test_platform_control.py -q --junitxml=artifacts/native-smoke/windows-control.xml
       - name: Preserve Windows control diagnostics

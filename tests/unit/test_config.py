@@ -3,11 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from qcchem.io.benchmark_config import load_benchmark_suite_spec
-from qcchem.io.campaign_config import load_campaign_spec
-from qcchem.io.config import load_run_spec
-from qcchem.io.scan_config import load_scan_spec
-from qcchem.io.study_config import load_study_spec
+from qcchem.io import (
+    load_benchmark_suite_spec,
+    load_campaign_spec,
+    load_run_spec,
+    load_scan_spec,
+    load_study_spec,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

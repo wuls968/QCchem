@@ -174,7 +174,9 @@ with the exact baseline. The optimization-stage energy remains in `energy`.
 
 Process locks reserve the first byte for exclusion. Owner metadata starts at the
 next byte so Windows mandatory locks do not prevent status readers from seeing
-an active owner. Native CI covers macOS/Linux science and process recovery, with
+an active owner. Checkpoint and control helpers import independently of Qiskit,
+PySCF, and Dash; public configuration loaders are resolved on demand. Native CI
+covers macOS/Linux science and process recovery, with
 a separate Windows control test. PySCF chemistry on Windows requires
 [WSL](https://pyscf.org/user/install.html). Configuration of CI is not evidence
 that its remote jobs have run.
